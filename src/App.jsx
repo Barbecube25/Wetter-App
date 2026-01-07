@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map } from 'lucide-react';
 
 // --- STYLE INJECTION ---
 const styles = `
@@ -47,26 +47,19 @@ const getConfidenceColor = (percent) => {
 // Berechnet die wahrscheinliche Laufzeit des Modells basierend auf UTC und Rechenzeit-Verzögerung
 const getModelRunTime = (intervalHours, processingDelayHours) => {
   const now = new Date();
-  // Aktuelle UTC Zeit in Stunden
   const currentUtcHour = now.getUTCHours();
   
-  // Wir ziehen die Rechenzeit ab, um zu sehen, welcher Lauf schon "fertig" sein müsste
-  // Beispiel: Es ist 14:00 UTC. GFS braucht 4h. 14 - 4 = 10.
-  // Das letzte Intervall vor 10 ist 06:00 UTC. Also ist der 06z Lauf da.
   let effectiveHour = currentUtcHour - processingDelayHours;
   if (effectiveHour < 0) effectiveHour += 24;
 
-  // Abrunden auf das nächste Intervall (z.B. alle 6 Stunden)
   const runHourUtc = Math.floor(effectiveHour / intervalHours) * intervalHours;
 
-  // Datum erstellen für diesen Lauf (heute oder gestern)
   const runDate = new Date();
   if (currentUtcHour - processingDelayHours < 0) {
       runDate.setDate(runDate.getDate() - 1); // Gestern
   }
   runDate.setUTCHours(runHourUtc, 0, 0, 0);
 
-  // In lokale Zeit umwandeln für die Anzeige
   return runDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + " Lauf";
 };
 
@@ -93,7 +86,6 @@ const WeatherAnimation = ({ type, isDay, date }) => {
   const cloudColor = "white"; 
   const cloudOpacity = 0.9;
   
-  // Moon Phase Calc
   const getMoonPhase = (d) => {
       const dateObj = new Date(d);
       const newMoon = new Date(2000, 0, 6, 18, 14).getTime();
@@ -167,7 +159,6 @@ export default function WeatherApp() {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
-  // Model Run Times (Calculated)
   const [modelRuns, setModelRuns] = useState({ icon: '', gfs: '', arome: '' });
 
   useEffect(() => {
@@ -209,11 +200,10 @@ export default function WeatherApp() {
       setLongTermData(await resLong.json());
       setLastUpdated(new Date());
       
-      // Berechne Modellzeiten (Intervall in h, Delay in h)
       setModelRuns({
-          icon: getModelRunTime(3, 2.5),  // ICON-D2: Alle 3h, ca 2.5h Delay
-          gfs: getModelRunTime(6, 4),     // GFS: Alle 6h, ca 4h Delay
-          arome: getModelRunTime(3, 2)    // AROME: Alle 3h, ca 2h Delay
+          icon: getModelRunTime(3, 2.5), 
+          gfs: getModelRunTime(6, 4),    
+          arome: getModelRunTime(3, 2)   
       });
 
     } catch (err) { setError(err.message); } finally { setLoading(false); }
@@ -325,7 +315,6 @@ export default function WeatherApp() {
   const weatherConf = getWeatherConfig(current.code || 0, current.isDay);
   const isNight = current.isDay === 0;
   
-  // --- STATISCHES HINTERGRUND-DESIGN ---
   const bgGradient = isNight ? 'from-slate-900 to-slate-800' : 'from-blue-500 to-sky-400';
   const textColor = 'text-white';
   const cardBg = isNight ? 'bg-slate-800/60 border-slate-700/50 text-white' : 'bg-white/80 border-white/40 text-slate-900';
@@ -405,6 +394,7 @@ export default function WeatherApp() {
            {[
              {id:'overview', label:'Verlauf', icon: List}, 
              {id:'chart', label:'Vergleich', icon: BarChart2}, 
+             {id:'radar', label:'Radar', icon: Map},
              {id:'longterm', label:'14 Tage', icon: CalendarDays}
             ].map(tab => (
              <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 py-3 rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === tab.id ? 'bg-white/90 text-slate-900 shadow-md' : 'hover:bg-white/10 opacity-70'}`}>
@@ -438,7 +428,6 @@ export default function WeatherApp() {
                                 </div>
                              </div>
                           </td>
-                          {/* NIEDERSCHLAGSMENGE JETZT SICHTBAR */}
                           <td className="py-4 px-2 text-right w-24">
                              {parseFloat(row.snow) > 0 ? (
                                <span className="text-cyan-500 font-bold whitespace-nowrap flex justify-end items-center gap-1"><Snowflake size={12}/>{row.snow}cm</span>
@@ -520,7 +509,27 @@ export default function WeatherApp() {
             </div>
           )}
 
-          {/* 3. 14 TAGE LISTE */}
+          {/* 3. RADAR TAB (NEU) */}
+          {activeTab === 'radar' && (
+            <div className="h-full flex flex-col">
+               <h3 className="text-sm font-bold uppercase opacity-70 mb-4 ml-2">Live-Radar (Windy)</h3>
+               <div className="w-full aspect-square rounded-xl overflow-hidden shadow-inner border border-black/10 bg-gray-200 relative">
+                  <iframe 
+                    width="100%" 
+                    height="100%" 
+                    src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=450&height=450&zoom=9&level=surface&overlay=radar&product=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`} 
+                    frameBorder="0"
+                    title="Windy Radar"
+                    className="absolute inset-0"
+                  ></iframe>
+               </div>
+               <div className="mt-4 text-xs text-center opacity-60">
+                  Radarbild bereitgestellt von Windy.com
+               </div>
+            </div>
+          )}
+
+          {/* 4. 14 TAGE LISTE */}
           {activeTab === 'longterm' && (
              <div className="space-y-4">
                <h3 className="text-sm font-bold uppercase opacity-70 ml-2">14-Tage Trend</h3>
@@ -535,20 +544,14 @@ export default function WeatherApp() {
 
                  return (
                    <div key={i} className="grid grid-cols-[auto_1fr_auto] gap-3 items-center py-4 border-b border-white/10 last:border-0 hover:bg-white/5 transition px-2">
-                      
-                      {/* Left: Date + Icon */}
                       <div className="flex flex-col items-center w-14">
                          <div className="font-bold text-lg leading-none mb-1">{day.dayName}</div>
                          <div className="text-xs opacity-60 mb-2">{day.dateShort}</div>
                          <DayIcon size={28} className="opacity-90" />
                       </div>
-
-                      {/* Middle: Temp Bar + Confidence */}
                       <div className="flex flex-col justify-center h-full px-2">
                          <div className="flex items-center gap-2 mb-2 w-full">
-                            {/* MIN TEMP JETZT GROSS UND FETT WIE MAX TEMP */}
                             <span className="text-lg font-bold w-8 text-right text-blue-500">{Math.round(day.min)}°</span>
-                            
                             <div className="h-2 flex-1 bg-black/10 rounded-full overflow-hidden relative">
                                <div className="absolute inset-y-0 bg-gradient-to-r from-blue-300 to-amber-300 opacity-90 w-full" />
                             </div>
@@ -559,8 +562,6 @@ export default function WeatherApp() {
                              {day.reliability}% Sicher
                           </div>
                       </div>
-
-                      {/* Right: Wind + Rain Stacked */}
                       <div className="flex flex-col items-end gap-2 w-24">
                          <div className="flex items-center gap-1.5 opacity-90">
                             <div className="flex flex-col items-end leading-none">
@@ -569,7 +570,6 @@ export default function WeatherApp() {
                             </div>
                             <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
                          </div>
-                         
                          <div className="flex flex-col items-end leading-none">
                             {isDaySnow ? (
                                <span className="text-cyan-500 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {day.snow}cm</span>
@@ -578,26 +578,25 @@ export default function WeatherApp() {
                             ) : (
                                <span className="text-xs opacity-20">-</span>
                             )}
-                            {/* Probability */}
                             <span className={`text-[10px] mt-1 ${probColor}`}>{day.prob > 0 ? `${day.prob}% Wahrsch.` : ''}</span>
                          </div>
                       </div>
-
                    </div>
                  );
                })}
              </div>
           )}
 
-          {/* DYNAMISCHE FUSSZEILE MIT MODELL-LAUFZEITEN */}
-          <div className="mt-8 text-xs text-center opacity-60 px-6 font-medium space-y-2">
-             <p className="flex items-center justify-center gap-2 mb-2"><Database size={14} /> Datenbasis & Laufzeiten (Geschätzt)</p>
-             <div className="flex flex-wrap justify-center gap-4">
-               <span className="bg-blue-500/10 px-2 py-1 rounded text-blue-500 border border-blue-500/20">ICON-D2: {modelRuns.icon || '--:--'}</span>
-               <span className="bg-purple-500/10 px-2 py-1 rounded text-purple-500 border border-purple-500/20">GFS: {modelRuns.gfs || '--:--'}</span>
-               <span className="bg-green-500/10 px-2 py-1 rounded text-green-500 border border-green-500/20">AROME: {modelRuns.arome || '--:--'}</span>
-             </div>
-          </div>
+          {activeTab !== 'radar' && (
+            <div className="mt-8 text-xs text-center opacity-60 px-6 font-medium space-y-2">
+               <p className="flex items-center justify-center gap-2 mb-2"><Database size={14} /> Datenbasis & Laufzeiten (Geschätzt)</p>
+               <div className="flex flex-wrap justify-center gap-4">
+                 <span className="bg-blue-500/10 px-2 py-1 rounded text-blue-500 border border-blue-500/20">ICON-D2: {modelRuns.icon || '--:--'}</span>
+                 <span className="bg-purple-500/10 px-2 py-1 rounded text-purple-500 border border-purple-500/20">GFS: {modelRuns.gfs || '--:--'}</span>
+                 <span className="bg-green-500/10 px-2 py-1 rounded text-green-500 border border-green-500/20">AROME: {modelRuns.arome || '--:--'}</span>
+               </div>
+            </div>
+          )}
 
         </div>
       </main>
