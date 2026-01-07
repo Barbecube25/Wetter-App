@@ -30,11 +30,25 @@ const styles = `
 // --- CONFIG ---
 const DAUBENRATH_LOC = { name: "Jülich Daubenrath", lat: 50.938, lon: 6.388, isHome: true };
 
-// --- HELPERS ---
+// --- HELPER: Moon Phase Calculation ---
+const getMoonPhase = (date) => {
+  const d = new Date(date);
+  const newMoon = new Date(2000, 0, 6, 18, 14).getTime();
+  const phaseSeconds = 2551443; // 29.53059 days
+  let sec = (d.getTime() - newMoon) / 1000;
+  let currentSec = sec % phaseSeconds;
+  if (currentSec < 0) currentSec += phaseSeconds;
+  // 0..1
+  const frac = currentSec / phaseSeconds;
+  // 0..7
+  return Math.round(frac * 8) % 8;
+};
+
+// --- HELPER: Colors ---
 const getWindColorClass = (speed) => {
   if (speed >= 60) return "text-red-600 font-extrabold";
   if (speed >= 40) return "text-orange-500 font-bold";
-  if (speed >= 20) return "text-blue-600 font-bold";
+  if (speed >= 20) return "text-blue-500 font-bold";
   return "text-slate-600 font-medium";
 };
 
@@ -44,13 +58,11 @@ const getConfidenceColor = (percent) => {
   return "bg-red-100 text-red-800 border-red-200";
 };
 
-// Config nur noch für Text und Icon, BG entfernt
 const getWeatherConfig = (code, isDay = 1) => {
   const isNight = isDay === 0;
   if (code === 0) return isNight ? { text: 'Klar', icon: Moon } : { text: 'Klar', icon: Sun };
   if (code === 1) return isNight ? { text: 'Leicht bewölkt', icon: Moon } : { text: 'Leicht bewölkt', icon: Sun };
   if (code === 2) return { text: 'Bewölkt', icon: Cloud };
-  
   if (code === 3) return { text: 'Bedeckt', icon: Cloud };
   if ([45, 48].includes(code)) return { text: 'Nebel', icon: Cloud };
   if ([51, 53, 55].includes(code)) return { text: 'Niesel', icon: CloudRain };
@@ -63,11 +75,28 @@ const getWeatherConfig = (code, isDay = 1) => {
 };
 
 // --- ANIMATION COMPONENT ---
-const WeatherAnimation = ({ type, isDay }) => {
+const WeatherAnimation = ({ type, isDay, date }) => {
   const isNight = isDay === 0;
-  // White elements for better contrast on blue background
   const cloudColor = "white"; 
   const cloudOpacity = 0.9;
+  
+  // Calculate moon phase if date provided
+  const phase = useMemo(() => date ? getMoonPhase(date) : 0, [date]);
+
+  // --- MOON PATHS (Center 50,40, Radius ~18) ---
+  const getMoonPath = (p) => {
+    switch(p) {
+      case 0: return <circle cx="50" cy="40" r="16" fill="none" stroke="#fef08a" strokeWidth="1" opacity="0.3" />;
+      case 1: return <path d="M50,24 A16,16 0 1,1 50,56 A12,16 0 0,0 50,24 Z" fill="#fef08a" />; // Right Crescent
+      case 2: return <path d="M50,24 A16,16 0 0,1 50,56 L50,24 Z" fill="#fef08a" />; // Right Half
+      case 3: return <path d="M50,24 A16,16 0 1,1 50,56 A12,16 0 0,1 50,24 Z" fill="#fef08a" />; // Right Gibbous
+      case 4: return <circle cx="50" cy="40" r="16" fill="#fef08a" />; // Full
+      case 5: return <path d="M50,24 A16,16 0 1,0 50,56 A12,16 0 0,0 50,24 Z" fill="#fef08a" />; // Left Gibbous
+      case 6: return <path d="M50,24 A16,16 0 0,0 50,56 L50,24 Z" fill="#fef08a" />; // Left Half
+      case 7: return <path d="M50,24 A16,16 0 1,0 50,56 A12,16 0 0,1 50,24 Z" fill="#fef08a" />; // Left Crescent
+      default: return <circle cx="50" cy="40" r="16" fill="#fef08a" />;
+    }
+  };
 
   if (isNight && (type === 'sunny' || type === 'clear-night')) {
     return (
@@ -75,10 +104,23 @@ const WeatherAnimation = ({ type, isDay }) => {
          <circle cx="20" cy="20" r="1.5" fill="white" className="animate-twinkle-1" />
          <circle cx="80" cy="30" r="1" fill="white" className="animate-twinkle-2" />
          <circle cx="50" cy="10" r="1.5" fill="white" className="animate-twinkle-3" />
-         <path d="M40,25 Q55,25 65,40 T60,70 Q45,75 35,60 T40,25 Z" fill="#fef08a" className="animate-float" filter="drop-shadow(0 0 10px rgba(254, 240, 138, 0.5))"/>
+         <g className="animate-float" filter="drop-shadow(0 0 12px rgba(254, 240, 138, 0.4))">
+            {getMoonPath(phase)}
+         </g>
       </svg>
     );
   }
+  
+  if (isNight && (type === 'partly-cloudy-night' || type === 'partly-cloudy')) {
+    return (
+      <svg viewBox="0 0 100 100" className="w-40 h-40">
+         <g transform="translate(-10, -5) scale(0.8)">{getMoonPath(phase)}</g>
+         <path d="M20,60 Q30,45 50,55 T80,60 T95,70 T90,90 T20,90 Z" fill="#64748b" fillOpacity="0.8" className="animate-float-side" />
+      </svg>
+    );
+  }
+
+  // --- DAY ANIMATIONS ---
   if (!isNight && type === 'sunny') {
     return (
       <svg viewBox="0 0 100 100" className="w-40 h-40">
@@ -263,14 +305,9 @@ export default function WeatherApp() {
   const isNight = current.isDay === 0;
   
   // --- STATISCHES HINTERGRUND-DESIGN ---
-  // Statischer Verlauf basierend auf Tag/Nacht, NICHT Wetter
   const bgGradient = isNight ? 'from-slate-900 to-slate-800' : 'from-blue-500 to-sky-400';
-  
-  // Farben passend zum statischen Hintergrund
-  const textColor = 'text-white'; // Immer weißer Text auf dem farbigen Hintergrund
-  // Karten: Tagsüber Weiß/Glas, Nachts Dunkel/Glas
+  const textColor = 'text-white';
   const cardBg = isNight ? 'bg-slate-800/60 border-slate-700/50 text-white' : 'bg-white/80 border-white/40 text-slate-900';
-  
   const windColorClass = getWindColorClass(current.wind || 0);
 
   if (loading) return <div className="min-h-screen bg-slate-100 flex items-center justify-center"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
@@ -301,11 +338,11 @@ export default function WeatherApp() {
         {/* HERO */}
         <div className="relative h-64 flex items-center justify-center">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-150 transform">
-              <WeatherAnimation type={isSnowing ? 'snowy' : (isNight && (current.code <= 2) ? 'clear-night' : current.code >= 51 ? 'rainy' : (current.code > 2 ? 'cloudy' : 'sunny'))} isDay={current.isDay} />
+              <WeatherAnimation type={isSnowing ? 'snowy' : (isNight && (current.code <= 2) ? 'clear-night' : current.code >= 51 ? 'rainy' : (current.code > 2 ? 'cloudy' : 'sunny'))} isDay={current.isDay} date={current.time} />
             </div>
             <div className={`relative z-10 text-center mt-24 ${textColor}`}>
-              <div className="text-8xl font-thin tracking-tighter drop-shadow-sm">{Math.round(current.temp)}°</div>
-              <div className="flex gap-4 justify-center mt-2 text-lg font-medium opacity-90 items-center">
+              <div className="text-9xl font-bold tracking-tighter drop-shadow-xl">{Math.round(current.temp)}°</div>
+              <div className="flex gap-4 justify-center mt-2 text-lg font-medium opacity-90 items-center drop-shadow-md">
                  <span>H: {processedLong[0]?.max}°</span>
                  <span>T: {processedLong[0]?.min}°</span>
                  <span className="mx-1 opacity-50">|</span>
@@ -380,6 +417,7 @@ export default function WeatherApp() {
                                 </div>
                              </div>
                           </td>
+                          {/* NIEDERSCHLAGSMENGE JETZT SICHTBAR */}
                           <td className="py-4 px-2 text-right w-24">
                              {parseFloat(row.snow) > 0 ? (
                                <span className="text-cyan-500 font-bold whitespace-nowrap flex justify-end items-center gap-1"><Snowflake size={12}/>{row.snow}cm</span>
@@ -477,15 +515,19 @@ export default function WeatherApp() {
                  return (
                    <div key={i} className="grid grid-cols-[auto_1fr_auto] gap-3 items-center py-4 border-b border-white/10 last:border-0 hover:bg-white/5 transition px-2">
                       
+                      {/* Left: Date + Icon */}
                       <div className="flex flex-col items-center w-14">
                          <div className="font-bold text-lg leading-none mb-1">{day.dayName}</div>
                          <div className="text-xs opacity-60 mb-2">{day.dateShort}</div>
                          <DayIcon size={28} className="opacity-90" />
                       </div>
 
+                      {/* Middle: Temp Bar + Confidence */}
                       <div className="flex flex-col justify-center h-full px-2">
                          <div className="flex items-center gap-2 mb-2 w-full">
+                            {/* MIN TEMP JETZT GROSS UND FETT WIE MAX TEMP */}
                             <span className="text-lg font-bold w-8 text-right text-blue-500">{Math.round(day.min)}°</span>
+                            
                             <div className="h-2 flex-1 bg-black/10 rounded-full overflow-hidden relative">
                                <div className="absolute inset-y-0 bg-gradient-to-r from-blue-300 to-amber-300 opacity-90 w-full" />
                             </div>
@@ -497,6 +539,7 @@ export default function WeatherApp() {
                           </div>
                       </div>
 
+                      {/* Right: Wind + Rain Stacked */}
                       <div className="flex flex-col items-end gap-2 w-24">
                          <div className="flex items-center gap-1.5 opacity-90">
                             <div className="flex flex-col items-end leading-none">
@@ -514,6 +557,7 @@ export default function WeatherApp() {
                             ) : (
                                <span className="text-xs opacity-20">-</span>
                             )}
+                            {/* Probability */}
                             <span className={`text-[10px] mt-1 ${probColor}`}>{day.prob > 0 ? `${day.prob}% Wahrsch.` : ''}</span>
                          </div>
                       </div>
