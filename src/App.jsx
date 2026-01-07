@@ -34,7 +34,7 @@ const DAUBENRATH_LOC = { name: "Jülich Daubenrath", lat: 50.938, lon: 6.388, is
 const getWindColorClass = (speed) => {
   if (speed >= 60) return "text-red-600 font-extrabold";
   if (speed >= 40) return "text-orange-500 font-bold";
-  if (speed >= 20) return "text-blue-500 font-bold";
+  if (speed >= 20) return "text-blue-600 font-bold";
   return "text-slate-600 font-medium";
 };
 
@@ -44,27 +44,31 @@ const getConfidenceColor = (percent) => {
   return "bg-red-100 text-red-800 border-red-200";
 };
 
+// Config nur noch für Text und Icon, BG entfernt
 const getWeatherConfig = (code, isDay = 1) => {
   const isNight = isDay === 0;
-  if (code === 0) return isNight ? { text: 'Klar', bg: 'from-slate-900 to-indigo-950', icon: Moon } : { text: 'Klar', bg: 'from-blue-400 to-blue-300', icon: Sun };
-  if (code === 1) return isNight ? { text: 'Leicht bewölkt', bg: 'from-slate-900 to-indigo-900', icon: Moon } : { text: 'Leicht bewölkt', bg: 'from-blue-400 to-blue-300', icon: Sun };
-  if (code === 2) return isNight ? { text: 'Bewölkt', bg: 'from-slate-800 to-slate-900', icon: Cloud } : { text: 'Bewölkt', bg: 'from-blue-300 to-gray-300', icon: Cloud };
+  if (code === 0) return isNight ? { text: 'Klar', icon: Moon } : { text: 'Klar', icon: Sun };
+  if (code === 1) return isNight ? { text: 'Leicht bewölkt', icon: Moon } : { text: 'Leicht bewölkt', icon: Sun };
+  if (code === 2) return { text: 'Bewölkt', icon: Cloud };
   
-  const baseBg = isNight ? 'from-gray-900 to-slate-800' : 'from-gray-400 to-gray-200';
-  if (code === 3) return { text: 'Bedeckt', bg: baseBg, icon: Cloud };
-  if ([45, 48].includes(code)) return { text: 'Nebel', bg: 'from-gray-400 to-slate-500', icon: Cloud };
-  if ([51, 53, 55].includes(code)) return { text: 'Niesel', bg: 'from-slate-700 to-slate-500', icon: CloudRain };
-  if ([61, 63].includes(code)) return { text: 'Regen', bg: 'from-slate-700 to-slate-500', icon: CloudRain };
-  if ([80, 81].includes(code)) return { text: 'Schauer', bg: 'from-slate-700 to-slate-500', icon: CloudRain };
-  if ([65, 82].includes(code)) return { text: 'Starkregen', bg: 'from-slate-800 to-slate-600', icon: CloudRain };
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return { text: 'Schnee', bg: 'from-blue-100 to-white', icon: Snowflake };
-  if ([95, 96, 99].includes(code)) return { text: 'Gewitter', bg: 'from-indigo-900 to-purple-800', icon: CloudLightning };
-  return { text: 'Unbekannt', bg: 'from-gray-400 to-gray-300', icon: Info };
+  if (code === 3) return { text: 'Bedeckt', icon: Cloud };
+  if ([45, 48].includes(code)) return { text: 'Nebel', icon: Cloud };
+  if ([51, 53, 55].includes(code)) return { text: 'Niesel', icon: CloudRain };
+  if ([61, 63].includes(code)) return { text: 'Regen', icon: CloudRain };
+  if ([80, 81].includes(code)) return { text: 'Schauer', icon: CloudRain };
+  if ([65, 82].includes(code)) return { text: 'Starkregen', icon: CloudRain };
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return { text: 'Schnee', icon: Snowflake };
+  if ([95, 96, 99].includes(code)) return { text: 'Gewitter', icon: CloudLightning };
+  return { text: 'Unbekannt', icon: Info };
 };
 
 // --- ANIMATION COMPONENT ---
 const WeatherAnimation = ({ type, isDay }) => {
   const isNight = isDay === 0;
+  // White elements for better contrast on blue background
+  const cloudColor = "white"; 
+  const cloudOpacity = 0.9;
+
   if (isNight && (type === 'sunny' || type === 'clear-night')) {
     return (
       <svg viewBox="0 0 100 100" className="w-40 h-40">
@@ -89,10 +93,10 @@ const WeatherAnimation = ({ type, isDay }) => {
   }
   return (
       <svg viewBox="0 0 100 100" className="w-40 h-40">
-        <path d="M25,60 Q35,45 50,55 T75,60 T90,65 T85,80 T25,80 Z" fill="white" fillOpacity="0.9" className="animate-float" />
-        <path d="M10,70 Q20,55 35,65 T60,70 T75,75 T70,90 T10,90 Z" fill="#e5e7eb" fillOpacity="0.8" className="animate-float-side" style={{animationDelay: '1s'}} />
+        <path d="M25,60 Q35,45 50,55 T75,60 T90,65 T85,80 T25,80 Z" fill={cloudColor} fillOpacity={cloudOpacity} className="animate-float" />
+        <path d="M10,70 Q20,55 35,65 T60,70 T75,75 T70,90 T10,90 Z" fill={cloudColor} fillOpacity="0.7" className="animate-float-side" style={{animationDelay: '1s'}} />
         {(type === 'rainy' || type === 'heavy-rain') && (
-           <g fill="#60a5fa"><circle cx="35" cy="75" r="3" className="animate-rain-1" /><circle cx="65" cy="75" r="3" className="animate-rain-2" /></g>
+           <g fill="#93c5fd"><circle cx="35" cy="75" r="3" className="animate-rain-1" /><circle cx="65" cy="75" r="3" className="animate-rain-2" /></g>
         )}
       </svg>
   );
@@ -141,8 +145,6 @@ export default function WeatherApp() {
       const { lat, lon } = currentLoc;
       const modelsShort = "icon_d2,gfs_seamless,arome_seamless";
       const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day&models=${modelsShort}&timezone=Europe%2FBerlin&forecast_days=2`;
-      
-      // HIER WURDE AROME HINZUGEFÜGT
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless";
       const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max&models=${modelsLong}&timezone=Europe%2FBerlin&forecast_days=14`;
 
@@ -208,7 +210,6 @@ export default function WeatherApp() {
       const date = new Date(t);
       const maxIcon = d.temperature_2m_max_icon_seamless[i];
       const maxGfs = d.temperature_2m_max_gfs_seamless[i];
-      // AROME Max Temperatur holen (falls vorhanden)
       const maxArome = d.temperature_2m_max_arome_seamless ? d.temperature_2m_max_arome_seamless[i] : null;
 
       const max = (maxIcon + maxGfs) / 2;
@@ -238,7 +239,7 @@ export default function WeatherApp() {
         min: parseFloat(min.toFixed(1)),
         max_icon: maxIcon,
         max_gfs: maxGfs,
-        max_arome: maxArome, // AROME für Chart
+        max_arome: maxArome,
         rain: rain.toFixed(1),
         snow: snow.toFixed(1),
         wind: Math.round(wind),
@@ -261,9 +262,15 @@ export default function WeatherApp() {
   const weatherConf = getWeatherConfig(current.code || 0, current.isDay);
   const isNight = current.isDay === 0;
   
-  const bgGradient = isSnowing ? 'from-slate-200 to-white' : weatherConf.bg;
-  const textColor = isNight ? 'text-white' : (weatherConf.bg.includes('blue') || weatherConf.bg.includes('white') ? 'text-slate-900' : 'text-white');
-  const cardBg = isNight ? 'bg-slate-800/40 border-slate-700/50 text-white' : 'bg-white/70 border-white/40 text-slate-900';
+  // --- STATISCHES HINTERGRUND-DESIGN ---
+  // Statischer Verlauf basierend auf Tag/Nacht, NICHT Wetter
+  const bgGradient = isNight ? 'from-slate-900 to-slate-800' : 'from-blue-500 to-sky-400';
+  
+  // Farben passend zum statischen Hintergrund
+  const textColor = 'text-white'; // Immer weißer Text auf dem farbigen Hintergrund
+  // Karten: Tagsüber Weiß/Glas, Nachts Dunkel/Glas
+  const cardBg = isNight ? 'bg-slate-800/60 border-slate-700/50 text-white' : 'bg-white/80 border-white/40 text-slate-900';
+  
   const windColorClass = getWindColorClass(current.wind || 0);
 
   if (loading) return <div className="min-h-screen bg-slate-100 flex items-center justify-center"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
@@ -294,7 +301,7 @@ export default function WeatherApp() {
         {/* HERO */}
         <div className="relative h-64 flex items-center justify-center">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-150 transform">
-              <WeatherAnimation type={isSnowing ? 'snowy' : (isNight && (weatherConf.bg.includes('sunny') || current.code <= 2) ? 'clear-night' : weatherConf.bg.includes('rain') ? 'rainy' : 'sunny')} isDay={current.isDay} />
+              <WeatherAnimation type={isSnowing ? 'snowy' : (isNight && (current.code <= 2) ? 'clear-night' : current.code >= 51 ? 'rainy' : (current.code > 2 ? 'cloudy' : 'sunny'))} isDay={current.isDay} />
             </div>
             <div className={`relative z-10 text-center mt-24 ${textColor}`}>
               <div className="text-8xl font-thin tracking-tighter drop-shadow-sm">{Math.round(current.temp)}°</div>
@@ -429,7 +436,6 @@ export default function WeatherApp() {
                           <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} />
                           <Line type="monotone" dataKey="max_icon" stroke="#93c5fd" strokeWidth={3} dot={{r:3}} name="ICON Max" />
                           <Line type="monotone" dataKey="max_gfs" stroke="#d8b4fe" strokeWidth={3} dot={{r:3}} name="GFS Max" />
-                          {/* AROME HINZUGEFÜGT */}
                           <Line type="monotone" dataKey="max_arome" stroke="#86efac" strokeWidth={3} dot={{r:3}} name="AROME Max" connectNulls={false} />
                         </LineChart>
                       )}
