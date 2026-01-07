@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database } from 'lucide-react';
 
 // --- STYLE INJECTION ---
 const styles = `
@@ -30,21 +30,7 @@ const styles = `
 // --- CONFIG ---
 const DAUBENRATH_LOC = { name: "Jülich Daubenrath", lat: 50.938, lon: 6.388, isHome: true };
 
-// --- HELPER: Moon Phase Calculation ---
-const getMoonPhase = (date) => {
-  const d = new Date(date);
-  const newMoon = new Date(2000, 0, 6, 18, 14).getTime();
-  const phaseSeconds = 2551443; // 29.53059 days
-  let sec = (d.getTime() - newMoon) / 1000;
-  let currentSec = sec % phaseSeconds;
-  if (currentSec < 0) currentSec += phaseSeconds;
-  // 0..1
-  const frac = currentSec / phaseSeconds;
-  // 0..7
-  return Math.round(frac * 8) % 8;
-};
-
-// --- HELPER: Colors ---
+// --- HELPERS ---
 const getWindColorClass = (speed) => {
   if (speed >= 60) return "text-red-600 font-extrabold";
   if (speed >= 40) return "text-orange-500 font-bold";
@@ -58,11 +44,38 @@ const getConfidenceColor = (percent) => {
   return "bg-red-100 text-red-800 border-red-200";
 };
 
+// Berechnet die wahrscheinliche Laufzeit des Modells basierend auf UTC und Rechenzeit-Verzögerung
+const getModelRunTime = (intervalHours, processingDelayHours) => {
+  const now = new Date();
+  // Aktuelle UTC Zeit in Stunden
+  const currentUtcHour = now.getUTCHours();
+  
+  // Wir ziehen die Rechenzeit ab, um zu sehen, welcher Lauf schon "fertig" sein müsste
+  // Beispiel: Es ist 14:00 UTC. GFS braucht 4h. 14 - 4 = 10.
+  // Das letzte Intervall vor 10 ist 06:00 UTC. Also ist der 06z Lauf da.
+  let effectiveHour = currentUtcHour - processingDelayHours;
+  if (effectiveHour < 0) effectiveHour += 24;
+
+  // Abrunden auf das nächste Intervall (z.B. alle 6 Stunden)
+  const runHourUtc = Math.floor(effectiveHour / intervalHours) * intervalHours;
+
+  // Datum erstellen für diesen Lauf (heute oder gestern)
+  const runDate = new Date();
+  if (currentUtcHour - processingDelayHours < 0) {
+      runDate.setDate(runDate.getDate() - 1); // Gestern
+  }
+  runDate.setUTCHours(runHourUtc, 0, 0, 0);
+
+  // In lokale Zeit umwandeln für die Anzeige
+  return runDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + " Lauf";
+};
+
 const getWeatherConfig = (code, isDay = 1) => {
   const isNight = isDay === 0;
   if (code === 0) return isNight ? { text: 'Klar', icon: Moon } : { text: 'Klar', icon: Sun };
   if (code === 1) return isNight ? { text: 'Leicht bewölkt', icon: Moon } : { text: 'Leicht bewölkt', icon: Sun };
   if (code === 2) return { text: 'Bewölkt', icon: Cloud };
+  
   if (code === 3) return { text: 'Bedeckt', icon: Cloud };
   if ([45, 48].includes(code)) return { text: 'Nebel', icon: Cloud };
   if ([51, 53, 55].includes(code)) return { text: 'Niesel', icon: CloudRain };
@@ -80,20 +93,28 @@ const WeatherAnimation = ({ type, isDay, date }) => {
   const cloudColor = "white"; 
   const cloudOpacity = 0.9;
   
-  // Calculate moon phase if date provided
+  // Moon Phase Calc
+  const getMoonPhase = (d) => {
+      const dateObj = new Date(d);
+      const newMoon = new Date(2000, 0, 6, 18, 14).getTime();
+      const phaseSeconds = 2551443; 
+      let sec = (dateObj.getTime() - newMoon) / 1000;
+      let currentSec = sec % phaseSeconds;
+      if (currentSec < 0) currentSec += phaseSeconds;
+      return Math.round((currentSec / phaseSeconds) * 8) % 8;
+  };
   const phase = useMemo(() => date ? getMoonPhase(date) : 0, [date]);
 
-  // --- MOON PATHS (Center 50,40, Radius ~18) ---
   const getMoonPath = (p) => {
     switch(p) {
       case 0: return <circle cx="50" cy="40" r="16" fill="none" stroke="#fef08a" strokeWidth="1" opacity="0.3" />;
-      case 1: return <path d="M50,24 A16,16 0 1,1 50,56 A12,16 0 0,0 50,24 Z" fill="#fef08a" />; // Right Crescent
-      case 2: return <path d="M50,24 A16,16 0 0,1 50,56 L50,24 Z" fill="#fef08a" />; // Right Half
-      case 3: return <path d="M50,24 A16,16 0 1,1 50,56 A12,16 0 0,1 50,24 Z" fill="#fef08a" />; // Right Gibbous
-      case 4: return <circle cx="50" cy="40" r="16" fill="#fef08a" />; // Full
-      case 5: return <path d="M50,24 A16,16 0 1,0 50,56 A12,16 0 0,0 50,24 Z" fill="#fef08a" />; // Left Gibbous
-      case 6: return <path d="M50,24 A16,16 0 0,0 50,56 L50,24 Z" fill="#fef08a" />; // Left Half
-      case 7: return <path d="M50,24 A16,16 0 1,0 50,56 A12,16 0 0,1 50,24 Z" fill="#fef08a" />; // Left Crescent
+      case 1: return <path d="M50,24 A16,16 0 1,1 50,56 A12,16 0 0,0 50,24 Z" fill="#fef08a" />; 
+      case 2: return <path d="M50,24 A16,16 0 0,1 50,56 L50,24 Z" fill="#fef08a" />; 
+      case 3: return <path d="M50,24 A16,16 0 1,1 50,56 A12,16 0 0,1 50,24 Z" fill="#fef08a" />; 
+      case 4: return <circle cx="50" cy="40" r="16" fill="#fef08a" />; 
+      case 5: return <path d="M50,24 A16,16 0 1,0 50,56 A12,16 0 0,0 50,24 Z" fill="#fef08a" />; 
+      case 6: return <path d="M50,24 A16,16 0 0,0 50,56 L50,24 Z" fill="#fef08a" />; 
+      case 7: return <path d="M50,24 A16,16 0 1,0 50,56 A12,16 0 0,1 50,24 Z" fill="#fef08a" />; 
       default: return <circle cx="50" cy="40" r="16" fill="#fef08a" />;
     }
   };
@@ -110,17 +131,6 @@ const WeatherAnimation = ({ type, isDay, date }) => {
       </svg>
     );
   }
-  
-  if (isNight && (type === 'partly-cloudy-night' || type === 'partly-cloudy')) {
-    return (
-      <svg viewBox="0 0 100 100" className="w-40 h-40">
-         <g transform="translate(-10, -5) scale(0.8)">{getMoonPath(phase)}</g>
-         <path d="M20,60 Q30,45 50,55 T80,60 T95,70 T90,90 T20,90 Z" fill="#64748b" fillOpacity="0.8" className="animate-float-side" />
-      </svg>
-    );
-  }
-
-  // --- DAY ANIMATIONS ---
   if (!isNight && type === 'sunny') {
     return (
       <svg viewBox="0 0 100 100" className="w-40 h-40">
@@ -156,6 +166,9 @@ export default function WeatherApp() {
   const [chartView, setChartView] = useState('hourly');
   const [lastUpdated, setLastUpdated] = useState(null);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  // Model Run Times (Calculated)
+  const [modelRuns, setModelRuns] = useState({ icon: '', gfs: '', arome: '' });
 
   useEffect(() => {
     const handler = (e) => { e.preventDefault(); setDeferredPrompt(e); };
@@ -195,6 +208,14 @@ export default function WeatherApp() {
       setShortTermData(await resShort.json());
       setLongTermData(await resLong.json());
       setLastUpdated(new Date());
+      
+      // Berechne Modellzeiten (Intervall in h, Delay in h)
+      setModelRuns({
+          icon: getModelRunTime(3, 2.5),  // ICON-D2: Alle 3h, ca 2.5h Delay
+          gfs: getModelRunTime(6, 4),     // GFS: Alle 6h, ca 4h Delay
+          arome: getModelRunTime(3, 2)    // AROME: Alle 3h, ca 2h Delay
+      });
+
     } catch (err) { setError(err.message); } finally { setLoading(false); }
   };
 
@@ -568,9 +589,14 @@ export default function WeatherApp() {
              </div>
           )}
 
-          <div className="mt-8 text-sm text-center opacity-50 px-6 font-medium">
-             <p className="flex items-center justify-center gap-2 mb-2"><Info size={14} /> Datenbasis: Open-Meteo Seamless</p>
-             <p>ICON-D2 (Update ~3h) • GFS (Update ~6h) • AROME (Update ~6h)</p>
+          {/* DYNAMISCHE FUSSZEILE MIT MODELL-LAUFZEITEN */}
+          <div className="mt-8 text-xs text-center opacity-60 px-6 font-medium space-y-2">
+             <p className="flex items-center justify-center gap-2 mb-2"><Database size={14} /> Datenbasis & Laufzeiten (Geschätzt)</p>
+             <div className="flex flex-wrap justify-center gap-4">
+               <span className="bg-blue-500/10 px-2 py-1 rounded text-blue-500 border border-blue-500/20">ICON-D2: {modelRuns.icon || '--:--'}</span>
+               <span className="bg-purple-500/10 px-2 py-1 rounded text-purple-500 border border-purple-500/20">GFS: {modelRuns.gfs || '--:--'}</span>
+               <span className="bg-green-500/10 px-2 py-1 rounded text-green-500 border border-green-500/20">AROME: {modelRuns.arome || '--:--'}</span>
+             </div>
           </div>
 
         </div>
