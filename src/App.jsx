@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { RefreshCw, Info, CalendarDays, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, AlertTriangle, BarChart2, List, Database, Map, Sparkles, ThermometerSun, Droplets, Waves, Gauge } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map, Sparkles, Thermometer } from 'lucide-react';
 
 // --- STYLE INJECTION ---
 const styles = `
@@ -9,7 +9,7 @@ const styles = `
   @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   @keyframes rain-drop { 0% { transform: translateY(-10px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(20px); opacity: 0; } }
   @keyframes snow-fall { 0% { transform: translateY(-10px) rotate(0deg); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(30px) rotate(180deg); opacity: 0; } }
-  @keyframes ray-pulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
+  @keyframes ray-pulse { 0%, 100% { opacity: 0.6; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
   @keyframes heat-pulse { 0%, 100% { opacity: 0.6; transform: scale(1); fill: #f59e0b; } 50% { opacity: 0.9; transform: scale(1.15); fill: #ef4444; } }
   @keyframes twinkle { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
   @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
@@ -126,7 +126,6 @@ const generateAIReport = (type, data) => {
       if (d.temp < minTemp) minTemp = d.temp;
     });
 
-    // WARNINGS
     if (maxGust >= 90) warning = `ORKANARTIGE BÖEN: Spitzen bis ${Math.round(maxGust)} km/h möglich!`;
     else if (maxGust >= 70) warning = `STURMWARNUNG: Schwere Sturmböen bis ${Math.round(maxGust)} km/h erwartet.`;
     else if (rainSum >= 30) warning = `STARKREGEN: Warnung vor Überflutungen (${rainSum.toFixed(0)} mm erwartet).`;
@@ -142,13 +141,8 @@ const generateAIReport = (type, data) => {
     else mainPart += "Es bleibt voraussichtlich trocken. ";
 
     if (windyTime && !warning) mainPart += `Gegen ${windyTime} Uhr frischen die Böen auf (${Math.round(maxGust)} km/h). `;
-
-    // UV Logic
-    if (maxUV >= 6) {
-        mainPart += `Achtung: Die Sonnenstrahlung ist intensiv (UV ${maxUV.toFixed(0)} um ${maxUVTime} Uhr). Sonnenschutz empfohlen. `;
-    } else if (maxUV >= 3) {
-        mainPart += `Der UV-Index ist mäßig (Max. ${maxUV.toFixed(0)}). `;
-    }
+    if (maxUV >= 6) mainPart += `Achtung: Die Sonnenstrahlung ist intensiv (UV ${maxUV.toFixed(0)} um ${maxUVTime} Uhr). Sonnenschutz empfohlen. `;
+    else if (maxUV >= 3) mainPart += `Der UV-Index ist mäßig (Max. ${maxUV.toFixed(0)}). `;
 
     text = `${greeting}! ${mainPart}`;
   }
@@ -181,102 +175,135 @@ const generateAIReport = (type, data) => {
   return { text, warning };
 };
 
-// --- ANIMATION COMPONENT ---
-const WeatherAnimation = ({ type, isDay, date, temp }) => {
+// --- LANDSCAPE WEATHER ANIMATION COMPONENT ---
+const WeatherLandscape = ({ code, isDay, date, temp }) => {
   const isNight = isDay === 0;
-  const cloudColor = "white"; 
-  const cloudOpacity = 0.9;
-  const isHot = temp >= 30;
+  const isSnow = [71, 73, 75, 77, 85, 86].includes(code);
+  const isRain = [51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99].includes(code);
+  const isStorm = [95, 96, 99].includes(code);
+  const isCloudy = [2, 3, 45, 48].includes(code) || isRain || isSnow;
+  const isOvercast = [3, 45, 48].includes(code) || (isRain && code > 60) || isSnow; // Darker sky
+  
+  const hour = date ? new Date(date).getHours() + new Date(date).getMinutes() / 60 : 12;
+  
+  let celestialX = -50;
+  let celestialY = 200; 
+  let celestialType = 'none';
+
+  if (hour >= 6 && hour <= 20) {
+     celestialType = 'sun';
+     const percentage = (hour - 6) / 14; 
+     celestialX = 20 + percentage * 200;
+     celestialY = 20 + 0.008 * Math.pow(celestialX - 120, 2);
+  } else {
+     celestialType = 'moon';
+     let nightHour = hour;
+     if (nightHour < 6) nightHour += 24; 
+     const percentage = (nightHour - 20) / 10; 
+     celestialX = 20 + percentage * 200;
+     celestialY = 20 + 0.008 * Math.pow(celestialX - 120, 2);
+  }
 
   const getMoonPhase = (d) => {
-      const dateObj = new Date(d);
-      const newMoon = new Date(2000, 0, 6, 18, 14).getTime();
-      const phaseSeconds = 2551443; 
-      let sec = (dateObj.getTime() - newMoon) / 1000;
-      let currentSec = sec % phaseSeconds;
-      if (currentSec < 0) currentSec += phaseSeconds;
-      return Math.round((currentSec / phaseSeconds) * 8) % 8;
+    const dateObj = new Date(d);
+    const newMoon = new Date(2000, 0, 6, 18, 14).getTime();
+    const phaseSeconds = 2551443;
+    let sec = (dateObj.getTime() - newMoon) / 1000;
+    let currentSec = sec % phaseSeconds;
+    if (currentSec < 0) currentSec += phaseSeconds;
+    return Math.round((currentSec / phaseSeconds) * 8) % 8;
   };
-  const phase = useMemo(() => date ? getMoonPhase(date) : 0, [date]);
-
-  const getMoonPath = (p) => {
-    switch(p) {
-      case 0: return <circle cx="50" cy="40" r="16" fill="none" stroke="#fef08a" strokeWidth="1" opacity="0.3" />;
-      case 1: return <path d="M50,24 A16,16 0 1,1 50,56 A12,16 0 0,0 50,24 Z" fill="#fef08a" />; 
-      case 2: return <path d="M50,24 A16,16 0 0,1 50,56 L50,24 Z" fill="#fef08a" />; 
-      case 3: return <path d="M50,24 A16,16 0 1,1 50,56 A12,16 0 0,1 50,24 Z" fill="#fef08a" />; 
-      case 4: return <circle cx="50" cy="40" r="16" fill="#fef08a" />; 
-      case 5: return <path d="M50,24 A16,16 0 1,0 50,56 A12,16 0 0,0 50,24 Z" fill="#fef08a" />; 
-      case 6: return <path d="M50,24 A16,16 0 0,0 50,56 L50,24 Z" fill="#fef08a" />; 
-      case 7: return <path d="M50,24 A16,16 0 1,0 50,56 A12,16 0 0,1 50,24 Z" fill="#fef08a" />; 
-      default: return <circle cx="50" cy="40" r="16" fill="#fef08a" />;
-    }
-  };
-
-  if (isNight && (type === 'sunny' || type === 'clear-night')) {
-    return (
-      <svg viewBox="0 0 100 100" className="w-full h-full">
-         <circle cx="20" cy="20" r="1.5" fill="white" className="animate-twinkle-1" />
-         <circle cx="80" cy="30" r="1" fill="white" className="animate-twinkle-2" />
-         <circle cx="50" cy="10" r="1.5" fill="white" className="animate-twinkle-3" />
-         <g className="animate-float" filter="drop-shadow(0 0 12px rgba(254, 240, 138, 0.4))">
-            {getMoonPath(phase)}
-         </g>
-      </svg>
-    );
-  }
+  const moonPhase = date ? getMoonPhase(date) : 0;
   
-  if (!isNight && type === 'sunny') {
-    if (isHot) {
-      return (
-        <svg viewBox="0 0 100 100" className="w-full h-full">
-          <circle cx="50" cy="50" r="22" fill="#ef4444" className="animate-heat-ray" />
-          <g className="animate-spin-slow origin-center">
-            {[...Array(12)].map((_, i) => (
-              <line key={i} x1="50" y1="18" x2="50" y2="5" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" transform={`rotate(${i * 30} 50 50)`} />
+  const groundColor = isSnow ? "#e2e8f0" : (isNight ? "#1e293b" : "#4ade80"); 
+  const mountainColor = isSnow ? "#f1f5f9" : (isNight ? "#334155" : "#64748b"); 
+  const treeTrunk = isNight ? "#3f2e22" : "#78350f";
+  const treeLeaf = isSnow ? "#f8fafc" : (isNight ? "#14532d" : "#16a34a");
+
+  return (
+    <svg viewBox="0 0 240 160" className="w-full h-full overflow-visible">
+      {celestialType === 'sun' && (
+        <g transform={`translate(${celestialX}, ${celestialY})`}>
+          <circle r="14" fill="#fbbf24" className="anim-sun-pulse" />
+          <g className="animate-spin-slow">
+            {[...Array(8)].map((_, i) => (
+              <line key={i} x1="0" y1="-20" x2="0" y2="-16" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" transform={`rotate(${i * 45})`} />
             ))}
           </g>
-        </svg>
-      );
-    }
-    return (
-      <svg viewBox="0 0 100 100" className="w-full h-full">
-        <circle cx="50" cy="50" r="20" fill="#fbbf24" className="animate-ray" />
-        <g className="animate-spin-slow origin-center">
-          {[...Array(8)].map((_, i) => (
-            <line key={i} x1="50" y1="20" x2="50" y2="10" stroke="#fbbf24" strokeWidth="4" strokeLinecap="round" transform={`rotate(${i * 45} 50 50)`} />
-          ))}
         </g>
-      </svg>
-    );
-  }
-  
-  return (
-      <svg viewBox="0 0 100 100" className="w-full h-full">
-        <path d="M25,60 Q35,45 50,55 T75,60 T90,65 T85,80 T25,80 Z" fill={cloudColor} fillOpacity={cloudOpacity} className="animate-float" />
-        <path d="M10,70 Q20,55 35,65 T60,70 T75,75 T70,90 T10,90 Z" fill={cloudColor} fillOpacity="0.7" className="animate-float-side" style={{animationDelay: '1s'}} />
-        
-        {(type === 'rainy' || type === 'heavy-rain') && (
-           <g fill="#93c5fd">
-             <circle cx="35" cy="75" r="3" className="animate-rain-1" />
-             <circle cx="50" cy="75" r="3" className="animate-rain-2" />
-             <circle cx="65" cy="75" r="3" className="animate-rain-3" />
-           </g>
-        )}
-        
-        {type === 'snowy' && (
-           <g fill="white">
-             <circle cx="35" cy="75" r="2" className="animate-snow-1" />
-             <circle cx="50" cy="75" r="3" className="animate-snow-2" />
-             <circle cx="65" cy="75" r="2" className="animate-snow-3" />
-           </g>
-        )}
-      </svg>
+      )}
+
+      {celestialType === 'moon' && (
+        <g transform={`translate(${celestialX}, ${celestialY})`}>
+           <circle r="12" fill="white" opacity="0.9" />
+           {moonPhase !== 4 && <circle r="12" fill="black" opacity="0.5" transform={`translate(${moonPhase < 4 ? -6 : 6}, 0)`} />}
+        </g>
+      )}
+      
+      {isNight && !isOvercast && (
+         <g>
+            <circle cx="20" cy="20" r="1" fill="white" className="anim-twinkle" style={{animationDelay: '0s'}} />
+            <circle cx="200" cy="30" r="1.5" fill="white" className="anim-twinkle" style={{animationDelay: '1s'}} />
+            <circle cx="150" cy="10" r="1" fill="white" className="anim-twinkle" style={{animationDelay: '2s'}} />
+            <circle cx="60" cy="40" r="1" fill="white" className="anim-twinkle" style={{animationDelay: '1.5s'}} />
+         </g>
+      )}
+
+      <path d="M-20 160 L80 60 L180 160 Z" fill={mountainColor} />
+      {isSnow && <path d="M80 60 L100 80 L60 80 Z" fill="white" />}
+
+      <path d="M-20 140 Q 120 120 260 140 V 170 H -20 Z" fill={groundColor} />
+
+      <g transform="translate(20, 130)">
+         <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+         <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+         <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+      </g>
+      <g transform="translate(190, 125) scale(0.8)">
+         <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+         <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+         <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+      </g>
+       <g transform="translate(160, 135) scale(0.6)">
+         <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+         <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+      </g>
+
+      {(isCloudy || isOvercast) && (
+        <g className="anim-clouds">
+           <path d="M40 50 Q 55 35 70 50 T 100 50 T 120 60 H 40 Z" fill="white" fillOpacity={isOvercast ? 0.7 : 0.5} transform="translate(0,0)" />
+           <path d="M140 40 Q 155 25 170 40 T 200 40 T 220 50 H 140 Z" fill="white" fillOpacity={isOvercast ? 0.7 : 0.5} transform="translate(20,10)" />
+           {isOvercast && <rect x="0" y="0" width="240" height="160" fill="black" opacity="0.1" />}
+        </g>
+      )}
+
+      {isRain && (
+         <g fill="#93c5fd" opacity="0.7">
+            {[...Array(15)].map((_, i) => (
+               <rect key={i} x={20 + i*15} y="40" width="1" height="6" className={`anim-rain-${i%3 === 0 ? 'fast' : i%3 === 1 ? 'med' : 'slow'}`} style={{animationDelay: `${i * 0.1}s`}} />
+            ))}
+         </g>
+      )}
+
+      {isSnow && (
+         <g fill="white" opacity="0.9">
+            {[...Array(20)].map((_, i) => (
+               <circle key={i} cx={10 + i*12} cy="40" r={i%2===0 ? 1.5 : 1} className="anim-snow" style={{animationDelay: `${i * 0.2}s`, transformOrigin: 'center'}} />
+            ))}
+         </g>
+      )}
+      
+      {isStorm && (
+         <path d="M100 30 L80 60 L95 60 L75 90" stroke="#fef08a" strokeWidth="2" fill="none" className="anim-lightning" />
+      )}
+
+    </svg>
   );
 };
 
 // --- AI REPORT BOX ---
 const AIReportBox = ({ report }) => {
+  if (!report) return null;
   const { text, warning } = report;
   if (!text && !warning) return null;
 
@@ -512,7 +539,7 @@ export default function WeatherApp() {
                <span className="text-7xl font-bold tracking-tighter leading-none">{Math.round(current.temp)}°</span>
                {/* Moved Feels Like Here */}
                <div className="flex items-center gap-1.5 mt-2 opacity-90 font-medium text-sm">
-                  <ThermometerSun size={16} />
+                  <Thermometer size={16} />
                   <span>Gefühlt {current.appTemp}°</span>
                </div>
                <div className="flex items-center gap-2 mt-1 opacity-80 font-medium text-sm">
@@ -524,7 +551,7 @@ export default function WeatherApp() {
 
             {/* Center: Icon Animation */}
             <div className="w-32 h-32 -my-4 relative z-0 scale-125">
-               <WeatherAnimation type={isSnowing ? 'snowy' : (isNight && (current.code <= 2) ? 'clear-night' : current.code >= 51 ? 'rainy' : (current.code > 2 ? 'cloudy' : 'sunny'))} isDay={current.isDay} date={current.time} temp={current.temp} />
+               <WeatherLandscape code={current.code} isDay={current.isDay} date={current.time} temp={current.temp} />
             </div>
 
             {/* Right: Rich Details List */}
@@ -544,13 +571,13 @@ export default function WeatherApp() {
                <div className="flex items-center gap-3">
                   <div className="flex flex-col items-end">
                      <div className="flex items-center gap-1 opacity-90 text-sm font-bold">
-                        <Waves size={14} /> <span>{current.humidity}%</span>
+                        <Droplets size={14} /> <span>{current.humidity}%</span>
                      </div>
                      <span className="text-[9px] opacity-60 uppercase font-bold">Feuchte</span>
                   </div>
                   <div className="flex flex-col items-end">
                      <div className="flex items-center gap-1 opacity-90 text-sm font-bold">
-                        <Droplets size={14} /> <span>{current.dewPoint}°</span>
+                        <Thermometer size={14} /> <span>{current.dewPoint}°</span>
                      </div>
                      <span className="text-[9px] opacity-60 uppercase font-bold">Taupkt.</span>
                   </div>
