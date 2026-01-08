@@ -1,36 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp } from 'lucide-react';
 
-// --- HELPER FUNCTIONS & CONFIG ---
+// --- 1. KONSTANTEN & CONFIG (GANZ OBEN DEFINIERT) ---
 
 const DAUBENRATH_LOC = { name: "Jülich Daubenrath", lat: 50.938, lon: 6.388, isHome: true };
 
-// UPDATED ANIMATIONS
 const styles = `
   @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
   @keyframes float-side { 0%, 100% { transform: translateX(0px); } 50% { transform: translateX(10px); } }
   @keyframes float-clouds { 0% { transform: translateX(0px); } 50% { transform: translateX(15px); } 100% { transform: translateX(0px); } }
-  @keyframes float-clouds-fast { 0% { transform: translateX(0px); } 50% { transform: translateX(25px); } 100% { transform: translateX(0px); } }
   @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  
-  /* REGEN */
-  @keyframes rain-drop { 
-    0% { transform: translateY(0px); opacity: 0; } 
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { transform: translateY(130px); opacity: 0; } 
-  }
-  
-  /* SCHNEE */
-  @keyframes snow-fall { 
-    0% { transform: translateY(0px) rotate(0deg); opacity: 0; } 
-    10% { opacity: 1; }
-    90% { opacity: 0.8; }
-    100% { transform: translateY(130px) rotate(180deg); opacity: 0; } 
-  }
-  
-  @keyframes ray-pulse { 0%, 100% { opacity: 0.6; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
+  @keyframes rain-drop { 0% { transform: translateY(-10px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(130px); opacity: 0; } }
+  @keyframes snow-fall { 0% { transform: translateY(-10px) rotate(0deg); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(130px) rotate(180deg); opacity: 0; } }
+  @keyframes ray-pulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
   @keyframes heat-pulse { 0%, 100% { opacity: 0.6; transform: scale(1); fill: #f59e0b; } 50% { opacity: 0.9; transform: scale(1.15); fill: #ef4444; } }
   @keyframes twinkle { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
   @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
@@ -40,7 +23,6 @@ const styles = `
   .animate-float { animation: float 6s ease-in-out infinite; }
   .animate-float-side { animation: float-side 8s ease-in-out infinite; }
   .anim-clouds { animation: float-clouds 20s ease-in-out infinite; }
-  .anim-clouds-fast { animation: float-clouds-fast 15s ease-in-out infinite; }
   .animate-spin-slow { animation: spin-slow 12s linear infinite; }
   .animate-rain-1 { animation: rain-drop 0.8s infinite linear; animation-delay: 0.1s; }
   .animate-rain-2 { animation: rain-drop 0.9s infinite linear; animation-delay: 0.3s; }
@@ -58,7 +40,10 @@ const styles = `
   .anim-glow { animation: sunrise-glow 4s ease-in-out infinite; }
 `;
 
+// --- 2. HILFSFUNKTIONEN (VOR DER KOMPONENTE) ---
+
 const formatDateShort = (date) => {
+  if (!date) return "";
   try {
     return new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit' }).format(date);
   } catch (e) {
@@ -114,7 +99,6 @@ const getWeatherConfig = (code, isDay = 1) => {
   if (code === 0) return isNight ? { text: 'Klar', icon: Moon } : { text: 'Klar', icon: Sun };
   if (code === 1) return isNight ? { text: 'Leicht bewölkt', icon: Moon } : { text: 'Leicht bewölkt', icon: Sun };
   if (code === 2) return { text: 'Bewölkt', icon: Cloud };
-  
   if (code === 3) return { text: 'Bedeckt', icon: Cloud };
   if ([45, 48].includes(code)) return { text: 'Nebel', icon: Cloud };
   if ([51, 53, 55].includes(code)) return { text: 'Niesel', icon: CloudRain };
@@ -126,13 +110,23 @@ const getWeatherConfig = (code, isDay = 1) => {
   return { text: 'Unbekannt', icon: Info };
 };
 
-// --- ADVANCED AI GENERATION LOGIC ---
+const getMoonPhase = (d) => {
+  if (!d) return 0;
+  const dateObj = new Date(d);
+  const newMoon = new Date(2000, 0, 6, 18, 14).getTime();
+  const phaseSeconds = 2551443;
+  let sec = (dateObj.getTime() - newMoon) / 1000;
+  let currentSec = sec % phaseSeconds;
+  if (currentSec < 0) currentSec += phaseSeconds;
+  return Math.round((currentSec / phaseSeconds) * 8) % 8;
+};
+
+// --- 3. KI LOGIK ---
 const generateAIReport = (type, data) => {
   if (!data || data.length === 0) return { text: "Analysiere Wetterdaten...", warning: null };
   let warning = null;
   let text = "";
 
-  // 1. TAGES-BERICHT
   if (type === 'daily') {
     const hour = new Date().getHours();
     const greeting = hour < 10 ? "Guten Morgen" : hour < 18 ? "Guten Tag" : "Guten Abend";
@@ -149,8 +143,13 @@ const generateAIReport = (type, data) => {
     
     let morningRain = 0;
     let afternoonRain = 0;
-    let morningWind = 0;
-    let afternoonWind = 0;
+    let eveningRain = 0;
+    let morningClouds = 0;
+    let afternoonClouds = 0;
+    let eveningClouds = 0;
+    let countMorning = 0;
+    let countAfternoon = 0;
+    let countEvening = 0;
 
     data.forEach(d => {
       const h = new Date(d.time).getHours();
@@ -158,6 +157,7 @@ const generateAIReport = (type, data) => {
       const s = parseFloat(d.snow || 0);
       const w = parseFloat(d.gust || 0);
       const uv = parseFloat(d.uvIndex || 0);
+      const code = d.code || 0;
       
       if ((p > 0.1 || s > 0.1) && !rainStart) rainStart = d.displayTime;
       if (w > 45 && !windyTime) windyTime = d.displayTime;
@@ -169,11 +169,24 @@ const generateAIReport = (type, data) => {
       if (d.temp > maxTemp) maxTemp = d.temp;
       if (d.temp < minTemp) minTemp = d.temp;
 
-      if (h >= 6 && h < 12) { morningRain += p; morningWind = Math.max(morningWind, w); }
-      else if (h >= 12 && h < 18) { afternoonRain += p; afternoonWind = Math.max(afternoonWind, w); }
+      const isCloudyCode = code > 2;
+
+      if (h >= 6 && h < 12) { 
+        morningRain += p; 
+        if(isCloudyCode) morningClouds++;
+        countMorning++;
+      } else if (h >= 12 && h < 18) { 
+        afternoonRain += p; 
+        if(isCloudyCode) afternoonClouds++;
+        countAfternoon++;
+      } else if (h >= 18) { 
+        eveningRain += p; 
+        if(isCloudyCode) eveningClouds++;
+        countEvening++;
+      }
     });
 
-    if (maxGust >= 90) warning = `ORKANARTIGE BÖEN: Spitzen bis ${Math.round(maxGust)} km/h möglich!`;
+    if (maxGust >= 90) warning = `ORKANARTIGE BÖEN: Spitzen bis ${Math.round(maxGust)} km/h möglich! Aufenthalt im Freien meiden.`;
     else if (maxGust >= 70) warning = `STURMWARNUNG: Schwere Sturmböen bis ${Math.round(maxGust)} km/h erwartet.`;
     else if (rainSum >= 30) warning = `STARKREGEN: Warnung vor Überflutungen (${rainSum.toFixed(0)} mm erwartet).`;
     else if (snowSum >= 5) warning = `SCHNEEFALL: Vorsicht Glätte! ${snowSum.toFixed(0)} cm Neuschnee.`;
@@ -182,157 +195,196 @@ const generateAIReport = (type, data) => {
     else if (minTemp < -8) warning = `STRENGER FROST: Temperaturen fallen unter -8°C.`;
     else if (rainSum > 0 && minTemp <= 0) warning = `GLATTEISGEFAHR: Gefrierender Regen möglich.`;
 
-    let mainPart = `Heute erreichen wir maximal ${Math.round(maxTemp)}°C. `;
-    if (snowSum > 0.5) mainPart += rainStart ? `Ab ${rainStart} Uhr ist mit Schneefall zu rechnen (${snowSum.toFixed(1)} cm). ` : `Es wird zeitweise schneien. `;
-    else if (rainSum > 0.5) mainPart += rainStart ? `Ab ${rainStart} Uhr zieht Nässe auf (${rainSum.toFixed(1)} mm). ` : `Es bleibt nicht ganz trocken (${rainSum.toFixed(1)} mm). `;
-    else mainPart += "Es bleibt voraussichtlich trocken. ";
+    let mainPart = `Heute erreichen wir maximal ${Math.round(maxTemp)}°C (Tiefstwert ${Math.round(minTemp)}°C). `;
+    
+    if (rainSum + snowSum < 0.2) {
+      if (countMorning > 0 && morningClouds === 0 && countAfternoon > 0 && afternoonClouds === 0) mainPart += "Ein strahlend sonniger Tag steht bevor. ";
+      else if (countMorning > 0 && morningClouds > 0 && countAfternoon > 0 && afternoonClouds === 0) mainPart += "Nach einem wolkigen Start klart es am Nachmittag auf. ";
+      else mainPart += "Es bleibt den gesamten Tag über trocken und freundlich, teils bewölkt. ";
+    } else {
+      if (morningRain > 0.5) mainPart += "Der Vormittag startet nass und ungemütlich. ";
+      else if (countMorning > 0 && morningClouds > (countMorning/2)) mainPart += "Der Vormittag verläuft meist bewölkt, aber weitgehend trocken. ";
+      
+      if (afternoonRain > 1.0) mainPart += `Am Nachmittag intensiviert sich der Regen (${afternoonRain.toFixed(1)} l/m²). `;
+      else if (afternoonRain > 0.1) mainPart += "Nachmittags sind vereinzelte Schauer möglich. ";
+      else if (morningRain > 0 && afternoonRain < 0.1) mainPart += "Zum Nachmittag hin klingen die Schauer ab und es lockert auf. ";
+      
+      if (countEvening > 0 && eveningRain > 0.5) mainPart += "Zum Abend hin zieht erneuter Regen auf. ";
 
-    if (windyTime && !warning) mainPart += `Gegen ${windyTime} Uhr frischen die Böen auf (${Math.round(maxGust)} km/h). `;
-    if (maxUV >= 6) mainPart += `Achtung: Die Sonnenstrahlung ist intensiv (UV ${maxUV.toFixed(0)} um ${maxUVTime} Uhr). Sonnenschutz empfohlen. `;
+      if (snowSum > 0) mainPart += `Vorsicht: Zeitweise geht der Regen in Schnee über (${snowSum.toFixed(1)} cm). `;
+    }
+
+    if (windyTime && !warning) {
+      mainPart += `Hinweis: Der Wind frischt ab ${windyTime} Uhr merklich auf (Böen ${Math.round(maxGust)} km/h). `;
+    }
+
+    if (maxUV >= 6) mainPart += `Denken Sie tagsüber an Sonnenschutz (UV ${maxUV.toFixed(0)}). `;
 
     text = `${greeting}! ${mainPart}`;
   }
   
-  // 2. MODEL CHECK (HOURLY)
   if (type === 'model-hourly') {
-     let maxDiff = 0;
+     let totalDiff = 0;
      let driftHour = null;
      data.forEach(d => {
        if (d.temp_icon !== null && d.temp_gfs !== null) {
          const diff = Math.abs(d.temp_icon - d.temp_gfs);
-         if (diff > maxDiff) maxDiff = diff;
+         totalDiff += diff;
          if (diff > 2.5 && !driftHour) driftHour = d.displayTime;
        }
      });
+     const avgDiff = totalDiff / data.length;
 
-     if (maxDiff < 1.5) text = "Hohe Übereinstimmung: Die Modelle (ICON, GFS, AROME) sind sich sehr einig. Die Prognose ist sicher.";
-     else if (maxDiff < 3.0) text = `Gute Übereinstimmung, aber leichte Nuancen. Die Modelle weichen in den Spitzen um bis zu ${maxDiff.toFixed(1)}°C ab.`;
+     if (avgDiff < 1.5) text = "Hohe Übereinstimmung: Die Modelle (ICON, GFS, AROME) sind sich sehr einig. Die Prognose ist sicher.";
+     else if (avgDiff < 3.0) text = `Gute Übereinstimmung, aber leichte Nuancen. Die Modelle weichen in den Spitzen um bis zu ${(avgDiff + 1).toFixed(1)}°C ab, folgen aber demselben Trend.`;
      else {
        text = `Signifikante Modellunterschiede! `;
        if (driftHour) text += `Ab ca. ${driftHour} Uhr sind sich die Wettercomputer uneinig. `;
-       text += `Die Temperaturprognosen klaffen um bis zu ${maxDiff.toFixed(1)}°C auseinander (Spaghetti-Szenario). Dies deutet auf eine komplexe Wetterlage hin.`;
+       text += `Die Temperaturprognosen klaffen auseinander. Dies deutet auf eine komplexe Wetterlage hin.`;
        warning = "UNSICHERE LAGE";
      }
   }
 
-  // 3. MODEL CHECK (DAILY / 14 DAYS)
   if (type === 'model-daily') {
     const totalDiff = data.reduce((acc, d) => acc + Math.abs(d.max_icon - d.max_gfs), 0) / data.length;
-    text = `Die Modelle weichen im Schnitt um ${totalDiff.toFixed(1)}°C voneinander ab.`;
+    const driftDay = data.find(d => Math.abs(d.max_icon - d.max_gfs) > 4);
+    
+    const gfsTotal = data.reduce((acc, d) => acc + d.max_gfs, 0);
+    const iconTotal = data.reduce((acc, d) => acc + d.max_icon, 0);
+    const warmerModel = gfsTotal > iconTotal ? "GFS (US-Modell)" : "ICON (EU-Modell)";
+    const diffVal = Math.abs(gfsTotal - iconTotal) / data.length;
+
+    text = `Die Modelle weichen im Schnitt um ${totalDiff.toFixed(1)}°C voneinander ab. `;
+    
+    if (driftDay) {
+        text += `Bis zum ${driftDay.dateShort} (${driftDay.dayName}) rechnen die Modelle ähnlich. Danach driften sie massiv auseinander (>4°C Differenz). `;
+    } else {
+        text += `Über den gesamten 14-Tage-Verlauf bleiben die Modelle relativ synchron. `;
+    }
+
+    if (diffVal > 1.0) {
+        text += `Systematischer Unterschied: Das ${warmerModel} rechnet diese Periode konsequent wärmer.`;
+    }
   }
 
-  // 4. LONG TERM TREND
   if (type === 'longterm') {
+    if (data.length < 2) return { text: "Daten werden geladen...", warning: null };
+    
     const warmDay = data.reduce((prev, current) => (prev.max > current.max) ? prev : current);
     const coldDay = data.reduce((prev, current) => (prev.min < current.min) ? prev : current);
     
     const midPoint = Math.ceil(data.length / 2);
-    const avgFirst = data.slice(0, midPoint).reduce((sum, d) => sum + d.max, 0) / midPoint;
-    const avgSecond = data.slice(midPoint).reduce((sum, d) => sum + d.max, 0) / (data.length - midPoint);
+    const firstWeek = data.slice(0, midPoint);
+    const secondWeek = data.slice(midPoint);
     
-    let trendText = "";
-    if (avgSecond > avgFirst + 3) trendText = "Nach einem kühleren Start steigen die Temperaturen in der zweiten Woche deutlich an.";
-    else if (avgSecond < avgFirst - 3) trendText = "Zur zweiten Woche hin kühlt es spürbar ab.";
-    else trendText = `Das Temperaturniveau bleibt stabil.`;
+    const avg1 = firstWeek.length > 0 ? firstWeek.reduce((sum, d) => sum + d.max, 0) / firstWeek.length : 0;
+    const avg2 = secondWeek.length > 0 ? secondWeek.reduce((sum, d) => sum + d.max, 0) / secondWeek.length : 0;
+    
+    const rainDaysTotal = data.filter(d => parseFloat(d.rain) > 0.5 || parseFloat(d.snow) > 0.1).length;
+    const totalPrecip = data.reduce((sum, d) => sum + parseFloat(d.rain) + parseFloat(d.snow), 0);
 
-    text = `Analyse: ${trendText} Spitzenwert am ${warmDay.dayName} (${Math.round(warmDay.max)}°C).`;
+    let trendText = "";
+    if (avg2 > avg1 + 2) trendText = "Stetiger Aufwärtstrend: Es wird kontinuierlich wärmer über die nächsten zwei Wochen.";
+    else if (avg2 < avg1 - 2) trendText = "Der Trend zeigt klar nach unten: Wir steuern auf eine deutlich kühlere Phase zu.";
+    else trendText = `Das Temperaturniveau bleibt stabil bei durchschnittlich ${Math.round((avg1 + avg2)/2)}°C.`;
+
+    let precipText = "";
+    if (rainDaysTotal === 0) precipText = "Außergewöhnlich: Es ist für 14 Tage kein nennenswerter Niederschlag in Sicht.";
+    else if (totalPrecip > 40) precipText = `Eine nasse Periode steht bevor: Mit insgesamt ca. ${Math.round(totalPrecip)} l/m² und ${rainDaysTotal} Regentagen wird es ungemütlich.`;
+    else if (rainDaysTotal > 8) precipText = "Es bleibt unbeständig mit häufigen, aber meist leichten Schauern.";
+    else precipText = `Gelegentlicher Niederschlag ist an etwa ${rainDaysTotal} Tagen möglich (Gesamtmenge ca. ${Math.round(totalPrecip)} l/m²).`;
+
+    let extremeText = `Das Temperatur-Maximum wird am ${warmDay.dayName} (${warmDay.dateShort}) mit ${Math.round(warmDay.max)}°C erreicht. `;
+    if (coldDay.min < 0) extremeText += `Vorsicht: In der Nacht auf ${coldDay.dayName} ist mit Frost zu rechnen (${Math.round(coldDay.min)}°C).`;
+    else extremeText += `Die kühlste Nacht wird am ${coldDay.dayName} (${Math.round(coldDay.min)}°C) erwartet.`;
+
+    const unsafeDayIndex = data.findIndex(d => d.reliability < 50);
+    let safetyText = "";
+    if (unsafeDayIndex === -1) safetyText = "\n\nDie Prognosesicherheit ist über den gesamten Zeitraum ungewöhnlich hoch.";
+    else if (unsafeDayIndex > 7) safetyText = `\n\nFür die erste Woche ist die Vorhersage sehr verlässlich. Ab ${data[unsafeDayIndex].dayName} nehmen die Unsicherheiten zu.`;
+    else if (unsafeDayIndex !== -1) safetyText = `\n\nDie Wetterlage ist aktuell sehr dynamisch und ab ${data[unsafeDayIndex].dayName} schwer vorherzusagen.`;
+
+    text = `${trendText}\n${precipText}\n${extremeText}${safetyText}`;
+
+    const stormDay = data.find(d => d.gust > 75);
+    const heavyRainDay = data.find(d => parseFloat(d.rain) > 20);
+    if (stormDay) warning = `STURM-TREND: Am ${stormDay.dayName} (${stormDay.dateShort}) drohen schwere Böen bis ${Math.round(stormDay.gust)} km/h!`;
+    else if (heavyRainDay) warning = `STARKREGEN-TREND: Am ${heavyRainDay.dayName} sind große Regenmengen (${heavyRainDay.rain} mm) möglich.`;
   }
   return { text, warning };
 };
 
-// --- LANDSCAPE ANIMATION COMPONENTS ---
+// --- 4. KOMPONENTEN ---
+
 const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset }) => {
   const isNight = isDay === 0;
-  
-  // Weather Conditions
   const isSnow = [71, 73, 75, 77, 85, 86].includes(code);
   const isRain = [51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99].includes(code);
   const isStorm = [95, 96, 99].includes(code);
-  // More clouds if precipitation or high coverage codes
   const isCloudy = [2, 3, 45, 48].includes(code) || isRain || isSnow;
   const isOvercast = [3, 45, 48].includes(code) || (isRain && code > 60) || isSnow; 
   
-  // Calculate Hour Decimal
   const d = date ? new Date(date) : new Date();
   const currentHour = d.getHours() + d.getMinutes() / 60;
   
-  // Use passed sunrise/sunset or defaults
-  const sunriseHour = sunrise ? (new Date(sunrise).getHours() + new Date(sunrise).getMinutes()/60) : 6.5;
-  const sunsetHour = sunset ? (new Date(sunset).getHours() + new Date(sunset).getMinutes()/60) : 20.5;
-
+  const getDecimalHour = (isoString) => {
+      if (!isoString) return null;
+      const t = new Date(isoString);
+      return t.getHours() + t.getMinutes() / 60;
+  };
+  
+  const sunriseHour = getDecimalHour(sunrise) ?? 6.5; 
+  const sunsetHour = getDecimalHour(sunset) ?? 20.5;
+  
   let celestialX = -50;
   let celestialY = 200; 
   let celestialType = 'none';
-  let dayProgress = 0; // 0..1
   let isDawn = false;
   let isDusk = false;
 
-  // Day Loop Logic
   if (currentHour >= sunriseHour && currentHour <= sunsetHour) {
      celestialType = 'sun';
      const dayLength = sunsetHour - sunriseHour;
-     dayProgress = (currentHour - sunriseHour) / dayLength; 
-     
-     // Position (Arc from X=20 to X=220)
+     const dayProgress = (currentHour - sunriseHour) / dayLength; 
      celestialX = 20 + dayProgress * 200;
-     // Parabolic arc for Y
      celestialY = 20 + 0.008 * Math.pow(celestialX - 120, 2);
-
-     // Dawn/Dusk Detection (within 1 hour of transition)
      if (currentHour - sunriseHour < 1.0) isDawn = true;
      if (sunsetHour - currentHour < 1.0) isDusk = true;
-
   } else {
-     // NIGHT
      celestialType = 'moon';
      let nightDuration = (24 - sunsetHour) + sunriseHour;
      let timeSinceSunset = currentHour - sunsetHour;
-     if (timeSinceSunset < 0) timeSinceSunset += 24; // If early morning
-     
+     if (timeSinceSunset < 0) timeSinceSunset += 24; 
      const nightProgress = timeSinceSunset / nightDuration;
      celestialX = 20 + nightProgress * 200;
      celestialY = 20 + 0.008 * Math.pow(celestialX - 120, 2);
   }
 
-  // Moon Phase
-  const getMoonPhase = (dateInput) => {
-    const dateObj = new Date(dateInput);
-    const newMoon = new Date(2000, 0, 6, 18, 14).getTime();
-    const phaseSeconds = 2551443;
-    let sec = (dateObj.getTime() - newMoon) / 1000;
-    let currentSec = sec % phaseSeconds;
-    if (currentSec < 0) currentSec += phaseSeconds;
-    return Math.round((currentSec / phaseSeconds) * 8) % 8;
-  };
   const moonPhase = date ? getMoonPhase(date) : 0;
   
-  // Colors
   const groundColor = isSnow ? "#e2e8f0" : (isNight ? "#1e293b" : "#4ade80"); 
   const mountainColor = isSnow ? "#f1f5f9" : (isNight ? "#334155" : "#64748b"); 
   const treeTrunk = isNight ? "#3f2e22" : "#78350f";
   const treeLeaf = isSnow ? "#f8fafc" : (isNight ? "#14532d" : "#16a34a");
-  const cloudColor = isOvercast ? "#cbd5e1" : "white"; // Darker clouds if overcast
-  const cloudOpacity = isOvercast ? 0.95 : 0.8;
+  const cloudColor = "white";
+  const cloudOpacity = 0.9;
 
   return (
     <svg viewBox="0 0 240 160" className="w-full h-full overflow-visible" preserveAspectRatio="xMidYMid slice">
-      
-      {/* SKY GRADIENT OVERLAY FOR DAWN/DUSK */}
-      {isDawn && <rect x="-50" y="-50" width="340" height="260" fill="url(#dawnGradient)" opacity="0.6" className="anim-glow" />}
-      {isDusk && <rect x="-50" y="-50" width="340" height="260" fill="url(#duskGradient)" opacity="0.6" className="anim-glow" />}
-
       <defs>
         <linearGradient id="dawnGradient" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#fdba74" stopOpacity="0" />
-          <stop offset="100%" stopColor="#f97316" stopOpacity="0.8" />
+          <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.8" />
+          <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
         </linearGradient>
         <linearGradient id="duskGradient" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#f472b6" stopOpacity="0" />
-          <stop offset="100%" stopColor="#db2777" stopOpacity="0.8" />
+          <stop offset="0%" stopColor="#f472b6" stopOpacity="0.8" />
+          <stop offset="100%" stopColor="#be185d" stopOpacity="0" />
         </linearGradient>
       </defs>
 
-      {/* 1. CELESTIAL BODY */}
+      {isDawn && <rect x="-100" y="0" width="440" height="160" fill="url(#dawnGradient)" opacity="0.3" className="anim-glow" />}
+      {isDusk && <rect x="-100" y="0" width="440" height="160" fill="url(#duskGradient)" opacity="0.3" className="anim-glow" />}
+
       {celestialType === 'sun' && (
         <g transform={`translate(${celestialX}, ${celestialY})`}>
           <circle r="14" fill="#fbbf24" className="animate-ray" />
@@ -360,7 +412,6 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset }) => {
          </g>
       )}
 
-      {/* 2. LANDSCAPE */}
       <path d="M-20 160 L80 60 L180 160 Z" fill={mountainColor} />
       {isSnow && <path d="M80 60 L100 80 L60 80 Z" fill="white" />} 
 
@@ -381,15 +432,11 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset }) => {
          <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
       </g>
 
-      {/* 5. WEATHER EFFECTS (More clouds for precipitation) */}
       {(isCloudy || isOvercast) && (
         <g className="anim-clouds">
-           <path d="M40 50 Q 55 35 70 50 T 100 50 T 120 60 H 40 Z" fill={cloudColor} fillOpacity={cloudOpacity} transform="translate(0,0)" />
-           <path d="M140 40 Q 155 25 170 40 T 200 40 T 220 50 H 140 Z" fill={cloudColor} fillOpacity={cloudOpacity} transform="translate(20,10)" />
-           {/* Extra Dark Clouds Layer for Overcast/Rain */}
-           {isOvercast && (
-               <path d="M90 60 Q 110 40 130 60 T 170 60 T 190 70 H 90 Z" fill="#94a3b8" fillOpacity="0.8" transform="translate(-30, 5)" className="anim-clouds-fast" />
-           )}
+           <path d="M40 50 Q 55 35 70 50 T 100 50 T 120 60 H 40 Z" fill="white" fillOpacity={isOvercast ? 0.7 : 0.5} transform="translate(0,0)" />
+           <path d="M140 40 Q 155 25 170 40 T 200 40 T 220 50 H 140 Z" fill="white" fillOpacity={isOvercast ? 0.7 : 0.5} transform="translate(20,10)" />
+           {isOvercast && <rect x="0" y="0" width="240" height="160" fill="black" opacity="0.1" />}
         </g>
       )}
 
@@ -417,7 +464,6 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset }) => {
   );
 };
 
-// --- AI REPORT BOX (CLEAN) ---
 const AIReportBox = ({ report }) => {
   if (!report) return null;
   const { text, warning } = report;
@@ -439,6 +485,8 @@ const AIReportBox = ({ report }) => {
   );
 };
 
+// --- 4. MAIN APP COMPONENT ---
+
 export default function WeatherApp() {
   const [loading, setLoading] = useState(true);
   const [currentLoc, setCurrentLoc] = useState(DAUBENRATH_LOC);
@@ -451,7 +499,6 @@ export default function WeatherApp() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showAllHours, setShowAllHours] = useState(false); 
   const [sunriseSunset, setSunriseSunset] = useState({ sunrise: null, sunset: null });
-
   const [modelRuns, setModelRuns] = useState({ icon: '', gfs: '', arome: '' });
 
   useEffect(() => {
@@ -468,6 +515,7 @@ export default function WeatherApp() {
   };
 
   const handleSetHome = () => setCurrentLoc(DAUBENRATH_LOC);
+  
   const handleSetCurrent = () => {
     setLoading(true);
     if (!navigator.geolocation) { setError("Kein GPS"); setLoading(false); return; }
@@ -484,7 +532,6 @@ export default function WeatherApp() {
       const { lat, lon } = currentLoc;
       const modelsShort = "icon_d2,gfs_seamless,arome_seamless";
       const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index&models=${modelsShort}&timezone=Europe%2FBerlin&forecast_days=2`;
-      // Fetch sunrise/sunset from daily API
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless";
       const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max,sunrise,sunset&models=${modelsLong}&timezone=Europe%2FBerlin&forecast_days=14`;
 
@@ -496,12 +543,8 @@ export default function WeatherApp() {
       setLastUpdated(new Date());
       setModelRuns({ icon: getModelRunTime(3, 2.5), gfs: getModelRunTime(6, 4), arome: getModelRunTime(3, 2) });
       
-      // Update Sunrise/Sunset
       if (longData.daily && longData.daily.sunrise && longData.daily.sunrise.length > 0) {
-          setSunriseSunset({ 
-              sunrise: longData.daily.sunrise[0], 
-              sunset: longData.daily.sunset[0] 
-          });
+          setSunriseSunset({ sunrise: longData.daily.sunrise[0], sunset: longData.daily.sunset[0] });
       }
 
     } catch (err) { setError(err.message); } finally { setLoading(false); }
@@ -522,7 +565,6 @@ export default function WeatherApp() {
       if (t < now && i < h.time.length - 1 && new Date(h.time[i+1]) > now) {} 
       else if (t < now) continue;
 
-      // Safe get value helper
       const getVal = (key) => {
           if (h[key] && h[key][i] != null) return h[key][i];
           if (h[`${key}_icon_d2`] && h[`${key}_icon_d2`][i] != null) return h[`${key}_icon_d2`][i];
@@ -626,7 +668,6 @@ export default function WeatherApp() {
   }, [longTermData]);
 
   const current = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: "0.0", precip: "0.0", wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0 };
-  
   const todayForecast = processedLong.length > 0 ? processedLong[0] : { rain: "0.0", snow: "0.0", max: 0, min: 0 };
   const dailyRainSum = todayForecast.rain;
   const dailySnowSum = todayForecast.snow;
@@ -634,18 +675,15 @@ export default function WeatherApp() {
   
   const weatherConf = getWeatherConfig(current.code || 0, current.isDay);
   const isNight = current.isDay === 0;
-  
   const bgGradient = isNight ? 'from-slate-900 to-slate-800' : 'from-blue-500 to-sky-400';
   const textColor = 'text-white';
   const cardBg = isNight ? 'bg-slate-800/60 border-slate-700/50 text-white' : 'bg-white/80 border-white/40 text-slate-900';
   const windColorClass = getWindColorClass(current.wind || 0);
 
-  // Generate Reports
   const dailyReport = useMemo(() => generateAIReport('daily', processedShort), [processedShort]);
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong), [chartView, processedShort, processedLong]);
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong), [processedLong]);
 
-  // LOGIC FOR EXPANDABLE LIST
   const displayedHours = showAllHours ? processedShort : processedShort.slice(0, 12);
 
   if (loading) return <div className="min-h-screen bg-slate-100 flex items-center justify-center"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
@@ -655,7 +693,6 @@ export default function WeatherApp() {
     <div className={`min-h-screen transition-all duration-1000 bg-gradient-to-br ${bgGradient} font-sans pb-20 overflow-hidden relative`}>
       <style>{styles}</style>
       
-      {/* HEADER */}
       <header className="pt-8 px-5 flex justify-between items-start z-10 relative">
         <div className={textColor}>
           <div className="flex gap-2 mb-2">
@@ -673,72 +710,33 @@ export default function WeatherApp() {
 
       <main className="max-w-4xl mx-auto p-4 z-10 relative space-y-6">
         
-        {/* HERO CARD COMPACT DASHBOARD */}
         <div className={`rounded-3xl p-6 ${cardBg} shadow-lg relative overflow-hidden`}>
           <div className="flex items-center justify-between">
-            {/* Left: Temp & Range */}
             <div className="flex flex-col z-10">
                <span className="text-7xl font-bold tracking-tighter leading-none">{Math.round(current.temp)}°</span>
-               {/* Moved Feels Like Here */}
-               <div className="flex items-center gap-1.5 mt-2 opacity-90 font-medium text-sm">
-                  <Thermometer size={16} />
-                  <span>Gefühlt {current.appTemp}°</span>
-               </div>
-               <div className="flex items-center gap-2 mt-1 opacity-80 font-medium text-sm">
-                  <span>H: {processedLong[0]?.max}°</span>
-                  <span>T: {processedLong[0]?.min}°</span>
-               </div>
+               <div className="flex items-center gap-1.5 mt-2 opacity-90 font-medium text-sm"><Thermometer size={16} /><span>Gefühlt {current.appTemp}°</span></div>
+               <div className="flex items-center gap-2 mt-1 opacity-80 font-medium text-sm"><span>H: {processedLong[0]?.max}°</span><span>T: {processedLong[0]?.min}°</span></div>
                <div className="mt-1 text-lg font-medium tracking-wide">{weatherConf.text}</div>
             </div>
-
-            {/* Center: Icon Animation */}
             <div className="w-32 h-32 -my-4 relative z-0 scale-125">
                <WeatherLandscape code={current.code} isDay={current.isDay} date={current.time} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} />
             </div>
-
-            {/* Right: Rich Details List */}
             <div className="flex flex-col gap-2 z-10 items-end text-right pl-3 border-l border-white/10 ml-2">
-               
-               {/* 1. UV Index (Standalone) */}
                <div className="flex flex-col items-end">
-                  <div className={`flex items-center gap-1 opacity-90 text-sm font-bold ${getUvColorClass(current.uvIndex)}`}>
-                     <Sun size={14} /> <span>{current.uvIndex}</span>
-                  </div>
+                  <div className={`flex items-center gap-1 opacity-90 text-sm font-bold ${getUvColorClass(current.uvIndex)}`}><Sun size={14} /> <span>{current.uvIndex}</span></div>
                   <span className="text-[9px] opacity-60 uppercase font-bold">UV</span>
                </div>
-
-               {/* 2. Humidity / Dew Point */}
                <div className="flex items-center gap-3">
-                  <div className="flex flex-col items-end">
-                     <div className="flex items-center gap-1 opacity-90 text-sm font-bold">
-                        <Waves size={14} /> <span>{current.humidity}%</span>
-                     </div>
-                     <span className="text-[9px] opacity-60 uppercase font-bold">Feuchte</span>
-                  </div>
-                  <div className="flex flex-col items-end">
-                     <div className="flex items-center gap-1 opacity-90 text-sm font-bold">
-                        <Thermometer size={14} /> <span>{current.dewPoint}°</span>
-                     </div>
-                     <span className="text-[9px] opacity-60 uppercase font-bold">Taupkt.</span>
-                  </div>
+                  <div className="flex flex-col items-end"><div className="flex items-center gap-1 opacity-90 text-sm font-bold"><Waves size={14} /> <span>{current.humidity}%</span></div><span className="text-[9px] opacity-60 uppercase font-bold">Feuchte</span></div>
+                  <div className="flex flex-col items-end"><div className="flex items-center gap-1 opacity-90 text-sm font-bold"><Thermometer size={14} /> <span>{current.dewPoint}°</span></div><span className="text-[9px] opacity-60 uppercase font-bold">Taupkt.</span></div>
                </div>
-
-               {/* 3. Wind (Combined) */}
                <div className="flex flex-col items-end mt-1">
-                  <div className={`flex items-center gap-1.5 text-sm font-bold ${windColorClass}`}>
-                    <Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }}/>
-                    <span>{current.wind} <span className="text-xs font-normal opacity-80">({current.gust})</span></span>
-                  </div>
+                  <div className={`flex items-center gap-1.5 text-sm font-bold ${windColorClass}`}><Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }}/><span>{current.wind} <span className="text-xs font-normal opacity-80">({current.gust})</span></span></div>
                   <span className="text-[9px] opacity-60 uppercase font-bold">Wind (Böen) km/h</span>
                </div>
-               
-               {/* 4. Rain (Conditional) */}
                {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0) && (
                  <div className="flex flex-col items-end mt-1">
-                    <div className="flex items-center gap-1.5 opacity-90 text-sm font-bold text-blue-500">
-                      {isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>}
-                      <span>{isSnowing ? dailySnowSum : dailyRainSum} {isSnowing ? 'cm' : 'mm'}</span>
-                    </div>
+                    <div className="flex items-center gap-1.5 opacity-90 text-sm font-bold text-blue-500">{isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>}<span>{isSnowing ? dailySnowSum : dailyRainSum} {isSnowing ? 'cm' : 'mm'}</span></div>
                     <span className="text-[9px] opacity-60 uppercase font-bold">Niederschlag (24h)</span>
                  </div>
                )}
@@ -746,7 +744,6 @@ export default function WeatherApp() {
           </div>
         </div>
 
-        {/* NAVIGATION */}
         <div className={`p-1.5 rounded-full backdrop-blur-md flex shadow-md border border-white/20 ${cardBg}`}>
            {[{id:'overview', label:'Verlauf', icon: List}, {id:'longterm', label:'14 Tage', icon: CalendarDays}, {id:'radar', label:'Radar', icon: Map}, {id:'chart', label:'Vergleich', icon: BarChart2}].map(tab => (
              <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 py-3 rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === tab.id ? 'bg-white/90 text-slate-900 shadow-md' : 'hover:bg-white/10 opacity-70'}`}><tab.icon size={16} /> <span className="hidden sm:inline">{tab.label}</span></button>
@@ -757,9 +754,7 @@ export default function WeatherApp() {
           
           {activeTab === 'overview' && (
             <div className="space-y-4">
-               {/* REPORT HIER EINGEBAUT */}
                <AIReportBox report={dailyReport} />
-               
                <h3 className="text-sm font-bold uppercase tracking-wide opacity-70 ml-2">Stündlicher Verlauf</h3>
                <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
@@ -778,21 +773,14 @@ export default function WeatherApp() {
                                     <span className="text-xs opacity-60 font-medium truncate w-20">{conf.text}</span>
                                 </div>
                              </div>
-                             {/* UV-Badge, wenn UV > 0 */}
-                             {row.uvIndex > 0 && (
-                                <div className={`inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold border ${getUvBadgeClass(row.uvIndex)}`}>
-                                   <Sun size={8} /> UV {(row.uvIndex || 0).toFixed(0)}
-                                </div>
-                             )}
+                             {row.uvIndex >= 0 && <div className={`inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold border ${getUvBadgeClass(row.uvIndex)}`}><Sun size={8} /> UV {(row.uvIndex || 0).toFixed(0)}</div>}
                           </td>
                           <td className="py-4 px-2 text-right w-24">
                              {parseFloat(row.snow) > 0 ? (
                                <span className="text-cyan-500 font-bold whitespace-nowrap flex justify-end items-center gap-1"><Snowflake size={12}/>{row.snow}cm</span>
                              ) : parseFloat(row.precip) > 0 ? (
                                <span className="text-blue-500 font-bold whitespace-nowrap flex justify-end items-center gap-1"><Droplets size={12}/>{row.precip}mm</span>
-                             ) : (
-                               <span className="opacity-20 text-sm">-</span>
-                             )}
+                             ) : (<span className="opacity-20 text-sm">-</span>)}
                           </td>
                           <td className="py-4 pr-2 text-right">
                              <div className="flex flex-col items-end leading-tight">
@@ -806,27 +794,13 @@ export default function WeatherApp() {
                   </tbody>
                 </table>
                </div>
-               
-               {/* EXPAND BUTTON */}
-               <button 
-                  onClick={() => setShowAllHours(!showAllHours)} 
-                  className="w-full py-3 mt-2 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 rounded-xl transition text-sm font-bold uppercase tracking-wide opacity-80"
-               >
-                  {showAllHours ? (
-                    <>Weniger anzeigen <ChevronUp size={16} /></>
-                  ) : (
-                    <>Mehr anzeigen <ChevronDown size={16} /></>
-                  )}
-               </button>
+               <button onClick={() => setShowAllHours(!showAllHours)} className="w-full py-3 mt-2 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 rounded-xl transition text-sm font-bold uppercase tracking-wide opacity-80">{showAllHours ? <><span className="mr-1">Weniger</span> <ChevronUp size={16}/></> : <><span className="mr-1">Mehr</span> <ChevronDown size={16}/></>}</button>
             </div>
           )}
 
-          {/* 2. CHART VERGLEICH */}
           {activeTab === 'chart' && (
             <div className="h-full flex flex-col">
-               {/* REPORT HIER EINGEBAUT */}
                <AIReportBox report={modelReport} />
-
                <div className="flex justify-between items-center mb-6">
                  <h3 className="text-sm font-bold uppercase opacity-70">Modell-Check</h3>
                  <div className="flex bg-black/10 rounded-lg p-1">
@@ -834,7 +808,6 @@ export default function WeatherApp() {
                     <button onClick={() => setChartView('daily')} className={`px-3 py-1 rounded-md text-xs font-bold transition ${chartView==='daily' ? 'bg-white text-black shadow-sm' : 'opacity-60'}`}>14 Tage</button>
                  </div>
                </div>
-               
                <div className="w-full h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                       {chartView === 'hourly' ? (
@@ -861,61 +834,32 @@ export default function WeatherApp() {
                       )}
                   </ResponsiveContainer>
                </div>
-               
                <div className="flex justify-center gap-4 mt-6 text-xs font-medium opacity-80 flex-wrap">
-                  {chartView === 'hourly' ? (
-                    <>
-                      <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
-                      <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
-                      <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
-                      <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div> Ø</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
-                      <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
-                      <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
-                    </>
-                  )}
+                  {chartView === 'hourly' ? (<><span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span><span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span><span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span><span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div> Ø</span></>) : (<><span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span><span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span><span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span></>)}
                </div>
             </div>
           )}
 
-          {/* 3. RADAR TAB (NEU) */}
           {activeTab === 'radar' && (
             <div className="h-full flex flex-col">
                <h3 className="text-sm font-bold uppercase opacity-70 mb-4 ml-2">Live-Radar (Windy)</h3>
                <div className="w-full aspect-square rounded-xl overflow-hidden shadow-inner border border-black/10 bg-gray-200 relative">
-                  <iframe 
-                    width="100%" 
-                    height="100%" 
-                    src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=450&height=450&zoom=9&level=surface&overlay=radar&product=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`} 
-                    frameBorder="0"
-                    title="Windy Radar"
-                    className="absolute inset-0"
-                  ></iframe>
+                  <iframe width="100%" height="100%" src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=450&height=450&zoom=9&level=surface&overlay=radar&product=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`} frameBorder="0" title="Windy Radar" className="absolute inset-0"></iframe>
                </div>
-               <div className="mt-4 text-xs text-center opacity-60">
-                  Radarbild bereitgestellt von Windy.com
-               </div>
+               <div className="mt-4 text-xs text-center opacity-60">Radarbild bereitgestellt von Windy.com</div>
             </div>
           )}
 
-          {/* 4. 14 TAGE LISTE */}
           {activeTab === 'longterm' && (
              <div className="space-y-4">
-               {/* REPORT HIER EINGEBAUT */}
                <AIReportBox report={longtermReport} />
-
                <h3 className="text-sm font-bold uppercase opacity-70 ml-2">14-Tage Liste</h3>
                {processedLong.map((day, i) => {
                  const isDaySnow = parseFloat(day.snow) > 0;
                  const DayIcon = getWeatherConfig(day.code, 1).icon;
                  const confColor = getConfidenceColor(day.reliability);
-                 
                  let probColor = "text-slate-400 opacity-50"; 
-                 if (day.prob >= 50) probColor = "text-blue-600 font-bold";
-                 else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
+                 if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
 
                  return (
                    <div key={i} className="grid grid-cols-[auto_1fr_auto] gap-3 items-center py-4 border-b border-white/10 last:border-0 hover:bg-white/5 transition px-2">
@@ -950,9 +894,7 @@ export default function WeatherApp() {
                                <span className="text-cyan-500 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {day.snow}cm</span>
                             ) : parseFloat(day.rain) > 0.1 ? (
                                <span className="text-blue-500 font-bold text-xs flex items-center gap-1"><Droplets size={10}/> {day.rain}mm</span>
-                            ) : (
-                               <span className="text-xs opacity-20">-</span>
-                            )}
+                            ) : (<span className="text-xs opacity-20">-</span>)}
                             <span className={`text-[10px] mt-1 ${probColor}`}>{day.prob > 0 ? `${day.prob}% Wahrsch.` : ''}</span>
                          </div>
                       </div>
