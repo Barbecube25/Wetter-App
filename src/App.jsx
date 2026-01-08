@@ -94,7 +94,6 @@ const getWeatherConfig = (code, isDay = 1) => {
   if (code === 0) return isNight ? { text: 'Klar', icon: Moon } : { text: 'Klar', icon: Sun };
   if (code === 1) return isNight ? { text: 'Leicht bewölkt', icon: Moon } : { text: 'Leicht bewölkt', icon: Sun };
   if (code === 2) return { text: 'Bewölkt', icon: Cloud };
-  
   if (code === 3) return { text: 'Bedeckt', icon: Cloud };
   if ([45, 48].includes(code)) return { text: 'Nebel', icon: Cloud };
   if ([51, 53, 55].includes(code)) return { text: 'Niesel', icon: CloudRain };
@@ -112,7 +111,7 @@ const generateAIReport = (type, data) => {
   let warning = null;
   let text = "";
 
-  // 1. TAGES-BERICHT (Sehr detailliert)
+  // 1. TAGES-BERICHT (Sehr detailliert & Narrativ)
   if (type === 'daily') {
     const hour = new Date().getHours();
     const greeting = hour < 10 ? "Guten Morgen" : hour < 18 ? "Guten Tag" : "Guten Abend";
@@ -132,7 +131,7 @@ const generateAIReport = (type, data) => {
     let afternoonRain = 0;
     let eveningRain = 0;
     
-    // Bewölkungs-Check (Code > 2 = Wolkig/Nass)
+    // Bewölkungs-Check
     let morningClouds = 0;
     let afternoonClouds = 0;
     let eveningClouds = 0;
@@ -240,7 +239,7 @@ const generateAIReport = (type, data) => {
      else {
        text = `Signifikante Modellunterschiede! `;
        if (driftHour) text += `Ab ca. ${driftHour} Uhr sind sich die Wettercomputer uneinig. `;
-       text += `Die Temperaturprognosen klaffen um bis zu ${maxDiff.toFixed(1)}°C auseinander. Dies deutet auf eine komplexe Wetterlage hin.`;
+       text += `Die Temperaturprognosen klaffen um bis zu ${maxDiff.toFixed(1)}°C auseinander (Spaghetti-Szenario). Dies deutet auf eine komplexe Wetterlage hin.`;
        warning = "UNSICHERE LAGE";
      }
   }
@@ -272,7 +271,7 @@ const generateAIReport = (type, data) => {
     }
   }
 
-  // 4. LONG TERM TREND (Sehr Ausführlich inkl. Sicherheit)
+  // 4. LONG TERM TREND (Sehr Ausführlich)
   if (type === 'longterm') {
     const warmDay = data.reduce((prev, current) => (prev.max > current.max) ? prev : current);
     const coldDay = data.reduce((prev, current) => (prev.min < current.min) ? prev : current);
@@ -307,21 +306,7 @@ const generateAIReport = (type, data) => {
     if (coldDay.min < 0) extremeText += `Vorsicht: In der Nacht auf ${coldDay.dayName} ist mit Frost zu rechnen (${Math.round(coldDay.min)}°C).`;
     else extremeText += `Die kühlste Nacht wird am ${coldDay.dayName} (${Math.round(coldDay.min)}°C) erwartet.`;
 
-    // SICHERHEITS-ANALYSE
-    const unsafeDayIndex = data.findIndex(d => d.reliability < 50);
-    let safetyText = "";
-    
-    if (unsafeDayIndex === -1) {
-        safetyText = "\n\nDie Prognosesicherheit ist über den gesamten Zeitraum ungewöhnlich hoch. Der Trend gilt als sehr stabil.";
-    } else if (unsafeDayIndex > 7) {
-        safetyText = `\n\nFür die erste Woche ist die Vorhersage sehr verlässlich. Ab ${data[unsafeDayIndex].dayName} (${data[unsafeDayIndex].dateShort}) nehmen die Unsicherheiten deutlich zu.`;
-    } else if (unsafeDayIndex > 3) {
-        safetyText = `\n\nDer Trend ist bis ${data[unsafeDayIndex].dayName} stabil, danach gehen die Modellberechnungen stark auseinander.`;
-    } else {
-        safetyText = "\n\nDie Wetterlage ist aktuell sehr dynamisch und schwer vorherzusagen. Selbst kurzfristige Trends sind mit Vorsicht zu genießen.";
-    }
-
-    text = `${trendText}\n${precipText}\n${extremeText}${safetyText}`;
+    text = `${trendText}\n${precipText}\n${extremeText}`;
 
     // Warnungen
     const stormDay = data.find(d => d.gust > 75);
@@ -380,7 +365,7 @@ const WeatherLandscape = ({ code, isDay, date, temp }) => {
   const cloudOpacity = 0.9;
 
   return (
-    <svg viewBox="0 0 240 160" className="w-full h-full overflow-visible">
+    <svg viewBox="0 0 240 160" className="w-full h-full overflow-visible" preserveAspectRatio="xMidYMid slice">
       {celestialType === 'sun' && (
         <g transform={`translate(${celestialX}, ${celestialY})`}>
           <circle r="14" fill="#fbbf24" className="animate-ray" />
@@ -706,7 +691,12 @@ export default function WeatherApp() {
         
         {/* HERO CARD COMPACT DASHBOARD */}
         <div className={`rounded-3xl p-6 ${cardBg} shadow-lg relative overflow-hidden`}>
-          <div className="flex items-center justify-between">
+          {/* Background Animation Layer */}
+           <div className="absolute inset-0 z-0 opacity-40">
+               <WeatherLandscape code={current.code} isDay={current.isDay} date={current.time} temp={current.temp} />
+           </div>
+
+          <div className="flex items-center justify-between relative z-10">
             {/* Left: Temp & Range */}
             <div className="flex flex-col z-10">
                <span className="text-7xl font-bold tracking-tighter leading-none">{Math.round(current.temp)}°</span>
@@ -720,11 +710,6 @@ export default function WeatherApp() {
                   <span>T: {processedLong[0]?.min}°</span>
                </div>
                <div className="mt-1 text-lg font-medium tracking-wide">{weatherConf.text}</div>
-            </div>
-
-            {/* Center: Icon Animation */}
-            <div className="w-32 h-32 -my-4 relative z-0 scale-125">
-               <WeatherLandscape code={current.code} isDay={current.isDay} date={current.time} temp={current.temp} />
             </div>
 
             {/* Right: Rich Details List */}
@@ -779,13 +764,22 @@ export default function WeatherApp() {
 
         {/* NAVIGATION */}
         <div className={`p-1.5 rounded-full backdrop-blur-md flex shadow-md border border-white/20 ${cardBg}`}>
-           {[{id:'overview', label:'Verlauf', icon: List}, {id:'longterm', label:'14 Tage', icon: CalendarDays}, {id:'radar', label:'Radar', icon: Map}, {id:'chart', label:'Vergleich', icon: BarChart2}].map(tab => (
-             <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 py-3 rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === tab.id ? 'bg-white/90 text-slate-900 shadow-md' : 'hover:bg-white/10 opacity-70'}`}><tab.icon size={16} /> <span className="hidden sm:inline">{tab.label}</span></button>
+           {[
+             {id:'overview', label:'Verlauf', icon: List}, 
+             {id:'longterm', label:'14 Tage', icon: CalendarDays},
+             {id:'radar', label:'Radar', icon: Map},
+             {id:'chart', label:'Vergleich', icon: BarChart2}
+            ].map(tab => (
+             <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 py-3 rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === tab.id ? 'bg-white/90 text-slate-900 shadow-md' : 'hover:bg-white/10 opacity-70'}`}>
+               <tab.icon size={16} /> <span className="hidden sm:inline">{tab.label}</span>
+             </button>
            ))}
         </div>
 
+        {/* MAIN CONTENT AREA */}
         <div className={`backdrop-blur-md rounded-[32px] p-5 shadow-2xl ${cardBg} min-h-[450px]`}>
           
+          {/* 1. STÜNDLICHE LISTE */}
           {activeTab === 'overview' && (
             <div className="space-y-4">
                {/* REPORT HIER EINGEBAUT */}
