@@ -555,7 +555,7 @@ const DwdAlertItem = ({ alert }) => {
   const colorClass = getDwdColorClass(alert.severity);
 
   return (
-    <div className={`rounded-xl border-l-4 shadow-sm relative overflow-hidden transition-all duration-300 ${colorClass} mb-3`}>
+    <div className={`rounded-xl border-l-4 shadow-sm relative overflow-hidden transition-all duration-300 ${colorClass}`}>
       <div className="p-4 flex items-start gap-3 relative z-10 cursor-pointer" onClick={() => setExpanded(!expanded)}>
         <Siren className="shrink-0 animate-pulse-red mt-1" size={24} />
         <div className="flex-1">
@@ -583,31 +583,9 @@ const DwdAlertItem = ({ alert }) => {
   );
 };
 
-// Modal für die Warnliste
-const WarningModal = ({ warnings, onClose }) => {
-  if (!warnings || warnings.length === 0) return null;
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
-      <div className="bg-white rounded-3xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-           <div className="flex items-center gap-2">
-             <div className="bg-red-100 p-2 rounded-full text-red-600"><Siren size={20} /></div>
-             <h3 className="font-bold text-lg text-slate-800">Amtliche Warnungen</h3>
-           </div>
-           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={20} className="text-slate-500" /></button>
-        </div>
-        <div className="p-4 overflow-y-auto space-y-3">
-           {warnings.map((alert, i) => <DwdAlertItem key={i} alert={alert} />)}
-        </div>
-        <div className="p-4 bg-slate-50 text-center text-xs text-slate-400 border-t border-slate-100">Quelle: Deutscher Wetterdienst (DWD) via Brightsky</div>
-      </div>
-    </div>
-  );
-};
-
-// Modifizierte AIReportBox mit integriertem DWD Trigger
+// Modifizierte AIReportBox mit integriertem Inline DWD Trigger
 const AIReportBox = ({ report, dwdWarnings }) => {
-  const [showModal, setShowModal] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   if (!report) return null;
   const { text, warning: localWarning } = report;
   
@@ -639,16 +617,26 @@ const AIReportBox = ({ report, dwdWarnings }) => {
         
         {/* DWD Warnung Trigger */}
         {hasDwd && (
-          <button onClick={() => setShowModal(true)} className={`w-full mb-3 p-3 rounded-lg border-l-4 shadow-sm flex items-center justify-between gap-3 text-left transition hover:brightness-95 ${bannerClass}`}>
-            <div className="flex items-center gap-3">
-               <div className="shrink-0">{icon}</div>
-               <div>
-                 <div className="font-extrabold uppercase text-[10px] tracking-wider opacity-80">Amtliche Warnung</div>
-                 <div className="font-bold leading-tight text-sm">{dwdWarnings.length} aktive Warnung(en)</div>
+          <div className="mb-3">
+            <button onClick={() => setExpanded(!expanded)} className={`w-full p-3 rounded-lg border-l-4 shadow-sm flex items-center justify-between gap-3 text-left transition hover:brightness-95 ${bannerClass}`}>
+              <div className="flex items-center gap-3">
+                 <div className="shrink-0">{icon}</div>
+                 <div>
+                   <div className="font-extrabold uppercase text-[10px] tracking-wider opacity-80">Amtliche Warnung</div>
+                   <div className="font-bold leading-tight text-sm">{dwdWarnings.length} aktive Warnung(en)</div>
+                 </div>
+              </div>
+              <div className="opacity-60">{expanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}</div>
+            </button>
+            
+            {/* Inline Warnliste */}
+            {expanded && (
+               <div className="mt-3 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  {dwdWarnings.map((alert, i) => <DwdAlertItem key={i} alert={alert} />)}
+                  <div className="text-[10px] text-center opacity-50 pt-1">Quelle: DWD via Brightsky</div>
                </div>
-            </div>
-            <ChevronDown size={16} className="opacity-60" />
-          </button>
+            )}
+          </div>
         )}
 
         {/* Lokale Warnung (Fallback wenn kein DWD) */}
@@ -664,8 +652,6 @@ const AIReportBox = ({ report, dwdWarnings }) => {
         
         <p className="text-sm text-slate-700 leading-relaxed font-medium relative z-10 whitespace-pre-line">{text}</p>
       </div>
-
-      {showModal && <WarningModal warnings={dwdWarnings} onClose={() => setShowModal(false)} />}
     </>
   );
 };
@@ -1140,6 +1126,16 @@ export default function WeatherApp() {
                  );
                })}
              </div>
+          )}
+
+          {activeTab === 'radar' && (
+            <div className="h-full flex flex-col">
+               <h3 className="text-sm font-bold uppercase opacity-70 mb-4 ml-2">Live-Radar (Windy)</h3>
+               <div className="w-full aspect-square rounded-xl overflow-hidden shadow-inner border border-black/10 bg-gray-200 relative">
+                  <iframe width="100%" height="100%" src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=450&height=450&zoom=9&level=surface&overlay=radar&product=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`} frameBorder="0" title="Windy Radar" className="absolute inset-0"></iframe>
+               </div>
+               <div className="mt-4 text-xs text-center opacity-60">Radarbild bereitgestellt von Windy.com</div>
+            </div>
           )}
 
           {activeTab !== 'radar' && (
