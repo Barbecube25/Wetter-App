@@ -1,10 +1,22 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save } from 'lucide-react';
 
 // --- 1. KONSTANTEN & CONFIG (GANZ OBEN DEFINIERT) ---
 
-const DAUBENRATH_LOC = { name: "Jülich Daubenrath", lat: 50.938, lon: 6.388, isHome: true };
+// Standard-Standort (Fallback), falls nichts gespeichert ist UND GPS fehlschlägt
+const DEFAULT_LOC = { name: "Jülich Daubenrath", lat: 50.938, lon: 6.388, isHome: true };
+
+// Hilfsfunktion zum Laden des gespeicherten Ortes
+const getSavedHomeLocation = () => {
+  try {
+    const saved = localStorage.getItem('weather_home_loc');
+    return saved ? JSON.parse(saved) : null;
+  } catch (e) {
+    console.error("Fehler beim Laden des Home-Standorts", e);
+    return null;
+  }
+};
 
 const styles = `
   @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
@@ -127,11 +139,22 @@ const generateAIReport = (type, data) => {
   let warning = null;
   let text = "";
 
+  // Hilfsfunktion zur Bestimmung der Tageszeit-Bezeichnung
+  const getTimeOfDayName = (date) => {
+     const h = date.getHours();
+     if (h >= 5 && h < 9) return "am Morgen";
+     if (h >= 9 && h < 12) return "am Vormittag";
+     if (h >= 12 && h < 14) return "am Mittag";
+     if (h >= 14 && h < 18) return "am Nachmittag";
+     if (h >= 18 && h < 22) return "am Abend";
+     return "in der Nacht";
+  };
+
   if (type === 'daily') {
-    const hour = new Date().getHours();
-    const greeting = hour < 10 ? "Guten Morgen" : hour < 18 ? "Guten Tag" : "Guten Abend";
+    // 24h Analyse (data enthält bereits die nächsten 24h ab 'jetzt')
     
     let rainStart = null;
+    let rainStop = null;
     let windyTime = null;
     let maxGust = 0;
     let rainSum = 0;
@@ -139,53 +162,50 @@ const generateAIReport = (type, data) => {
     let maxTemp = -100;
     let minTemp = 100;
     let maxUV = 0;
-    let maxUVTime = null;
     
-    let morningRain = 0;
-    let afternoonRain = 0;
-    let eveningRain = 0;
-    let morningClouds = 0;
-    let afternoonClouds = 0;
-    let eveningClouds = 0;
-    let countMorning = 0;
-    let countAfternoon = 0;
-    let countEvening = 0;
+    // Buckets für Timeline-Analyse
+    let precipPhase1 = 0; // 0-6h
+    let precipPhase2 = 0; // 6-12h
+    let precipPhase3 = 0; // 12-24h
+    let cloudsPhase1 = 0;
+    let cloudsPhase2 = 0;
 
-    data.forEach(d => {
-      const h = new Date(d.time).getHours();
+    data.forEach((d, i) => {
       const p = parseFloat(d.precip || 0);
       const s = parseFloat(d.snow || 0);
       const w = parseFloat(d.gust || 0);
       const uv = parseFloat(d.uvIndex || 0);
       const code = d.code || 0;
       
+      // Global Warnings Logic
       if ((p > 0.1 || s > 0.1) && !rainStart) rainStart = d.displayTime;
       if (w > 45 && !windyTime) windyTime = d.displayTime;
       if (w > maxGust) maxGust = w;
-      if (uv > maxUV) { maxUV = uv; maxUVTime = d.displayTime; }
+      if (uv > maxUV) maxUV = uv;
       
       rainSum += p;
       snowSum += s;
       if (d.temp > maxTemp) maxTemp = d.temp;
       if (d.temp < minTemp) minTemp = d.temp;
 
-      const isCloudyCode = code > 2;
-
-      if (h >= 6 && h < 12) { 
-        morningRain += p; 
-        if(isCloudyCode) morningClouds++;
-        countMorning++;
-      } else if (h >= 12 && h < 18) { 
-        afternoonRain += p; 
-        if(isCloudyCode) afternoonClouds++;
-        countAfternoon++;
-      } else if (h >= 18) { 
-        eveningRain += p; 
-        if(isCloudyCode) eveningClouds++;
-        countEvening++;
+      // Phase Logic
+      if (i < 6) {
+         precipPhase1 += p;
+         if (code > 2) cloudsPhase1++;
+      } else if (i < 12) {
+         precipPhase2 += p;
+         if (code > 2) cloudsPhase2++;
+      } else {
+         precipPhase3 += p;
+      }
+      
+      // Finde Ende des Regens (wenn es am Anfang geregnet hat)
+      if (i > 0 && precipPhase1 > 0 && p < 0.1 && !rainStop) {
+          rainStop = d.displayTime;
       }
     });
 
+    // Warnungen (Priorität)
     if (maxGust >= 90) warning = `ORKANARTIGE BÖEN: Spitzen bis ${Math.round(maxGust)} km/h möglich! Aufenthalt im Freien meiden.`;
     else if (maxGust >= 70) warning = `STURMWARNUNG: Schwere Sturmböen bis ${Math.round(maxGust)} km/h erwartet.`;
     else if (rainSum >= 30) warning = `STARKREGEN: Warnung vor Überflutungen (${rainSum.toFixed(0)} mm erwartet).`;
@@ -195,32 +215,46 @@ const generateAIReport = (type, data) => {
     else if (minTemp < -8) warning = `STRENGER FROST: Temperaturen fallen unter -8°C.`;
     else if (rainSum > 0 && minTemp <= 0) warning = `GLATTEISGEFAHR: Gefrierender Regen möglich.`;
 
-    let mainPart = `Heute erreichen wir maximal ${Math.round(maxTemp)}°C (Tiefstwert ${Math.round(minTemp)}°C). `;
+    // Haupttext - Dynamisch basierend auf 24h Verlauf
     
-    if (rainSum + snowSum < 0.2) {
-      if (countMorning > 0 && morningClouds === 0 && countAfternoon > 0 && afternoonClouds === 0) mainPart += "Ein strahlend sonniger Tag steht bevor. ";
-      else if (countMorning > 0 && morningClouds > 0 && countAfternoon > 0 && afternoonClouds === 0) mainPart += "Nach einem wolkigen Start klart es am Nachmittag auf. ";
-      else mainPart += "Es bleibt den gesamten Tag über trocken und freundlich, teils bewölkt. ";
+    // 1. Übersicht
+    let mainPart = `In den kommenden 24 Stunden liegen die Temperaturen zwischen ${Math.round(minTemp)}°C und ${Math.round(maxTemp)}°C. `;
+    
+    // 2. Kurzfristig (nächste 6h)
+    const timePhase2 = data[6] ? getTimeOfDayName(data[6].time) : "später";
+    const timePhase3 = data[12] ? getTimeOfDayName(data[12].time) : "danach";
+
+    if (precipPhase1 > 0.2) {
+        mainPart += "Aktuell und in den nächsten Stunden ist mit Niederschlag zu rechnen. ";
+        if (rainStop && parseFloat(rainStop.split(':')[0]) < (new Date().getHours() + 6)) {
+            mainPart += `Gegen ${rainStop} Uhr sollte es abklingen. `;
+        }
     } else {
-      if (morningRain > 0.5) mainPart += "Der Vormittag startet nass und ungemütlich. ";
-      else if (countMorning > 0 && morningClouds > (countMorning/2)) mainPart += "Der Vormittag verläuft meist bewölkt, aber weitgehend trocken. ";
-      
-      if (afternoonRain > 1.0) mainPart += `Am Nachmittag intensiviert sich der Regen (${afternoonRain.toFixed(1)} l/m²). `;
-      else if (afternoonRain > 0.1) mainPart += "Nachmittags sind vereinzelte Schauer möglich. ";
-      else if (morningRain > 0 && afternoonRain < 0.1) mainPart += "Zum Nachmittag hin klingen die Schauer ab und es lockert auf. ";
-      
-      if (countEvening > 0 && eveningRain > 0.5) mainPart += "Zum Abend hin zieht erneuter Regen auf. ";
-
-      if (snowSum > 0) mainPart += `Vorsicht: Zeitweise geht der Regen in Schnee über (${snowSum.toFixed(1)} cm). `;
+        if (cloudsPhase1 <= 2) mainPart += "Der Zeitraum beginnt überwiegend freundlich und trocken. ";
+        else mainPart += "Zunächst bleibt es bewölkt, aber meist trocken. ";
     }
 
-    if (windyTime && !warning) {
-      mainPart += `Hinweis: Der Wind frischt ab ${windyTime} Uhr merklich auf (Böen ${Math.round(maxGust)} km/h). `;
+    // 3. Mittelfristig (+6h bis +12h) - Übergang
+    if (precipPhase2 > 0.5) {
+        if (precipPhase1 < 0.2) mainPart += `${timePhase2.charAt(0).toUpperCase() + timePhase2.slice(1)} zieht Regen auf. `; // "Am Abend zieht Regen auf"
+        else mainPart += `Auch ${timePhase2} bleibt es unbeständig. `;
+    } else {
+        if (precipPhase1 > 0.5) mainPart += `${timePhase2.charAt(0).toUpperCase() + timePhase2.slice(1)} beruhigt sich das Wetter und es wird trockener. `;
+        else if (cloudsPhase2 <= 2 && cloudsPhase1 > 3) mainPart += `${timePhase2.charAt(0).toUpperCase() + timePhase2.slice(1)} lockert die Bewölkung auf. `;
     }
 
-    if (maxUV >= 6) mainPart += `Denken Sie tagsüber an Sonnenschutz (UV ${maxUV.toFixed(0)}). `;
+    // 4. Langfristig (+12h bis +24h) - Ausblick
+    if (precipPhase3 > 1.0) {
+        mainPart += `${timePhase3.charAt(0).toUpperCase() + timePhase3.slice(1)} folgt weiterer Niederschlag (${precipPhase3.toFixed(1)} mm).`;
+    } else {
+         mainPart += `${timePhase3.charAt(0).toUpperCase() + timePhase3.slice(1)} bleibt es weitgehend trocken.`;
+    }
 
-    text = `${greeting}! ${mainPart}`;
+    // Zusätze (Wind & Schnee)
+    if (snowSum > 0) mainPart += ` Achtung: Zeitweise fällt Schnee (${snowSum.toFixed(0)}cm).`;
+    if (windyTime && !warning) mainPart += ` Der Wind frischt ab ${windyTime} Uhr merklich auf.`;
+
+    text = mainPart;
   }
   
   if (type === 'model-hourly') {
@@ -489,7 +523,16 @@ const AIReportBox = ({ report }) => {
 
 export default function WeatherApp() {
   const [loading, setLoading] = useState(true);
-  const [currentLoc, setCurrentLoc] = useState(DAUBENRATH_LOC);
+  
+  // State für den gespeicherten Home-Standort
+  const [homeLoc, setHomeLoc] = useState(() => {
+    const saved = getSavedHomeLocation();
+    return saved ? saved : DEFAULT_LOC;
+  });
+
+  // currentLoc startet mit dem aktuellen Home
+  const [currentLoc, setCurrentLoc] = useState(homeLoc);
+  
   const [shortTermData, setShortTermData] = useState(null);
   const [longTermData, setLongTermData] = useState(null);
   const [error, setError] = useState(null);
@@ -500,6 +543,27 @@ export default function WeatherApp() {
   const [showAllHours, setShowAllHours] = useState(false); 
   const [sunriseSunset, setSunriseSunset] = useState({ sunrise: null, sunset: null });
   const [modelRuns, setModelRuns] = useState({ icon: '', gfs: '', arome: '' });
+
+  // NEU: Beim allerersten Laden prüfen, ob wir wirklich einen gespeicherten Ort haben.
+  // Wenn NICHT, versuchen wir automatisch GPS zu nutzen.
+  useEffect(() => {
+    const saved = localStorage.getItem('weather_home_loc');
+    if (!saved) {
+       // Kein gespeicherter Ort vorhanden -> Versuche GPS
+       if (navigator.geolocation) {
+         navigator.geolocation.getCurrentPosition(
+           (pos) => {
+             // GPS erfolgreich! Setze aktuellen Ort, aber speichere noch nicht als Home
+             const gpsLoc = { name: "Mein Standort", lat: pos.coords.latitude, lon: pos.coords.longitude, isHome: false };
+             setCurrentLoc(gpsLoc);
+           },
+           (err) => {
+             console.warn("Auto-GPS nicht möglich, nutze Default", err);
+           }
+         );
+       }
+    }
+  }, []);
 
   useEffect(() => {
     const handler = (e) => { e.preventDefault(); setDeferredPrompt(e); };
@@ -514,8 +578,22 @@ export default function WeatherApp() {
     if (outcome === 'accepted') setDeferredPrompt(null);
   };
 
-  const handleSetHome = () => setCurrentLoc(DAUBENRATH_LOC);
+  // Setze den Ort zurück auf den gespeicherten Home-Standort (oder Default)
+  const handleSetHome = () => setCurrentLoc(homeLoc);
   
+  // Funktion zum Speichern des aktuellen Standorts als "Home"
+  const handleSaveAsHome = () => {
+    const newHome = { 
+        ...currentLoc, 
+        isHome: true, 
+        name: currentLoc.name === 'Mein Standort' ? 'Mein Zuhause' : currentLoc.name 
+    };
+    setHomeLoc(newHome);
+    setCurrentLoc(newHome);
+    localStorage.setItem('weather_home_loc', JSON.stringify(newHome));
+    alert("Neuer Heimatort erfolgreich gespeichert!");
+  };
+
   const handleSetCurrent = () => {
     setLoading(true);
     if (!navigator.geolocation) { setError("Kein GPS"); setLoading(false); return; }
@@ -687,7 +765,7 @@ export default function WeatherApp() {
   const displayedHours = showAllHours ? processedShort : processedShort.slice(0, 12);
 
   if (loading) return <div className="min-h-screen bg-slate-100 flex items-center justify-center"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
-  if (error) return <div className="min-h-screen flex items-center justify-center p-8 bg-red-50 text-red-900 font-bold">{error} <button onClick={() => setCurrentLoc(DAUBENRATH_LOC)} className="ml-4 underline">Reset</button></div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center p-8 bg-red-50 text-red-900 font-bold">{error} <button onClick={() => setCurrentLoc(homeLoc)} className="ml-4 underline">Reset</button></div>;
 
   return (
     <div className={`min-h-screen transition-all duration-1000 bg-gradient-to-br ${bgGradient} font-sans pb-20 overflow-hidden relative`}>
@@ -698,6 +776,11 @@ export default function WeatherApp() {
           <div className="flex gap-2 mb-2">
              <button onClick={handleSetHome} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.isHome ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Home size={14} /> Home</button>
              <button onClick={handleSetCurrent} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${!currentLoc.isHome ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Crosshair size={14} /> GPS</button>
+             {!currentLoc.isHome && (
+                <button onClick={handleSaveAsHome} className="px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition bg-green-500/80 text-white hover:bg-green-600 shadow-md">
+                   <Save size={14} /> Speichern
+                </button>
+             )}
           </div>
           <h1 className="text-3xl font-light mt-2 tracking-tight">{currentLoc.name}</h1>
           <div className="flex items-center gap-2 mt-1 opacity-80 text-xs font-medium"><Clock size={12} /><span>Stand: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} Uhr</span></div>
