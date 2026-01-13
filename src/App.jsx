@@ -16,6 +16,27 @@ const getSavedHomeLocation = () => {
   }
 };
 
+// Hilfsfunktion: Datum strikt als lokale Zeit parsen, um Zeitzonen-Verschiebungen zu vermeiden
+// Verhindert, dass Browser '2024-05-26T10:00' als UTC interpretieren und Stunden addieren/subtrahieren.
+const parseLocalTime = (isoString) => {
+  if (!isoString) return new Date();
+  
+  // Fall A: Nur Datum "YYYY-MM-DD" (für Daily Forecast)
+  // Setzen wir auf 12:00 Mittags, damit es sicher am richtigen Tag bleibt
+  if (isoString.length === 10) {
+    const [y, m, d] = isoString.split('-').map(Number);
+    return new Date(y, m - 1, d, 12, 0, 0);
+  }
+  
+  // Fall B: Datum mit Zeit "YYYY-MM-DDTHH:mm" (für Hourly Forecast)
+  const [datePart, timePart] = isoString.split('T');
+  const [y, m, d] = datePart.split('-').map(Number);
+  const [hr, min] = timePart.split(':').map(Number);
+  
+  // Erstellt ein Datum mit exakt diesen Werten in der lokalen Browser-Zeit
+  return new Date(y, m - 1, d, hr, min);
+};
+
 const styles = `
   @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
   @keyframes float-clouds { 0% { transform: translateX(0px); } 50% { transform: translateX(15px); } 100% { transform: translateX(0px); } }
@@ -160,7 +181,7 @@ const generateAIReport = (type, data) => {
   let text = "";
 
   if (type === 'daily') {
-    // Teile den Tag in Phasen
+    // Teile den Tag in Phasen (Nutzt jetzt die korrekten lokalen Stunden)
     const morning = data.filter(d => d.time.getHours() >= 6 && d.time.getHours() < 12);
     const afternoon = data.filter(d => d.time.getHours() >= 12 && d.time.getHours() < 18);
     const evening = data.filter(d => d.time.getHours() >= 18 && d.time.getHours() < 22);
@@ -185,7 +206,7 @@ const generateAIReport = (type, data) => {
     const feelsLike = Math.round(current.appTemp);
     const tempDiff = feelsLike - Math.round(current.temp);
     
-    let intro = `Aktuell haben wir ${Math.round(current.temp)}°C`;
+    let intro = `Aktuell (${current.displayTime} Uhr) haben wir ${Math.round(current.temp)}°C`;
     if (Math.abs(tempDiff) > 2) intro += `, gefühlt aber eher ${feelsLike}°C (${tempDiff > 0 ? 'wärmer' : 'kühler'} durch ${current.wind} km/h Wind). `;
     else intro += ". ";
 
@@ -242,8 +263,7 @@ const generateAIReport = (type, data) => {
      // Analyse der nächsten 48h
      let totalDiff = 0;
      let driftHour = null;
-     let rainDisagreement = false;
-
+     
      data.forEach(d => {
        if (d.temp_icon !== null && d.temp_gfs !== null) {
          const diff = Math.abs(d.temp_icon - d.temp_gfs);
@@ -260,7 +280,16 @@ const generateAIReport = (type, data) => {
          text += "⚠️ Leichte Unsicherheiten: Die Modelle folgen dem gleichen Trend, sind sich aber bei der genauen Temperaturhöhe oder dem Timing von Wetterfronten noch nicht ganz einig.";
      } else {
          text += "❌ Große Diskrepanz: Die Wettercomputer berechnen völlig unterschiedliche Szenarien. ";
-         if (driftHour) text += `Besonders ab ${driftHour} Uhr gehen die Prognosen auseinander. `;
+         if (driftHour) {
+            // Check if drift is immediate
+            const driftH = parseInt(driftHour.split(':')[0], 10);
+            const currentH = new Date().getHours();
+            if (Math.abs(driftH - currentH) <= 1) {
+                text += "Die Modelle sind sich bereits ab sofort uneinig. ";
+            } else {
+                text += `Besonders ab ${driftHour} Uhr gehen die Prognosen auseinander. `;
+            }
+         }
          text += "Dies deutet auf eine komplexe, schwer vorhersagbare Wetterlage hin (z.B. Gewitterzellen oder unklare Fronten).";
          warning = "UNSICHERE PROGNOSE";
      }
@@ -285,7 +314,6 @@ const generateAIReport = (type, data) => {
     }
     
     const rainDayDiff = slicedData.find(d => {
-        const r1 = parseFloat(d.rain_icon || 0);
         return Math.abs(d.max_icon - d.max_gfs) > 5;
     });
 
@@ -367,7 +395,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset }) => {
   
   const getDecimalHour = (isoString) => {
       if (!isoString) return null;
-      const t = new Date(isoString);
+      // Auch hier sicher parsen
+      const t = parseLocalTime(isoString);
       return t.getHours() + t.getMinutes() / 60;
   };
   
@@ -728,17 +757,30 @@ export default function WeatherApp() {
 
   useEffect(() => { fetchData(); }, [currentLoc]);
 
-  // --- PROCESSING LOGIC --- (vereinfacht für Lesbarkeit, Logik bleibt gleich)
+  // --- PROCESSING LOGIC --- 
   const processedShort = useMemo(() => {
     if (!shortTermData?.hourly) return [];
     const h = shortTermData.hourly;
-    const now = new Date();
+    const now = new Date(); // Browser-Zeit für Vergleich (Vergangenheit ausblenden)
     const res = [];
     const isDayArray = h.is_day_icon_d2 || h.is_day || h.is_day_gfs_seamless;
 
     for (let i = 0; i < h.time.length; i++) {
-      const t = new Date(h.time[i]);
-      if (t < now && i < h.time.length - 1 && new Date(h.time[i+1]) > now) {} else if (t < now) continue;
+      // WICHTIG: parseLocalTime verwenden
+      const t = parseLocalTime(h.time[i]);
+      
+      // Filter: Vergangenheit ausblenden, aber aktuellen Interval behalten
+      // Wir vergleichen das "geparste" Datum mit "now".
+      // Wenn "t" kleiner als "now" ist und der nächste Slot auch in der Vergangenheit, überspringen.
+      // Achtung: Wenn parseLocalTime Zeitzonen korrigiert hat, stimmt der Vergleich mit `now` (Systemzeit) nur, 
+      // wenn System auch in der Zeitzone ist. Für die meisten User passt das.
+      
+      const nextT = i < h.time.length - 1 ? parseLocalTime(h.time[i+1]) : null;
+      if (t < now && nextT && nextT > now) {
+         // Das ist das aktuelle Intervall, behalten
+      } else if (t < now) {
+         continue; 
+      }
 
       const getVal = (key) => h[key]?.[i] ?? h[`${key}_icon_d2`]?.[i] ?? h[`${key}_gfs_seamless`]?.[i] ?? h[`${key}_arome_seamless`]?.[i] ?? 0;
       const temp_icon = h.temperature_2m_icon_d2?.[i] ?? null;
@@ -765,14 +807,15 @@ export default function WeatherApp() {
         uvIndex: getVal('uv_index')
       });
     }
-    return res.slice(0, 48); // Mehr Daten für 48h Chart
+    return res.slice(0, 48);
   }, [shortTermData]);
 
   const processedLong = useMemo(() => {
     if (!longTermData?.daily) return [];
     const d = longTermData.daily;
     return d.time.map((t, i) => {
-      const date = new Date(t);
+      // WICHTIG: parseLocalTime verwenden
+      const date = parseLocalTime(t);
       const maxIcon = d.temperature_2m_max_icon_seamless?.[i] ?? 0;
       const maxGfs = d.temperature_2m_max_gfs_seamless?.[i] ?? 0;
       const maxArome = d.temperature_2m_max_arome_seamless?.[i] ?? null;
