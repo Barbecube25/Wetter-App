@@ -782,15 +782,36 @@ export default function WeatherApp() {
       const t_vals = [temp_icon, temp_gfs, temp_arome, temp_knmi, temp_gem].filter(v => v !== null && v !== undefined);
       const temp = t_vals.length > 0 ? t_vals.reduce((a,b)=>a+b,0) / t_vals.length : 0;
       
+      // Auch bei Regen/Schnee/Wind alle Modelle einbeziehen
+      const getAvg = (key) => {
+         const v1 = h[`${key}_icon_d2`]?.[i];
+         const v2 = h[`${key}_gfs_seamless`]?.[i];
+         const v3 = h[`${key}_arome_seamless`]?.[i];
+         const v4 = h[`${key}_knmi_harmonie_arome_europe`]?.[i];
+         const v5 = h[`${key}_gem_seamless`]?.[i];
+         const vals = [v1, v2, v3, v4, v5].filter(v => v !== undefined && v !== null);
+         return vals.length > 0 ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+      };
+
+      const getMax = (key) => {
+         const v1 = h[`${key}_icon_d2`]?.[i];
+         const v2 = h[`${key}_gfs_seamless`]?.[i];
+         const v3 = h[`${key}_arome_seamless`]?.[i];
+         const v4 = h[`${key}_knmi_harmonie_arome_europe`]?.[i];
+         const v5 = h[`${key}_gem_seamless`]?.[i];
+         const vals = [v1, v2, v3, v4, v5].filter(v => v !== undefined && v !== null);
+         return vals.length > 0 ? Math.max(...vals) : 0;
+      };
+
       res.push({
         time: t,
         displayTime: t.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}),
         temp: temp,
         temp_icon, temp_gfs, temp_arome, temp_knmi, temp_gem,
-        precip: ((h.precipitation_icon_d2?.[i]||0) + (h.precipitation_gfs_seamless?.[i]||0) + (h.precipitation_arome_seamless?.[i]||0)) / 3,
-        snow: Math.max(h.snowfall_icon_d2?.[i]||0, h.snowfall_gfs_seamless?.[i]||0, h.snowfall_arome_seamless?.[i]||0),
-        wind: Math.round(((h.windspeed_10m_icon_d2?.[i]||0) + (h.windspeed_10m_gfs_seamless?.[i]||0) + (h.windspeed_10m_arome_seamless?.[i]||0))/3),
-        gust: Math.max(h.windgusts_10m_icon_d2?.[i]||0, h.windgusts_10m_gfs_seamless?.[i]||0, h.windgusts_10m_arome_seamless?.[i]||0),
+        precip: getAvg('precipitation'),
+        snow: getMax('snowfall'), // Schnee lieber Max nehmen zur Sicherheit
+        wind: Math.round(getAvg('windspeed_10m')),
+        gust: Math.round(getMax('windgusts_10m')), // Böen immer Max Warnung
         dir: h.winddirection_10m_icon_d2?.[i] || 0,
         code: h.weathercode_icon_d2?.[i] || 0,
         isDay: isDayArray?.[i] ?? (t.getHours() >= 6 && t.getHours() <= 21 ? 1 : 0),
@@ -824,10 +845,11 @@ export default function WeatherApp() {
         max: maxVals.length > 0 ? maxVals.reduce((a,b)=>a+b,0)/maxVals.length : maxIcon,
         min: ((d.temperature_2m_min_icon_seamless?.[i]??0) + (d.temperature_2m_min_gfs_seamless?.[i]??0)) / 2,
         max_icon: maxIcon, max_gfs: maxGfs, max_arome: maxArome, max_gem: maxGem,
-        rain: Math.max(d.precipitation_sum_icon_seamless?.[i]||0, d.precipitation_sum_gfs_seamless?.[i]||0).toFixed(1),
-        snow: Math.max(d.snowfall_sum_icon_seamless?.[i]||0, d.snowfall_sum_gfs_seamless?.[i]||0).toFixed(1),
-        wind: Math.round(Math.max(d.windspeed_10m_max_icon_seamless?.[i]||0, d.windspeed_10m_max_gfs_seamless?.[i]||0)),
-        gust: Math.round(Math.max(d.windgusts_10m_max_icon_seamless?.[i]||0, d.windgusts_10m_max_gfs_seamless?.[i]||0)),
+        // Auch hier GEM mit einbeziehen
+        rain: Math.max(d.precipitation_sum_icon_seamless?.[i]||0, d.precipitation_sum_gfs_seamless?.[i]||0, d.precipitation_sum_gem_seamless?.[i]||0).toFixed(1),
+        snow: Math.max(d.snowfall_sum_icon_seamless?.[i]||0, d.snowfall_sum_gfs_seamless?.[i]||0, d.snowfall_sum_gem_seamless?.[i]||0).toFixed(1),
+        wind: Math.round(Math.max(d.windspeed_10m_max_icon_seamless?.[i]||0, d.windspeed_10m_max_gfs_seamless?.[i]||0, d.windspeed_10m_max_gem_seamless?.[i]||0)),
+        gust: Math.round(Math.max(d.windgusts_10m_max_icon_seamless?.[i]||0, d.windgusts_10m_max_gfs_seamless?.[i]||0, d.windgusts_10m_max_gem_seamless?.[i]||0)),
         dir: d.winddirection_10m_dominant_icon_seamless?.[i] || 0,
         code: d.weathercode_icon_seamless?.[i] || 0,
         reliability: Math.round(Math.max(10, 100 - (Math.abs(maxIcon - maxGfs) * 15) - (i * 2))),
