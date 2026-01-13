@@ -3,15 +3,18 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 
-// Service Worker Registrierung für PWA/PlayStore
+// Erweiterte Service Worker Registrierung
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
-        console.log('Service Worker registriert mit Scope:', registration.scope);
+        console.log('SW registriert:', registration.scope);
+        
+        // Check auf Updates beim Start
+        registration.update();
       })
       .catch((error) => {
-        console.error('Service Worker Registrierung fehlgeschlagen:', error);
+        console.error('SW Fehler:', error);
       });
   });
 }
