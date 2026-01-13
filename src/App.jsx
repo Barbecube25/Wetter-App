@@ -607,7 +607,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
       {/* --- BÄUME --- */}
       
       {/* Baum Links - Rand */}
-      <g transform="translate(10, 130) scale(0.8)">
+      <g transform="translate(40, 120)">
         <g className={treeAnim}>
             <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
             <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
@@ -615,25 +615,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
         </g>
       </g>
 
-      {/* Baum Links - Mitte */}
-      <g transform="translate(40, 125) scale(1.1)">
-        <g className={treeAnim} style={{animationDelay: '0.1s'}}>
-            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-            <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
-            <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
-        </g>
-      </g>
-      
       {/* Baum Links - Neben Haus */}
-      <g transform="translate(90, 125) scale(0.7)">
-        <g className={treeAnim} style={{animationDelay: '0.3s'}}>
-            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-            <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
-            <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
-        </g>
-      </g>
-      
-      {/* Baum direkt neben dem Haus - links */}
       <g transform="translate(155, 120) scale(0.9)">
         <g className={treeAnim} style={{animationDelay: '0.2s'}}>
             <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
@@ -641,9 +623,9 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
             <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
         </g>
       </g>
-
+      
       {/* Baumgruppe Rechts */}
-      <g transform="translate(280, 120) scale(1.0)">
+      <g transform="translate(280, 135) scale(0.9)">
         <g className={treeAnim} style={{animationDelay: '0.5s'}}>
             <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
             <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
@@ -652,21 +634,12 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
       </g>
       
       {/* Baum Rechts - Rand */}
-      <g transform="translate(320, 130) scale(0.9)">
+      <g transform="translate(320, 134) scale(0.8)">
         <g className={treeAnim} style={{animationDelay: '0.7s'}}>
             <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
             <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
             <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
         </g>
-      </g>
-      
-       {/* Kleiner Baum / Busch im Vordergrund */}
-       <g transform="translate(230, 140) scale(0.7)">
-         <g className={treeAnim} style={{animationDelay: '1s'}}>
-            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-            <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
-            <circle cx="10" cy="5" r="7" fill={treeLeaf} />
-         </g>
       </g>
 
       {(isPartlyCloudy) && (
