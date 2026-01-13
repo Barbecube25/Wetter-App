@@ -16,24 +16,16 @@ const getSavedHomeLocation = () => {
   }
 };
 
-// Hilfsfunktion: Datum strikt als lokale Zeit parsen, um Zeitzonen-Verschiebungen zu vermeiden
-// Verhindert, dass Browser '2024-05-26T10:00' als UTC interpretieren und Stunden addieren/subtrahieren.
+// Hilfsfunktion: Datum strikt als lokale Zeit parsen
 const parseLocalTime = (isoString) => {
   if (!isoString) return new Date();
-  
-  // Fall A: Nur Datum "YYYY-MM-DD" (für Daily Forecast)
-  // Setzen wir auf 12:00 Mittags, damit es sicher am richtigen Tag bleibt
   if (isoString.length === 10) {
     const [y, m, d] = isoString.split('-').map(Number);
     return new Date(y, m - 1, d, 12, 0, 0);
   }
-  
-  // Fall B: Datum mit Zeit "YYYY-MM-DDTHH:mm" (für Hourly Forecast)
   const [datePart, timePart] = isoString.split('T');
   const [y, m, d] = datePart.split('-').map(Number);
   const [hr, min] = timePart.split(':').map(Number);
-  
-  // Erstellt ein Datum mit exakt diesen Werten in der lokalen Browser-Zeit
   return new Date(y, m - 1, d, hr, min);
 };
 
@@ -266,6 +258,7 @@ const generateAIReport = (type, data) => {
      
      data.forEach(d => {
        if (d.temp_icon !== null && d.temp_gfs !== null) {
+         // Wir vergleichen hier weiter ICON und GFS als Basis, da sie die Extreme darstellen
          const diff = Math.abs(d.temp_icon - d.temp_gfs);
          totalDiff += diff;
          if (diff > 3.0 && !driftHour) driftHour = d.displayTime;
@@ -273,15 +266,14 @@ const generateAIReport = (type, data) => {
      });
      const avgDiff = totalDiff / data.length;
 
-     text = `Analyse der nächsten 48 Stunden:\n`;
+     text = `Analyse der nächsten 48 Stunden (5-Modelle-Check):\n`;
      if (avgDiff < 1.0) {
-         text += "✅ Hohe Einigkeit: ICON (DE), GFS (US) und AROME (FR) rechnen fast identisch. Die Vorhersage ist sehr sicher.";
+         text += "✅ Hohe Einigkeit: Alle 5 Wettermodelle (ICON, GFS, AROME, KNMI, GEM) rechnen fast identisch. Die Vorhersage ist sehr sicher.";
      } else if (avgDiff < 2.5) {
-         text += "⚠️ Leichte Unsicherheiten: Die Modelle folgen dem gleichen Trend, sind sich aber bei der genauen Temperaturhöhe oder dem Timing von Wetterfronten noch nicht ganz einig.";
+         text += "⚠️ Leichte Unsicherheiten: Die Modelle folgen dem gleichen Trend, sind sich aber bei der genauen Temperaturhöhe oder dem Timing noch nicht ganz einig.";
      } else {
-         text += "❌ Große Diskrepanz: Die Wettercomputer berechnen völlig unterschiedliche Szenarien. ";
+         text += "❌ Große Diskrepanz: Die Wettercomputer berechnen unterschiedliche Szenarien. ";
          if (driftHour) {
-            // Check if drift is immediate
             const driftH = parseInt(driftHour.split(':')[0], 10);
             const currentH = new Date().getHours();
             if (Math.abs(driftH - currentH) <= 1) {
@@ -290,7 +282,7 @@ const generateAIReport = (type, data) => {
                 text += `Besonders ab ${driftHour} Uhr gehen die Prognosen auseinander. `;
             }
          }
-         text += "Dies deutet auf eine komplexe, schwer vorhersagbare Wetterlage hin (z.B. Gewitterzellen oder unklare Fronten).";
+         text += "Dies deutet auf eine komplexe Wetterlage hin. Achten Sie auf das Mittel.";
          warning = "UNSICHERE PROGNOSE";
      }
   }
@@ -306,11 +298,11 @@ const generateAIReport = (type, data) => {
     
     text = "Modellvergleich (Kommende 6 Tage):\n";
     if (Math.abs(diff) < 2) {
-        text += "Die Langzeitmodelle sind synchron. Beide erwarten einen ähnlichen Temperaturverlauf.";
+        text += "Die Langzeitmodelle (inkl. GEM Kanada) sind weitgehend synchron.";
     } else if (diff > 0) {
-        text += "Das US-Modell (GFS) ist deutlich optimistischer und rechnet wärmer als das europäische ICON-Modell. Oft liegt die Wahrheit in der Mitte.";
+        text += "Das US-Modell (GFS) rechnet wärmer als das europäische ICON. Das kanadische GEM liegt oft dazwischen.";
     } else {
-        text += "Das europäische ICON-Modell sieht die Woche wärmer, während das US-Modell (GFS) einen kühleren Trend berechnet.";
+        text += "Das europäische ICON-Modell sieht die Woche wärmer, während US-Modell (GFS) und GEM eher kühler rechnen.";
     }
     
     const rainDayDiff = slicedData.find(d => {
@@ -318,7 +310,7 @@ const generateAIReport = (type, data) => {
     });
 
     if (rainDayDiff) {
-        text += `\nBesonders am ${rainDayDiff.dayName} herrscht große Uneinigkeit (>5°C Differenz). Hier ist die Vorhersage noch spekulativ.`;
+        text += `\nBesonders am ${rainDayDiff.dayName} herrscht große Uneinigkeit (>5°C Differenz).`;
     }
   }
 
@@ -730,9 +722,10 @@ export default function WeatherApp() {
     setDwdWarnings([]);
     try {
       const { lat, lon } = currentLoc;
-      const modelsShort = "icon_d2,gfs_seamless,arome_seamless";
+      // HINZUFÜGEN von KNMI (Niederlande, super für NRW) und GEM (Kanada, globaler Check)
+      const modelsShort = "icon_d2,gfs_seamless,arome_seamless,knmi_harmonie_arome_europe,gem_seamless";
       const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index&models=${modelsShort}&timezone=Europe%2FBerlin&forecast_days=2`;
-      const modelsLong = "icon_seamless,gfs_seamless,arome_seamless";
+      const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; // KNMI oft nur 48h
       const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max,sunrise,sunset&models=${modelsLong}&timezone=Europe%2FBerlin&forecast_days=8`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
 
@@ -769,12 +762,6 @@ export default function WeatherApp() {
       // WICHTIG: parseLocalTime verwenden
       const t = parseLocalTime(h.time[i]);
       
-      // Filter: Vergangenheit ausblenden, aber aktuellen Interval behalten
-      // Wir vergleichen das "geparste" Datum mit "now".
-      // Wenn "t" kleiner als "now" ist und der nächste Slot auch in der Vergangenheit, überspringen.
-      // Achtung: Wenn parseLocalTime Zeitzonen korrigiert hat, stimmt der Vergleich mit `now` (Systemzeit) nur, 
-      // wenn System auch in der Zeitzone ist. Für die meisten User passt das.
-      
       const nextT = i < h.time.length - 1 ? parseLocalTime(h.time[i+1]) : null;
       if (t < now && nextT && nextT > now) {
          // Das ist das aktuelle Intervall, behalten
@@ -783,17 +770,23 @@ export default function WeatherApp() {
       }
 
       const getVal = (key) => h[key]?.[i] ?? h[`${key}_icon_d2`]?.[i] ?? h[`${key}_gfs_seamless`]?.[i] ?? h[`${key}_arome_seamless`]?.[i] ?? 0;
+      
+      // Neue Modelle auslesen (wenn vorhanden)
       const temp_icon = h.temperature_2m_icon_d2?.[i] ?? null;
       const temp_gfs = h.temperature_2m_gfs_seamless?.[i] ?? null;
       const temp_arome = h.temperature_2m_arome_seamless?.[i] ?? null;
-      const t_vals = [temp_icon, temp_gfs, temp_arome].filter(v => v !== null);
+      const temp_knmi = h.temperature_2m_knmi_harmonie_arome_europe?.[i] ?? null;
+      const temp_gem = h.temperature_2m_gem_seamless?.[i] ?? null;
+      
+      // Mittelwert jetzt aus 5 Modellen (wo verfügbar)
+      const t_vals = [temp_icon, temp_gfs, temp_arome, temp_knmi, temp_gem].filter(v => v !== null && v !== undefined);
       const temp = t_vals.length > 0 ? t_vals.reduce((a,b)=>a+b,0) / t_vals.length : 0;
       
       res.push({
         time: t,
         displayTime: t.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}),
         temp: temp,
-        temp_icon, temp_gfs, temp_arome,
+        temp_icon, temp_gfs, temp_arome, temp_knmi, temp_gem,
         precip: ((h.precipitation_icon_d2?.[i]||0) + (h.precipitation_gfs_seamless?.[i]||0) + (h.precipitation_arome_seamless?.[i]||0)) / 3,
         snow: Math.max(h.snowfall_icon_d2?.[i]||0, h.snowfall_gfs_seamless?.[i]||0, h.snowfall_arome_seamless?.[i]||0),
         wind: Math.round(((h.windspeed_10m_icon_d2?.[i]||0) + (h.windspeed_10m_gfs_seamless?.[i]||0) + (h.windspeed_10m_arome_seamless?.[i]||0))/3),
@@ -819,13 +812,18 @@ export default function WeatherApp() {
       const maxIcon = d.temperature_2m_max_icon_seamless?.[i] ?? 0;
       const maxGfs = d.temperature_2m_max_gfs_seamless?.[i] ?? 0;
       const maxArome = d.temperature_2m_max_arome_seamless?.[i] ?? null;
+      const maxGem = d.temperature_2m_max_gem_seamless?.[i] ?? null;
+      
+      // Mittelwert robuster
+      const maxVals = [maxIcon, maxGfs, maxGem].filter(v => v !== null && v !== undefined);
+      
       return {
         date,
         dayName: new Intl.DateTimeFormat('de-DE', { weekday: 'short' }).format(date),
         dateShort: formatDateShort(date),
-        max: (maxIcon + maxGfs) / 2,
+        max: maxVals.length > 0 ? maxVals.reduce((a,b)=>a+b,0)/maxVals.length : maxIcon,
         min: ((d.temperature_2m_min_icon_seamless?.[i]??0) + (d.temperature_2m_min_gfs_seamless?.[i]??0)) / 2,
-        max_icon: maxIcon, max_gfs: maxGfs, max_arome: maxArome,
+        max_icon: maxIcon, max_gfs: maxGfs, max_arome: maxArome, max_gem: maxGem,
         rain: Math.max(d.precipitation_sum_icon_seamless?.[i]||0, d.precipitation_sum_gfs_seamless?.[i]||0).toFixed(1),
         snow: Math.max(d.snowfall_sum_icon_seamless?.[i]||0, d.snowfall_sum_gfs_seamless?.[i]||0).toFixed(1),
         wind: Math.round(Math.max(d.windspeed_10m_max_icon_seamless?.[i]||0, d.windspeed_10m_max_gfs_seamless?.[i]||0)),
@@ -971,7 +969,9 @@ export default function WeatherApp() {
                           <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={2} dot={false} name="ICON" />
                           <Line type="monotone" dataKey="temp_gfs" stroke="#d8b4fe" strokeWidth={2} dot={false} name="GFS" />
                           <Line type="monotone" dataKey="temp_arome" stroke="#86efac" strokeWidth={2} dot={false} name="AROME" />
-                          <Line type="monotone" dataKey="temp" stroke="#2563eb" strokeWidth={4} dot={{r:0}} name="Mittel" />
+                          {/* KNMI ist besonders wichtig, daher in markantem Orange */}
+                          <Line type="monotone" dataKey="temp_knmi" stroke="#fb923c" strokeWidth={2} dot={false} name="KNMI (NL)" />
+                          <Line type="monotone" dataKey="temp" stroke="#2563eb" strokeWidth={4} dot={{r:0}} name="Mittel (5)" />
                         </LineChart>
                       ) : (
                         <LineChart data={processedLong.slice(0, 6)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -981,13 +981,29 @@ export default function WeatherApp() {
                           <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} />
                           <Line type="monotone" dataKey="max_icon" stroke="#93c5fd" strokeWidth={3} dot={{r:3}} name="ICON Max" />
                           <Line type="monotone" dataKey="max_gfs" stroke="#d8b4fe" strokeWidth={3} dot={{r:3}} name="GFS Max" />
+                          <Line type="monotone" dataKey="max_gem" stroke="#fca5a5" strokeWidth={3} dot={{r:3}} name="GEM Max" />
                           <Line type="monotone" dataKey="max_arome" stroke="#86efac" strokeWidth={3} dot={{r:3}} name="AROME Max" connectNulls={false} />
                         </LineChart>
                       )}
                   </ResponsiveContainer>
                </div>
                <div className="flex justify-center gap-4 mt-6 text-xs font-medium opacity-80 flex-wrap">
-                  {chartView === 'hourly' ? (<><span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span><span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span><span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span><span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div> Ø</span></>) : (<><span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span><span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span><span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span></>)}
+                  {chartView === 'hourly' ? (
+                    <>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400"></div> KNMI</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div> Ø</span>
+                    </>
+                  ) : (
+                    <>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-300"></div> GEM</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
+                    </>
+                  )}
                </div>
             </div>
           )}
