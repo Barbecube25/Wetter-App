@@ -33,31 +33,56 @@ const styles = `
   @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
   @keyframes float-clouds { 0% { transform: translateX(0px); } 50% { transform: translateX(15px); } 100% { transform: translateX(0px); } }
   @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  @keyframes rain-drop { 0% { transform: translateY(-20px) scaleY(1); opacity: 0; } 20% { opacity: 0.8; } 100% { transform: translateY(180px) scaleY(1.2); opacity: 0; } }
+  
+  /* --- NIEDERSCHLAG & WIND --- */
+  @keyframes rain-drop { 
+    0% { transform: translateY(-20px) scaleY(1); opacity: 0; } 
+    20% { opacity: 0.8; } 
+    90% { opacity: 0.8; transform: translateY(140px) scaleY(1); }
+    100% { transform: translateY(150px) scaleY(0.5) scaleX(1.5); opacity: 0; } /* Splash effect simulation */
+  }
   
   @keyframes snow-fall-slow { 
-    0% { transform: translateY(-20px) translateX(-5px); opacity: 0; } 
+    0% { transform: translateY(-20px) translateX(-5px) rotate(0deg); opacity: 0; } 
     10% { opacity: 0.9; } 
-    50% { transform: translateY(80px) translateX(5px); }
-    100% { transform: translateY(180px) translateX(-10px); opacity: 0; } 
+    50% { transform: translateY(80px) translateX(5px) rotate(180deg); }
+    100% { transform: translateY(160px) translateX(-10px) rotate(360deg); opacity: 0; } 
   }
   
   @keyframes snow-fall-fast { 
     0% { transform: translateY(-20px) translateX(0px); opacity: 0; } 
     10% { opacity: 0.8; } 
-    100% { transform: translateY(180px) translateX(10px); opacity: 0; } 
+    100% { transform: translateY(180px) translateX(20px); opacity: 0; } 
   }
 
+  /* --- NEBEL & ATMOSPHÄRE --- */
   @keyframes fog-flow { 
     0% { transform: translateX(-5%); opacity: 0.3; } 
     50% { opacity: 0.6; transform: translateX(5%); } 
     100% { transform: translateX(-5%); opacity: 0.3; } 
   }
 
+  @keyframes heat-shimmer {
+    0% { opacity: 0.3; transform: scaleY(1) skewX(0deg); }
+    50% { opacity: 0.5; transform: scaleY(1.05) skewX(2deg); }
+    100% { opacity: 0.3; transform: scaleY(1) skewX(0deg); }
+  }
+
+  @keyframes ice-sparkle {
+    0%, 100% { opacity: 0; transform: scale(0.5); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+
+  /* --- BÄUME & STURM --- */
+  @keyframes tree-shake-gentle { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(1deg); } }
+  @keyframes tree-shake-windy { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(4deg); } }
+  @keyframes tree-shake-storm { 0%, 100% { transform: rotate(-5deg); } 20% { transform: rotate(10deg); } 40% { transform: rotate(-8deg); } 60% { transform: rotate(5deg); } }
+
+  /* --- SONSTIGES --- */
   @keyframes ray-pulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
   @keyframes twinkle { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
   @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-  @keyframes lightning-flash { 0%, 90%, 100% { opacity: 0; } 92%, 96% { opacity: 1; } }
+  @keyframes lightning-flash { 0%, 92%, 100% { opacity: 0; } 93%, 95% { opacity: 1; background: white; } }
   @keyframes sunrise-glow { 0% { opacity: 0.4; } 50% { opacity: 0.8; } 100% { opacity: 0.4; } }
   
   .animate-float { animation: float 6s ease-in-out infinite; }
@@ -65,8 +90,9 @@ const styles = `
   .animate-spin-slow { animation: spin-slow 12s linear infinite; }
   
   .animate-rain-1 { animation: rain-drop 0.8s infinite linear; animation-delay: 0.1s; }
-  .animate-rain-2 { animation: rain-drop 0.9s infinite linear; animation-delay: 0.3s; }
-  .animate-rain-3 { animation: rain-drop 0.7s infinite linear; animation-delay: 0.5s; }
+  .animate-rain-2 { animation: rain-drop 0.7s infinite linear; animation-delay: 0.3s; }
+  .animate-rain-3 { animation: rain-drop 0.6s infinite linear; animation-delay: 0.5s; }
+  .animate-rain-storm { animation: rain-drop 0.4s infinite linear; }
   
   .animate-snow-slow { animation: snow-fall-slow 6s infinite linear; }
   .animate-snow-fast { animation: snow-fall-fast 3.5s infinite linear; }
@@ -81,6 +107,13 @@ const styles = `
   .animate-pulse-red { animation: pulse-red 2s infinite ease-in-out; }
   .anim-lightning { animation: lightning-flash 5s infinite; }
   .anim-glow { animation: sunrise-glow 4s ease-in-out infinite; }
+  
+  .anim-tree-gentle { animation: tree-shake-gentle 4s ease-in-out infinite; transform-origin: bottom center; }
+  .anim-tree-windy { animation: tree-shake-windy 1s ease-in-out infinite; transform-origin: bottom center; }
+  .anim-tree-storm { animation: tree-shake-storm 0.8s ease-in-out infinite; transform-origin: bottom center; }
+  
+  .anim-heat { animation: heat-shimmer 2s infinite linear; }
+  .anim-sparkle { animation: ice-sparkle 3s infinite ease-in-out; }
 `;
 
 // --- 2. HILFSFUNKTIONEN ---
@@ -151,6 +184,7 @@ const getWeatherConfig = (code, isDay = 1) => {
   if ([80, 81].includes(code)) return { text: 'Regenschauer', icon: CloudRain };
   if ([65, 82].includes(code)) return { text: 'Starkregen', icon: CloudRain };
   if ([71, 73, 75, 77, 85, 86].includes(code)) return { text: 'Schnee', icon: Snowflake };
+  if ([56, 57, 66, 67].includes(code)) return { text: 'Schneeregen/Eis', icon: Snowflake };
   if ([95, 96, 99].includes(code)) return { text: 'Gewitter', icon: CloudLightning };
   return { text: 'Unbekannt', icon: Info };
 };
@@ -182,8 +216,6 @@ const generateAIReport = (type, data) => {
     );
 
     // 2. PHASE: Kommende Nacht (ca. 22:00 heute bis 06:00 morgen)
-    // Wir nehmen einfach die Datenpunkte, die in diesem Zeitraum liegen
-    // Dafür brauchen wir morgen früh
     const tomorrowDate = new Date(now);
     tomorrowDate.setDate(tomorrowDate.getDate() + 1);
     
@@ -208,7 +240,7 @@ const generateAIReport = (type, data) => {
     
     let parts = [intro];
 
-    // TEIL A: HEUTE (Nur wenn noch relevante Stunden übrig sind)
+    // TEIL A: HEUTE
     if (todayData.length > 0) {
         let todayText = "";
         const maxToday = Math.max(...todayData.map(d => d.temp));
@@ -237,7 +269,7 @@ const generateAIReport = (type, data) => {
         if (todayText) parts.push(todayText);
     }
 
-    // TEIL B: DIE NACHT (Kurz & Knapp)
+    // TEIL B: DIE NACHT
     if (nightData.length > 0) {
         const minNight = Math.min(...nightData.map(d => d.temp));
         const rainNight = nightData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
@@ -253,15 +285,13 @@ const generateAIReport = (type, data) => {
         parts.push(nightText);
     }
 
-    // TEIL C: MORGEN (Ausführlich & Konstant)
+    // TEIL C: MORGEN
     if (tomorrowDayData.length > 0) {
         const tMax = Math.max(...tomorrowDayData.map(d => d.temp));
         const tMin = Math.min(...tomorrowDayData.map(d => d.temp)); // Tagsüber Min
         const tRain = tomorrowDayData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
-        const tWind = Math.max(...tomorrowDayData.map(d => d.wind));
         const tGust = Math.max(...tomorrowDayData.map(d => d.gust));
         
-        // Vormittag vs Nachmittag Check für Tomorrow
         const tMorning = tomorrowDayData.filter(d => d.time.getHours() < 12);
         const tAfternoon = tomorrowDayData.filter(d => d.time.getHours() >= 12);
         
@@ -278,7 +308,6 @@ const generateAIReport = (type, data) => {
         } else if (tRain > 0.1) {
             tomorrowText += "Vereinzelt sind kurze Schauer möglich, meist bleibt es aber trocken.";
         } else {
-            // Check Cloud cover rough estimate by code
             const avgCode = tomorrowDayData.reduce((a,b)=>a+b.code,0) / tomorrowDayData.length;
             if (avgCode <= 2) tomorrowText += "Es wird ein schöner, sonniger Tag.";
             else tomorrowText += "Es bleibt meist wolkig oder bedeckt.";
@@ -306,7 +335,6 @@ const generateAIReport = (type, data) => {
      
      data.forEach(d => {
        if (d.temp_icon !== null && d.temp_gfs !== null) {
-         // Wir vergleichen hier weiter ICON und GFS als Basis, da sie die Extreme darstellen
          const diff = Math.abs(d.temp_icon - d.temp_gfs);
          totalDiff += diff;
          if (diff > 3.0 && !driftHour) driftHour = d.displayTime;
@@ -322,13 +350,7 @@ const generateAIReport = (type, data) => {
      } else {
          text += "❌ Große Diskrepanz: Die Wettercomputer berechnen unterschiedliche Szenarien. ";
          if (driftHour) {
-            const driftH = parseInt(driftHour.split(':')[0], 10);
-            const currentH = new Date().getHours();
-            if (Math.abs(driftH - currentH) <= 1) {
-                text += "Die Modelle sind sich bereits ab sofort uneinig. ";
-            } else {
-                text += `Besonders ab ${driftHour} Uhr gehen die Prognosen auseinander. `;
-            }
+            text += `Besonders ab ${driftHour} Uhr gehen die Prognosen auseinander. `;
          }
          text += "Dies deutet auf eine komplexe Wetterlage hin. Achten Sie auf das Mittel.";
          warning = "UNSICHERE PROGNOSE";
@@ -336,12 +358,9 @@ const generateAIReport = (type, data) => {
   }
 
   if (type === 'model-daily') {
-    // Reduziert auf 6 Tage
     const slicedData = data.slice(0, 6); 
-    const totalDiff = slicedData.reduce((acc, d) => acc + Math.abs(d.max_icon - d.max_gfs), 0) / slicedData.length;
     const gfsTotal = slicedData.reduce((acc, d) => acc + d.max_gfs, 0);
     const iconTotal = slicedData.reduce((acc, d) => acc + d.max_icon, 0);
-    
     const diff = gfsTotal - iconTotal;
     
     text = "Modellvergleich (Kommende 6 Tage):\n";
@@ -363,34 +382,28 @@ const generateAIReport = (type, data) => {
   }
 
   if (type === 'longterm') {
-    // 7 Tage Analyse (ohne Heute)
     const analysisData = data.slice(1);
     if (analysisData.length < 2) return { text: "Lade Trend...", warning: null };
     
-    // Statistiken
     const maxTempDay = analysisData.reduce((p, c) => (p.max > c.max) ? p : c);
     const minTempDay = analysisData.reduce((p, c) => (p.max < c.max) ? p : c);
     const rainyDays = analysisData.filter(d => parseFloat(d.rain) > 1.0);
     const sunDays = analysisData.filter(d => parseFloat(d.rain) < 0.2 && d.code <= 2);
     
-    // Berechne durchschnittliche Sicherheit und Minimum
     const avgReliability = Math.round(analysisData.reduce((a, b) => a + b.reliability, 0) / analysisData.length);
     const minRel = Math.min(...analysisData.map(d => d.reliability));
 
     let story = "";
 
-    // 1. Trendlinie
     const startTemp = analysisData[0].max;
     const endTemp = analysisData[analysisData.length-1].max;
     if (endTemp > startTemp + 4) story = "Der Trend zeigt steil nach oben: Es wird spürbar wärmer in der Woche. ";
     else if (endTemp < startTemp - 4) story = "Stellen Sie sich auf Abkühlung ein: Die Temperaturen gehen im Wochenverlauf deutlich zurück. ";
     else story = "Die Temperaturen pendeln sich auf dem aktuellen Niveau ein. ";
 
-    // 2. Highlights & Lowlights
     if (sunDays.length >= 3) story += `Freuen Sie sich auf schöne Tage, besonders am ${sunDays[0].dayName} wird es freundlich. `;
     else if (sunDays.length === 0 && rainyDays.length > 4) story += "Es bleibt leider eine graue, nasse Woche fast ohne Sonnenschein. ";
     
-    // 3. Wochenende Check
     const weekend = analysisData.filter(d => d.dayName === 'Sa.' || d.dayName === 'So.');
     if (weekend.length > 0) {
         const weRain = weekend.reduce((s, d) => s + parseFloat(d.rain), 0);
@@ -400,7 +413,6 @@ const generateAIReport = (type, data) => {
         else story += `\nDas Wochenende wird durchwachsen bei ${weTemp}°C.`;
     }
 
-    // 4. Prognosesicherheit im Text
     let safetyText = `\n\nTrend-Check: Die Vorhersage ist im Schnitt zu ${avgReliability}% sicher. `;
     if (minRel < 50) {
         const shakyDay = analysisData.find(d => d.reliability === minRel);
@@ -421,21 +433,53 @@ const generateAIReport = (type, data) => {
 
 // --- 4. KOMPONENTEN ---
 
-const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset }) => {
+const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed }) => {
   const isNight = isDay === 0;
-  const isSnow = [71, 73, 75, 77, 85, 86].includes(code);
-  const isRain = [51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99].includes(code);
-  const isStorm = [95, 96, 99].includes(code);
-  const isFog = [45, 48].includes(code);
-  const isCloudy = [2, 3, 45, 48].includes(code) || isRain || isSnow || isFog;
-  const isOvercast = [3, 45, 48].includes(code) || (isRain && code > 60) || isSnow || isFog; 
   
+  // --- WETTERZUSTÄNDE ERWEITERT ---
+  
+  // 1. Grundzustand
+  const isClear = code === 0 || code === 1;
+  const isPartlyCloudy = code === 2;
+  const isOvercast = code === 3 || code === 45 || code === 48; // Nebel zählt hier zu grau
+  
+  // 2. Niederschlag
+  // Regen: 51-55 (leicht), 61-65 (Regen), 80-82 (Schauer)
+  const isLightRain = [51, 53, 55, 61, 80].includes(code);
+  const isHeavyRain = [63, 65, 81, 82].includes(code) || (code >= 95); // Gewitter oft mit Starkregen
+  const isRain = isLightRain || isHeavyRain;
+
+  // Schnee: 71 (leicht), 73 (mäßig), 75 (stark), 77 (rieseln), 85 (Schauer leicht), 86 (Schauer stark)
+  const isLightSnow = [71, 77, 85].includes(code);
+  const isHeavySnow = [73, 75, 86].includes(code);
+  const isSnow = isLightSnow || isHeavySnow;
+
+  // Schneeregen / Eisregen
+  // 56, 57 (gefrierender Niesel), 66, 67 (gefrierender Regen)
+  // Oft gemischte Codes oder spezifische "Sleet" codes je nach API mapping (OpenMeteo nutzt WMO Code 4501 Code table)
+  // Wir nehmen die Standard WMO
+  const isSleet = [56, 57, 66, 67].includes(code);
+  
+  // Gewitter
+  const isStorm = [95, 96, 99].includes(code);
+  
+  // Nebel
+  const isFog = [45, 48].includes(code);
+
+  // 3. Extreme & Temperatur
+  const isExtremeHeat = temp >= 30; // Hitzeflimmern
+  const isDeepFreeze = temp <= -5; // Eisiger Glanz
+  const isFreezing = temp <= 0; // Glatteis-Gefahr (visuell glänzender Boden)
+  
+  // 4. Wind
+  const isWindy = windSpeed >= 30;
+  const isStormyWind = windSpeed >= 60; // Orkanartig
+
   const d = date ? new Date(date) : new Date();
   const currentHour = d.getHours() + d.getMinutes() / 60;
   
   const getDecimalHour = (isoString) => {
       if (!isoString) return null;
-      // Auch hier sicher parsen
       const t = parseLocalTime(isoString);
       return t.getHours() + t.getMinutes() / 60;
   };
@@ -469,11 +513,20 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset }) => {
 
   const moonPhase = date ? getMoonPhase(date) : 0;
   
-  const groundColor = isSnow ? "#e2e8f0" : (isNight ? "#1e293b" : "#4ade80"); 
-  const mountainColor = isSnow ? "#f1f5f9" : (isNight ? "#334155" : "#64748b"); 
+  // Farben anpassen je nach Eis/Schnee
+  const groundColor = (isSnow || isDeepFreeze) ? "#e2e8f0" : (isNight ? "#1e293b" : "#4ade80"); 
+  const mountainColor = (isSnow || isDeepFreeze) ? "#f1f5f9" : (isNight ? "#334155" : "#64748b"); 
   const treeTrunk = isNight ? "#3f2e22" : "#78350f";
-  const treeLeaf = isSnow ? "#f8fafc" : (isNight ? "#14532d" : "#16a34a");
+  const treeLeaf = (isSnow || isDeepFreeze) ? "#f8fafc" : (isNight ? "#14532d" : "#16a34a");
   
+  // Baum Animation basierend auf Wind
+  let treeAnim = "anim-tree-gentle";
+  if (isStormyWind) treeAnim = "anim-tree-storm";
+  else if (isWindy) treeAnim = "anim-tree-windy";
+
+  // Regenwinkel bei Sturm
+  const rainRotation = isStormyWind ? "rotate(20deg)" : "rotate(0deg)";
+
   return (
     <svg viewBox="0 0 360 160" className="w-full h-full overflow-hidden" preserveAspectRatio="xMidYMax slice">
       <defs>
@@ -487,16 +540,26 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset }) => {
         </linearGradient>
         <linearGradient id="fogGradient" x1="0" x2="1" y1="0" y2="0">
            <stop offset="0%" stopColor="white" stopOpacity="0.1" />
-           <stop offset="20%" stopColor="white" stopOpacity="0.4" />
-           <stop offset="80%" stopColor="white" stopOpacity="0.4" />
+           <stop offset="20%" stopColor="white" stopOpacity="0.5" />
+           <stop offset="80%" stopColor="white" stopOpacity="0.5" />
            <stop offset="100%" stopColor="white" stopOpacity="0.1" />
         </linearGradient>
+         <filter id="iceGlow">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
+            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 1  0 0 0 18 -7" result="glow" />
+            <feMerge>
+                <feMergeNode in="SourceGraphic" />
+                <feMergeNode in="glow" />
+            </feMerge>
+        </filter>
       </defs>
 
+      {/* --- HIMMEL / ATMOSPHÄRE --- */}
       {isDawn && <rect x="-100" y="0" width="600" height="160" fill="url(#dawnGradient)" opacity="0.3" className="anim-glow" />}
       {isDusk && <rect x="-100" y="0" width="600" height="160" fill="url(#duskGradient)" opacity="0.3" className="anim-glow" />}
 
-      {celestialType === 'sun' && (
+      {/* --- SONNE / MOND --- */}
+      {celestialType === 'sun' && !isOvercast && (
         <g transform={`translate(${celestialX}, ${celestialY})`}>
           <circle r="14" fill="#fbbf24" className="animate-ray" />
           <g className="animate-spin-slow">
@@ -507,14 +570,15 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset }) => {
         </g>
       )}
 
-      {celestialType === 'moon' && (
+      {celestialType === 'moon' && !isOvercast && (
         <g transform={`translate(${celestialX}, ${celestialY})`}>
            <circle r="12" fill="white" opacity="0.9" />
            {moonPhase !== 4 && <circle r="12" fill="black" opacity="0.5" transform={`translate(${moonPhase < 4 ? -6 : 6}, 0)`} />}
         </g>
       )}
       
-      {isNight && !isOvercast && (
+      {/* Sterne nur bei klarem Nachthimmel */}
+      {isNight && isClear && (
          <g>
             <circle cx="50" cy="30" r="1" fill="white" className="animate-twinkle-1" style={{animationDelay: '0s'}} />
             <circle cx="300" cy="40" r="1.5" fill="white" className="animate-twinkle-2" style={{animationDelay: '1s'}} />
@@ -524,56 +588,100 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset }) => {
          </g>
       )}
 
+      {/* --- LANDSCHAFT --- */}
       <path d="M-50 160 L120 40 L280 160 Z" fill={mountainColor} />
       <path d="M200 160 L320 70 L460 160 Z" fill={mountainColor} opacity="0.8" />
-      {isSnow && <path d="M120 40 L150 70 L90 70 Z" fill="white" />} 
-      {isSnow && <path d="M320 70 L340 90 L300 90 Z" fill="white" />}
+      {/* Schneekappen auf Bergen */}
+      {(isSnow || isDeepFreeze || isSleet) && <path d="M120 40 L150 70 L90 70 Z" fill="white" />} 
+      {(isSnow || isDeepFreeze || isSleet) && <path d="M320 70 L340 90 L300 90 Z" fill="white" />}
 
+      {/* Boden */}
       <path d="M-50 140 Q 180 120 460 140 V 170 H -50 Z" fill={groundColor} />
+      
+      {/* Glatteis / Eis-Effekt am Boden */}
+      {(isSleet || (isRain && isFreezing) || isDeepFreeze) && (
+        <path d="M-50 142 Q 180 122 460 142 V 170 H -50 Z" fill="#bae6fd" opacity="0.4" />
+      )}
+      {/* Glitzern bei Eis */}
+      {(isDeepFreeze || (isRain && isFreezing)) && (
+          <g>
+             <circle cx="100" cy="140" r="2" fill="white" className="anim-sparkle" />
+             <circle cx="250" cy="150" r="1.5" fill="white" className="anim-sparkle" style={{animationDelay: '1s'}} />
+             <circle cx="180" cy="145" r="2" fill="white" className="anim-sparkle" style={{animationDelay: '2s'}} />
+          </g>
+      )}
 
-      <g transform="translate(40, 130)">
+      {/* Bäume mit Wind-Animation */}
+      <g transform="translate(40, 130)" className={treeAnim}>
          <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
          <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
          <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
       </g>
-      <g transform="translate(280, 125) scale(0.9)">
+      <g transform="translate(280, 125) scale(0.9)" className={treeAnim} style={{animationDelay: '0.5s'}}>
          <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
          <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
          <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
       </g>
-       <g transform="translate(240, 135) scale(0.7)">
+       <g transform="translate(240, 135) scale(0.7)" className={treeAnim} style={{animationDelay: '1s'}}>
          <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
          <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
       </g>
 
-      {(isCloudy || isOvercast) && (
+      {/* --- WOLKEN --- */}
+      {/* Leicht bewölkt */}
+      {(isPartlyCloudy) && (
         <g className="anim-clouds">
-           <path d="M40 50 Q 55 35 70 50 T 100 50 T 120 60 H 40 Z" fill="white" fillOpacity={isOvercast ? 0.7 : 0.5} transform="translate(0,0)" />
-           <path d="M240 40 Q 255 25 270 40 T 300 40 T 320 50 H 240 Z" fill="white" fillOpacity={isOvercast ? 0.7 : 0.5} transform="translate(20,10)" />
-           <path d="M140 30 Q 155 15 170 30 T 200 30 T 220 40 H 140 Z" fill="white" fillOpacity={isOvercast ? 0.7 : 0.5} transform="translate(-10,5)" />
-           {isOvercast && <rect x="-50" y="0" width="460" height="160" fill="black" opacity="0.15" />}
+           <path d="M240 40 Q 255 25 270 40 T 300 40 T 320 50 H 240 Z" fill="white" fillOpacity="0.8" transform="translate(20,10)" />
+           <path d="M140 30 Q 155 15 170 30 T 200 30 T 220 40 H 140 Z" fill="white" fillOpacity="0.6" transform="translate(-10,5)" />
         </g>
       )}
 
+      {/* Stark bewölkt / Bedeckt / Regenwolken */}
+      {(isOvercast || isRain || isSnow || isStorm || isSleet) && (
+        <g className="anim-clouds">
+           <path d="M40 50 Q 55 35 70 50 T 100 50 T 120 60 H 40 Z" fill={isStorm ? "#475569" : "white"} fillOpacity={isOvercast ? 0.9 : 0.7} transform="translate(0,0)" />
+           <path d="M240 40 Q 255 25 270 40 T 300 40 T 320 50 H 240 Z" fill={isStorm ? "#334155" : "white"} fillOpacity={isOvercast ? 0.9 : 0.7} transform="translate(20,10)" />
+           <path d="M140 30 Q 155 15 170 30 T 200 30 T 220 40 H 140 Z" fill={isStorm ? "#475569" : "white"} fillOpacity={isOvercast ? 0.9 : 0.7} transform="translate(-10,5)" />
+           
+           {/* Dunkler Overlay bei Gewitter/Starkregen */}
+           {(isStorm || isHeavyRain) && <rect x="-50" y="0" width="460" height="160" fill="black" opacity="0.3" />}
+        </g>
+      )}
+
+      {/* --- PHÄNOMENE --- */}
+
+      {/* Nebel */}
       {isFog && (
          <g>
-            <rect x="-50" y="80" width="500" height="40" fill="url(#fogGradient)" className="anim-fog-1" opacity="0.5" />
-            <rect x="-50" y="100" width="500" height="50" fill="url(#fogGradient)" className="anim-fog-2" opacity="0.4" />
+            <rect x="-50" y="80" width="500" height="40" fill="url(#fogGradient)" className="anim-fog-1" opacity="0.6" />
+            <rect x="-50" y="100" width="500" height="50" fill="url(#fogGradient)" className="anim-fog-2" opacity="0.5" />
          </g>
       )}
 
-      {isRain && (
-         <g fill="#93c5fd" opacity="0.7">
-            {[...Array(30)].map((_, i) => (
-               <rect key={i} x={Math.random() * 360} y="40" width="1.5" height="12" className={`animate-rain-${i%3 === 0 ? '1' : i%3 === 1 ? '2' : '3'}`} style={{animationDelay: `${Math.random()}s`}} />
+      {/* Hitzeflimmern */}
+      {isExtremeHeat && (
+          <g className="anim-heat">
+             <rect x="-50" y="80" width="500" height="80" fill="orange" opacity="0.1" style={{mixBlendMode: 'overlay'}} />
+          </g>
+      )}
+
+      {/* Regen / Schneeregen */}
+      {(isRain || isSleet) && (
+         <g fill={isSleet ? "#cbd5e1" : "#93c5fd"} opacity={0.8} transform={rainRotation}>
+            {/* Anzahl Tropfen variiert nach Intensität */}
+            {[...Array(isHeavyRain ? 60 : 30)].map((_, i) => (
+               <rect key={i} x={Math.random() * 400 - 20} y="40" width={isHeavyRain ? 2 : 1.5} height={isHeavyRain ? 15 : 12} 
+                     className={isHeavyRain ? "animate-rain-storm" : `animate-rain-${i%3 === 0 ? '1' : i%3 === 1 ? '2' : '3'}`} 
+                     style={{animationDelay: `${Math.random()}s`}} />
             ))}
          </g>
       )}
 
-      {isSnow && (
-         <g fill="white" opacity="0.9">
-            {[...Array(50)].map((_, i) => {
-               const startX = Math.random() * 360;
+      {/* Schnee / Schneeregen */}
+      {(isSnow || isSleet) && (
+         <g fill="white" opacity="0.9" transform={rainRotation}>
+            {[...Array(isHeavySnow ? 80 : 40)].map((_, i) => {
+               const startX = Math.random() * 400 - 20;
                const delay = Math.random() * 5;
                const size = Math.random() * 2 + 1;
                const isSlow = i % 2 === 0;
@@ -583,7 +691,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset }) => {
                     cx={startX} 
                     cy="-10" 
                     r={size} 
-                    className={isSlow ? "animate-snow-slow" : "animate-snow-fast"} 
+                    className={isHeavySnow || isStormyWind ? "animate-snow-fast" : "animate-snow-slow"} 
                     style={{
                         animationDelay: `${delay}s`, 
                         opacity: Math.random() * 0.5 + 0.5
@@ -594,8 +702,12 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset }) => {
          </g>
       )}
       
+      {/* Gewitter Blitze */}
       {isStorm && (
-         <path d="M160 30 L140 60 L155 60 L135 130" stroke="#fef08a" strokeWidth="2" fill="none" className="anim-lightning" />
+         <g className="anim-lightning">
+            <path d="M160 30 L140 60 L155 60 L135 130" stroke="#fef08a" strokeWidth="3" fill="none" filter="url(#iceGlow)" />
+            <rect x="-50" y="0" width="500" height="200" fill="white" opacity="0.1" />
+         </g>
       )}
 
     </svg>
@@ -986,7 +1098,7 @@ export default function WeatherApp() {
 
       <main className="max-w-4xl mx-auto p-4 z-10 relative space-y-6">
         <div className={`rounded-3xl p-6 ${cardBg} shadow-lg relative overflow-hidden min-h-[240px] flex items-center`}>
-          <div className="absolute inset-0 z-0 pointer-events-none"><WeatherLandscape code={current.code} isDay={current.isDay} date={current.time} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} /></div>
+          <div className="absolute inset-0 z-0 pointer-events-none"><WeatherLandscape code={current.code} isDay={current.isDay} date={current.time} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} /></div>
           <div className="flex items-center justify-between w-full relative z-10">
             <div className="flex flex-col">
                <span className="text-7xl font-bold tracking-tighter leading-none drop-shadow-lg text-white">{Math.round(current.temp)}°</span>
