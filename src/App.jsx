@@ -166,89 +166,137 @@ const getMoonPhase = (d) => {
   return Math.round((currentSec / phaseSeconds) * 8) % 8;
 };
 
-// --- 3. KI LOGIK (VERBESSERT & AUSFÜHRLICH) ---
+// --- 3. KI LOGIK (OPTIMIERT FÜR REST-TAG & MORGEN) ---
 const generateAIReport = (type, data) => {
   if (!data || data.length === 0) return { text: "Warte auf Daten...", warning: null };
   let warning = null;
   let text = "";
 
   if (type === 'daily') {
-    // Teile den Tag in Phasen (Nutzt jetzt die korrekten lokalen Stunden)
-    const morning = data.filter(d => d.time.getHours() >= 6 && d.time.getHours() < 12);
-    const afternoon = data.filter(d => d.time.getHours() >= 12 && d.time.getHours() < 18);
-    const evening = data.filter(d => d.time.getHours() >= 18 && d.time.getHours() < 22);
+    const now = new Date();
+    const currentHour = now.getHours();
 
-    const getPhaseStats = (phaseData) => {
-        if (!phaseData.length) return null;
-        const temp = Math.round(phaseData.reduce((acc, c) => acc + c.temp, 0) / phaseData.length);
-        const rain = phaseData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
-        const gust = Math.max(...phaseData.map(c => c.gust));
-        const codes = phaseData.map(c => c.code);
-        const isRainy = codes.some(c => c >= 51);
-        const isSunny = codes.every(c => c <= 2);
-        return { temp, rain, gust, isRainy, isSunny };
-    };
+    // 1. PHASE: Rest von Heute (Filtert alles Vergangene raus)
+    const todayData = data.filter(d => 
+        d.time.getDate() === now.getDate() && d.time.getHours() > currentHour
+    );
 
-    const mStats = getPhaseStats(morning);
-    const aStats = getPhaseStats(afternoon);
-    const eStats = getPhaseStats(evening);
-
-    // Intro
-    const current = data[0];
-    const feelsLike = Math.round(current.appTemp);
-    const tempDiff = feelsLike - Math.round(current.temp);
+    // 2. PHASE: Kommende Nacht (ca. 22:00 heute bis 06:00 morgen)
+    // Wir nehmen einfach die Datenpunkte, die in diesem Zeitraum liegen
+    // Dafür brauchen wir morgen früh
+    const tomorrowDate = new Date(now);
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
     
-    let intro = `Aktuell (${current.displayTime} Uhr) haben wir ${Math.round(current.temp)}°C`;
-    if (Math.abs(tempDiff) > 2) intro += `, gefühlt aber eher ${feelsLike}°C (${tempDiff > 0 ? 'wärmer' : 'kühler'} durch ${current.wind} km/h Wind). `;
-    else intro += ". ";
+    const nightData = data.filter(d => {
+        const h = d.time.getHours();
+        const isTonightLate = d.time.getDate() === now.getDate() && h >= 22;
+        const isTomorrowEarly = d.time.getDate() === tomorrowDate.getDate() && h < 6;
+        return isTonightLate || isTomorrowEarly;
+    });
 
-    // Phasen-Bericht
-    let narrative = "";
+    // 3. PHASE: Morgen (06:00 bis 22:00 Uhr) - KONSTANT
+    const tomorrowDayData = data.filter(d => 
+        d.time.getDate() === tomorrowDate.getDate() && d.time.getHours() >= 6 && d.time.getHours() <= 22
+    );
+
+    // -- GENERIERUNG BERICHT --
+
+    // Intro: Aktuelle Lage
+    const current = data[0]; // Das ist immer der aktuelle Zeitpunkt (oder sehr nah dran)
+    let intro = `Aktuell (${current.displayTime} Uhr): ${Math.round(current.temp)}°C`;
+    if (Math.abs(current.appTemp - current.temp) > 2) intro += `, gefühlt ${Math.round(current.appTemp)}°C.`;
     
-    // Morgen
-    if (mStats) {
-        if (mStats.rain > 0.5) narrative += "Der Vormittag zeigt sich von seiner nassen Seite. Rechnen Sie mit Schauern. ";
-        else if (mStats.isSunny) narrative += "Der Start in den Tag verläuft freundlich und sonnig. ";
-        else narrative += "Vormittags bleibt es meist bedeckt, aber weitgehend trocken. ";
+    let parts = [intro];
+
+    // TEIL A: HEUTE (Nur wenn noch relevante Stunden übrig sind)
+    if (todayData.length > 0) {
+        let todayText = "";
+        const maxToday = Math.max(...todayData.map(d => d.temp));
+        const rainSumToday = todayData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
+        const codesToday = todayData.map(d => d.code);
+        const isRainy = codesToday.some(c => c >= 51);
+        const isSunny = codesToday.every(c => c <= 2);
+
+        if (currentHour < 11) {
+            todayText = "Heute: ";
+            if (isRainy) todayText += `Regenschirm einpacken! Es kommen ca. ${rainSumToday.toFixed(1)}mm Niederschlag zusammen. `;
+            else if (isSunny) todayText += "Ein freundlicher Tag steht bevor, genießen Sie die Sonne. ";
+            else todayText += "Es bleibt meist bedeckt, aber weitgehend trocken. ";
+            todayText += `Höchstwerte bis ${Math.round(maxToday)}°C.`;
+        } else if (currentHour < 17) {
+            todayText = "Im weiteren Tagesverlauf: ";
+            if (isRainy) todayText += "Es bleibt unbeständig mit weiteren Schauern. ";
+            else if (isSunny) todayText += "Der Nachmittag bleibt sonnig und schön. ";
+            else todayText += "Keine großen Wetteränderungen bis zum Abend. ";
+        } else if (currentHour < 21) {
+            todayText = "Der Abend: ";
+            if (isRainy) todayText += "Es kann noch etwas tröpfeln. ";
+            else todayText += "Der Tag klingt ruhig aus. ";
+        }
+        
+        if (todayText) parts.push(todayText);
     }
 
-    // Nachmittag
-    if (aStats) {
-        narrative += `Am Nachmittag erreichen wir ca. ${aStats.temp}°C. `;
-        if (aStats.rain > 1.0) narrative += "Es wird ungemütlich: Längere Regenfälle setzen ein. ";
-        else if (aStats.isRainy) narrative += "Vereinzelte Schauer sind möglich, dazwischen aber auch Pausen. ";
-        else if (aStats.isSunny && (!mStats || !mStats.isSunny)) narrative += "Später setzt sich die Sonne immer besser durch. ";
-        else if (aStats.isSunny) narrative += "Das strahlende Wetter hält weiter an. ";
-        else narrative += "Es bleibt wohl grau, aber der Regenschirm wird kaum gebraucht. ";
+    // TEIL B: DIE NACHT (Kurz & Knapp)
+    if (nightData.length > 0) {
+        const minNight = Math.min(...nightData.map(d => d.temp));
+        const rainNight = nightData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
+        let nightText = "In der Nacht ";
+        
+        if (minNight < 1) nightText += `wird es frostig bei bis zu ${Math.round(minNight)}°C. Achtung Glättegefahr!`;
+        else if (minNight < 5) nightText += `frischt es auf ${Math.round(minNight)}°C auf.`;
+        else nightText += `kühlt es auf milde ${Math.round(minNight)}°C ab.`;
+
+        if (rainNight > 0.5) nightText += " Zeitweise fällt Regen.";
+        else nightText += " Es bleibt trocken.";
+        
+        parts.push(nightText);
     }
 
-    // Abend
-    if (eStats) {
-        if (eStats.temp < 10 && aStats && aStats.temp > 15) narrative += `Zum Abend hin kühlt es rasch auf ${eStats.temp}°C ab. `;
-        if (eStats.isRainy) narrative += "Der Abend könnte nass ausklingen. ";
-        else narrative += "Ein trockener Abend steht bevor. ";
+    // TEIL C: MORGEN (Ausführlich & Konstant)
+    if (tomorrowDayData.length > 0) {
+        const tMax = Math.max(...tomorrowDayData.map(d => d.temp));
+        const tMin = Math.min(...tomorrowDayData.map(d => d.temp)); // Tagsüber Min
+        const tRain = tomorrowDayData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
+        const tWind = Math.max(...tomorrowDayData.map(d => d.wind));
+        const tGust = Math.max(...tomorrowDayData.map(d => d.gust));
+        
+        // Vormittag vs Nachmittag Check für Tomorrow
+        const tMorning = tomorrowDayData.filter(d => d.time.getHours() < 12);
+        const tAfternoon = tomorrowDayData.filter(d => d.time.getHours() >= 12);
+        
+        const isRainyMorning = tMorning.some(d => d.precip > 0.1);
+        const isRainyAfternoon = tAfternoon.some(d => d.precip > 0.1);
+
+        let tomorrowText = `\n📅 Ausblick auf Morgen (${tomorrowDate.toLocaleDateString('de-DE', {weekday:'long'})}):\n`;
+        tomorrowText += `Erwarten Sie Temperaturen zwischen ${Math.round(tMin)}°C am Morgen und bis zu ${Math.round(tMax)}°C am Nachmittag. `;
+        
+        if (tRain > 2.0) {
+             if (isRainyMorning && !isRainyAfternoon) tomorrowText += "Der Vormittag startet nass, später lockert es auf.";
+             else if (!isRainyMorning && isRainyAfternoon) tomorrowText += "Starten Sie trocken in den Tag, nachmittags zieht Regen auf.";
+             else tomorrowText += `Ein regnerischer Tag (${tRain.toFixed(1)}mm), vergessen Sie den Schirm nicht.`;
+        } else if (tRain > 0.1) {
+            tomorrowText += "Vereinzelt sind kurze Schauer möglich, meist bleibt es aber trocken.";
+        } else {
+            // Check Cloud cover rough estimate by code
+            const avgCode = tomorrowDayData.reduce((a,b)=>a+b.code,0) / tomorrowDayData.length;
+            if (avgCode <= 2) tomorrowText += "Es wird ein schöner, sonniger Tag.";
+            else tomorrowText += "Es bleibt meist wolkig oder bedeckt.";
+        }
+
+        if (tGust > 50) {
+             tomorrowText += ` Es wird windig mit Böen bis ${tGust} km/h.`;
+             warning = "WINDIG (Morgen)";
+        }
+
+        parts.push(tomorrowText);
     }
+    
+    // Globale Warnungen überschreiben alles
+    const maxGustNow = Math.max(...(todayData.map(d=>d.gust)||[]), 0);
+    if (maxGustNow > 60) warning = "STURMBÖEN (Heute)";
 
-    // Fazit & Kleidung
-    let tip = "";
-    const totalRain = (mStats?.rain||0) + (aStats?.rain||0) + (eStats?.rain||0);
-    const maxGust = Math.max(mStats?.gust||0, aStats?.gust||0, eStats?.gust||0);
-
-    if (maxGust > 60) {
-        warning = `STURMBÖEN (${Math.round(maxGust)} km/h)`;
-        tip = "Vorsicht: Äste könnten abbrechen. Meiden Sie Wälder!";
-    } else if (totalRain > 10) {
-        warning = "DAUERREGEN MÖGLICH";
-        tip = "Gummistiefel-Wetter! Planen Sie mehr Zeit für Wege ein.";
-    } else if (Math.max(mStats?.temp||0, aStats?.temp||0) > 28) {
-        tip = "Hitze-Belastung: Trinken Sie viel Wasser und meiden Sie die Mittagssonne.";
-    } else if (totalRain > 0.5) {
-        tip = "Eine Regenjacke sollte heute Ihr Begleiter sein.";
-    } else {
-        tip = "Genießen Sie den Tag – das Wetter spielt weitgehend mit.";
-    }
-
-    text = `${intro}\n\n${narrative}\n${tip}`;
+    text = parts.join("\n\n");
   }
   
   if (type === 'model-hourly') {
