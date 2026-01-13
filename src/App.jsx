@@ -85,9 +85,12 @@ const styles = `
     50% { opacity: 1; transform: scale(1.2); }
   }
   
-  @keyframes smoke-rise {
-    0% { transform: translateY(0) scale(1); opacity: 0.6; }
-    100% { transform: translateY(-25px) scale(2.5) translateX(10px); opacity: 0; }
+  /* Verbesserter Rauch: Puff-Effekt */
+  @keyframes smoke-puff {
+    0% { transform: translate(0, 0) scale(0.5); opacity: 0; }
+    10% { opacity: 0.7; transform: translate(2px, -5px) scale(0.8); }
+    40% { opacity: 0.5; }
+    100% { transform: translate(15px, -35px) scale(2.5); opacity: 0; }
   }
 
   /* --- BÄUME & STURM --- */
@@ -117,7 +120,10 @@ const styles = `
   .anim-fog-1 { animation: fog-flow 12s ease-in-out infinite; }
   .anim-fog-2 { animation: fog-flow 18s ease-in-out infinite reverse; }
   
-  .anim-smoke circle { animation: smoke-rise 4s infinite ease-out; transform-origin: center; }
+  /* Rauch Animation Zuordnung */
+  .smoke-puff-1 { animation: smoke-puff 4s infinite ease-out; transform-origin: center; animation-delay: 0s; }
+  .smoke-puff-2 { animation: smoke-puff 4s infinite ease-out; transform-origin: center; animation-delay: 1.3s; }
+  .smoke-puff-3 { animation: smoke-puff 4s infinite ease-out; transform-origin: center; animation-delay: 2.6s; }
 
   .animate-ray { animation: ray-pulse 3s infinite ease-in-out; }
   .animate-twinkle-1 { animation: twinkle 3s infinite ease-in-out; animation-delay: 0.5s; }
@@ -638,12 +644,12 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
 
       {/* --- HAUS --- */}
       <g transform="translate(190, 120)">
-          {/* Rauch (wenn kalt) */}
+          {/* Rauch (wenn kalt) - Verbesserter Puff-Effekt */}
           {temp < 12 && (
-             <g className="anim-smoke">
-               <circle cx="28" cy="-15" r="3" fill="white" opacity="0.6" />
-               <circle cx="32" cy="-22" r="4" fill="white" opacity="0.5" style={{animationDelay: '0.5s'}} />
-               <circle cx="26" cy="-28" r="3.5" fill="white" opacity="0.4" style={{animationDelay: '1s'}} />
+             <g>
+               <circle cx="28" cy="-15" r="3" fill="white" opacity="0.6" className="smoke-puff-1" />
+               <circle cx="28" cy="-15" r="2.5" fill="white" opacity="0.6" className="smoke-puff-2" />
+               <circle cx="28" cy="-15" r="3" fill="white" opacity="0.6" className="smoke-puff-3" />
              </g>
           )}
           {/* Schornstein */}
@@ -658,8 +664,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
           <line x1="12" y1="23" x2="22" y2="23" stroke={windowStroke} strokeWidth="1" />
           {/* Tür */}
           <rect x="30" y="22" width="10" height="18" fill="#3f2e22" />
-          {/* Lichtschein bei Nacht */}
-          {isNight && <circle cx="17" cy="23" r="15" fill="yellow" opacity="0.1" className="animate-pulse" />}
+          {/* Lichtschein bei Nacht - JETZT STETIG */}
+          {isNight && <circle cx="17" cy="23" r="8" fill="#fbbf24" opacity="0.6" filter="blur(4px)" />}
       </g>
 
       {/* --- BÄUME --- */}
