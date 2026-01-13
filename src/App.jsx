@@ -249,10 +249,6 @@ const generateAIReport = (type, data) => {
          const diff = Math.abs(d.temp_icon - d.temp_gfs);
          totalDiff += diff;
          if (diff > 3.0 && !driftHour) driftHour = d.displayTime;
-         
-         // Prüfen ob Modelle bei Regen uneinig sind (einer > 0.5, einer < 0.1)
-         const rainIcon = d.precip_icon_d2 || 0; // Annahme: Datenstruktur hat diese Felder (müsste in processing angepasst werden, hier vereinfacht)
-         // Da wir im processedShort nur gemittelten precip haben, schauen wir auf die Temp Differenz als Indikator für unterschiedliche Luftmassen
        }
      });
      const avgDiff = totalDiff / data.length;
@@ -289,8 +285,7 @@ const generateAIReport = (type, data) => {
     }
     
     const rainDayDiff = slicedData.find(d => {
-        const r1 = parseFloat(d.rain_icon || 0); // Diese Felder müssten im Processing explizit gemappt werden wenn verfügbar
-        // Fallback auf Temp Diskrepanz für Textgenauigkeit
+        const r1 = parseFloat(d.rain_icon || 0);
         return Math.abs(d.max_icon - d.max_gfs) > 5;
     });
 
