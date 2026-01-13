@@ -1,10 +1,22 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette } from 'lucide-react';
 
 // --- 1. KONSTANTEN & CONFIG ---
 
 const DEFAULT_LOC = { name: "Jülich Daubenrath", lat: 50.938, lon: 6.388, isHome: true };
+
+// DEMO SZENARIEN FÜR ANIMATIONSTESTS
+const DEMO_SCENARIOS = [
+  { name: "Live", data: null },
+  { name: "Sonnig & Heiß", data: { code: 0, isDay: 1, temp: 32, wind: 5, gust: 10, snow: 0, precip: 0, appTemp: 34 } },
+  { name: "Starkregen & Wind", data: { code: 65, isDay: 1, temp: 12, wind: 45, gust: 70, snow: 0, precip: 15.0, appTemp: 10 } },
+  { name: "Gewitter", data: { code: 95, isDay: 0, temp: 18, wind: 30, gust: 85, snow: 0, precip: 25.0, appTemp: 18 } },
+  { name: "Leichter Schnee", data: { code: 71, isDay: 1, temp: -1, wind: 10, gust: 20, snow: 2.0, precip: 0, appTemp: -3 } },
+  { name: "Starker Schneefall", data: { code: 75, isDay: 1, temp: -4, wind: 25, gust: 40, snow: 15.0, precip: 0, appTemp: -8 } },
+  { name: "Nebel", data: { code: 45, isDay: 0, temp: 4, wind: 2, gust: 5, snow: 0, precip: 0, appTemp: 3 } },
+  { name: "Eis & Frost", data: { code: 0, isDay: 0, temp: -8, wind: 10, gust: 15, snow: 0, precip: 0, appTemp: -12 } },
+];
 
 const getSavedHomeLocation = () => {
   try {
@@ -72,6 +84,11 @@ const styles = `
     0%, 100% { opacity: 0; transform: scale(0.5); }
     50% { opacity: 1; transform: scale(1.2); }
   }
+  
+  @keyframes smoke-rise {
+    0% { transform: translateY(0) scale(1); opacity: 0.6; }
+    100% { transform: translateY(-25px) scale(2.5) translateX(10px); opacity: 0; }
+  }
 
   /* --- BÄUME & STURM --- */
   @keyframes tree-shake-gentle { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(1deg); } }
@@ -99,6 +116,8 @@ const styles = `
   
   .anim-fog-1 { animation: fog-flow 12s ease-in-out infinite; }
   .anim-fog-2 { animation: fog-flow 18s ease-in-out infinite reverse; }
+  
+  .anim-smoke circle { animation: smoke-rise 4s infinite ease-out; transform-origin: center; }
 
   .animate-ray { animation: ray-pulse 3s infinite ease-in-out; }
   .animate-twinkle-1 { animation: twinkle 3s infinite ease-in-out; animation-delay: 0.5s; }
@@ -519,6 +538,12 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
   const treeTrunk = isNight ? "#3f2e22" : "#78350f";
   const treeLeaf = (isSnow || isDeepFreeze) ? "#f8fafc" : (isNight ? "#14532d" : "#16a34a");
   
+  // Haus-Farben
+  const houseWall = isNight ? "#78350f" : "#b45309"; 
+  const houseRoof = (isSnow || isDeepFreeze) ? "#f1f5f9" : (isNight ? "#451a03" : "#7c2d12");
+  const windowColor = isNight ? "#fbbf24" : "#94a3b8";
+  const windowStroke = isNight ? "#b45309" : "#475569";
+
   // Baum Animation basierend auf Wind
   let treeAnim = "anim-tree-gentle";
   if (isStormyWind) treeAnim = "anim-tree-storm";
@@ -595,36 +620,75 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
       {(isSnow || isDeepFreeze || isSleet) && <path d="M120 40 L150 70 L90 70 Z" fill="white" />} 
       {(isSnow || isDeepFreeze || isSleet) && <path d="M320 70 L340 90 L300 90 Z" fill="white" />}
 
-      {/* Boden */}
-      <path d="M-50 140 Q 180 120 460 140 V 170 H -50 Z" fill={groundColor} />
+      {/* Boden mit sanften Hügeln */}
+      <path d="M-50 140 Q 50 130 150 145 T 450 135 V 170 H -50 Z" fill={groundColor} />
       
       {/* Glatteis / Eis-Effekt am Boden */}
       {(isSleet || (isRain && isFreezing) || isDeepFreeze) && (
-        <path d="M-50 142 Q 180 122 460 142 V 170 H -50 Z" fill="#bae6fd" opacity="0.4" />
+        <path d="M-50 142 Q 50 132 150 147 T 450 137 V 170 H -50 Z" fill="#bae6fd" opacity="0.4" />
       )}
       {/* Glitzern bei Eis */}
       {(isDeepFreeze || (isRain && isFreezing)) && (
           <g>
-             <circle cx="100" cy="140" r="2" fill="white" className="anim-sparkle" />
-             <circle cx="250" cy="150" r="1.5" fill="white" className="anim-sparkle" style={{animationDelay: '1s'}} />
-             <circle cx="180" cy="145" r="2" fill="white" className="anim-sparkle" style={{animationDelay: '2s'}} />
+             <circle cx="100" cy="150" r="2" fill="white" className="anim-sparkle" />
+             <circle cx="250" cy="160" r="1.5" fill="white" className="anim-sparkle" style={{animationDelay: '1s'}} />
+             <circle cx="180" cy="155" r="2" fill="white" className="anim-sparkle" style={{animationDelay: '2s'}} />
           </g>
       )}
 
-      {/* Bäume mit Wind-Animation */}
+      {/* --- HAUS --- */}
+      <g transform="translate(190, 120)">
+          {/* Rauch (wenn kalt) */}
+          {temp < 12 && (
+             <g className="anim-smoke">
+               <circle cx="28" cy="-15" r="3" fill="white" opacity="0.6" />
+               <circle cx="32" cy="-22" r="4" fill="white" opacity="0.5" style={{animationDelay: '0.5s'}} />
+               <circle cx="26" cy="-28" r="3.5" fill="white" opacity="0.4" style={{animationDelay: '1s'}} />
+             </g>
+          )}
+          {/* Schornstein */}
+          <rect x="25" y="-10" width="6" height="15" fill="#57534e" />
+          {/* Hauptgebäude */}
+          <rect x="5" y="10" width="40" height="30" fill={houseWall} />
+          {/* Dach */}
+          <path d="M-2 10 L25 -15 L52 10 Z" fill={houseRoof} filter={isSnow ? "brightness(1.1)" : "none"} />
+          {/* Fenster */}
+          <rect x="12" y="18" width="10" height="10" fill={windowColor} stroke={windowStroke} strokeWidth="1"/>
+          <line x1="17" y1="18" x2="17" y2="28" stroke={windowStroke} strokeWidth="1" />
+          <line x1="12" y1="23" x2="22" y2="23" stroke={windowStroke} strokeWidth="1" />
+          {/* Tür */}
+          <rect x="30" y="22" width="10" height="18" fill="#3f2e22" />
+          {/* Lichtschein bei Nacht */}
+          {isNight && <circle cx="17" cy="23" r="15" fill="yellow" opacity="0.1" className="animate-pulse" />}
+      </g>
+
+      {/* --- BÄUME --- */}
+      {/* Baum Links */}
       <g transform="translate(40, 130)" className={treeAnim}>
          <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
          <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
          <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
       </g>
+      
+      {/* Baum neben dem Haus */}
+      <g transform="translate(160, 125) scale(0.8)" className={treeAnim} style={{animationDelay: '0.2s'}}>
+         <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+         <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+         <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+      </g>
+
+      {/* Baumgruppe Rechts */}
       <g transform="translate(280, 125) scale(0.9)" className={treeAnim} style={{animationDelay: '0.5s'}}>
          <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
          <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
          <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
       </g>
-       <g transform="translate(240, 135) scale(0.7)" className={treeAnim} style={{animationDelay: '1s'}}>
+      
+      {/* Kleiner Baum / Busch im Vordergrund */}
+       <g transform="translate(240, 140) scale(0.6)" className={treeAnim} style={{animationDelay: '1s'}}>
          <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
          <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+         <circle cx="10" cy="5" r="7" fill={treeLeaf} />
       </g>
 
       {/* --- WOLKEN --- */}
@@ -835,6 +899,7 @@ export default function WeatherApp() {
   const [sunriseSunset, setSunriseSunset] = useState({ sunrise: null, sunset: null });
   const [modelRuns, setModelRuns] = useState({ icon: '', gfs: '', arome: '' });
   const [showIosInstall, setShowIosInstall] = useState(false);
+  const [demoIndex, setDemoIndex] = useState(0); // State für Demo-Modus
 
   // NEU: iOS Erkennung
   useEffect(() => {
@@ -901,6 +966,11 @@ export default function WeatherApp() {
       (pos) => setCurrentLoc({ name: "Mein Standort", lat: pos.coords.latitude, lon: pos.coords.longitude, isHome: false }),
       (err) => { setError("GPS verweigert"); setLoading(false); }
     );
+  };
+  
+  // Toggle durch Demo-Szenarien
+  const handleToggleDemo = () => {
+      setDemoIndex((prev) => (prev + 1) % DEMO_SCENARIOS.length);
   };
 
   const fetchData = async () => {
@@ -1044,8 +1114,12 @@ export default function WeatherApp() {
       };
     });
   }, [longTermData]);
+  
+  // LIVE oder DEMO Daten?
+  const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: "0.0", precip: "0.0", wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0 };
+  const demoData = DEMO_SCENARIOS[demoIndex].data;
+  const current = demoData ? { ...liveCurrent, ...demoData } : liveCurrent;
 
-  const current = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: "0.0", precip: "0.0", wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0 };
   const dailyRainSum = processedLong.length > 0 ? processedLong[0].rain : "0.0";
   const dailySnowSum = processedLong.length > 0 ? processedLong[0].snow : "0.0";
   const isSnowing = parseFloat(current.snow) > 0;
@@ -1092,7 +1166,13 @@ export default function WeatherApp() {
              </div>
            )}
 
-           <button onClick={fetchData} className={`p-3 rounded-full backdrop-blur-md bg-white/20 transition shadow-md ${textColor}`}><RefreshCw size={20} /></button>
+           <div className="flex gap-2">
+               <button onClick={handleToggleDemo} className={`p-3 rounded-full backdrop-blur-md transition shadow-md flex items-center gap-2 ${demoIndex > 0 ? 'bg-amber-400 text-black animate-pulse' : 'bg-white/20 ' + textColor}`}>
+                   <Palette size={20} />
+                   {demoIndex > 0 && <span className="text-xs font-bold hidden sm:inline">{DEMO_SCENARIOS[demoIndex].name}</span>}
+               </button>
+               <button onClick={fetchData} className={`p-3 rounded-full backdrop-blur-md bg-white/20 transition shadow-md ${textColor}`}><RefreshCw size={20} /></button>
+           </div>
         </div>
       </header>
 
@@ -1102,9 +1182,9 @@ export default function WeatherApp() {
           <div className="flex items-center justify-between w-full relative z-10">
             <div className="flex flex-col">
                <span className="text-7xl font-bold tracking-tighter leading-none drop-shadow-lg text-white">{Math.round(current.temp)}°</span>
-               <div className="flex items-center gap-1.5 mt-2 opacity-90 font-medium text-sm text-white drop-shadow-md"><Thermometer size={16} /><span>Gefühlt {current.appTemp}°</span></div>
+               <div className="flex items-center gap-1.5 mt-2 opacity-90 font-medium text-sm text-white drop-shadow-md"><Thermometer size={16} /><span>Gefühlt {Math.round(current.appTemp)}°</span></div>
                <div className="flex items-center gap-2 mt-1 opacity-80 font-medium text-sm text-white drop-shadow-md"><span>H: {processedLong[0]?.max.toFixed(0)}°</span><span>T: {processedLong[0]?.min.toFixed(0)}°</span></div>
-               <div className="mt-1 text-lg font-medium tracking-wide text-white drop-shadow-md">{weatherConf.text}</div>
+               <div className="mt-1 text-lg font-medium tracking-wide text-white drop-shadow-md">{weatherConf.text} {demoIndex > 0 && "(Demo)"}</div>
             </div>
             <div className="flex flex-col gap-2 items-end text-right pl-3 border-l border-white/20 ml-2 backdrop-blur-sm bg-black/5 rounded-xl p-2">
                <div className="flex flex-col items-end"><div className={`flex items-center gap-1 opacity-90 text-sm font-bold ${getUvColorClass(current.uvIndex)} drop-shadow-sm`}><Sun size={14} /> <span>{current.uvIndex}</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">UV</span></div>
@@ -1113,7 +1193,7 @@ export default function WeatherApp() {
                   <div className="flex flex-col items-end"><div className="flex items-center gap-1 opacity-90 text-sm font-bold text-white drop-shadow-sm"><Thermometer size={14} /> <span>{current.dewPoint}°</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Taupkt.</span></div>
                </div>
                <div className="flex flex-col items-end mt-1"><div className={`flex items-center gap-1.5 text-sm font-bold ${windColorClass} drop-shadow-sm`}><Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }}/><span>{current.wind} <span className="text-xs font-normal opacity-80">({current.gust})</span></span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Wind (Böen) km/h</span></div>
-               {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0) && (<div className="flex flex-col items-end mt-1"><div className="flex items-center gap-1.5 opacity-90 text-sm font-bold text-blue-300 drop-shadow-sm">{isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>}<span>{isSnowing ? dailySnowSum : dailyRainSum} {isSnowing ? 'cm' : 'mm'}</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Niederschlag (24h)</span></div>)}
+               {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0 || demoIndex > 0) && (<div className="flex flex-col items-end mt-1"><div className="flex items-center gap-1.5 opacity-90 text-sm font-bold text-blue-300 drop-shadow-sm">{isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>}<span>{isSnowing ? (demoIndex > 0 ? current.snow : dailySnowSum) : (demoIndex > 0 ? current.precip : dailyRainSum)} {isSnowing ? 'cm' : 'mm'}</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Niederschlag (24h)</span></div>)}
             </div>
           </div>
         </div>
