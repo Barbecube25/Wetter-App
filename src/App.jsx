@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share } from 'lucide-react';
 
 // --- 1. KONSTANTEN & CONFIG ---
 
@@ -674,12 +674,26 @@ export default function WeatherApp() {
   const [showAllHours, setShowAllHours] = useState(false); 
   const [sunriseSunset, setSunriseSunset] = useState({ sunrise: null, sunset: null });
   const [modelRuns, setModelRuns] = useState({ icon: '', gfs: '', arome: '' });
+  const [showIosInstall, setShowIosInstall] = useState(false);
 
-  // NEU: Service Worker Registrierung direkt in der App
+  // NEU: iOS Erkennung
+  useEffect(() => {
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    // Zeige Hinweis nur, wenn noch nicht installiert (standalone check)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    if (isIos && !isStandalone) {
+      setShowIosInstall(true);
+    }
+  }, []);
+
+  // NEU: Service Worker Registrierung mit Log
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('SW registriert:', reg))
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .then(reg => {
+           console.log('SW registriert:', reg);
+           reg.update(); // Erzwinge Update Check
+        })
         .catch(err => console.error('SW Fehler:', err));
     }
   }, []);
@@ -695,7 +709,11 @@ export default function WeatherApp() {
   }, []);
 
   useEffect(() => {
-    const handler = (e) => { e.preventDefault(); setDeferredPrompt(e); };
+    const handler = (e) => { 
+        e.preventDefault(); 
+        setDeferredPrompt(e); 
+        console.log("Install prompt captured");
+    };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
@@ -901,8 +919,19 @@ export default function WeatherApp() {
           <h1 className="text-3xl font-light mt-2 tracking-tight">{currentLoc.name}</h1>
           <div className="flex items-center gap-2 mt-1 opacity-80 text-xs font-medium"><Clock size={12} /><span>Stand: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} Uhr</span></div>
         </div>
-        <div className="flex flex-col gap-2">
-           {deferredPrompt && (<button onClick={handleInstallClick} className="p-3 rounded-full backdrop-blur-md bg-blue-600 text-white animate-pulse"><Download size={20} /></button>)}
+        <div className="flex flex-col gap-2 items-end">
+           {deferredPrompt && (<button onClick={handleInstallClick} className="p-3 rounded-full backdrop-blur-md bg-blue-600 text-white animate-pulse shadow-lg"><Download size={20} /></button>)}
+           
+           {/* iOS Install Tip */}
+           {showIosInstall && (
+             <div className="bg-white/90 backdrop-blur-md p-3 rounded-xl shadow-xl text-black max-w-[200px] text-xs relative animate-in fade-in slide-in-from-top-4 duration-500">
+                <button onClick={() => setShowIosInstall(false)} className="absolute top-1 right-1 opacity-50"><X size={14}/></button>
+                <div className="font-bold mb-1 flex items-center gap-1"><Share size={12} /> App installieren</div>
+                <p>Tippen Sie unten auf <strong>"Teilen"</strong> und dann <strong>"Zum Home-Bildschirm"</strong>.</p>
+                <div className="w-3 h-3 bg-white/90 absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-45"></div>
+             </div>
+           )}
+
            <button onClick={fetchData} className={`p-3 rounded-full backdrop-blur-md bg-white/20 transition shadow-md ${textColor}`}><RefreshCw size={20} /></button>
         </div>
       </header>
