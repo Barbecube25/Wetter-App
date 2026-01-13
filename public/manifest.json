@@ -1,36 +1,18 @@
-{
-  "short_name": "Wetter",
-  "name": "Wetter Daubenrath",
-  "icons": [
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/4052/4052984.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#eff1f5",
-  "background_color": "#eff1f5"
+// ... existing code ...
+import './index.css'
+
+// Service Worker Registrierung für PWA/PlayStore
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((registration) => {
+        console.log('Service Worker registriert mit Scope:', registration.scope);
+      })
+      .catch((error) => {
+        console.error('Service Worker Registrierung fehlgeschlagen:', error);
+      });
+  });
 }
-{
-  "name": "Vercel",
-  "short_name": "Vercel",
-  "description": "Build and deploy the best web experiences with the AI Cloud",
-  "start_url": "wetterapp-one.vercel.app",
-  "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
-  "icons": [
-    {
-      "src": "https://assets.vercel.com/image/upload/v1573246280/front/favicon/vercel/android-chrome-192x192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "https://assets.vercel.com/image/upload/v1573246280/front/favicon/vercel/android-chrome-512x512.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
-  ]
-}
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+// ... existing code ...
