@@ -85,16 +85,8 @@ const styles = `
     50% { opacity: 1; transform: scale(1.2); }
   }
   
-  /* NEU: Rauch steigt wellenförmig auf */
-  @keyframes smoke-wave {
-    0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
-    15% { opacity: 0.5; transform: translate(3px, -10px) scale(0.7); }
-    40% { transform: translate(-3px, -25px) scale(1.1); }
-    70% { opacity: 0.3; transform: translate(3px, -45px) scale(1.6); }
-    100% { opacity: 0; transform: translate(0, -60px) scale(2.2); }
-  }
-
   /* --- BÄUME & STURM --- */
+  /* WICHTIG: transform-box: fill-box sorgt dafür, dass sich der Baum um sich selbst dreht */
   @keyframes tree-shake-gentle { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(1deg); } }
   @keyframes tree-shake-windy { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(4deg); } }
   @keyframes tree-shake-storm { 0%, 100% { transform: rotate(-5deg); } 20% { transform: rotate(10deg); } 40% { transform: rotate(-8deg); } 60% { transform: rotate(5deg); } }
@@ -121,11 +113,6 @@ const styles = `
   .anim-fog-1 { animation: fog-flow 12s ease-in-out infinite; }
   .anim-fog-2 { animation: fog-flow 18s ease-in-out infinite reverse; }
   
-  /* Rauch Animation Zuordnung - Sanfte Wellen */
-  .smoke-puff-1 { animation: smoke-wave 6s infinite ease-out; transform-origin: center; animation-delay: 0s; }
-  .smoke-puff-2 { animation: smoke-wave 6s infinite ease-out; transform-origin: center; animation-delay: 2s; }
-  .smoke-puff-3 { animation: smoke-wave 6s infinite ease-out; transform-origin: center; animation-delay: 4s; }
-
   .animate-ray { animation: ray-pulse 3s infinite ease-in-out; }
   .animate-twinkle-1 { animation: twinkle 3s infinite ease-in-out; animation-delay: 0.5s; }
   .animate-twinkle-2 { animation: twinkle 4s infinite ease-in-out; animation-delay: 1.5s; }
@@ -134,9 +121,9 @@ const styles = `
   .anim-lightning { animation: lightning-flash 5s infinite; }
   .anim-glow { animation: sunrise-glow 4s ease-in-out infinite; }
   
-  .anim-tree-gentle { animation: tree-shake-gentle 4s ease-in-out infinite; transform-origin: bottom center; }
-  .anim-tree-windy { animation: tree-shake-windy 1s ease-in-out infinite; transform-origin: bottom center; }
-  .anim-tree-storm { animation: tree-shake-storm 0.8s ease-in-out infinite; transform-origin: bottom center; }
+  .anim-tree-gentle { animation: tree-shake-gentle 4s ease-in-out infinite; transform-origin: bottom center; transform-box: fill-box; }
+  .anim-tree-windy { animation: tree-shake-windy 1s ease-in-out infinite; transform-origin: bottom center; transform-box: fill-box; }
+  .anim-tree-storm { animation: tree-shake-storm 0.8s ease-in-out infinite; transform-origin: bottom center; transform-box: fill-box; }
   
   .anim-heat { animation: heat-shimmer 2s infinite linear; }
   .anim-sparkle { animation: ice-sparkle 3s infinite ease-in-out; }
@@ -232,7 +219,7 @@ const generateAIReport = (type, data) => {
   
   let title = "";
   let summary = "";
-  let details = "";
+  let details = null; // Standardmäßig null für "nicht ausklappbar"
   let warning = null;
   let confidence = null;
 
@@ -243,45 +230,119 @@ const generateAIReport = (type, data) => {
     
     // Basisdaten
     const current = data[0];
-    const maxToday = Math.max(...data.slice(0, 24).map(d => d.temp));
-    const isRainy = data.slice(0, 12).some(d => d.precip > 0.1);
+    let intro = `Aktuell (${current.displayTime} Uhr): ${Math.round(current.temp)}°C`;
+    if (Math.abs(current.appTemp - current.temp) > 2) intro += `, gefühlt ${Math.round(current.appTemp)}°C.`;
     
-    // Summary
-    summary = `Aktuell ${Math.round(current.temp)}°C. `;
-    if (isRainy) summary += `Unbeständig mit Regenrisiko im Tagesverlauf. Max: ${Math.round(maxToday)}°C.`;
-    else summary += `Überwiegend trocken und freundlich bis ${Math.round(maxToday)}°C.`;
+    let parts = [intro];
 
-    // Details konstruieren (wie vorher, aber jetzt als Detail-Text)
-    const todayData = data.filter(d => d.time.getDate() === now.getDate() && d.time.getHours() > currentHour);
+    // 1. PHASE: Rest von Heute (Filtert alles Vergangene raus)
+    const todayData = data.filter(d => 
+        d.time.getDate() === now.getDate() && d.time.getHours() > currentHour
+    );
+
+    // 2. PHASE: Kommende Nacht (ca. 22:00 heute bis 06:00 morgen)
+    const tomorrowDate = new Date(now);
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    
     const nightData = data.filter(d => {
         const h = d.time.getHours();
         const isTonightLate = d.time.getDate() === now.getDate() && h >= 22;
-        const tomorrowDate = new Date(now); tomorrowDate.setDate(tomorrowDate.getDate()+1);
         const isTomorrowEarly = d.time.getDate() === tomorrowDate.getDate() && h < 6;
         return isTonightLate || isTomorrowEarly;
     });
-    
-    let parts = [];
-    if (todayData.length > 0) parts.push("📅 **Rest des Tages:** " + (isRainy ? "Regenschirm bereithalten." : "Genießen Sie den Tag."));
-    if (nightData.length > 0) {
-        const minNight = Math.min(...nightData.map(d => d.temp));
-        parts.push(`🌙 **Kommende Nacht:** Tiefstwerte um ${Math.round(minNight)}°C. ` + (minNight < 3 ? "Achtung, Bodenfrost möglich!" : "Milde Nacht."));
-    }
-    
-    // Morgen Vorschau kurz
-    const tomorrowDate = new Date(now); tomorrowDate.setDate(tomorrowDate.getDate()+1);
-    const tomorrowData = data.filter(d => d.time.getDate() === tomorrowDate.getDate());
-    if (tomorrowData.length > 0) {
-        const tMax = Math.max(...tomorrowData.map(d => d.temp));
-        parts.push(`🌅 **Ausblick Morgen:** Bis zu ${Math.round(tMax)}°C.`);
+
+    // 3. PHASE: Morgen (06:00 bis 22:00 Uhr) - KONSTANT
+    const tomorrowDayData = data.filter(d => 
+        d.time.getDate() === tomorrowDate.getDate() && d.time.getHours() >= 6 && d.time.getHours() <= 22
+    );
+
+    // TEIL A: HEUTE
+    if (todayData.length > 0) {
+        let todayText = "";
+        const maxToday = Math.max(...todayData.map(d => d.temp));
+        const rainSumToday = todayData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
+        const codesToday = todayData.map(d => d.code);
+        const isRainy = codesToday.some(c => c >= 51);
+        const isSunny = codesToday.every(c => c <= 2);
+
+        if (currentHour < 11) {
+            todayText = "Heute: ";
+            if (isRainy) todayText += `Regenschirm einpacken! Es kommen ca. ${rainSumToday.toFixed(1)}mm Niederschlag zusammen. `;
+            else if (isSunny) todayText += "Ein freundlicher Tag steht bevor, genießen Sie die Sonne. ";
+            else todayText += "Es bleibt meist bedeckt, aber weitgehend trocken. ";
+            todayText += `Höchstwerte bis ${Math.round(maxToday)}°C.`;
+        } else if (currentHour < 17) {
+            todayText = "Im weiteren Tagesverlauf: ";
+            if (isRainy) todayText += "Es bleibt unbeständig mit weiteren Schauern. ";
+            else if (isSunny) todayText += "Der Nachmittag bleibt sonnig und schön. ";
+            else todayText += "Keine großen Wetteränderungen bis zum Abend. ";
+        } else if (currentHour < 21) {
+            todayText = "Der Abend: ";
+            if (isRainy) todayText += "Es kann noch etwas tröpfeln. ";
+            else todayText += "Der Tag klingt ruhig aus. ";
+        }
+        
+        if (todayText) parts.push(todayText);
     }
 
-    details = parts.join("\n\n");
-    confidence = 90; // Kurzfristig meist sicher
+    // TEIL B: DIE NACHT
+    if (nightData.length > 0) {
+        const minNight = Math.min(...nightData.map(d => d.temp));
+        const rainNight = nightData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
+        let nightText = "In der Nacht ";
+        
+        if (minNight < 1) nightText += `wird es frostig bei bis zu ${Math.round(minNight)}°C. Achtung Glättegefahr!`;
+        else if (minNight < 5) nightText += `frischt es auf ${Math.round(minNight)}°C auf.`;
+        else nightText += `kühlt es auf milde ${Math.round(minNight)}°C ab.`;
+
+        if (rainNight > 0.5) nightText += " Zeitweise fällt Regen.";
+        else nightText += " Es bleibt trocken.";
+        
+        parts.push(nightText);
+    }
+
+    // TEIL C: MORGEN
+    if (tomorrowDayData.length > 0) {
+        const tMax = Math.max(...tomorrowDayData.map(d => d.temp));
+        const tMin = Math.min(...tomorrowDayData.map(d => d.temp)); 
+        const tRain = tomorrowDayData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
+        const tGust = Math.max(...tomorrowDayData.map(d => d.gust));
+        
+        const tMorning = tomorrowDayData.filter(d => d.time.getHours() < 12);
+        const tAfternoon = tomorrowDayData.filter(d => d.time.getHours() >= 12);
+        
+        const isRainyMorning = tMorning.some(d => d.precip > 0.1);
+        const isRainyAfternoon = tAfternoon.some(d => d.precip > 0.1);
+
+        let tomorrowText = `📅 Ausblick auf Morgen (${tomorrowDate.toLocaleDateString('de-DE', {weekday:'long'})}):\n`;
+        tomorrowText += `Erwarten Sie Temperaturen zwischen ${Math.round(tMin)}°C am Morgen und bis zu ${Math.round(tMax)}°C am Nachmittag. `;
+        
+        if (tRain > 2.0) {
+             if (isRainyMorning && !isRainyAfternoon) tomorrowText += "Der Vormittag startet nass, später lockert es auf.";
+             else if (!isRainyMorning && isRainyAfternoon) tomorrowText += "Starten Sie trocken in den Tag, nachmittags zieht Regen auf.";
+             else tomorrowText += `Ein regnerischer Tag (${tRain.toFixed(1)}mm), vergessen Sie den Schirm nicht.`;
+        } else if (tRain > 0.1) {
+            tomorrowText += "Vereinzelt sind kurze Schauer möglich, meist bleibt es aber trocken.";
+        } else {
+            const avgCode = tomorrowDayData.reduce((a,b)=>a+b.code,0) / tomorrowDayData.length;
+            if (avgCode <= 2) tomorrowText += "Es wird ein schöner, sonniger Tag.";
+            else tomorrowText += "Es bleibt meist wolkig oder bedeckt.";
+        }
+
+        if (tGust > 50) {
+             tomorrowText += ` Es wird windig mit Böen bis ${tGust} km/h.`;
+             warning = "WINDIG (Morgen)";
+        }
+
+        parts.push(tomorrowText);
+    }
+
+    summary = parts.join("\n\n");
+    confidence = 90; 
     
-    // Warnungen
-    const maxGust = Math.max(...(todayData.map(d=>d.gust)||[]), 0);
-    if (maxGust > 60) warning = "STURMBÖEN";
+    // Globale Warnungen
+    const maxGustNow = Math.max(...(todayData.map(d=>d.gust)||[]), 0);
+    if (maxGustNow > 60) warning = "STURMBÖEN (Heute)";
   }
 
   if (type === 'longterm') {
@@ -309,7 +370,7 @@ const generateAIReport = (type, data) => {
     else if (sunDays.length >= 3) summary += "Freuen Sie sich auf viel Sonne.";
     else summary += "Wechselhaftes Wetter dominiert.";
 
-    // Details (Ausführlich)
+    // Details (Ausführlich) für Longterm
     let detailParts = [];
     
     detailParts.push(`🌡️ **Temperatur-Entwicklung:**\nStart bei ${Math.round(startTemp)}°C, danach ${trendArrow}. Der wärmste Tag wird der **${maxTempDay.dayName}** (${Math.round(maxTempDay.max)}°C), am kühlsten bleibt es am ${minTempDay.dayName}.`);
@@ -321,7 +382,6 @@ const generateAIReport = (type, data) => {
         detailParts.push("☔ **Niederschlag:**\nEs bleibt weitgehend trocken.");
     }
 
-    // Wochenende Check
     const weekend = analysisData.filter(d => d.dayName === 'Sa.' || d.dayName === 'So.');
     if (weekend.length > 0) {
         const weTemp = Math.round(weekend.reduce((s, d) => s + d.max, 0) / weekend.length);
@@ -329,7 +389,6 @@ const generateAIReport = (type, data) => {
         detailParts.push(`🎉 **Wochenende:**\n${weRain < 1 ? "Perfektes Ausflugswetter" : "Eher ungemütlich"} bei ca. ${weTemp}°C.`);
     }
 
-    // Unsicherheits-Check
     if (confidence < 60) {
         detailParts.push(`⚠️ **Unsicherheit:**\nDie Wettermodelle sind sich noch uneinig. Die Prognose kann sich noch ändern (nur ${confidence}% sicher).`);
     } else {
@@ -535,13 +594,6 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
 
       {/* --- HAUS (zuerst gerendert, damit Bäume davor können) --- */}
       <g transform="translate(190, 120)">
-          {temp < 12 && (
-             <g>
-               <circle cx="28" cy="-15" r="3" fill="white" opacity="0.6" className="smoke-puff-1" />
-               <circle cx="28" cy="-15" r="2.5" fill="white" opacity="0.6" className="smoke-puff-2" />
-               <circle cx="28" cy="-15" r="3" fill="white" opacity="0.6" className="smoke-puff-3" />
-             </g>
-          )}
           <rect x="25" y="-10" width="6" height="15" fill="#57534e" />
           <rect x="5" y="10" width="40" height="30" fill={houseWall} />
           <path d="M-2 10 L25 -15 L52 10 Z" fill={houseRoof} filter={isSnow ? "brightness(1.1)" : "none"} />
@@ -552,32 +604,69 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
           {isNight && <circle cx="17" cy="23" r="8" fill="#fbbf24" opacity="0.6" filter="blur(4px)" />}
       </g>
 
-      {/* --- BÄUME (etwas größer und teilweise vor dem Haus) --- */}
-      <g transform="translate(40, 125) scale(1.1)" className={treeAnim}>
-         <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-         <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
-         <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+      {/* --- BÄUME --- */}
+      
+      {/* Baum Links - Rand */}
+      <g transform="translate(10, 130) scale(0.8)">
+        <g className={treeAnim}>
+            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+            <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+            <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+        </g>
+      </g>
+
+      {/* Baum Links - Mitte */}
+      <g transform="translate(40, 125) scale(1.1)">
+        <g className={treeAnim} style={{animationDelay: '0.1s'}}>
+            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+            <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+            <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+        </g>
       </g>
       
-      {/* Baum neben dem Haus - links */}
-      <g transform="translate(155, 120) scale(0.9)" className={treeAnim} style={{animationDelay: '0.2s'}}>
-         <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-         <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
-         <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+      {/* Baum Links - Neben Haus */}
+      <g transform="translate(90, 125) scale(0.7)">
+        <g className={treeAnim} style={{animationDelay: '0.3s'}}>
+            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+            <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+            <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+        </g>
+      </g>
+      
+      {/* Baum direkt neben dem Haus - links */}
+      <g transform="translate(155, 120) scale(0.9)">
+        <g className={treeAnim} style={{animationDelay: '0.2s'}}>
+            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+            <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+            <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+        </g>
       </g>
 
       {/* Baumgruppe Rechts */}
-      <g transform="translate(280, 120) scale(1.0)" className={treeAnim} style={{animationDelay: '0.5s'}}>
-         <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-         <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
-         <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+      <g transform="translate(280, 120) scale(1.0)">
+        <g className={treeAnim} style={{animationDelay: '0.5s'}}>
+            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+            <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+            <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+        </g>
+      </g>
+      
+      {/* Baum Rechts - Rand */}
+      <g transform="translate(320, 130) scale(0.9)">
+        <g className={treeAnim} style={{animationDelay: '0.7s'}}>
+            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+            <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+            <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+        </g>
       </g>
       
        {/* Kleiner Baum / Busch im Vordergrund */}
-       <g transform="translate(230, 140) scale(0.7)" className={treeAnim} style={{animationDelay: '1s'}}>
-         <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-         <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
-         <circle cx="10" cy="5" r="7" fill={treeLeaf} />
+       <g transform="translate(230, 140) scale(0.7)">
+         <g className={treeAnim} style={{animationDelay: '1s'}}>
+            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+            <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+            <circle cx="10" cy="5" r="7" fill={treeLeaf} />
+         </g>
       </g>
 
       {(isPartlyCloudy) && (
@@ -766,7 +855,8 @@ const AIReportBox = ({ report, dwdWarnings }) => {
                 )}
             </div>
             
-            <p className="text-sm text-slate-800 leading-relaxed font-semibold relative z-10">{summary}</p>
+            {/* Hinzugefügt: whitespace-pre-line für korrekte Zeilenumbrüche im Daily Report */}
+            <p className="text-sm text-slate-800 leading-relaxed font-semibold relative z-10 whitespace-pre-line">{summary}</p>
             
             {/* Toggle Button */}
             {details && (
