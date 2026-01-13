@@ -675,6 +675,15 @@ export default function WeatherApp() {
   const [sunriseSunset, setSunriseSunset] = useState({ sunrise: null, sunset: null });
   const [modelRuns, setModelRuns] = useState({ icon: '', gfs: '', arome: '' });
 
+  // NEU: Service Worker Registrierung direkt in der App
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('SW registriert:', reg))
+        .catch(err => console.error('SW Fehler:', err));
+    }
+  }, []);
+
   useEffect(() => {
     const saved = localStorage.getItem('weather_home_loc');
     if (!saved && navigator.geolocation) {
