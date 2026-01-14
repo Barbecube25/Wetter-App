@@ -1,23 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft } from 'lucide-react';
 
 // --- 1. KONSTANTEN & CONFIG ---
 
 const DEFAULT_LOC = { name: "Jülich Daubenrath", lat: 50.938, lon: 6.388, isHome: true };
-
-// DEMO SZENARIEN FÜR ANIMATIONSTESTS
-const DEMO_SCENARIOS = [
-  { name: "Live", data: null },
-  { name: "Sonnig & Heiß", data: { code: 0, isDay: 1, temp: 32, wind: 5, gust: 10, snow: 0, precip: 0, appTemp: 34 } },
-  { name: "Nieselregen", data: { code: 53, isDay: 1, temp: 11, wind: 10, gust: 15, snow: 0, precip: 0.5, appTemp: 10 } },
-  { name: "Starkregen & Wind", data: { code: 65, isDay: 1, temp: 12, wind: 45, gust: 70, snow: 0, precip: 15.0, appTemp: 10 } },
-  { name: "Gewitter", data: { code: 95, isDay: 0, temp: 18, wind: 30, gust: 85, snow: 0, precip: 25.0, appTemp: 18 } },
-  { name: "Leichter Schnee", data: { code: 71, isDay: 1, temp: -1, wind: 10, gust: 20, snow: 2.0, precip: 0, appTemp: -3 } },
-  { name: "Starker Schneefall", data: { code: 75, isDay: 1, temp: -4, wind: 25, gust: 40, snow: 15.0, precip: 0, appTemp: -8 } },
-  { name: "Nebel", data: { code: 45, isDay: 0, temp: 4, wind: 2, gust: 5, snow: 0, precip: 0, appTemp: 3 } },
-  { name: "Eis & Frost", data: { code: 0, isDay: 0, temp: -8, wind: 10, gust: 15, snow: 0, precip: 0, appTemp: -12 } },
-];
 
 const getSavedHomeLocation = () => {
   try {
@@ -596,7 +583,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
           </g>
       )}
 
-      {/* --- HAUS --- */}
+      {/* --- HAUS (zuerst gerendert, damit Bäume davor können) --- */}
       <g transform="translate(190, 120)">
           <rect x="25" y="-10" width="6" height="15" fill="#57534e" />
           <rect x="5" y="10" width="40" height="30" fill={houseWall} />
@@ -1141,8 +1128,17 @@ export default function WeatherApp() {
   const [sunriseSunset, setSunriseSunset] = useState({ sunrise: null, sunset: null });
   const [modelRuns, setModelRuns] = useState({ icon: '', gfs: '', arome: '' });
   const [showIosInstall, setShowIosInstall] = useState(false);
-  const [demoIndex, setDemoIndex] = useState(0); // State für Demo-Modus
   const [showFeedback, setShowFeedback] = useState(false); // State für Feedback Modal
+  
+  // WIDGET MODE (View Parameter)
+  const [viewMode, setViewMode] = useState(null);
+
+  useEffect(() => {
+    // Check URL parameters for view mode
+    const urlParams = new URLSearchParams(window.location.search);
+    const view = urlParams.get('view');
+    if (view) setViewMode(view);
+  }, []);
 
   // NEU: iOS Erkennung
   useEffect(() => {
@@ -1153,9 +1149,6 @@ export default function WeatherApp() {
       setShowIosInstall(true);
     }
   }, []);
-
-  // NEU: Service Worker Registrierung mit Log -- HIER ENTFERNT -- 
-  // Das erledigt bereits main.jsx zuverlässiger.
 
   useEffect(() => {
     const saved = localStorage.getItem('weather_home_loc');
@@ -1202,11 +1195,6 @@ export default function WeatherApp() {
     );
   };
   
-  // Toggle durch Demo-Szenarien
-  const handleToggleDemo = () => {
-      setDemoIndex((prev) => (prev + 1) % DEMO_SCENARIOS.length);
-  };
-
   const fetchData = async () => {
     setLoading(true);
     setError(null);
@@ -1352,8 +1340,7 @@ export default function WeatherApp() {
   
   // LIVE oder DEMO Daten?
   const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: "0.0", precip: "0.0", wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0 };
-  const demoData = DEMO_SCENARIOS[demoIndex].data;
-  const current = demoData ? { ...liveCurrent, ...demoData } : liveCurrent;
+  const current = liveCurrent;
 
   const dailyRainSum = processedLong.length > 0 ? processedLong[0].rain : "0.0";
   const dailySnowSum = processedLong.length > 0 ? processedLong[0].snow : "0.0";
@@ -1370,6 +1357,58 @@ export default function WeatherApp() {
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, processedShort), [processedLong, processedShort]);
 
   const displayedHours = showAllHours ? processedShort.slice(0, 24) : processedShort.slice(0, 12);
+
+  // --- WIDGET VIEWS ---
+  if (viewMode === 'animation') {
+    if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-900 text-white">Lade...</div>;
+    return (
+      <div className={`h-screen w-screen overflow-hidden relative bg-gradient-to-br ${bgGradient}`}>
+        <style>{styles}</style>
+        <div className="absolute top-4 left-4 z-50">
+            <a href="/" className="bg-black/20 p-2 rounded-full text-white backdrop-blur-md block"><ArrowLeft size={24}/></a>
+        </div>
+        <div className="h-full w-full">
+            <WeatherLandscape code={current.code} isDay={current.isDay} date={current.time} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} />
+        </div>
+        <div className="absolute bottom-8 left-0 right-0 text-center text-white drop-shadow-md pointer-events-none">
+            <div className="text-6xl font-bold">{Math.round(current.temp)}°</div>
+            <div className="text-xl opacity-90">{weatherConf.text}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (viewMode === 'report') {
+     if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-50">Lade...</div>;
+     return (
+        <div className="min-h-screen bg-slate-100 p-4">
+            <div className="mb-4">
+                <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
+            </div>
+            <h2 className="text-2xl font-bold mb-4 text-slate-800">Tages-Bericht</h2>
+            <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} />
+            <div className="mt-8">
+                 <h2 className="text-2xl font-bold mb-4 text-slate-800">7-Tage-Trend</h2>
+                 <AIReportBox report={longtermReport} dwdWarnings={[]} />
+            </div>
+        </div>
+     );
+  }
+
+  if (viewMode === 'precip') {
+    if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-50">Lade...</div>;
+    return (
+       <div className="min-h-screen bg-slate-100 p-4 flex flex-col justify-center">
+           <div className="absolute top-4 left-4">
+               <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
+           </div>
+           <h2 className="text-2xl font-bold mb-6 text-slate-800 text-center">Niederschlags-Radar</h2>
+           <PrecipitationTile data={processedShort} />
+       </div>
+    );
+ }
+
+  // --- STANDARD APP ---
 
   if (loading) return <div className="min-h-screen bg-slate-100 flex items-center justify-center"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
   if (error) return <div className="min-h-screen flex items-center justify-center p-8 bg-red-50 text-red-900 font-bold">{error} <button onClick={() => setCurrentLoc(homeLoc)} className="ml-4 underline">Reset</button></div>;
@@ -1409,10 +1448,6 @@ export default function WeatherApp() {
                    <MessageSquarePlus size={20} />
                </button>
 
-               <button onClick={handleToggleDemo} className={`p-3 rounded-full backdrop-blur-md transition shadow-md flex items-center gap-2 ${demoIndex > 0 ? 'bg-amber-400 text-black animate-pulse' : 'bg-white/20 ' + textColor}`}>
-                   <Palette size={20} />
-                   {demoIndex > 0 && <span className="text-xs font-bold hidden sm:inline">{DEMO_SCENARIOS[demoIndex].name}</span>}
-               </button>
                <button onClick={fetchData} className={`p-3 rounded-full backdrop-blur-md bg-white/20 transition shadow-md ${textColor}`}><RefreshCw size={20} /></button>
            </div>
         </div>
@@ -1426,7 +1461,7 @@ export default function WeatherApp() {
                <span className="text-7xl font-bold tracking-tighter leading-none drop-shadow-lg text-white">{Math.round(current.temp)}°</span>
                <div className="flex items-center gap-1.5 mt-2 opacity-90 font-medium text-sm text-white drop-shadow-md"><Thermometer size={16} /><span>Gefühlt {Math.round(current.appTemp)}°</span></div>
                <div className="flex items-center gap-2 mt-1 opacity-80 font-medium text-sm text-white drop-shadow-md"><span>H: {processedLong[0]?.max.toFixed(0)}°</span><span>T: {processedLong[0]?.min.toFixed(0)}°</span></div>
-               <div className="mt-1 text-lg font-medium tracking-wide text-white drop-shadow-md">{weatherConf.text} {demoIndex > 0 && "(Demo)"}</div>
+               <div className="mt-1 text-lg font-medium tracking-wide text-white drop-shadow-md">{weatherConf.text}</div>
             </div>
             <div className="flex flex-col gap-2 items-end text-right pl-3 border-l border-white/20 ml-2 backdrop-blur-sm bg-black/5 rounded-xl p-2">
                <div className="flex flex-col items-end"><div className={`flex items-center gap-1 opacity-90 text-sm font-bold ${getUvColorClass(current.uvIndex)} drop-shadow-sm`}><Sun size={14} /> <span>{current.uvIndex}</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">UV</span></div>
@@ -1435,7 +1470,7 @@ export default function WeatherApp() {
                   <div className="flex flex-col items-end"><div className="flex items-center gap-1 opacity-90 text-sm font-bold text-white drop-shadow-sm"><Thermometer size={14} /> <span>{current.dewPoint}°</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Taupkt.</span></div>
                </div>
                <div className="flex flex-col items-end mt-1"><div className={`flex items-center gap-1.5 text-sm font-bold ${windColorClass} drop-shadow-sm`}><Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }}/><span>{current.wind} <span className="text-xs font-normal opacity-80">({current.gust})</span></span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Wind (Böen) km/h</span></div>
-               {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0 || demoIndex > 0) && (<div className="flex flex-col items-end mt-1"><div className="flex items-center gap-1.5 opacity-90 text-sm font-bold text-blue-300 drop-shadow-sm">{isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>}<span>{isSnowing ? (demoIndex > 0 ? current.snow : dailySnowSum) : (demoIndex > 0 ? current.precip : dailyRainSum)} {isSnowing ? 'cm' : 'mm'}</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Niederschlag (24h)</span></div>)}
+               {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0) && (<div className="flex flex-col items-end mt-1"><div className="flex items-center gap-1.5 opacity-90 text-sm font-bold text-blue-300 drop-shadow-sm">{isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>}<span>{isSnowing ? dailySnowSum : dailyRainSum} {isSnowing ? 'cm' : 'mm'}</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Niederschlag (24h)</span></div>)}
             </div>
           </div>
         </div>
@@ -1451,7 +1486,7 @@ export default function WeatherApp() {
           {activeTab === 'overview' && (
             <div className="space-y-4">
                <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} />
-               <PrecipitationTile data={demoIndex > 0 ? [current, ...processedShort] : processedShort} />
+               <PrecipitationTile data={processedShort} />
                <h3 className="text-sm font-bold uppercase tracking-wide opacity-70 ml-2">Stündlicher Verlauf</h3>
                <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
@@ -1547,77 +1582,6 @@ export default function WeatherApp() {
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
                     </>
                   )}
-               </div>
-            </div>
-          )}
-
-          {activeTab === 'longterm' && (
-             <div className="space-y-4">
-               <AIReportBox report={longtermReport} dwdWarnings={dwdWarnings} />
-               <h3 className="text-sm font-bold uppercase opacity-70 ml-2">7-Tage Liste</h3>
-               {processedLong.map((day, i) => {
-                 const isDaySnow = parseFloat(day.snow) > 0;
-                 const DayIcon = getWeatherConfig(day.code, 1).icon;
-                 const confColor = getConfidenceColor(day.reliability);
-                 let probColor = "text-slate-400 opacity-50"; 
-                 if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
-
-                 return (
-                   <div key={i} className="grid grid-cols-[auto_1fr_auto] gap-3 items-center py-4 border-b border-white/10 last:border-0 hover:bg-white/5 transition px-2">
-                      <div className="flex flex-col items-center w-14">
-                         <div className="font-bold text-lg leading-none mb-1">{day.dayName}</div>
-                         <div className="text-xs opacity-60 mb-2">{day.dateShort}</div>
-                         <DayIcon size={28} className="opacity-90" />
-                      </div>
-                      <div className="flex flex-col justify-center h-full px-2">
-                         <div className="flex items-center gap-2 mb-2 w-full">
-                            <span className="text-lg font-bold w-8 text-right text-blue-500">{Math.round(day.min)}°</span>
-                            <div className="h-2 flex-1 bg-black/10 rounded-full overflow-hidden relative">
-                               <div className="absolute inset-y-0 bg-gradient-to-r from-blue-300 to-amber-300 opacity-90 w-full" />
-                            </div>
-                            <span className="text-lg font-bold w-8 text-red-500">{Math.round(day.max)}°</span>
-                         </div>
-                         <div className={`self-start px-2 py-0.5 rounded text-[10px] font-bold border flex items-center gap-1 ${confColor}`}>
-                             {day.reliability >= 80 ? <ShieldCheck size={10} /> : <AlertTriangle size={10} />}
-                             {day.reliability}% Sicher
-                          </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-2 w-24">
-                         <div className="flex items-center gap-1.5 opacity-90">
-                            <div className="flex flex-col items-end leading-none">
-                               <span className={`text-sm font-bold ${getWindColorClass(day.wind)}`}>{day.wind}</span>
-                               <span className={`text-[10px] opacity-70 ${getWindColorClass(day.gust)}`}>({day.gust})</span>
-                            </div>
-                            <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
-                         </div>
-                         <div className="flex flex-col items-end leading-none">
-                            {isDaySnow ? <span className="text-cyan-500 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {day.snow}cm</span> : parseFloat(day.rain) > 0.1 ? <span className="text-blue-500 font-bold text-xs flex items-center gap-1"><Droplets size={10}/> {day.rain}mm</span> : <span className="text-xs opacity-20">-</span>}
-                            <span className={`text-[10px] mt-1 ${probColor}`}>{day.prob > 0 ? `${day.prob}% Wahrsch.` : ''}</span>
-                         </div>
-                      </div>
-                   </div>
-                 );
-               })}
-             </div>
-          )}
-
-          {activeTab === 'radar' && (
-            <div className="h-full flex flex-col">
-               <h3 className="text-sm font-bold uppercase opacity-70 mb-4 ml-2">Live-Radar (Windy)</h3>
-               <div className="w-full aspect-square rounded-xl overflow-hidden shadow-inner border border-black/10 bg-gray-200 relative">
-                  <iframe width="100%" height="100%" src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=450&height=450&zoom=9&level=surface&overlay=radar&product=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`} frameBorder="0" title="Windy Radar" className="absolute inset-0"></iframe>
-               </div>
-               <div className="mt-4 text-xs text-center opacity-60">Radarbild bereitgestellt von Windy.com</div>
-            </div>
-          )}
-
-          {activeTab !== 'radar' && (
-            <div className="mt-8 text-xs text-center opacity-60 px-6 font-medium space-y-2">
-               <p className="flex items-center justify-center gap-2 mb-2"><Database size={14} /> Datenbasis & Laufzeiten (Geschätzt)</p>
-               <div className="flex flex-wrap justify-center gap-4">
-                 <span className="bg-blue-500/10 px-2 py-1 rounded text-blue-500 border border-blue-500/20">ICON-D2: {modelRuns.icon || '--:--'}</span>
-                 <span className="bg-purple-500/10 px-2 py-1 rounded text-purple-500 border border-purple-500/20">GFS: {modelRuns.gfs || '--:--'}</span>
-                 <span className="bg-green-500/10 px-2 py-1 rounded text-green-500 border border-green-500/20">AROME: {modelRuns.arome || '--:--'}</span>
                </div>
             </div>
           )}
