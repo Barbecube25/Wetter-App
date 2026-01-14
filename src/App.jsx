@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail } from 'lucide-react';
 
 // --- 1. KONSTANTEN & CONFIG ---
 
@@ -10,13 +10,13 @@ const DEFAULT_LOC = { name: "Jülich Daubenrath", lat: 50.938, lon: 6.388, isHom
 const DEMO_SCENARIOS = [
   { name: "Live", data: null },
   { name: "Sonnig & Heiß", data: { code: 0, isDay: 1, temp: 32, wind: 5, gust: 10, snow: 0, precip: 0, appTemp: 34 } },
+  { name: "Nieselregen", data: { code: 53, isDay: 1, temp: 11, wind: 10, gust: 15, snow: 0, precip: 0.5, appTemp: 10 } },
   { name: "Starkregen & Wind", data: { code: 65, isDay: 1, temp: 12, wind: 45, gust: 70, snow: 0, precip: 15.0, appTemp: 10 } },
   { name: "Gewitter", data: { code: 95, isDay: 0, temp: 18, wind: 30, gust: 85, snow: 0, precip: 25.0, appTemp: 18 } },
   { name: "Leichter Schnee", data: { code: 71, isDay: 1, temp: -1, wind: 10, gust: 20, snow: 2.0, precip: 0, appTemp: -3 } },
   { name: "Starker Schneefall", data: { code: 75, isDay: 1, temp: -4, wind: 25, gust: 40, snow: 15.0, precip: 0, appTemp: -8 } },
   { name: "Nebel", data: { code: 45, isDay: 0, temp: 4, wind: 2, gust: 5, snow: 0, precip: 0, appTemp: 3 } },
   { name: "Eis & Frost", data: { code: 0, isDay: 0, temp: -8, wind: 10, gust: 15, snow: 0, precip: 0, appTemp: -12 } },
-  { name: "Nieselregen", data: { code: 53, isDay: 1, temp: 11, wind: 10, gust: 15, snow: 0, precip: 0.5, appTemp: 10 } },
 ];
 
 const getSavedHomeLocation = () => {
@@ -872,6 +872,115 @@ const PrecipitationTile = ({ data }) => {
   );
 };
 
+// --- NEU: FEEDBACK MODAL (ERWEITERT) ---
+const FeedbackModal = ({ onClose, currentTemp }) => {
+    const [sent, setSent] = useState(false);
+    const [tempAdjustment, setTempAdjustment] = useState(0); // Offset in Grad
+    const [selectedCondition, setSelectedCondition] = useState(null);
+
+    const conditions = [
+        { id: 'sun', label: 'Sonnig', icon: Sun, color: 'text-amber-500 bg-amber-50 border-amber-200' },
+        { id: 'cloudy', label: 'Bewölkt', icon: Cloud, color: 'text-slate-500 bg-slate-50 border-slate-200' },
+        { id: 'overcast', label: 'Bedeckt', icon: Cloud, color: 'text-slate-700 bg-slate-100 border-slate-300' }, // Neu
+        { id: 'fog', label: 'Nebel', icon: CloudFog, color: 'text-slate-400 bg-slate-50/50 border-slate-200' },
+        { id: 'drizzle', label: 'Niesel', icon: CloudDrizzle, color: 'text-cyan-500 bg-cyan-50 border-cyan-200' },
+        { id: 'rain', label: 'Regen', icon: CloudRain, color: 'text-blue-500 bg-blue-50 border-blue-200' },
+        { id: 'storm', label: 'Gewitter', icon: CloudLightning, color: 'text-purple-600 bg-purple-50 border-purple-200' }, // Neu
+        { id: 'snow', label: 'Schnee', icon: CloudSnow, color: 'text-sky-300 bg-sky-50 border-sky-100' }, // Neu
+        { id: 'hail', label: 'Hagel', icon: CloudHail, color: 'text-teal-600 bg-teal-50 border-teal-200' }, // Neu
+        { id: 'wind', label: 'Windig', icon: Wind, color: 'text-slate-600 bg-slate-100 border-slate-300' }, // Neu
+    ];
+
+    const handleSend = () => {
+        if (!selectedCondition && tempAdjustment === 0) return; // Nichts zu senden
+
+        setSent(true);
+        // Hier würde normalerweise der API-Call zum Backend stehen mit:
+        // condition: selectedCondition
+        // tempCorrection: tempAdjustment
+        setTimeout(() => {
+            onClose();
+            setSent(false);
+        }, 2000);
+    };
+
+    if (sent) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
+                    <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-600">
+                        <CheckCircle2 size={32} />
+                    </div>
+                    <h3 className="text-xl font-black text-slate-800 mb-2">Danke!</h3>
+                    <p className="text-slate-500">Dein Feedback hilft uns, die lokalen Daten zu vergleichen.</p>
+                </div>
+            </div>
+        );
+    }
+
+    const displayTemp = Math.round(currentTemp + tempAdjustment);
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2"><MessageSquarePlus size={18} className="text-blue-500"/> Wetter melden</h3>
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={20} className="text-slate-400" /></button>
+                </div>
+                
+                <div className="p-6 overflow-y-auto">
+                    {/* Temperatur Slider */}
+                    <div className="mb-8">
+                        <div className="flex justify-between items-end mb-4">
+                            <label className="text-sm font-bold text-slate-500 uppercase tracking-wide">Temperatur</label>
+                            <div className="text-3xl font-black text-slate-800">{displayTemp}°C</div>
+                        </div>
+                        <input 
+                            type="range" 
+                            min="-10" 
+                            max="10" 
+                            step="1" 
+                            value={tempAdjustment} 
+                            onChange={(e) => setTempAdjustment(parseInt(e.target.value))}
+                            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                        />
+                        <div className="flex justify-between text-xs text-slate-400 mt-2 font-medium">
+                            <span>Kälter (-10°)</span>
+                            <span>Genau richtig</span>
+                            <span>Wärmer (+10°)</span>
+                        </div>
+                    </div>
+
+                    {/* Wetter Grid */}
+                    <div className="mb-6">
+                        <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 block">Aktuelles Wetter</label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {conditions.map((c) => (
+                                <button 
+                                    key={c.id}
+                                    onClick={() => setSelectedCondition(c.id)}
+                                    className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200 ${selectedCondition === c.id ? `ring-2 ring-offset-1 ring-blue-500 ${c.color}` : 'border-slate-100 hover:bg-slate-50'}`}
+                                >
+                                    <c.icon size={24} className={selectedCondition === c.id ? '' : 'text-slate-400'} />
+                                    <span className={`text-xs font-medium mt-2 ${selectedCondition === c.id ? '' : 'text-slate-600'}`}>{c.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <button 
+                        onClick={handleSend} 
+                        disabled={!selectedCondition && tempAdjustment === 0}
+                        className="w-full py-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20"
+                    >
+                        Feedback senden
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const DwdAlertItem = ({ alert }) => {
   const [expanded, setExpanded] = useState(false);
   const colorClass = getDwdColorClass(alert.severity);
@@ -1033,6 +1142,7 @@ export default function WeatherApp() {
   const [modelRuns, setModelRuns] = useState({ icon: '', gfs: '', arome: '' });
   const [showIosInstall, setShowIosInstall] = useState(false);
   const [demoIndex, setDemoIndex] = useState(0); // State für Demo-Modus
+  const [showFeedback, setShowFeedback] = useState(false); // State für Feedback Modal
 
   // NEU: iOS Erkennung
   useEffect(() => {
@@ -1268,6 +1378,8 @@ export default function WeatherApp() {
     <div className={`min-h-screen transition-all duration-1000 bg-gradient-to-br ${bgGradient} font-sans pb-20 overflow-hidden relative`}>
       <style>{styles}</style>
       
+      {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} currentTemp={current.temp} />}
+
       <header className="pt-8 px-5 flex justify-between items-start z-10 relative">
         <div className={textColor}>
           <div className="flex gap-2 mb-2">
@@ -1292,6 +1404,11 @@ export default function WeatherApp() {
            )}
 
            <div className="flex gap-2">
+               {/* FEEDBACK BUTTON */}
+               <button onClick={() => setShowFeedback(true)} className={`p-3 rounded-full backdrop-blur-md transition shadow-md ${textColor} bg-white/20 hover:bg-white/30`}>
+                   <MessageSquarePlus size={20} />
+               </button>
+
                <button onClick={handleToggleDemo} className={`p-3 rounded-full backdrop-blur-md transition shadow-md flex items-center gap-2 ${demoIndex > 0 ? 'bg-amber-400 text-black animate-pulse' : 'bg-white/20 ' + textColor}`}>
                    <Palette size={20} />
                    {demoIndex > 0 && <span className="text-xs font-bold hidden sm:inline">{DEMO_SCENARIOS[demoIndex].name}</span>}
