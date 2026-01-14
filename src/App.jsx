@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft } from 'lucide-react';
 
 // --- 1. KONSTANTEN & CONFIG ---
 
@@ -740,7 +740,8 @@ const PrecipitationTile = ({ data }) => {
        endTime: null,
        amount: 0,
        duration: 0,
-       isSnow: false
+       isSnow: false,
+       maxIntensity: 0
     };
 
     let foundStart = false;
@@ -758,7 +759,9 @@ const PrecipitationTile = ({ data }) => {
                result.startTime = d.time;
                result.isSnow = d.snow > 0.05; // Typerkennung beim Start
            }
-           result.amount += (d.precip > 0 ? d.precip : d.snow); // Schnee in mm Wasseräquivalent meist ähnlich in API
+           const hourlyAmount = d.precip > 0 ? d.precip : d.snow;
+           result.amount += hourlyAmount; // Schnee in mm Wasseräquivalent meist ähnlich in API
+           result.maxIntensity = Math.max(result.maxIntensity, hourlyAmount);
            result.duration++;
        } else {
            if (foundStart) {
@@ -771,9 +774,11 @@ const PrecipitationTile = ({ data }) => {
     
     if (!foundStart && isRainingNow) {
         // Es regnet jetzt, hört aber in <1h auf (in den futureData nicht mehr drin)
+        const hourlyAmount = current.precip || current.snow;
         result.type = current.snow > 0 ? 'snow_now' : 'rain_now';
         result.duration = 1; 
-        result.amount = current.precip || current.snow;
+        result.amount = hourlyAmount;
+        result.maxIntensity = hourlyAmount;
         result.startTime = current.time;
     } else if (foundStart) {
         if (precipStartIdx === 0 && isRainingNow) {
@@ -788,7 +793,7 @@ const PrecipitationTile = ({ data }) => {
 
   if (!analysis) return null;
 
-  const { type, startTime, duration, amount, isSnow } = analysis;
+  const { type, startTime, duration, amount, isSnow, maxIntensity } = analysis;
   
   if (type === 'none') {
       return (
@@ -809,6 +814,15 @@ const PrecipitationTile = ({ data }) => {
   const Icon = isSnow ? Snowflake : CloudRain;
   const colorClass = isSnow ? "text-cyan-600 bg-cyan-100 border-cyan-200" : "text-blue-600 bg-blue-100 border-blue-200";
   const bgClass = isSnow ? "bg-cyan-50/80" : "bg-blue-50/80";
+
+  // Intensitäts-Logik
+  const getIntensityInfo = (rate) => {
+      if (rate < 1.0) return { label: 'Leicht', percent: 33, color: isSnow ? 'bg-cyan-400' : 'bg-blue-400' };
+      if (rate < 4.0) return { label: 'Mäßig', percent: 66, color: isSnow ? 'bg-cyan-500' : 'bg-blue-600' };
+      return { label: 'Stark', percent: 100, color: isSnow ? 'bg-cyan-700' : 'bg-blue-800' };
+  };
+
+  const intensity = getIntensityInfo(maxIntensity);
 
   return (
     <div className={`${bgClass} border ${isSnow ? 'border-cyan-100' : 'border-blue-100'} rounded-2xl p-4 shadow-sm mb-4 relative overflow-hidden`}>
@@ -836,7 +850,7 @@ const PrecipitationTile = ({ data }) => {
                  {!isNow && <span className="text-sm font-bold text-slate-500 mb-1 ml-1">Uhr</span>}
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 mb-3">
                 <div className="bg-white/60 rounded-xl p-2 flex flex-col justify-center">
                     <div className="flex items-center gap-1.5 mb-0.5 opacity-70">
                         <Timer size={12} /> <span className="text-[10px] font-bold uppercase">Dauer</span>
@@ -852,6 +866,25 @@ const PrecipitationTile = ({ data }) => {
                     <div className="font-bold text-slate-800 leading-none">
                         {amount.toFixed(1)} <span className="text-xs font-medium opacity-60">mm</span>
                     </div>
+                </div>
+            </div>
+
+            {/* Intensitäts-Balken */}
+            <div className="bg-white/40 rounded-xl p-2">
+                <div className="flex justify-between text-[10px] font-bold uppercase opacity-70 mb-1.5">
+                    <span>Intensität</span>
+                    <span>{intensity.label}</span>
+                </div>
+                <div className="h-2 w-full bg-white/50 rounded-full overflow-hidden relative">
+                    {/* Hintergrund Segmente */}
+                    <div className="absolute inset-0 flex">
+                        <div className="w-1/3 border-r border-white/30 h-full"></div>
+                        <div className="w-1/3 border-r border-white/30 h-full"></div>
+                    </div>
+                    <div 
+                        className={`h-full ${intensity.color} transition-all duration-1000 ease-out rounded-full shadow-sm`} 
+                        style={{ width: `${intensity.percent}%` }}
+                    ></div>
                 </div>
             </div>
         </div>
@@ -1149,6 +1182,9 @@ export default function WeatherApp() {
       setShowIosInstall(true);
     }
   }, []);
+
+  // NEU: Service Worker Registrierung mit Log -- HIER ENTFERNT -- 
+  // Das erledigt bereits main.jsx zuverlässiger.
 
   useEffect(() => {
     const saved = localStorage.getItem('weather_home_loc');
