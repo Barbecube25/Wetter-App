@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft } from 'lucide-react';
 
 // --- 1. KONSTANTEN & CONFIG ---
 
@@ -1618,6 +1618,77 @@ export default function WeatherApp() {
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
                     </>
                   )}
+               </div>
+            </div>
+          )}
+
+          {activeTab === 'longterm' && (
+             <div className="space-y-4">
+               <AIReportBox report={longtermReport} dwdWarnings={dwdWarnings} />
+               <h3 className="text-sm font-bold uppercase opacity-70 ml-2">7-Tage Liste</h3>
+               {processedLong.map((day, i) => {
+                 const isDaySnow = parseFloat(day.snow) > 0;
+                 const DayIcon = getWeatherConfig(day.code, 1).icon;
+                 const confColor = getConfidenceColor(day.reliability);
+                 let probColor = "text-slate-400 opacity-50"; 
+                 if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
+
+                 return (
+                   <div key={i} className="grid grid-cols-[auto_1fr_auto] gap-3 items-center py-4 border-b border-white/10 last:border-0 hover:bg-white/5 transition px-2">
+                      <div className="flex flex-col items-center w-14">
+                         <div className="font-bold text-lg leading-none mb-1">{day.dayName}</div>
+                         <div className="text-xs opacity-60 mb-2">{day.dateShort}</div>
+                         <DayIcon size={28} className="opacity-90" />
+                      </div>
+                      <div className="flex flex-col justify-center h-full px-2">
+                         <div className="flex items-center gap-2 mb-2 w-full">
+                            <span className="text-lg font-bold w-8 text-right text-blue-500">{Math.round(day.min)}°</span>
+                            <div className="h-2 flex-1 bg-black/10 rounded-full overflow-hidden relative">
+                               <div className="absolute inset-y-0 bg-gradient-to-r from-blue-300 to-amber-300 opacity-90 w-full" />
+                            </div>
+                            <span className="text-lg font-bold w-8 text-red-500">{Math.round(day.max)}°</span>
+                         </div>
+                         <div className={`self-start px-2 py-0.5 rounded text-[10px] font-bold border flex items-center gap-1 ${confColor}`}>
+                             {day.reliability >= 80 ? <ShieldCheck size={10} /> : <AlertTriangle size={10} />}
+                             {day.reliability}% Sicher
+                          </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2 w-24">
+                         <div className="flex items-center gap-1.5 opacity-90">
+                            <div className="flex flex-col items-end leading-none">
+                               <span className={`text-sm font-bold ${getWindColorClass(day.wind)}`}>{day.wind}</span>
+                               <span className={`text-[10px] opacity-70 ${getWindColorClass(day.gust)}`}>({day.gust})</span>
+                            </div>
+                            <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
+                         </div>
+                         <div className="flex flex-col items-end leading-none">
+                            {isDaySnow ? <span className="text-cyan-500 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {day.snow}cm</span> : parseFloat(day.rain) > 0.1 ? <span className="text-blue-500 font-bold text-xs flex items-center gap-1"><Droplets size={10}/> {day.rain}mm</span> : <span className="text-xs opacity-20">-</span>}
+                            <span className={`text-[10px] mt-1 ${probColor}`}>{day.prob > 0 ? `${day.prob}% Wahrsch.` : ''}</span>
+                         </div>
+                      </div>
+                   </div>
+                 );
+               })}
+             </div>
+          )}
+
+          {activeTab === 'radar' && (
+            <div className="h-full flex flex-col">
+               <h3 className="text-sm font-bold uppercase opacity-70 mb-4 ml-2">Live-Radar (Windy)</h3>
+               <div className="w-full aspect-square rounded-xl overflow-hidden shadow-inner border border-black/10 bg-gray-200 relative">
+                  <iframe width="100%" height="100%" src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=450&height=450&zoom=9&level=surface&overlay=radar&product=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`} frameBorder="0" title="Windy Radar" className="absolute inset-0"></iframe>
+               </div>
+               <div className="mt-4 text-xs text-center opacity-60">Radarbild bereitgestellt von Windy.com</div>
+            </div>
+          )}
+
+          {activeTab !== 'radar' && (
+            <div className="mt-8 text-xs text-center opacity-60 px-6 font-medium space-y-2">
+               <p className="flex items-center justify-center gap-2 mb-2"><Database size={14} /> Datenbasis & Laufzeiten (Geschätzt)</p>
+               <div className="flex flex-wrap justify-center gap-4">
+                 <span className="bg-blue-500/10 px-2 py-1 rounded text-blue-500 border border-blue-500/20">ICON-D2: {modelRuns.icon || '--:--'}</span>
+                 <span className="bg-purple-500/10 px-2 py-1 rounded text-purple-500 border border-purple-500/20">GFS: {modelRuns.gfs || '--:--'}</span>
+                 <span className="bg-green-500/10 px-2 py-1 rounded text-green-500 border border-green-500/20">AROME: {modelRuns.arome || '--:--'}</span>
                </div>
             </div>
           )}
