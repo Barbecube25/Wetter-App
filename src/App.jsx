@@ -400,213 +400,6 @@ const generateAIReport = (type, data) => {
     details = detailParts.join("\n\n");
     
     const stormDay = analysisData.find(d => d.gust > 70);
-    if (stormDay) warning = `STURM (${stormDay.dayNameFuain };
-  if ([61, 63].includes(code)) return { text: 'Regen', icon: CloudRain };
-  if ([80, 81].includes(code)) return { text: 'Regenschauer', icon: CloudRain };
-  if ([65, 82].includes(code)) return { text: 'Starkregen', icon: CloudRain };
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return { text: 'Schnee', icon: Snowflake };
-  if ([56, 57, 66, 67].includes(code)) return { text: 'Schneeregen/Eis', icon: Snowflake };
-  if ([95, 96, 99].includes(code)) return { text: 'Gewitter', icon: CloudLightning };
-  return { text: 'Unbekannt', icon: Info };
-};
-
-const getMoonPhase = (d) => {
-  if (!d) return 0;
-  const dateObj = new Date(d);
-  const newMoon = new Date(2000, 0, 6, 18, 14).getTime();
-  const phaseSeconds = 2551443;
-  let sec = (dateObj.getTime() - newMoon) / 1000;
-  let currentSec = sec % phaseSeconds;
-  if (currentSec < 0) currentSec += phaseSeconds;
-  return Math.round((currentSec / phaseSeconds) * 8) % 8;
-};
-
-// --- 3. KI LOGIK (REVISED - MIT STRUKTURIERTEN DATEN) ---
-const generateAIReport = (type, data) => {
-  if (!data || data.length === 0) return { title: "Lade...", summary: "Warte auf Daten...", details: null, warning: null, confidence: null };
-  
-  let title = "";
-  let summary = "";
-  let details = null; // Standardmäßig null für "nicht ausklappbar"
-  let warning = null;
-  let confidence = null;
-
-  if (type === 'daily') {
-    title = "Tages-Briefing";
-    const now = new Date();
-    const currentHour = now.getHours();
-    
-    // Basisdaten
-    const current = data[0];
-    let intro = `Aktuell (${current.displayTime} Uhr): ${Math.round(current.temp)}°C`;
-    if (Math.abs(current.appTemp - current.temp) > 2) intro += `, gefühlt ${Math.round(current.appTemp)}°C.`;
-    
-    let parts = [intro];
-
-    // 1. PHASE: Rest von Heute (Filtert alles Vergangene raus)
-    const todayData = data.filter(d => 
-        d.time.getDate() === now.getDate() && d.time.getHours() > currentHour
-    );
-
-    // 2. PHASE: Kommende Nacht (ca. 22:00 heute bis 06:00 morgen)
-    const tomorrowDate = new Date(now);
-    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-    
-    const nightData = data.filter(d => {
-        const h = d.time.getHours();
-        const isTonightLate = d.time.getDate() === now.getDate() && h >= 22;
-        const isTomorrowEarly = d.time.getDate() === tomorrowDate.getDate() && h < 6;
-        return isTonightLate || isTomorrowEarly;
-    });
-
-    // 3. PHASE: Morgen (06:00 bis 22:00 Uhr) - KONSTANT
-    const tomorrowDayData = data.filter(d => 
-        d.time.getDate() === tomorrowDate.getDate() && d.time.getHours() >= 6 && d.time.getHours() <= 22
-    );
-
-    // TEIL A: HEUTE
-    if (todayData.length > 0) {
-        let todayText = "";
-        const maxToday = Math.max(...todayData.map(d => d.temp));
-        const rainSumToday = todayData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
-        const codesToday = todayData.map(d => d.code);
-        const isRainy = codesToday.some(c => c >= 51);
-        const isSunny = codesToday.every(c => c <= 2);
-
-        if (currentHour < 11) {
-            todayText = "Heute: ";
-            if (isRainy) todayText += `Regenschirm einpacken! Es kommen ca. ${rainSumToday.toFixed(1)}mm Niederschlag zusammen. `;
-            else if (isSunny) todayText += "Ein freundlicher Tag steht bevor, genießen Sie die Sonne. ";
-            else todayText += "Es bleibt meist bedeckt, aber weitgehend trocken. ";
-            todayText += `Höchstwerte bis ${Math.round(maxToday)}°C.`;
-        } else if (currentHour < 17) {
-            todayText = "Im weiteren Tagesverlauf: ";
-            if (isRainy) todayText += "Es bleibt unbeständig mit weiteren Schauern. ";
-            else if (isSunny) todayText += "Der Nachmittag bleibt sonnig und schön. ";
-            else todayText += "Keine großen Wetteränderungen bis zum Abend. ";
-        } else if (currentHour < 21) {
-            todayText = "Der Abend: ";
-            if (isRainy) todayText += "Es kann noch etwas tröpfeln. ";
-            else todayText += "Der Tag klingt ruhig aus. ";
-        }
-        
-        if (todayText) parts.push(todayText);
-    }
-
-    // TEIL B: DIE NACHT
-    if (nightData.length > 0) {
-        const minNight = Math.min(...nightData.map(d => d.temp));
-        const rainNight = nightData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
-        let nightText = "In der Nacht ";
-        
-        if (minNight < 1) nightText += `wird es frostig bei bis zu ${Math.round(minNight)}°C. Achtung Glättegefahr!`;
-        else if (minNight < 5) nightText += `frischt es auf ${Math.round(minNight)}°C auf.`;
-        else nightText += `kühlt es auf milde ${Math.round(minNight)}°C ab.`;
-
-        if (rainNight > 0.5) nightText += " Zeitweise fällt Regen.";
-        else nightText += " Es bleibt trocken.";
-        
-        parts.push(nightText);
-    }
-
-    // TEIL C: MORGEN
-    if (tomorrowDayData.length > 0) {
-        const tMax = Math.max(...tomorrowDayData.map(d => d.temp));
-        const tMin = Math.min(...tomorrowDayData.map(d => d.temp)); 
-        const tRain = tomorrowDayData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
-        const tGust = Math.max(...tomorrowDayData.map(d => d.gust));
-        
-        const tMorning = tomorrowDayData.filter(d => d.time.getHours() < 12);
-        const tAfternoon = tomorrowDayData.filter(d => d.time.getHours() >= 12);
-        
-        const isRainyMorning = tMorning.some(d => d.precip > 0.1);
-        const isRainyAfternoon = tAfternoon.some(d => d.precip > 0.1);
-
-        let tomorrowText = `📅 Ausblick auf Morgen (${tomorrowDate.toLocaleDateString('de-DE', {weekday:'long'})}):\n`;
-        tomorrowText += `Erwarten Sie Temperaturen zwischen ${Math.round(tMin)}°C am Morgen und bis zu ${Math.round(tMax)}°C am Nachmittag. `;
-        
-        if (tRain > 2.0) {
-             if (isRainyMorning && !isRainyAfternoon) tomorrowText += "Der Vormittag startet nass, später lockert es auf.";
-             else if (!isRainyMorning && isRainyAfternoon) tomorrowText += "Starten Sie trocken in den Tag, nachmittags zieht Regen auf.";
-             else tomorrowText += `Ein regnerischer Tag (${tRain.toFixed(1)}mm), vergessen Sie den Schirm nicht.`;
-        } else if (tRain > 0.1) {
-            tomorrowText += "Vereinzelt sind kurze Schauer möglich, meist bleibt es aber trocken.";
-        } else {
-            const avgCode = tomorrowDayData.reduce((a,b)=>a+b.code,0) / tomorrowDayData.length;
-            if (avgCode <= 2) tomorrowText += "Es wird ein schöner, sonniger Tag.";
-            else tomorrowText += "Es bleibt meist wolkig oder bedeckt.";
-        }
-
-        if (tGust > 50) {
-             tomorrowText += ` Es wird windig mit Böen bis ${tGust} km/h.`;
-             warning = "WINDIG (Morgen)";
-        }
-
-        parts.push(tomorrowText);
-    }
-
-    summary = parts.join("\n\n");
-    confidence = 90; 
-    
-    // Globale Warnungen
-    const maxGustNow = Math.max(...(todayData.map(d=>d.gust)||[]), 0);
-    if (maxGustNow > 60) warning = "STURMBÖEN (Heute)";
-  }
-
-  if (type === 'longterm') {
-    title = "7-Tage-Wettertrend";
-    const analysisData = data.slice(1);
-    
-    // Stats
-    const maxTempDay = analysisData.reduce((p, c) => (p.max > c.max) ? p : c);
-    const minTempDay = analysisData.reduce((p, c) => (p.max < c.max) ? p : c);
-    const rainyDays = analysisData.filter(d => parseFloat(d.rain) > 1.0);
-    const sunDays = analysisData.filter(d => parseFloat(d.rain) < 0.2 && d.code <= 2);
-    const avgRel = Math.round(analysisData.reduce((a, b) => a + b.reliability, 0) / analysisData.length);
-    confidence = avgRel;
-
-    // Summary (Kompakt)
-    const startTemp = analysisData[0].max;
-    const endTemp = analysisData[analysisData.length-1].max;
-    
-    let trendArrow = "➡️";
-    if (endTemp > startTemp + 3) { summary = "Trend: Es wird spürbar wärmer! "; trendArrow = "↗️"; }
-    else if (endTemp < startTemp - 3) { summary = "Trend: Deutliche Abkühlung in Sicht. "; trendArrow = "↘️"; }
-    else summary = "Trend: Die Temperaturen bleiben stabil. ";
-
-    if (rainyDays.length >= 4) summary += "Es wird eine nasse Woche.";
-    else if (sunDays.length >= 3) summary += "Freuen Sie sich auf viel Sonne.";
-    else summary += "Wechselhaftes Wetter dominiert.";
-
-    // Details (Ausführlich) für Longterm
-    let detailParts = [];
-    
-    // Wochentage ausschreiben (dayNameFull), keine Sternchen
-    detailParts.push(`🌡️ Temperatur-Entwicklung:\nStart bei ${Math.round(startTemp)}°C, danach ${trendArrow}. Der wärmste Tag wird der ${maxTempDay.dayNameFull} (${Math.round(maxTempDay.max)}°C), am kühlsten bleibt es am ${minTempDay.dayNameFull}.`);
-    
-    if (rainyDays.length > 0) {
-        const wettestDay = rainyDays.reduce((p,c) => parseFloat(p.rain) > parseFloat(c.rain) ? p : c);
-        detailParts.push(`☔ Niederschlag:\nRegenrisiko an ${rainyDays.length} Tagen. Besonders am ${wettestDay.dayNameFull} wird es nass (${wettestDay.rain}mm).`);
-    } else {
-        detailParts.push("☔ Niederschlag:\nEs bleibt weitgehend trocken.");
-    }
-
-    const weekend = analysisData.filter(d => d.dayName === 'Sa.' || d.dayName === 'So.');
-    if (weekend.length > 0) {
-        const weTemp = Math.round(weekend.reduce((s, d) => s + d.max, 0) / weekend.length);
-        const weRain = weekend.reduce((s, d) => s + parseFloat(d.rain), 0);
-        detailParts.push(`🎉 Wochenende:\n${weRain < 1 ? "Perfektes Ausflugswetter" : "Eher ungemütlich"} bei ca. ${weTemp}°C.`);
-    }
-
-    if (confidence < 60) {
-        detailParts.push(`⚠️ Unsicherheit:\nDie Wettermodelle sind sich noch uneinig. Die Prognose kann sich noch ändern (nur ${confidence}% sicher).`);
-    } else {
-        detailParts.push(`✅ Sicherheit:\nDie Prognose ist mit ${confidence}% relativ sicher.`);
-    }
-
-    details = detailParts.join("\n\n");
-    
-    const stormDay = analysisData.find(d => d.gust > 70);
     if (stormDay) warning = `STURM (${stormDay.dayNameFull})`;
   }
   
@@ -656,7 +449,9 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
   const isClear = code === 0 || code === 1;
   const isPartlyCloudy = code === 2;
   const isOvercast = code === 3 || code === 45 || code === 48; 
-  const isLightRain = [51, 53, 55, 61, 80].includes(code);
+  // Nieselregen: Codes 51, 53, 55
+  const isDrizzle = [51, 53, 55].includes(code);
+  const isLightRain = [61, 80].includes(code);
   const isHeavyRain = [63, 65, 81, 82].includes(code) || (code >= 95);
   const isRain = isLightRain || isHeavyRain;
   const isLightSnow = [71, 77, 85].includes(code);
@@ -801,7 +596,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
           </g>
       )}
 
-      {/* --- HAUS (zuerst gerendert, damit Bäume davor können) --- */}
+      {/* --- HAUS --- */}
       <g transform="translate(190, 120)">
           <rect x="25" y="-10" width="6" height="15" fill="#57534e" />
           <rect x="5" y="10" width="40" height="30" fill={houseWall} />
@@ -858,7 +653,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
         </g>
       )}
 
-      {(isOvercast || isRain || isSnow || isStorm || isSleet) && (
+      {(isOvercast || isRain || isSnow || isStorm || isSleet || isDrizzle) && (
         <g className="anim-clouds">
            <path d="M40 50 Q 55 35 70 50 T 100 50 T 120 60 H 40 Z" fill={isStorm ? "#475569" : "white"} fillOpacity={isOvercast ? 0.9 : 0.7} transform="translate(0,0)" />
            <path d="M240 40 Q 255 25 270 40 T 300 40 T 320 50 H 240 Z" fill={isStorm ? "#334155" : "white"} fillOpacity={isOvercast ? 0.9 : 0.7} transform="translate(20,10)" />
@@ -879,6 +674,16 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
           <g className="anim-heat">
              <rect x="-50" y="80" width="500" height="80" fill="orange" opacity="0.1" style={{mixBlendMode: 'overlay'}} />
           </g>
+      )}
+
+      {isDrizzle && (
+         <g fill="#93c5fd" opacity="0.4" transform={rainRotation}>
+            {[...Array(40)].map((_, i) => (
+               <rect key={i} x={Math.random() * 400 - 20} y="40" width="0.8" height="6" 
+                     className={`animate-rain-${i%3 === 0 ? '1' : i%3 === 1 ? '2' : '3'}`} 
+                     style={{animationDelay: `${Math.random()}s`}} />
+            ))}
+         </g>
       )}
 
       {(isRain || isSleet) && (
@@ -923,6 +728,147 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
       )}
 
     </svg>
+  );
+};
+
+// --- NEU: PRECIPITATION TILE (Wann, Wie lang, Wie viel) ---
+const PrecipitationTile = ({ data }) => {
+  // Analyse der nächsten 24h
+  const analysis = useMemo(() => {
+    if (!data || data.length === 0) return null;
+    
+    // Wir betrachten nur die Zukunft (ab jetzt)
+    const now = new Date();
+    const futureData = data.filter(d => d.time > now);
+    
+    if (futureData.length === 0) return null;
+    
+    // Ist es gerade nass? (in der aktuellen Stunde oder nächsten Stunde)
+    const current = data[0]; 
+    const isRainingNow = current.precip > 0.05 || current.snow > 0.05; // kleiner Threshold
+    
+    let result = { 
+       type: 'none', // none, rain_now, rain_later, snow_now, snow_later
+       startTime: null,
+       endTime: null,
+       amount: 0,
+       duration: 0,
+       isSnow: false
+    };
+
+    let foundStart = false;
+    let precipStartIdx = -1;
+    
+    // Loop um Start und Ende zu finden
+    for (let i = 0; i < futureData.length; i++) {
+       const d = futureData[i];
+       const hasPrecip = d.precip > 0.05 || d.snow > 0.05;
+       
+       if (hasPrecip) {
+           if (!foundStart) {
+               foundStart = true;
+               precipStartIdx = i;
+               result.startTime = d.time;
+               result.isSnow = d.snow > 0.05; // Typerkennung beim Start
+           }
+           result.amount += (d.precip > 0 ? d.precip : d.snow); // Schnee in mm Wasseräquivalent meist ähnlich in API
+           result.duration++;
+       } else {
+           if (foundStart) {
+               // Regen hat aufgehört
+               result.endTime = d.time; // Endzeit ist Beginn der trockenen Stunde
+               break; 
+           }
+       }
+    }
+    
+    if (!foundStart && isRainingNow) {
+        // Es regnet jetzt, hört aber in <1h auf (in den futureData nicht mehr drin)
+        result.type = current.snow > 0 ? 'snow_now' : 'rain_now';
+        result.duration = 1; 
+        result.amount = current.precip || current.snow;
+        result.startTime = current.time;
+    } else if (foundStart) {
+        if (precipStartIdx === 0 && isRainingNow) {
+            result.type = result.isSnow ? 'snow_now' : 'rain_now';
+        } else {
+            result.type = result.isSnow ? 'snow_later' : 'rain_later';
+        }
+    }
+    
+    return result;
+  }, [data]);
+
+  if (!analysis) return null;
+
+  const { type, startTime, duration, amount, isSnow } = analysis;
+  
+  if (type === 'none') {
+      return (
+        <div className="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between shadow-sm mb-4">
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-100 rounded-full text-emerald-600"><Sun size={20} /></div>
+                <div>
+                    <div className="font-bold text-slate-700 text-sm">Kein Niederschlag</div>
+                    <div className="text-xs text-slate-500 font-medium">In den nächsten 24h bleibt es trocken.</div>
+                </div>
+            </div>
+        </div>
+      );
+  }
+
+  const isRain = type.includes('rain');
+  const isNow = type.includes('now');
+  const Icon = isSnow ? Snowflake : CloudRain;
+  const colorClass = isSnow ? "text-cyan-600 bg-cyan-100 border-cyan-200" : "text-blue-600 bg-blue-100 border-blue-200";
+  const bgClass = isSnow ? "bg-cyan-50/80" : "bg-blue-50/80";
+
+  return (
+    <div className={`${bgClass} border ${isSnow ? 'border-cyan-100' : 'border-blue-100'} rounded-2xl p-4 shadow-sm mb-4 relative overflow-hidden`}>
+        {/* Hintergrund Deko */}
+        <div className="absolute right-0 top-0 opacity-10 pointer-events-none transform translate-x-4 -translate-y-2">
+            <Icon size={80} />
+        </div>
+
+        <div className="relative z-10">
+            <div className="flex justify-between items-start mb-2">
+                <div className="flex items-center gap-2">
+                    <div className={`p-1.5 rounded-lg ${colorClass} bg-opacity-50`}>
+                        <Icon size={18} />
+                    </div>
+                    <span className="font-bold text-slate-700 text-sm uppercase tracking-wide opacity-80">
+                        {isNow ? "Aktueller Niederschlag" : "Nächster Niederschlag"}
+                    </span>
+                </div>
+                {isNow && <span className="flex h-2 w-2 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span></span>}
+            </div>
+            
+            <div className="flex items-end gap-1 mb-3">
+                 {!isNow && <span className="text-2xl font-black text-slate-800 tracking-tight">{startTime ? startTime.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'}</span>}
+                 {isNow && <span className="text-2xl font-black text-slate-800 tracking-tight">Jetzt</span>}
+                 {!isNow && <span className="text-sm font-bold text-slate-500 mb-1 ml-1">Uhr</span>}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+                <div className="bg-white/60 rounded-xl p-2 flex flex-col justify-center">
+                    <div className="flex items-center gap-1.5 mb-0.5 opacity-70">
+                        <Timer size={12} /> <span className="text-[10px] font-bold uppercase">Dauer</span>
+                    </div>
+                    <div className="font-bold text-slate-800 leading-none">
+                        {duration} <span className="text-xs font-medium opacity-60">Std</span>
+                    </div>
+                </div>
+                <div className="bg-white/60 rounded-xl p-2 flex flex-col justify-center">
+                    <div className="flex items-center gap-1.5 mb-0.5 opacity-70">
+                        <Droplets size={12} /> <span className="text-[10px] font-bold uppercase">Menge</span>
+                    </div>
+                    <div className="font-bold text-slate-800 leading-none">
+                        {amount.toFixed(1)} <span className="text-xs font-medium opacity-60">mm</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
   );
 };
 
@@ -1388,6 +1334,7 @@ export default function WeatherApp() {
           {activeTab === 'overview' && (
             <div className="space-y-4">
                <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} />
+               <PrecipitationTile data={demoIndex > 0 ? [current, ...processedShort] : processedShort} />
                <h3 className="text-sm font-bold uppercase tracking-wide opacity-70 ml-2">Stündlicher Verlauf</h3>
                <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
