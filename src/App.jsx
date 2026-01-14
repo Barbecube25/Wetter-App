@@ -340,49 +340,82 @@ const generateAIReport = (type, data) => {
     // Stats
     const maxTempDay = analysisData.reduce((p, c) => (p.max > c.max) ? p : c);
     const minTempDay = analysisData.reduce((p, c) => (p.max < c.max) ? p : c);
+    const absoluteMin = Math.min(...analysisData.map(d => d.min)); 
+    
     const rainyDays = analysisData.filter(d => parseFloat(d.rain) > 1.0);
     const sunDays = analysisData.filter(d => parseFloat(d.rain) < 0.2 && d.code <= 2);
+    const windyDays = analysisData.filter(d => d.gust > 45);
+    const totalRain = analysisData.reduce((acc, d) => acc + parseFloat(d.rain), 0);
+    
     const avgRel = Math.round(analysisData.reduce((a, b) => a + b.reliability, 0) / analysisData.length);
     confidence = avgRel;
 
-    // Summary (Kompakt)
+    // --- SUMMARY (Mehr Details) ---
     const startTemp = analysisData[0].max;
     const endTemp = analysisData[analysisData.length-1].max;
     
-    let trendArrow = "➡️";
-    if (endTemp > startTemp + 3) { summary = "Trend: Es wird spürbar wärmer! "; trendArrow = "↗️"; }
-    else if (endTemp < startTemp - 3) { summary = "Trend: Deutliche Abkühlung in Sicht. "; trendArrow = "↘️"; }
-    else summary = "Trend: Die Temperaturen bleiben stabil. ";
+    let trendText = "";
+    if (endTemp > startTemp + 3) trendText = "Es wird spürbar wärmer.";
+    else if (endTemp < startTemp - 3) trendText = "Es kühlt im Verlauf deutlich ab.";
+    else trendText = "Das Temperaturniveau bleibt konstant.";
+    
+    let conditionText = "";
+    if (rainyDays.length >= 4) conditionText = "Stellen Sie sich auf eine unbeständige, nasse Woche ein.";
+    else if (sunDays.length >= 4) conditionText = "Hoher Luftdruck dominiert: Viel Sonnenschein erwartet.";
+    else if (totalRain < 2) conditionText = "Es bleibt weitgehend trocken, aber oft bewölkt.";
+    else conditionText = "Ein Mix aus Sonne und Wolken mit gelegentlichen Schauern.";
 
-    if (rainyDays.length >= 4) summary += "Es wird eine nasse Woche.";
-    else if (sunDays.length >= 3) summary += "Freuen Sie sich auf viel Sonne.";
-    else summary += "Wechselhaftes Wetter dominiert.";
+    summary = `${trendText} Die Höchstwerte liegen zwischen ${Math.round(minTempDay.max)}°C und ${Math.round(maxTempDay.max)}°C. ${conditionText}`;
+    
+    if (windyDays.length > 0) summary += " Zeitweise wird es windig.";
 
-    // Details (Ausführlich) für Longterm
+    // --- DETAILS (Sehr Ausführlich) ---
     let detailParts = [];
     
-    // Wochentage ausschreiben (dayNameFull), keine Sternchen
-    detailParts.push(`🌡️ Temperatur-Entwicklung:\nStart bei ${Math.round(startTemp)}°C, danach ${trendArrow}. Der wärmste Tag wird der ${maxTempDay.dayNameFull} (${Math.round(maxTempDay.max)}°C), am kühlsten bleibt es am ${minTempDay.dayNameFull}.`);
+    // 1. Temperaturen Detail
+    detailParts.push(`🌡️ Temperatur-Verlauf:\nDie Woche startet mit ${Math.round(startTemp)}°C. Der Höhepunkt wird voraussichtlich am ${maxTempDay.dayNameFull} mit bis zu ${Math.round(maxTempDay.max)}°C erreicht. In den Nächten kühlt es auf ${Math.round(absoluteMin)}°C bis ${Math.round(Math.max(...analysisData.map(d=>d.min)))}°C ab.`);
     
-    if (rainyDays.length > 0) {
+    // 2. Niederschlag & Wolken Detail
+    let rainDetail = "";
+    if (totalRain < 0.5) {
+        rainDetail = "Es ist kaum mit Niederschlag zu rechnen. Gute Bedingungen für Outdoor-Aktivitäten.";
+    } else if (rainyDays.length > 0) {
         const wettestDay = rainyDays.reduce((p,c) => parseFloat(p.rain) > parseFloat(c.rain) ? p : c);
-        detailParts.push(`☔ Niederschlag:\nRegenrisiko an ${rainyDays.length} Tagen. Besonders am ${wettestDay.dayNameFull} wird es nass (${wettestDay.rain}mm).`);
+        rainDetail = `Insgesamt fallen ca. ${totalRain.toFixed(1)}mm Regen. Der ${wettestDay.dayNameFull} sticht als nassester Tag heraus (${wettestDay.rain}mm).`;
+        if (rainyDays.length > 3) rainDetail += " Rechnen Sie fast täglich mit Regenschirmen.";
     } else {
-        detailParts.push("☔ Niederschlag:\nEs bleibt weitgehend trocken.");
+        rainDetail = "Es bleibt meist trocken, vereinzelte Tropfen sind aber nicht ausgeschlossen.";
+    }
+    detailParts.push(`☁️/☔ Himmel & Nässe:\n${rainDetail}`);
+
+    // 3. Wind Detail
+    if (windyDays.length > 0) {
+        const stormDay = windyDays.reduce((p,c) => p.gust > c.gust ? p : c);
+        detailParts.push(`💨 Wind:\nFrischer Wind an ${windyDays.length} Tagen. Vorsicht am ${stormDay.dayNameFull}: Hier sind Böen bis ${stormDay.gust} km/h möglich.`);
     }
 
+    // 4. Wochenende
     const weekend = analysisData.filter(d => d.dayName === 'Sa.' || d.dayName === 'So.');
     if (weekend.length > 0) {
         const weTemp = Math.round(weekend.reduce((s, d) => s + d.max, 0) / weekend.length);
         const weRain = weekend.reduce((s, d) => s + parseFloat(d.rain), 0);
-        detailParts.push(`🎉 Wochenende:\n${weRain < 1 ? "Perfektes Ausflugswetter" : "Eher ungemütlich"} bei ca. ${weTemp}°C.`);
+        const weSun = weekend.every(d => d.code <= 2);
+        
+        let weText = `Temperatur um ${weTemp}°C. `;
+        if (weSun) weText += "Bestes Ausflugswetter mit viel Sonne!";
+        else if (weRain > 5) weText += "Leider eher verregnet.";
+        else weText += "Teils heiter, teils wolkig, meist trocken.";
+        
+        detailParts.push(`🎉 Wochenend-Check:\n${weText}`);
     }
 
-    if (confidence < 60) {
-        detailParts.push(`⚠️ Unsicherheit:\nDie Wettermodelle sind sich noch uneinig. Die Prognose kann sich noch ändern (nur ${confidence}% sicher).`);
-    } else {
-        detailParts.push(`✅ Sicherheit:\nDie Prognose ist mit ${confidence}% relativ sicher.`);
-    }
+    // 5. Reliability Context
+    let relText = "";
+    if (confidence >= 80) relText = "Die Modelle sind sich sehr einig. Dieser Trend ist sehr wahrscheinlich.";
+    else if (confidence >= 50) relText = "Der grobe Trend stimmt, aber Details (wie genaue Regenzeitpunkte) können sich noch verschieben.";
+    else relText = "Die Wetterlage ist instabil. Die Vorhersage kann sich noch deutlich ändern.";
+    
+    detailParts.push(`ℹ️ Prognose-Güte:\n${relText} (${confidence}%)`);
 
     details = detailParts.join("\n\n");
     
@@ -1606,9 +1639,8 @@ export default function WeatherApp() {
                     <>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-300"></div> GEM</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400"></div> KNMI</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div> Ø</span>
                     </>
                   ) : (
                     <>
