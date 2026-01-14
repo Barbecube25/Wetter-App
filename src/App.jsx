@@ -1394,7 +1394,7 @@ export default function WeatherApp() {
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong), [chartView, processedShort, processedLong]);
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, processedShort), [processedLong, processedShort]);
 
-  const displayedHours = showAllHours ? processedShort.slice(0, 24) : processedShort.slice(0, 12);
+  const displayedHours = processedShort.slice(0, 48);
 
   // --- WIDGET VIEWS ---
   if (viewMode === 'animation') {
@@ -1525,42 +1525,62 @@ export default function WeatherApp() {
             <div className="space-y-4">
                <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} />
                <PrecipitationTile data={processedShort} />
-               <h3 className="text-sm font-bold uppercase tracking-wide opacity-70 ml-2">Stündlicher Verlauf</h3>
-               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <tbody>
+               <h3 className="text-sm font-bold uppercase tracking-wide opacity-70 ml-2">Stündlicher Verlauf (48h)</h3>
+               
+               {/* Horizontal Scroll Container */}
+               <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide"> 
+                  <div className="flex gap-3 w-max">
                     {displayedHours.map((row, i) => {
                       const conf = getWeatherConfig(row.code, row.isDay);
                       const HourIcon = conf.icon;
                       return (
-                        <tr key={i} className="border-b border-white/10 last:border-0 hover:bg-white/10 transition">
-                          <td className="py-4 pl-2 font-medium opacity-90 whitespace-nowrap w-20 text-lg">{row.displayTime}</td>
-                          <td className="py-4 px-2">
-                             <div className="flex items-center gap-4">
-                                <HourIcon size={24} className="opacity-80" />
-                                <div className="flex flex-col">
-                                    <span className="text-xl font-bold leading-none">{row.temp.toFixed(1)}°</span>
-                                    <span className="text-xs opacity-60 font-medium truncate w-20">{conf.text}</span>
-                                </div>
+                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[110px] w-[110px] hover:bg-white/10 transition relative group">
+                          {/* Time */}
+                          <div className="text-sm font-bold opacity-90 mb-2">{row.displayTime}</div>
+                          
+                          {/* Icon */}
+                          <HourIcon size={32} className="opacity-90 mb-2" />
+                          
+                          {/* Temp */}
+                          <div className="text-2xl font-bold mb-1 tracking-tighter">{row.temp.toFixed(1)}°</div>
+                          
+                          {/* Desc */}
+                          <div className="text-[10px] opacity-60 text-center leading-tight h-6 flex items-center justify-center line-clamp-2 w-full mb-2">
+                            {conf.text}
+                          </div>
+                          
+                          {/* Precip */}
+                           <div className="mb-2 h-4">
+                             {parseFloat(row.snow) > 0 ? (
+                               <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {row.snow.toFixed(1)}</span>
+                             ) : parseFloat(row.precip) > 0 ? (
+                               <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={10}/> {row.precip.toFixed(1)}</span>
+                             ) : (
+                               <span className="opacity-20 text-xs">-</span>
+                             )}
+                           </div>
+                           
+                           {/* Wind */}
+                           <div className="flex flex-col items-center gap-0.5 mb-2">
+                              <div className="flex items-center gap-1 opacity-80">
+                                 <Navigation size={10} style={{ transform: `rotate(${row.dir}deg)` }} />
+                                 <span className={`text-xs font-bold ${getWindColorClass(row.wind)}`}>{row.wind}</span>
+                              </div>
+                              <span className={`text-[9px] opacity-60 ${getWindColorClass(row.gust)}`}>Böen {row.gust}</span>
+                           </div>
+
+                           {/* UV */}
+                           {row.uvIndex >= 1 && (
+                             <div className={`px-1.5 py-0.5 rounded text-[9px] font-bold border ${getUvBadgeClass(row.uvIndex)}`}>
+                               UV {(row.uvIndex).toFixed(0)}
                              </div>
-                             {row.uvIndex >= 0 && <div className={`inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold border ${getUvBadgeClass(row.uvIndex)}`}><Sun size={8} /> UV {(row.uvIndex || 0).toFixed(0)}</div>}
-                          </td>
-                          <td className="py-4 px-2 text-right w-24">
-                             {parseFloat(row.snow) > 0 ? <span className="text-cyan-500 font-bold whitespace-nowrap flex justify-end items-center gap-1"><Snowflake size={12}/>{row.snow.toFixed(1)}cm</span> : parseFloat(row.precip) > 0 ? <span className="text-blue-500 font-bold whitespace-nowrap flex justify-end items-center gap-1"><Droplets size={12}/>{row.precip.toFixed(1)}mm</span> : <span className="opacity-20 text-sm">-</span>}
-                          </td>
-                          <td className="py-4 pr-2 text-right">
-                             <div className="flex flex-col items-end leading-tight">
-                                <span className={`text-sm font-bold ${getWindColorClass(row.wind)}`}>{row.wind} km/h</span>
-                                <span className={`text-xs opacity-80 ${getWindColorClass(row.gust)}`}>Böen {row.gust}</span>
-                             </div>
-                          </td>
-                        </tr>
+                           )}
+                           
+                        </div>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </div>
                </div>
-               <button onClick={() => setShowAllHours(!showAllHours)} className="w-full py-3 mt-2 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 rounded-xl transition text-sm font-bold uppercase tracking-wide opacity-80">{showAllHours ? <><span className="mr-1">Weniger</span> <ChevronUp size={16}/></> : <><span className="mr-1">Mehr</span> <ChevronDown size={16}/></>}</button>
             </div>
           )}
 
