@@ -373,32 +373,33 @@ const generateAIReport = (type, data) => {
     // Details (Ausführlich) für Longterm
     let detailParts = [];
     
-    detailParts.push(`🌡️ **Temperatur-Entwicklung:**\nStart bei ${Math.round(startTemp)}°C, danach ${trendArrow}. Der wärmste Tag wird der **${maxTempDay.dayName}** (${Math.round(maxTempDay.max)}°C), am kühlsten bleibt es am ${minTempDay.dayName}.`);
+    // Wochentage ausschreiben (dayNameFull), keine Sternchen
+    detailParts.push(`🌡️ Temperatur-Entwicklung:\nStart bei ${Math.round(startTemp)}°C, danach ${trendArrow}. Der wärmste Tag wird der ${maxTempDay.dayNameFull} (${Math.round(maxTempDay.max)}°C), am kühlsten bleibt es am ${minTempDay.dayNameFull}.`);
     
     if (rainyDays.length > 0) {
         const wettestDay = rainyDays.reduce((p,c) => parseFloat(p.rain) > parseFloat(c.rain) ? p : c);
-        detailParts.push(`☔ **Niederschlag:**\nRegenrisiko an ${rainyDays.length} Tagen. Besonders am **${wettestDay.dayName}** wird es nass (${wettestDay.rain}mm).`);
+        detailParts.push(`☔ Niederschlag:\nRegenrisiko an ${rainyDays.length} Tagen. Besonders am ${wettestDay.dayNameFull} wird es nass (${wettestDay.rain}mm).`);
     } else {
-        detailParts.push("☔ **Niederschlag:**\nEs bleibt weitgehend trocken.");
+        detailParts.push("☔ Niederschlag:\nEs bleibt weitgehend trocken.");
     }
 
     const weekend = analysisData.filter(d => d.dayName === 'Sa.' || d.dayName === 'So.');
     if (weekend.length > 0) {
         const weTemp = Math.round(weekend.reduce((s, d) => s + d.max, 0) / weekend.length);
         const weRain = weekend.reduce((s, d) => s + parseFloat(d.rain), 0);
-        detailParts.push(`🎉 **Wochenende:**\n${weRain < 1 ? "Perfektes Ausflugswetter" : "Eher ungemütlich"} bei ca. ${weTemp}°C.`);
+        detailParts.push(`🎉 Wochenende:\n${weRain < 1 ? "Perfektes Ausflugswetter" : "Eher ungemütlich"} bei ca. ${weTemp}°C.`);
     }
 
     if (confidence < 60) {
-        detailParts.push(`⚠️ **Unsicherheit:**\nDie Wettermodelle sind sich noch uneinig. Die Prognose kann sich noch ändern (nur ${confidence}% sicher).`);
+        detailParts.push(`⚠️ Unsicherheit:\nDie Wettermodelle sind sich noch uneinig. Die Prognose kann sich noch ändern (nur ${confidence}% sicher).`);
     } else {
-        detailParts.push(`✅ **Sicherheit:**\nDie Prognose ist mit ${confidence}% relativ sicher.`);
+        detailParts.push(`✅ Sicherheit:\nDie Prognose ist mit ${confidence}% relativ sicher.`);
     }
 
     details = detailParts.join("\n\n");
     
     const stormDay = analysisData.find(d => d.gust > 70);
-    if (stormDay) warning = `STURM (${stormDay.dayName})`;
+    if (stormDay) warning = `STURM (${stormDay.dayNameFull})`;
   }
   
   if (type === 'model-hourly') {
@@ -1067,6 +1068,7 @@ export default function WeatherApp() {
       return {
         date,
         dayName: new Intl.DateTimeFormat('de-DE', { weekday: 'short' }).format(date),
+        dayNameFull: new Intl.DateTimeFormat('de-DE', { weekday: 'long' }).format(date),
         dateShort: formatDateShort(date),
         max: maxVals.length > 0 ? maxVals.reduce((a,b)=>a+b,0)/maxVals.length : maxIcon,
         min: ((d.temperature_2m_min_icon_seamless?.[i]??0) + (d.temperature_2m_min_gfs_seamless?.[i]??0)) / 2,
