@@ -858,68 +858,37 @@ const PrecipitationTile = ({ data }) => {
   const intensity = getIntensityInfo(maxIntensity);
 
   return (
-    <div className={`${bgClass} border ${isSnow ? 'border-cyan-100' : 'border-blue-100'} rounded-2xl p-4 shadow-sm mb-4 relative overflow-hidden`}>
-        {/* Hintergrund Deko */}
-        <div className="absolute right-0 top-0 opacity-10 pointer-events-none transform translate-x-4 -translate-y-2">
-            <Icon size={80} />
+    <div className={`${bgClass} border ${isSnow ? 'border-cyan-100' : 'border-blue-100'} rounded-2xl p-3 shadow-sm mb-3 relative overflow-hidden`}>
+        <div className="flex justify-between items-center z-10 relative">
+            <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${colorClass} bg-opacity-30`}>
+                    <Icon size={24} strokeWidth={2.5} />
+                </div>
+                <div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xl font-black text-slate-800 tracking-tight leading-none">
+                            {isNow ? "Jetzt" : (startTime ? startTime.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--')}
+                        </span>
+                        {!isNow && <span className="text-[10px] font-bold text-slate-500 uppercase">Uhr</span>}
+                        {isNow && <span className="flex h-2 w-2 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span></span>}
+                    </div>
+                    <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wide mt-0.5">
+                        {isSnow ? "Schnee" : "Regen"} • {intensity.label}
+                    </div>
+                </div>
+            </div>
+
+            <div className="text-right">
+                <div className="text-sm font-bold text-slate-700 leading-tight">{amount.toFixed(1)}<span className="text-[10px] text-slate-500 font-normal ml-0.5">mm</span></div>
+                <div className="text-xs font-medium text-slate-500 leading-tight">{duration} <span className="text-[10px]">Std</span></div>
+            </div>
         </div>
 
-        <div className="relative z-10">
-            <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-2">
-                    <div className={`p-1.5 rounded-lg ${colorClass} bg-opacity-50`}>
-                        <Icon size={18} />
-                    </div>
-                    <span className="font-bold text-slate-700 text-sm uppercase tracking-wide opacity-80">
-                        {isNow ? "Aktueller Niederschlag" : "Nächster Niederschlag"}
-                    </span>
-                </div>
-                {isNow && <span className="flex h-2 w-2 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span></span>}
-            </div>
-            
-            <div className="flex items-end gap-1 mb-3">
-                 {!isNow && <span className="text-2xl font-black text-slate-800 tracking-tight">{startTime ? startTime.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'}</span>}
-                 {isNow && <span className="text-2xl font-black text-slate-800 tracking-tight">Jetzt</span>}
-                 {!isNow && <span className="text-sm font-bold text-slate-500 mb-1 ml-1">Uhr</span>}
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 mb-3">
-                <div className="bg-white/60 rounded-xl p-2 flex flex-col justify-center">
-                    <div className="flex items-center gap-1.5 mb-0.5 opacity-70">
-                        <Timer size={12} /> <span className="text-[10px] font-bold uppercase">Dauer</span>
-                    </div>
-                    <div className="font-bold text-slate-800 leading-none">
-                        {duration} <span className="text-xs font-medium opacity-60">Std</span>
-                    </div>
-                </div>
-                <div className="bg-white/60 rounded-xl p-2 flex flex-col justify-center">
-                    <div className="flex items-center gap-1.5 mb-0.5 opacity-70">
-                        <Droplets size={12} /> <span className="text-[10px] font-bold uppercase">Menge</span>
-                    </div>
-                    <div className="font-bold text-slate-800 leading-none">
-                        {amount.toFixed(1)} <span className="text-xs font-medium opacity-60">mm</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Intensitäts-Balken */}
-            <div className="bg-white/40 rounded-xl p-2">
-                <div className="flex justify-between text-[10px] font-bold uppercase opacity-70 mb-1.5">
-                    <span>Intensität</span>
-                    <span>{intensity.label}</span>
-                </div>
-                <div className="h-2 w-full bg-white/50 rounded-full overflow-hidden relative">
-                    {/* Hintergrund Segmente */}
-                    <div className="absolute inset-0 flex">
-                        <div className="w-1/3 border-r border-white/30 h-full"></div>
-                        <div className="w-1/3 border-r border-white/30 h-full"></div>
-                    </div>
-                    <div 
-                        className={`h-full ${intensity.color} transition-all duration-1000 ease-out rounded-full shadow-sm`} 
-                        style={{ width: `${intensity.percent}%` }}
-                    ></div>
-                </div>
-            </div>
+        <div className="mt-3 h-1.5 w-full bg-white/40 rounded-full overflow-hidden relative">
+            <div 
+                className={`h-full ${intensity.color} rounded-full transition-all duration-1000 ease-out`} 
+                style={{ width: `${intensity.percent}%` }}
+            ></div>
         </div>
     </div>
   );
@@ -1639,8 +1608,9 @@ export default function WeatherApp() {
                     <>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-300"></div> GEM</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400"></div> KNMI</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div> Ø</span>
                     </>
                   ) : (
                     <>
