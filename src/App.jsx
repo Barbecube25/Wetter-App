@@ -441,7 +441,14 @@ const generateAIReport = (type, data) => {
     if (weekend.length > 0) {
         const weTemp = Math.round(weekend.reduce((s, d) => s + d.max, 0) / weekend.length);
         const weRain = weekend.reduce((s, d) => s + parseFloat(d.rain), 0);
-        detailParts.push(`🎉 Wochenend-Check:\n${weRain < 1 ? "Perfektes Ausflugswetter" : "Eher ungemütlich"} bei ca. ${weTemp}°C.`);
+        const weSun = weekend.every(d => d.code <= 2);
+        
+        let weText = `Temperatur um ${weTemp}°C. `;
+        if (weSun) weText += "Bestes Ausflugswetter mit viel Sonne!";
+        else if (weRain > 5) weText += "Leider eher verregnet.";
+        else weText += "Teils heiter, teils wolkig, meist trocken.";
+        
+        detailParts.push(`🎉 Wochenend-Check:\n${weText}`);
     }
 
     // 5. Reliability Context
@@ -800,7 +807,7 @@ const PrecipitationTile = ({ data }) => {
     
     // Ist es gerade nass? (in der aktuellen Stunde oder nächsten Stunde)
     const current = data[0]; 
-    const isRainingNow = current.precip > 0.05 || current.snow > 0.05; // kleiner Threshold
+    const isRainingNow = current.precip > 0.1 || current.snow > 0.1 || current.precipProb > 30; // Erhöhter Threshold
     
     let result = { 
        type: 'none', // none, rain_now, rain_later, snow_now, snow_later
@@ -818,30 +825,31 @@ const PrecipitationTile = ({ data }) => {
     // Loop um Start und Ende zu finden
     for (let i = 0; i < futureData.length; i++) {
        const d = futureData[i];
-       const hasPrecip = d.precip > 0.05 || d.snow > 0.05;
+       // Erhöhter Threshold für "relevante" Nässe
+       const hasPrecip = (d.precip > 0.1 || d.snow > 0.1) && d.precipProb > 30;
        
        if (hasPrecip) {
            if (!foundStart) {
                foundStart = true;
                precipStartIdx = i;
                result.startTime = d.time;
-               result.isSnow = d.snow > 0.05; // Typerkennung beim Start
+               result.isSnow = d.snow > 0.1; // Typerkennung beim Start
            }
            const hourlyAmount = d.precip > 0 ? d.precip : d.snow;
-           result.amount += hourlyAmount; // Schnee in mm Wasseräquivalent meist ähnlich in API
+           result.amount += hourlyAmount; 
            result.maxIntensity = Math.max(result.maxIntensity, hourlyAmount);
            result.duration++;
        } else {
            if (foundStart) {
                // Regen hat aufgehört
-               result.endTime = d.time; // Endzeit ist Beginn der trockenen Stunde
+               result.endTime = d.time; 
                break; 
            }
        }
     }
     
     if (!foundStart && isRainingNow) {
-        // Es regnet jetzt, hört aber in <1h auf (in den futureData nicht mehr drin)
+        // Es regnet jetzt, hört aber in <1h auf
         const hourlyAmount = current.precip || current.snow;
         result.type = current.snow > 0 ? 'snow_now' : 'rain_now';
         result.duration = 1; 
@@ -862,14 +870,40 @@ const PrecipitationTile = ({ data }) => {
   if (!analysis) return null;
 
   const { type, startTime, duration, amount, isSnow, maxIntensity } = analysis;
+  const isRain = type.includes('rain');
+  const isNow = type.includes('now');
   
+  // Zeit-Logik
+  const now = new Date();
+  const diffMs = startTime ? startTime - now : 0;
+  // "Später" definiert als > 2h
+  const isLaterThan2h = !isNow && startTime && (diffMs > 2 * 60 * 60 * 1000);
+  // "Gleich" definiert als < 45min (2700000 ms) aber nicht "jetzt"
+  const isSoon = !isNow && startTime && (diffMs > 0 && diffMs < 45 * 60 * 1000);
+
+  // Datum Check
+  const isTomorrow = startTime && startTime.getDate() !== now.getDate();
+  const dayPrefix = isTomorrow ? "Morgen" : "";
+  const dayName = startTime ? new Intl.DateTimeFormat('de-DE', { weekday: 'short' }).format(startTime) + "." : "";
+
+  // Custom headline logic
+  let headline = "Nächster Niederschlag";
+  if (type === 'none' || isLaterThan2h) {
+      headline = "Aktuell kein Regen zu erwarten";
+  } else if (isNow) {
+      headline = "Aktueller Niederschlag";
+  } else if (isSoon) {
+      headline = "Regen beginnt gleich";
+  }
+
+  // If type is 'none', we just show the "No rain" box
   if (type === 'none') {
       return (
         <div className="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between shadow-sm mb-4">
             <div className="flex items-center gap-3">
                 <div className="p-2 bg-emerald-100 rounded-full text-emerald-600"><Sun size={20} /></div>
                 <div>
-                    <div className="font-bold text-slate-700 text-sm">Kein Niederschlag</div>
+                    <div className="font-bold text-slate-700 text-sm">{headline}</div>
                     <div className="text-xs text-slate-500 font-medium">In den nächsten 24h bleibt es trocken.</div>
                 </div>
             </div>
@@ -877,20 +911,17 @@ const PrecipitationTile = ({ data }) => {
       );
   }
 
-  const isRain = type.includes('rain');
-  const isNow = type.includes('now');
   const Icon = isSnow ? Snowflake : CloudRain;
   const colorClass = isSnow ? "text-cyan-600 bg-cyan-100 border-cyan-200" : "text-blue-600 bg-blue-100 border-blue-200";
   const bgClass = isSnow ? "bg-cyan-50/80" : "bg-blue-50/80";
 
-  // Intensitäts-Logik
-  const getIntensityInfo = (rate) => {
+  const intensity = (rate) => {
       if (rate < 1.0) return { label: 'Leicht', percent: 33, color: isSnow ? 'bg-cyan-400' : 'bg-blue-400' };
       if (rate < 4.0) return { label: 'Mäßig', percent: 66, color: isSnow ? 'bg-cyan-500' : 'bg-blue-600' };
       return { label: 'Stark', percent: 100, color: isSnow ? 'bg-cyan-700' : 'bg-blue-800' };
   };
 
-  const intensity = getIntensityInfo(maxIntensity);
+  const intens = intensity(maxIntensity);
 
   return (
     <div className={`${bgClass} border ${isSnow ? 'border-cyan-100' : 'border-blue-100'} rounded-2xl p-3 shadow-sm mb-3 relative overflow-hidden`}>
@@ -900,15 +931,19 @@ const PrecipitationTile = ({ data }) => {
                     <Icon size={24} strokeWidth={2.5} />
                 </div>
                 <div>
+                    <div className="font-bold text-slate-700 text-sm uppercase tracking-wide opacity-80 mb-0.5">
+                        {headline}
+                    </div>
                     <div className="flex items-center gap-2">
+                        {!isNow && isLaterThan2h && <span className="text-xs font-bold text-slate-600">Ab</span>}
                         <span className="text-xl font-black text-slate-800 tracking-tight leading-none">
-                            {isNow ? "Jetzt" : (startTime ? startTime.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--')}
+                            {isNow ? "Jetzt" : (isSoon ? "Gleich" : (startTime ? (isTomorrow ? (dayPrefix + " ") : "") + startTime.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'))}
                         </span>
-                        {!isNow && <span className="text-[10px] font-bold text-slate-500 uppercase">Uhr</span>}
+                        {!isNow && !isSoon && <span className="text-[10px] font-bold text-slate-500 uppercase">Uhr</span>}
                         {isNow && <span className="flex h-2 w-2 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span></span>}
                     </div>
                     <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wide mt-0.5">
-                        {isSnow ? "Schnee" : "Regen"} • {intensity.label}
+                        {isSnow ? "Schnee" : "Regen"} • {intens.label}
                     </div>
                 </div>
             </div>
@@ -921,8 +956,8 @@ const PrecipitationTile = ({ data }) => {
 
         <div className="mt-3 h-1.5 w-full bg-white/40 rounded-full overflow-hidden relative">
             <div 
-                className={`h-full ${intensity.color} rounded-full transition-all duration-1000 ease-out`} 
-                style={{ width: `${intensity.percent}%` }}
+                className={`h-full ${intens.color} rounded-full transition-all duration-1000 ease-out`} 
+                style={{ width: `${intens.percent}%` }}
             ></div>
         </div>
     </div>
@@ -1475,6 +1510,7 @@ export default function WeatherApp() {
     if (!longTermData?.daily) return [];
     const d = longTermData.daily;
     return d.time.map((t, i) => {
+      // WICHTIG: parseLocalTime verwenden
       const date = parseLocalTime(t);
       const maxIcon = d.temperature_2m_max_icon_seamless?.[i] ?? 0;
       const maxGfs = d.temperature_2m_max_gfs_seamless?.[i] ?? 0;
@@ -1621,7 +1657,6 @@ export default function WeatherApp() {
                <button onClick={() => setShowFeedback(true)} className={`p-3 rounded-full backdrop-blur-md transition shadow-md ${textColor} bg-white/20 hover:bg-white/30`}>
                    <MessageSquarePlus size={20} />
                </button>
-
                <button onClick={fetchData} className={`p-3 rounded-full backdrop-blur-md bg-white/20 transition shadow-md ${textColor}`}><RefreshCw size={20} /></button>
            </div>
         </div>
@@ -1650,7 +1685,7 @@ export default function WeatherApp() {
         </div>
 
         <div className={`p-1.5 rounded-full backdrop-blur-md flex shadow-md border border-white/20 ${cardBg}`}>
-           {[{id:'overview', label:'Verlauf', icon: List}, {id:'longterm', label:'7 Tage', icon: CalendarDays}, {id:'radar', label:'Radar', icon: Map}, {id:'chart', label:'Vergleich', icon: BarChart2}].map(tab => (
+           {[{id:'overview', label:'Verlauf', icon: List}, {id:'longterm', label:'7 Tage', icon: CalendarDays}, {id:'radar', label:'Radar', icon: MapIcon}, {id:'chart', label:'Vergleich', icon: BarChart2}].map(tab => (
              <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 py-3 rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === tab.id ? 'bg-white/90 text-slate-900 shadow-md' : 'hover:bg-white/10 opacity-70'}`}><tab.icon size={16} /> <span className="hidden sm:inline">{tab.label}</span></button>
            ))}
         </div>
@@ -1743,7 +1778,7 @@ export default function WeatherApp() {
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
                           <XAxis dataKey="displayTime" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={3} />
                           <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
-                          <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} />
+                          <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => Math.round(value)} />
                           <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={2} dot={false} name="ICON" />
                           <Line type="monotone" dataKey="temp_gfs" stroke="#d8b4fe" strokeWidth={2} dot={false} name="GFS" />
                           <Line type="monotone" dataKey="temp_arome" stroke="#86efac" strokeWidth={2} dot={false} name="AROME" />
@@ -1756,7 +1791,7 @@ export default function WeatherApp() {
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
                           <XAxis dataKey="dateShort" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={0} />
                           <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
-                          <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} />
+                          <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => Math.round(value)} />
                           <Line type="monotone" dataKey="max_icon" stroke="#93c5fd" strokeWidth={3} dot={{r:3}} name="ICON Max" />
                           <Line type="monotone" dataKey="max_gfs" stroke="#d8b4fe" strokeWidth={3} dot={{r:3}} name="GFS Max" />
                           <Line type="monotone" dataKey="max_gem" stroke="#fca5a5" strokeWidth={3} dot={{r:3}} name="GEM Max" />
@@ -1782,89 +1817,6 @@ export default function WeatherApp() {
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
                     </>
                   )}
-               </div>
-            </div>
-          )}
-
-          {activeTab === 'longterm' && (
-             <div className="space-y-4">
-               <AIReportBox report={longtermReport} dwdWarnings={dwdWarnings} />
-               <h3 className="text-sm font-bold uppercase opacity-70 ml-2">7-Tage Liste</h3>
-               
-               {/* Horizontal Scroll Container for 7-Day Forecast */}
-               <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide"> 
-                  <div className="flex gap-3 w-max">
-                    {processedLong.map((day, i) => {
-                      const DayIcon = getWeatherConfig(day.code, 1).icon;
-                      const confColor = getConfidenceColor(day.reliability);
-                      const isDaySnow = parseFloat(day.snow) > 0;
-                      let probColor = "text-slate-400 opacity-50"; 
-                      if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
-
-                      return (
-                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[140px] w-[140px] hover:bg-white/10 transition relative group">
-                          {/* Day & Date */}
-                          <div className="text-sm font-bold opacity-90 mb-0.5">{day.dayName}</div>
-                          <div className="text-[10px] opacity-60 mb-2">{day.dateShort}</div>
-                          
-                          {/* Icon */}
-                          <DayIcon size={36} className="opacity-90 mb-2" />
-                          
-                          {/* Temp Range */}
-                          <div className="flex items-center gap-2 mb-2 w-full justify-center">
-                            <span className="text-lg font-bold text-blue-400">{Math.round(day.min)}°</span>
-                            <div className="h-1 w-6 bg-white/10 rounded-full overflow-hidden">
-                               <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
-                            </div>
-                            <span className="text-lg font-bold text-red-400">{Math.round(day.max)}°</span>
-                         </div>
-                          
-                          {/* Precip */}
-                           <div className="mb-1 h-4 flex items-center justify-center w-full">
-                             {isDaySnow ? <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {day.snow}cm</span> : parseFloat(day.rain) > 0.1 ? <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={10}/> {day.rain}mm</span> : <span className="opacity-20 text-xs">-</span>}
-                           </div>
-                           <div className={`text-[9px] mb-2 ${probColor} h-3`}>{day.prob > 0 ? `${day.prob}% Wahrsch.` : ''}</div>
-                           
-                           {/* Wind */}
-                           <div className="flex flex-col items-center gap-0.5 mb-2 w-full">
-                              <div className="flex items-center justify-center gap-1 opacity-80 w-full">
-                                 <Navigation size={10} style={{ transform: `rotate(${day.dir}deg)` }} />
-                                 <span className={`text-xs font-bold ${getWindColorClass(day.wind)}`}>{day.wind}</span>
-                              </div>
-                              <span className={`text-[9px] opacity-60 ${getWindColorClass(day.gust)}`}>Böen {day.gust}</span>
-                           </div>
-
-                           {/* Reliability Indicator */}
-                           <div className="mt-1 text-[9px] flex items-center gap-1 opacity-70 border border-white/10 px-2 py-0.5 rounded-full">
-                              <ShieldCheck size={9} className={confColor} />
-                              <span className={confColor}>{day.reliability}% Sicher</span>
-                           </div>
-                           
-                        </div>
-                      );
-                    })}
-                  </div>
-               </div>
-             </div>
-          )}
-
-          {activeTab === 'radar' && (
-            <div className="h-full flex flex-col">
-               <h3 className="text-sm font-bold uppercase opacity-70 mb-4 ml-2">Live-Radar (Windy)</h3>
-               <div className="w-full aspect-square rounded-xl overflow-hidden shadow-inner border border-black/10 bg-gray-200 relative">
-                  <iframe width="100%" height="100%" src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=450&height=450&zoom=9&level=surface&overlay=radar&product=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`} frameBorder="0" title="Windy Radar" className="absolute inset-0"></iframe>
-               </div>
-               <div className="mt-4 text-xs text-center opacity-60">Radarbild bereitgestellt von Windy.com</div>
-            </div>
-          )}
-
-          {activeTab !== 'radar' && (
-            <div className="mt-8 text-xs text-center opacity-60 px-6 font-medium space-y-2">
-               <p className="flex items-center justify-center gap-2 mb-2"><Database size={14} /> Datenbasis & Laufzeiten (Geschätzt)</p>
-               <div className="flex flex-wrap justify-center gap-4">
-                 <span className="bg-blue-500/10 px-2 py-1 rounded text-blue-500 border border-blue-500/20">ICON-D2: {modelRuns.icon || '--:--'}</span>
-                 <span className="bg-purple-500/10 px-2 py-1 rounded text-purple-500 border border-purple-500/20">GFS: {modelRuns.gfs || '--:--'}</span>
-                 <span className="bg-green-500/10 px-2 py-1 rounded text-green-500 border border-green-500/20">AROME: {modelRuns.arome || '--:--'}</span>
                </div>
             </div>
           )}
