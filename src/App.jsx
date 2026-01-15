@@ -223,7 +223,7 @@ const generateAIReport = (type, data) => {
   
   let title = "";
   let summary = "";
-  let details = null; // Standardmäßig null für "nicht ausklappbar"
+  let details = null; 
   let warning = null;
   let confidence = null;
 
@@ -232,23 +232,19 @@ const generateAIReport = (type, data) => {
     const now = new Date();
     const currentHour = now.getHours();
     
-    // Basisdaten
     const current = data[0];
     let intro = `Aktuell (${current.displayTime} Uhr): ${Math.round(current.temp)}°C`;
     if (Math.abs(current.appTemp - current.temp) > 2) intro += `, gefühlt ${Math.round(current.appTemp)}°C.`;
     
     let parts = [intro];
 
-    // 1. PHASE: Rest von Heute (Filtert alles Vergangene raus)
     const todayData = data.filter(d => 
         d.time.getDate() === now.getDate() && d.time.getHours() > currentHour
     );
 
-    // FIX: tomorrowDate wird nun HIER definiert, bevor es verwendet wird
     const tomorrowDate = new Date(now);
     tomorrowDate.setDate(tomorrowDate.getDate() + 1);
 
-    // 2. PHASE: Kommende Nacht (ca. 22:00 heute bis 06:00 morgen)
     const nightData = data.filter(d => {
         const h = d.time.getHours();
         const isTonightLate = d.time.getDate() === now.getDate() && h >= 22;
@@ -256,7 +252,6 @@ const generateAIReport = (type, data) => {
         return isTonightLate || isTomorrowEarly;
     });
 
-    // 3. PHASE: Morgen (06:00 bis 22:00 Uhr) - KONSTANT
     const tomorrowDayData = data.filter(d => 
         d.time.getDate() === tomorrowDate.getDate() && d.time.getHours() >= 6 && d.time.getHours() <= 22
     );
@@ -266,24 +261,41 @@ const generateAIReport = (type, data) => {
         let todayText = "📅 Heute: ";
         const maxToday = Math.max(...todayData.map(d => d.temp));
         const rainSumToday = todayData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
-        const codesToday = todayData.map(d => d.code);
-        const isRainy = codesToday.some(c => c >= 51);
-        const isSunny = codesToday.every(c => c <= 2);
+        const maxWind = Math.max(...todayData.map(d => d.gust));
+        
+        const rainHours = todayData.filter(d => d.precip > 0.1 && d.precipProb > 30);
+        const firstRain = rainHours.length > 0 ? rainHours[0] : null;
 
         if (currentHour < 11) {
-            todayText = "Heute: ";
-            if (isRainy) todayText += `Regenschirm einpacken! Es kommen ca. ${rainSumToday.toFixed(1)}mm Niederschlag zusammen. `;
-            else if (isSunny) todayText += "Ein freundlicher Tag steht bevor, genießen Sie die Sonne. ";
-            else todayText += "Es bleibt meist bedeckt, aber weitgehend trocken. ";
-            todayText += `Höchstwerte bis ${Math.round(maxToday)}°C.`;
+            todayText += `Die Temperaturen klettern bis auf ${Math.round(maxToday)}°C. `;
+            
+            if (rainSumToday < 0.2) {
+                todayText += "Ein weitgehend trockener Tag erwartet Sie. ";
+                const sunHours = todayData.filter(d => d.code <= 2).length;
+                if (sunHours > 5) todayText += "Nutzen Sie die sonnigen Abschnitte!";
+                else todayText += "Die Wolken haben oft die Oberhand.";
+            } else {
+                todayText += `Insgesamt werden ca. ${rainSumToday.toFixed(1)}mm Niederschlag erwartet. `;
+                if (firstRain) {
+                    const rTime = firstRain.time.getHours();
+                    if (rTime <= currentHour + 1) todayText += "Es regnet bereits oder fängt gleich an. ";
+                    else todayText += `Trocken bis ca. ${rTime} Uhr, dann steigt das Regenrisiko deutlich. `;
+                } else {
+                     todayText += "Gelegentliche Schauer sind über den Tag verteilt möglich. ";
+                }
+            }
+            
+            if (maxWind > 45) todayText += ` Der Wind frischt auf mit Böen bis ${Math.round(maxWind)} km/h.`;
+
         } else if (currentHour < 17) {
-            todayText = "Im weiteren Tagesverlauf: ";
-            if (isRainy) todayText += "Es bleibt unbeständig mit weiteren Schauern. ";
-            else if (isSunny) todayText += "Der Nachmittag bleibt sonnig und schön. ";
-            else todayText += "Keine großen Wetteränderungen bis zum Abend. ";
-        } else if (currentHour < 21) {
-            todayText = "Der Abend: ";
-            if (isRainy) todayText += "Es kann noch etwas tröpfeln. ";
+            todayText = "📅 Rest des Tages: ";
+            if (rainSumToday > 0.5) todayText += `Es bleibt unbeständig mit weiteren Regenfällen (${rainSumToday.toFixed(1)}mm). `;
+            else todayText += "Der Nachmittag verläuft meist trocken und ruhig. ";
+             todayText += `Werte bis ${Math.round(maxToday)}°C.`;
+
+        } else {
+            todayText = "📅 Der Abend: ";
+            if (rainSumToday > 0.1) todayText += "Es kann noch etwas tröpfeln. ";
             else todayText += "Der Tag klingt ruhig aus. ";
         }
         
@@ -865,8 +877,8 @@ const PrecipitationTile = ({ data }) => {
             <div className="flex items-center gap-3">
                 <div className="p-2 bg-emerald-100 rounded-full text-emerald-600"><Sun size={20} /></div>
                 <div>
-                    <div className="font-bold text-slate-700 text-sm">{headline}</div>
-                    <div className="text-xs text-slate-500 font-medium">In den nächsten 24h bleibt es trocken.</div>
+                    <div className="font-bold text-slate-700 text-base">{headline}</div>
+                    <div className="text-sm text-slate-500 font-medium">In den nächsten 24h bleibt es trocken.</div>
                 </div>
             </div>
         </div>
@@ -894,30 +906,30 @@ const PrecipitationTile = ({ data }) => {
                     <Icon size={24} strokeWidth={2.5} />
                 </div>
                 <div>
-                    <div className="font-bold text-slate-700 text-sm uppercase tracking-wide opacity-80 mb-0.5">
+                    <div className="font-bold text-slate-700 text-base uppercase tracking-wide opacity-80 mb-0.5">
                         {headline}
                     </div>
                     <div className="flex items-center gap-2">
-                        {!isNow && isLaterThan2h && <span className="text-xs font-bold text-slate-600">Ab</span>}
-                        <span className="text-xl font-black text-slate-800 tracking-tight leading-none">
+                        {!isNow && isLaterThan2h && <span className="text-sm font-bold text-slate-600">Ab</span>}
+                        <span className="text-3xl font-black text-slate-800 tracking-tight leading-none">
                             {isNow ? "Jetzt" : (isSoon ? "Gleich" : (startTime ? (isTomorrow ? (dayPrefix + " ") : "") + startTime.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'))}
                         </span>
-                        {!isNow && !isSoon && <span className="text-[10px] font-bold text-slate-500 uppercase">Uhr</span>}
-                        {isNow && <span className="flex h-2 w-2 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span></span>}
+                        {!isNow && !isSoon && <span className="text-xs font-bold text-slate-500 uppercase">Uhr</span>}
+                        {isNow && <span className="flex h-3 w-3 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span></span>}
                     </div>
-                    <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wide mt-0.5">
+                    <div className="text-xs font-bold uppercase text-slate-500 tracking-wide mt-0.5">
                         {isSnow ? "Schnee" : "Regen"} • {intensity.label}
                     </div>
                 </div>
             </div>
 
             <div className="text-right">
-                <div className="text-sm font-bold text-slate-700 leading-tight">{amount.toFixed(1)}<span className="text-[10px] text-slate-500 font-normal ml-0.5">mm</span></div>
-                <div className="text-xs font-medium text-slate-500 leading-tight">{duration} <span className="text-[10px]">Std</span></div>
+                <div className="text-base font-bold text-slate-700 leading-tight">{amount.toFixed(1)}<span className="text-xs text-slate-500 font-normal ml-0.5">mm</span></div>
+                <div className="text-sm font-medium text-slate-500 leading-tight">{duration} <span className="text-xs">Std</span></div>
             </div>
         </div>
 
-        <div className="mt-3 h-1.5 w-full bg-white/40 rounded-full overflow-hidden relative">
+        <div className="mt-3 h-2 w-full bg-white/40 rounded-full overflow-hidden relative">
             <div 
                 className={`h-full ${intensity.color} rounded-full transition-all duration-1000 ease-out`} 
                 style={{ width: `${intensity.percent}%` }}
@@ -1672,18 +1684,18 @@ export default function WeatherApp() {
                       const conf = getWeatherConfig(row.code, row.isDay);
                       const HourIcon = conf.icon;
                       return (
-                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[110px] w-[110px] hover:bg-white/10 transition relative group">
+                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[140px] w-[140px] hover:bg-white/10 transition relative group">
                           {/* Time */}
-                          <div className="text-sm font-bold opacity-90 mb-2">{row.displayTime}</div>
+                          <div className="text-lg font-bold opacity-90 mb-2">{row.displayTime}</div>
                           
                           {/* Icon */}
-                          <HourIcon size={32} className="opacity-90 mb-2" />
+                          <HourIcon size={40} className="opacity-90 mb-2" />
                           
                           {/* Temp */}
-                          <div className="text-2xl font-bold mb-1 tracking-tighter">{Math.round(row.temp)}°</div>
+                          <div className="text-4xl font-bold mb-1 tracking-tighter">{Math.round(row.temp)}°</div>
                           
                           {/* Desc */}
-                          <div className="text-[10px] opacity-60 text-center leading-tight h-6 flex items-center justify-center line-clamp-2 w-full mb-2">
+                          <div className="text-sm opacity-60 text-center leading-tight h-8 flex items-center justify-center line-clamp-2 w-full mb-2">
                             {conf.text}
                           </div>
                           
@@ -1715,9 +1727,9 @@ export default function WeatherApp() {
                            )}
 
                            {/* Reliability Indicator */}
-                           <div className="mt-2 text-[9px] flex items-center gap-1 opacity-70">
-                              <ShieldCheck size={9} className={getConfidenceColor(row.reliability)} />
-                              <span className={getConfidenceColor(row.reliability)}>{row.reliability}% Sicher</span>
+                           <div className="mt-2 text-[10px] flex items-center gap-1 opacity-70">
+                              <ShieldCheck size={10} className={getConfidenceColor(row.reliability)} />
+                              <span className={`${getConfidenceColor(row.reliability)} font-medium`}>{row.reliability}% Sicher</span>
                            </div>
                            
                         </div>
@@ -1806,26 +1818,26 @@ export default function WeatherApp() {
                       return (
                         <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[140px] w-[140px] hover:bg-white/10 transition relative group">
                           {/* Day & Date */}
-                          <div className="text-sm font-bold opacity-90 mb-0.5">{day.dayName}</div>
-                          <div className="text-[10px] opacity-60 mb-2">{day.dateShort}</div>
+                          <div className="text-lg font-bold opacity-90 mb-0.5">{day.dayName}</div>
+                          <div className="text-xs opacity-60 mb-2">{day.dateShort}</div>
                           
                           {/* Icon */}
-                          <DayIcon size={36} className="opacity-90 mb-2" />
+                          <DayIcon size={40} className="opacity-90 mb-2" />
                           
                           {/* Temp Range */}
                           <div className="flex items-center gap-2 mb-2 w-full justify-center">
-                            <span className="text-lg font-bold text-blue-400">{Math.round(day.min)}°</span>
+                            <span className="text-2xl font-bold text-blue-400">{Math.round(day.min)}°</span>
                             <div className="h-1 w-6 bg-white/10 rounded-full overflow-hidden">
                                <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
                             </div>
-                            <span className="text-lg font-bold text-red-400">{Math.round(day.max)}°</span>
+                            <span className="text-2xl font-bold text-red-400">{Math.round(day.max)}°</span>
                          </div>
                           
                           {/* Precip */}
                            <div className="mb-1 h-4 flex items-center justify-center w-full">
                              {isDaySnow ? <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {day.snow}cm</span> : parseFloat(day.rain) > 0.1 ? <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={10}/> {day.rain}mm</span> : <span className="opacity-20 text-xs">-</span>}
                            </div>
-                           <div className={`text-[9px] mb-2 ${probColor} h-3`}>{day.prob > 0 ? `${day.prob}% Wahrsch.` : ''}</div>
+                           <div className={`text-[10px] mb-2 ${probColor} h-3`}>{day.prob > 0 ? `${day.prob}% Wahrsch.` : ''}</div>
                            
                            {/* Wind */}
                            <div className="flex flex-col items-center gap-0.5 mb-2 w-full">
