@@ -39,7 +39,7 @@ const styles = `
     0% { transform: translateY(-20px) scaleY(1); opacity: 0; } 
     20% { opacity: 0.8; } 
     90% { opacity: 0.8; transform: translateY(140px) scaleY(1); }
-    100% { transform: translateY(150px) scaleY(0.5) scaleX(1.5); opacity: 0; } /* Splash effect simulation */
+    100% { transform: translateY(150px) scaleY(0.5) scaleX(1.5); opacity: 0; }
   }
   
   @keyframes snow-fall-slow { 
@@ -74,7 +74,6 @@ const styles = `
   }
   
   /* --- BÄUME & STURM --- */
-  /* WICHTIG: transform-box: fill-box sorgt dafür, dass sich der Baum um sich selbst dreht */
   @keyframes tree-shake-gentle { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(1deg); } }
   @keyframes tree-shake-windy { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(4deg); } }
   @keyframes tree-shake-storm { 0%, 100% { transform: rotate(-5deg); } 20% { transform: rotate(10deg); } 40% { transform: rotate(-8deg); } 60% { transform: rotate(5deg); } }
@@ -252,7 +251,7 @@ const generateAIReport = (type, data) => {
         const maxWind = Math.max(...todayData.map(d => d.gust));
         
         // Finde Beginn des Regens
-        const rainHours = todayData.filter(d => d.precip > 0.1);
+        const rainHours = todayData.filter(d => d.precip > 0.1 && d.precipProb > 30);
         const firstRain = rainHours.length > 0 ? rainHours[0] : null;
 
         if (currentHour < 11) {
@@ -320,8 +319,8 @@ const generateAIReport = (type, data) => {
         const tMorning = tomorrowDayData.filter(d => d.time.getHours() < 12);
         const tAfternoon = tomorrowDayData.filter(d => d.time.getHours() >= 12);
         
-        const isRainyMorning = tMorning.some(d => d.precip > 0.1);
-        const isRainyAfternoon = tAfternoon.some(d => d.precip > 0.1);
+        const isRainyMorning = tMorning.some(d => d.precip > 0.1 && d.precipProb > 30);
+        const isRainyAfternoon = tAfternoon.some(d => d.precip > 0.1 && d.precipProb > 30);
 
         let tomorrowText = `🌅 Ausblick auf Morgen (${tomorrowDate.toLocaleDateString('de-DE', {weekday:'long'})}):\n`;
         tomorrowText += `Erwarten Sie Temperaturen zwischen ${Math.round(tMin)}°C am Morgen und bis zu ${Math.round(tMax)}°C am Nachmittag. `;
@@ -786,7 +785,7 @@ const PrecipitationTile = ({ data }) => {
     
     // Ist es gerade nass? (in der aktuellen Stunde oder nächsten Stunde)
     const current = data[0]; 
-    const isRainingNow = current.precip > 0.05 || current.snow > 0.05; // kleiner Threshold
+    const isRainingNow = current.precip > 0.1 || current.snow > 0.1 || current.precipProb > 30; // Erhöhter Threshold
     
     let result = { 
        type: 'none', // none, rain_now, rain_later, snow_now, snow_later
@@ -804,30 +803,31 @@ const PrecipitationTile = ({ data }) => {
     // Loop um Start und Ende zu finden
     for (let i = 0; i < futureData.length; i++) {
        const d = futureData[i];
-       const hasPrecip = d.precip > 0.05 || d.snow > 0.05;
+       // Erhöhter Threshold für "relevante" Nässe
+       const hasPrecip = (d.precip > 0.1 || d.snow > 0.1) && d.precipProb > 30;
        
        if (hasPrecip) {
            if (!foundStart) {
                foundStart = true;
                precipStartIdx = i;
                result.startTime = d.time;
-               result.isSnow = d.snow > 0.05; // Typerkennung beim Start
+               result.isSnow = d.snow > 0.1; // Typerkennung beim Start
            }
            const hourlyAmount = d.precip > 0 ? d.precip : d.snow;
-           result.amount += hourlyAmount; // Schnee in mm Wasseräquivalent meist ähnlich in API
+           result.amount += hourlyAmount; 
            result.maxIntensity = Math.max(result.maxIntensity, hourlyAmount);
            result.duration++;
        } else {
            if (foundStart) {
                // Regen hat aufgehört
-               result.endTime = d.time; // Endzeit ist Beginn der trockenen Stunde
+               result.endTime = d.time; 
                break; 
            }
        }
     }
     
     if (!foundStart && isRainingNow) {
-        // Es regnet jetzt, hört aber in <1h auf (in den futureData nicht mehr drin)
+        // Es regnet jetzt, hört aber in <1h auf
         const hourlyAmount = current.precip || current.snow;
         result.type = current.snow > 0 ? 'snow_now' : 'rain_now';
         result.duration = 1; 
@@ -848,14 +848,40 @@ const PrecipitationTile = ({ data }) => {
   if (!analysis) return null;
 
   const { type, startTime, duration, amount, isSnow, maxIntensity } = analysis;
+  const isRain = type.includes('rain');
+  const isNow = type.includes('now');
   
+  // Zeit-Logik
+  const now = new Date();
+  const diffMs = startTime ? startTime - now : 0;
+  // "Später" definiert als > 2h
+  const isLaterThan2h = !isNow && startTime && (diffMs > 2 * 60 * 60 * 1000);
+  // "Gleich" definiert als < 45min (2700000 ms) aber nicht "jetzt"
+  const isSoon = !isNow && startTime && (diffMs > 0 && diffMs < 45 * 60 * 1000);
+
+  // Datum Check
+  const isTomorrow = startTime && startTime.getDate() !== now.getDate();
+  const dayPrefix = isTomorrow ? "Morgen" : "";
+  const dayName = startTime ? new Intl.DateTimeFormat('de-DE', { weekday: 'short' }).format(startTime) + "." : "";
+
+  // Custom headline logic
+  let headline = "Nächster Niederschlag";
+  if (type === 'none' || isLaterThan2h) {
+      headline = "Aktuell kein Regen zu erwarten";
+  } else if (isNow) {
+      headline = "Aktueller Niederschlag";
+  } else if (isSoon) {
+      headline = "Regen beginnt gleich";
+  }
+
+  // If type is 'none', we just show the "No rain" box
   if (type === 'none') {
       return (
         <div className="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between shadow-sm mb-4">
             <div className="flex items-center gap-3">
                 <div className="p-2 bg-emerald-100 rounded-full text-emerald-600"><Sun size={20} /></div>
                 <div>
-                    <div className="font-bold text-slate-700 text-sm">Kein Niederschlag</div>
+                    <div className="font-bold text-slate-700 text-sm">{headline}</div>
                     <div className="text-xs text-slate-500 font-medium">In den nächsten 24h bleibt es trocken.</div>
                 </div>
             </div>
@@ -863,20 +889,17 @@ const PrecipitationTile = ({ data }) => {
       );
   }
 
-  const isRain = type.includes('rain');
-  const isNow = type.includes('now');
   const Icon = isSnow ? Snowflake : CloudRain;
   const colorClass = isSnow ? "text-cyan-600 bg-cyan-100 border-cyan-200" : "text-blue-600 bg-blue-100 border-blue-200";
   const bgClass = isSnow ? "bg-cyan-50/80" : "bg-blue-50/80";
 
-  // Intensitäts-Logik
-  const getIntensityInfo = (rate) => {
+  const intensity = (rate) => {
       if (rate < 1.0) return { label: 'Leicht', percent: 33, color: isSnow ? 'bg-cyan-400' : 'bg-blue-400' };
       if (rate < 4.0) return { label: 'Mäßig', percent: 66, color: isSnow ? 'bg-cyan-500' : 'bg-blue-600' };
       return { label: 'Stark', percent: 100, color: isSnow ? 'bg-cyan-700' : 'bg-blue-800' };
   };
 
-  const intensity = getIntensityInfo(maxIntensity);
+  const intens = intensity(maxIntensity);
 
   return (
     <div className={`${bgClass} border ${isSnow ? 'border-cyan-100' : 'border-blue-100'} rounded-2xl p-3 shadow-sm mb-3 relative overflow-hidden`}>
@@ -886,15 +909,19 @@ const PrecipitationTile = ({ data }) => {
                     <Icon size={24} strokeWidth={2.5} />
                 </div>
                 <div>
+                    <div className="font-bold text-slate-700 text-sm uppercase tracking-wide opacity-80 mb-0.5">
+                        {headline}
+                    </div>
                     <div className="flex items-center gap-2">
+                        {!isNow && isLaterThan2h && <span className="text-xs font-bold text-slate-600">Ab</span>}
                         <span className="text-xl font-black text-slate-800 tracking-tight leading-none">
-                            {isNow ? "Jetzt" : (startTime ? startTime.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--')}
+                            {isNow ? "Jetzt" : (isSoon ? "Gleich" : (startTime ? (isTomorrow ? (dayPrefix + " ") : "") + startTime.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'))}
                         </span>
-                        {!isNow && <span className="text-[10px] font-bold text-slate-500 uppercase">Uhr</span>}
+                        {!isNow && !isSoon && <span className="text-[10px] font-bold text-slate-500 uppercase">Uhr</span>}
                         {isNow && <span className="flex h-2 w-2 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span></span>}
                     </div>
                     <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wide mt-0.5">
-                        {isSnow ? "Schnee" : "Regen"} • {intensity.label}
+                        {isSnow ? "Schnee" : "Regen"} • {intens.label}
                     </div>
                 </div>
             </div>
@@ -907,8 +934,8 @@ const PrecipitationTile = ({ data }) => {
 
         <div className="mt-3 h-1.5 w-full bg-white/40 rounded-full overflow-hidden relative">
             <div 
-                className={`h-full ${intensity.color} rounded-full transition-all duration-1000 ease-out`} 
-                style={{ width: `${intensity.percent}%` }}
+                className={`h-full ${intens.color} rounded-full transition-all duration-1000 ease-out`} 
+                style={{ width: `${intens.percent}%` }}
             ></div>
         </div>
     </div>
@@ -918,29 +945,25 @@ const PrecipitationTile = ({ data }) => {
 // --- NEU: FEEDBACK MODAL (ERWEITERT) ---
 const FeedbackModal = ({ onClose, currentTemp }) => {
     const [sent, setSent] = useState(false);
-    const [tempAdjustment, setTempAdjustment] = useState(0); // Offset in Grad
+    const [tempAdjustment, setTempAdjustment] = useState(0); 
     const [selectedCondition, setSelectedCondition] = useState(null);
 
     const conditions = [
         { id: 'sun', label: 'Sonnig', icon: Sun, color: 'text-amber-500 bg-amber-50 border-amber-200' },
         { id: 'cloudy', label: 'Bewölkt', icon: Cloud, color: 'text-slate-500 bg-slate-50 border-slate-200' },
-        { id: 'overcast', label: 'Bedeckt', icon: Cloud, color: 'text-slate-700 bg-slate-100 border-slate-300' }, // Neu
+        { id: 'overcast', label: 'Bedeckt', icon: Cloud, color: 'text-slate-700 bg-slate-100 border-slate-300' },
         { id: 'fog', label: 'Nebel', icon: CloudFog, color: 'text-slate-400 bg-slate-50/50 border-slate-200' },
         { id: 'drizzle', label: 'Niesel', icon: CloudDrizzle, color: 'text-cyan-500 bg-cyan-50 border-cyan-200' },
         { id: 'rain', label: 'Regen', icon: CloudRain, color: 'text-blue-500 bg-blue-50 border-blue-200' },
-        { id: 'storm', label: 'Gewitter', icon: CloudLightning, color: 'text-purple-600 bg-purple-50 border-purple-200' }, // Neu
-        { id: 'snow', label: 'Schnee', icon: CloudSnow, color: 'text-sky-300 bg-sky-50 border-sky-100' }, // Neu
-        { id: 'hail', label: 'Hagel', icon: CloudHail, color: 'text-teal-600 bg-teal-50 border-teal-200' }, // Neu
-        { id: 'wind', label: 'Windig', icon: Wind, color: 'text-slate-600 bg-slate-100 border-slate-300' }, // Neu
+        { id: 'storm', label: 'Gewitter', icon: CloudLightning, color: 'text-purple-600 bg-purple-50 border-purple-200' },
+        { id: 'snow', label: 'Schnee', icon: CloudSnow, color: 'text-sky-300 bg-sky-50 border-sky-100' },
+        { id: 'hail', label: 'Hagel', icon: CloudHail, color: 'text-teal-600 bg-teal-50 border-teal-200' },
+        { id: 'wind', label: 'Windig', icon: Wind, color: 'text-slate-600 bg-slate-100 border-slate-300' },
     ];
 
     const handleSend = () => {
-        if (!selectedCondition && tempAdjustment === 0) return; // Nichts zu senden
-
+        if (!selectedCondition && tempAdjustment === 0) return;
         setSent(true);
-        // Hier würde normalerweise der API-Call zum Backend stehen mit:
-        // condition: selectedCondition
-        // tempCorrection: tempAdjustment
         setTimeout(() => {
             onClose();
             setSent(false);
@@ -972,7 +995,6 @@ const FeedbackModal = ({ onClose, currentTemp }) => {
                 </div>
                 
                 <div className="p-6 overflow-y-auto">
-                    {/* Temperatur Slider */}
                     <div className="mb-8">
                         <div className="flex justify-between items-end mb-4">
                             <label className="text-sm font-bold text-slate-500 uppercase tracking-wide">Temperatur</label>
@@ -994,7 +1016,6 @@ const FeedbackModal = ({ onClose, currentTemp }) => {
                         </div>
                     </div>
 
-                    {/* Wetter Grid */}
                     <div className="mb-6">
                         <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 block">Aktuelles Wetter</label>
                         <div className="grid grid-cols-3 gap-2">
@@ -1206,9 +1227,6 @@ export default function WeatherApp() {
     }
   }, []);
 
-  // NEU: Service Worker Registrierung mit Log -- HIER ENTFERNT -- 
-  // Das erledigt bereits main.jsx zuverlässiger.
-
   useEffect(() => {
     const saved = localStorage.getItem('weather_home_loc');
     if (!saved && navigator.geolocation) {
@@ -1261,8 +1279,9 @@ export default function WeatherApp() {
     try {
       const { lat, lon } = currentLoc;
       // HINZUFÜGEN von KNMI (Niederlande, super für NRW) und GEM (Kanada, globaler Check)
+      // WICHTIG: precipitation_probability in hourly hinzugefügt
       const modelsShort = "icon_d2,gfs_seamless,arome_seamless,knmi_harmonie_arome_europe,gem_seamless";
-      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index&models=${modelsShort}&timezone=Europe%2FBerlin&forecast_days=2`;
+      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability&models=${modelsShort}&timezone=Europe%2FBerlin&forecast_days=2`;
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; // KNMI oft nur 48h
       const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max,sunrise,sunset&models=${modelsLong}&timezone=Europe%2FBerlin&forecast_days=8`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
@@ -1340,6 +1359,13 @@ export default function WeatherApp() {
          const vals = [v1, v2, v3, v4, v5].filter(v => v !== undefined && v !== null);
          return vals.length > 0 ? Math.max(...vals) : 0;
       };
+      
+      // Neue Probability Logik
+      const getProb = () => {
+         // Wir nehmen die Probability vom ICON Modell als Standard, da es für DE am besten ist
+         // Falls nicht vorhanden, GFS
+         return h.precipitation_probability?.[i] ?? h.precipitation_probability_icon_d2?.[i] ?? 0;
+      };
 
       // Zuverlässigkeit
       const t_spread = t_vals.length > 1 ? Math.max(...t_vals) - Math.min(...t_vals) : 0;
@@ -1351,9 +1377,10 @@ export default function WeatherApp() {
         temp: temp,
         temp_icon, temp_gfs, temp_arome, temp_knmi, temp_gem,
         precip: getAvg('precipitation'),
-        snow: getMax('snowfall'), // Schnee lieber Max nehmen zur Sicherheit
+        precipProb: getProb(), // NEU
+        snow: getMax('snowfall'), 
         wind: Math.round(getAvg('windspeed_10m')),
-        gust: Math.round(getMax('windgusts_10m')), // Böen immer Max Warnung
+        gust: Math.round(getMax('windgusts_10m')), 
         dir: h.winddirection_10m_icon_d2?.[i] || 0,
         code: h.weathercode_icon_d2?.[i] || 0,
         isDay: isDayArray?.[i] ?? (t.getHours() >= 6 && t.getHours() <= 21 ? 1 : 0),
@@ -1420,7 +1447,6 @@ export default function WeatherApp() {
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong), [chartView, processedShort, processedLong]);
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, processedShort), [processedLong, processedShort]);
 
-  // ANPASSUNG: Nur 24 Stunden anzeigen statt 48
   const displayedHours = processedShort.slice(0, 24);
 
   // --- WIDGET VIEWS ---
@@ -1634,7 +1660,7 @@ export default function WeatherApp() {
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
                           <XAxis dataKey="displayTime" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={3} />
                           <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
-                          <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => Math.round(value)} />
+                          <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} />
                           <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={2} dot={false} name="ICON" />
                           <Line type="monotone" dataKey="temp_gfs" stroke="#d8b4fe" strokeWidth={2} dot={false} name="GFS" />
                           <Line type="monotone" dataKey="temp_arome" stroke="#86efac" strokeWidth={2} dot={false} name="AROME" />
@@ -1647,7 +1673,7 @@ export default function WeatherApp() {
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
                           <XAxis dataKey="dateShort" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={0} />
                           <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
-                          <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => Math.round(value)} />
+                          <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} />
                           <Line type="monotone" dataKey="max_icon" stroke="#93c5fd" strokeWidth={3} dot={{r:3}} name="ICON Max" />
                           <Line type="monotone" dataKey="max_gfs" stroke="#d8b4fe" strokeWidth={3} dot={{r:3}} name="GFS Max" />
                           <Line type="monotone" dataKey="max_gem" stroke="#fca5a5" strokeWidth={3} dot={{r:3}} name="GEM Max" />
