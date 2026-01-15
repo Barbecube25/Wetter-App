@@ -232,6 +232,7 @@ const generateAIReport = (type, data) => {
     const now = new Date();
     const currentHour = now.getHours();
     
+    // Basisdaten
     const current = data[0];
     let intro = `Aktuell (${current.displayTime} Uhr): ${Math.round(current.temp)}°C`;
     if (Math.abs(current.appTemp - current.temp) > 2) intro += `, gefühlt ${Math.round(current.appTemp)}°C.`;
@@ -268,7 +269,6 @@ const generateAIReport = (type, data) => {
 
         if (currentHour < 11) {
             todayText += `Die Temperaturen klettern bis auf ${Math.round(maxToday)}°C. `;
-            
             if (rainSumToday < 0.2) {
                 todayText += "Ein weitgehend trockener Tag erwartet Sie. ";
                 const sunHours = todayData.filter(d => d.code <= 2).length;
@@ -284,21 +284,17 @@ const generateAIReport = (type, data) => {
                      todayText += "Gelegentliche Schauer sind über den Tag verteilt möglich. ";
                 }
             }
-            
             if (maxWind > 45) todayText += ` Der Wind frischt auf mit Böen bis ${Math.round(maxWind)} km/h.`;
-
         } else if (currentHour < 17) {
             todayText = "📅 Rest des Tages: ";
             if (rainSumToday > 0.5) todayText += `Es bleibt unbeständig mit weiteren Regenfällen (${rainSumToday.toFixed(1)}mm). `;
             else todayText += "Der Nachmittag verläuft meist trocken und ruhig. ";
              todayText += `Werte bis ${Math.round(maxToday)}°C.`;
-
         } else {
             todayText = "📅 Der Abend: ";
             if (rainSumToday > 0.1) todayText += "Es kann noch etwas tröpfeln. ";
             else todayText += "Der Tag klingt ruhig aus. ";
         }
-        
         parts.push(todayText);
     }
 
@@ -478,6 +474,56 @@ const generateAIReport = (type, data) => {
 };
 
 // --- 4. KOMPONENTEN ---
+// --- HIER WURDE DIE MODEL INFO BOX EINGEFÜGT ---
+const ModelInfoBox = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="mt-6 bg-white/40 border border-white/40 rounded-xl overflow-hidden transition-all shadow-sm">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full p-4 flex items-center justify-between text-left hover:bg-white/20 transition"
+      >
+         <div className="flex items-center gap-2 font-bold text-slate-700 text-lg">
+            <Info size={24} className="text-blue-600"/> 
+            <span>Hilfe: Was bedeuten die Modelle?</span>
+         </div>
+         {isOpen ? <ChevronUp size={24} className="opacity-50 text-slate-600"/> : <ChevronDown size={24} className="opacity-50 text-slate-600"/>}
+      </button>
+      
+      {isOpen && (
+        <div className="px-4 pb-4 pt-0 text-base text-slate-700 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+            <p className="opacity-90 leading-relaxed">
+                Jede Linie zeigt die Berechnung eines anderen Supercomputers.
+                <br/><strong>Faustregel:</strong> Liegen alle Linien eng beisammen, ist die Vorhersage sehr sicher. Gehen sie weit auseinander, ist die Wetterlage noch unklar.
+            </p>
+            <div className="grid gap-3 text-sm">
+                <div className="p-3 bg-blue-50/80 rounded-lg border border-blue-100">
+                    <span className="font-black text-blue-700 block mb-0.5 text-base">ICON (Deutschland)</span>
+                    Vom Deutschen Wetterdienst (DWD). Unser "Heimvorteil" und meist sehr zuverlässig für lokale Details.
+                </div>
+                <div className="p-3 bg-purple-50/80 rounded-lg border border-purple-100">
+                    <span className="font-black text-purple-700 block mb-0.5 text-base">GFS (USA)</span>
+                    Das amerikanische Modell. Der weltweite Standard, gut für den groben Trend über längere Zeiträume.
+                </div>
+                <div className="p-3 bg-green-50/80 rounded-lg border border-green-100">
+                    <span className="font-black text-green-700 block mb-0.5 text-base">AROME (Frankreich)</span>
+                    Extrem hochauflösendes Modell. Erkennt lokale Gewitter und Regenfronten oft besser als andere.
+                </div>
+                <div className="p-3 bg-orange-50/80 rounded-lg border border-orange-100">
+                    <span className="font-black text-orange-700 block mb-0.5 text-base">KNMI (Niederlande)</span>
+                    Oft ein Geheimtipp für Westdeutschland (NRW), da das Wetter meist von dort zu uns zieht.
+                </div>
+                 <div className="p-3 bg-red-50/80 rounded-lg border border-red-100">
+                    <span className="font-black text-red-700 block mb-0.5 text-base">GEM (Kanada)</span>
+                    Dient oft als gute "dritte Meinung" bei langfristigen Trends (7-Tage-Vorschau).
+                </div>
+            </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed }) => {
   const isNight = isDay === 0;
@@ -875,10 +921,10 @@ const PrecipitationTile = ({ data }) => {
       return (
         <div className="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between shadow-sm mb-4">
             <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-100 rounded-full text-emerald-600"><Sun size={20} /></div>
+                <div className="p-3 bg-emerald-100 rounded-full text-emerald-600"><Sun size={28} /></div>
                 <div>
-                    <div className="font-bold text-slate-700 text-base">{headline}</div>
-                    <div className="text-sm text-slate-500 font-medium">In den nächsten 24h bleibt es trocken.</div>
+                    <div className="font-bold text-slate-700 text-lg">{headline}</div>
+                    <div className="text-base text-slate-500 font-medium">In den nächsten 24h bleibt es trocken.</div>
                 </div>
             </div>
         </div>
@@ -899,37 +945,37 @@ const PrecipitationTile = ({ data }) => {
   const intensity = getIntensityInfo(maxIntensity);
 
   return (
-    <div className={`${bgClass} border ${isSnow ? 'border-cyan-100' : 'border-blue-100'} rounded-2xl p-3 shadow-sm mb-3 relative overflow-hidden`}>
+    <div className={`${bgClass} border ${isSnow ? 'border-cyan-100' : 'border-blue-100'} rounded-2xl p-4 shadow-sm mb-4 relative overflow-hidden`}>
         <div className="flex justify-between items-center z-10 relative">
-            <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${colorClass} bg-opacity-30`}>
-                    <Icon size={24} strokeWidth={2.5} />
+            <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-lg ${colorClass} bg-opacity-30`}>
+                    <Icon size={32} strokeWidth={2.5} />
                 </div>
                 <div>
-                    <div className="font-bold text-slate-700 text-base uppercase tracking-wide opacity-80 mb-0.5">
+                    <div className="font-bold text-slate-700 text-lg uppercase tracking-wide opacity-80 mb-0.5">
                         {headline}
                     </div>
                     <div className="flex items-center gap-2">
-                        {!isNow && isLaterThan2h && <span className="text-sm font-bold text-slate-600">Ab</span>}
-                        <span className="text-3xl font-black text-slate-800 tracking-tight leading-none">
+                        {!isNow && isLaterThan2h && <span className="text-base font-bold text-slate-600">Ab</span>}
+                        <span className="text-4xl font-black text-slate-800 tracking-tight leading-none">
                             {isNow ? "Jetzt" : (isSoon ? "Gleich" : (startTime ? (isTomorrow ? (dayPrefix + " ") : "") + startTime.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'))}
                         </span>
-                        {!isNow && !isSoon && <span className="text-xs font-bold text-slate-500 uppercase">Uhr</span>}
-                        {isNow && <span className="flex h-3 w-3 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span></span>}
+                        {!isNow && !isSoon && <span className="text-sm font-bold text-slate-500 uppercase">Uhr</span>}
+                        {isNow && <span className="flex h-4 w-4 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span className="relative inline-flex rounded-full h-4 w-4 bg-blue-500"></span></span>}
                     </div>
-                    <div className="text-xs font-bold uppercase text-slate-500 tracking-wide mt-0.5">
+                    <div className="text-sm font-bold uppercase text-slate-500 tracking-wide mt-1">
                         {isSnow ? "Schnee" : "Regen"} • {intensity.label}
                     </div>
                 </div>
             </div>
 
             <div className="text-right">
-                <div className="text-base font-bold text-slate-700 leading-tight">{amount.toFixed(1)}<span className="text-xs text-slate-500 font-normal ml-0.5">mm</span></div>
-                <div className="text-sm font-medium text-slate-500 leading-tight">{duration} <span className="text-xs">Std</span></div>
+                <div className="text-xl font-bold text-slate-700 leading-tight">{amount.toFixed(1)}<span className="text-sm text-slate-500 font-normal ml-0.5">mm</span></div>
+                <div className="text-lg font-medium text-slate-500 leading-tight">{duration} <span className="text-sm">Std</span></div>
             </div>
         </div>
 
-        <div className="mt-3 h-2 w-full bg-white/40 rounded-full overflow-hidden relative">
+        <div className="mt-4 h-3 w-full bg-white/40 rounded-full overflow-hidden relative">
             <div 
                 className={`h-full ${intensity.color} rounded-full transition-all duration-1000 ease-out`} 
                 style={{ width: `${intensity.percent}%` }}
@@ -1160,15 +1206,15 @@ const AIReportBox = ({ report, dwdWarnings }) => {
             </div>
             
             {/* Hinzugefügt: whitespace-pre-line für korrekte Zeilenumbrüche im Daily Report */}
-            <p className="text-sm text-slate-800 leading-relaxed font-semibold relative z-10 whitespace-pre-line">{summary}</p>
+            <p className="text-lg text-slate-800 leading-relaxed font-semibold relative z-10 whitespace-pre-line">{summary}</p>
             
             {/* Toggle Button */}
             {details && (
                 <button 
                     onClick={() => setExpanded(!expanded)} 
-                    className="mt-3 text-xs font-bold text-indigo-600 flex items-center gap-1 hover:text-indigo-800 transition-colors"
+                    className="mt-3 text-sm font-bold text-indigo-600 flex items-center gap-1 hover:text-indigo-800 transition-colors"
                 >
-                    {expanded ? "Weniger anzeigen" : "Ausführliche Details"} {expanded ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
+                    {expanded ? "Weniger anzeigen" : "Ausführliche Details"} {expanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
                 </button>
             )}
         </div>
@@ -1177,7 +1223,7 @@ const AIReportBox = ({ report, dwdWarnings }) => {
         {expanded && details && (
             <div className="px-4 pb-4 pt-0 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="h-px w-full bg-indigo-200/50 mb-3"></div>
-                <div className="text-sm text-slate-700 leading-relaxed space-y-2 whitespace-pre-line">
+                <div className="text-base text-slate-700 leading-relaxed space-y-2 whitespace-pre-line">
                     {details}
                 </div>
             </div>
@@ -1354,7 +1400,7 @@ export default function WeatherApp() {
       // Avoid duplicates based on name/coords
       const exists = locations.some(l => l.name === currentLoc.name);
       if (!exists) {
-          setLocations([...locations, { ...currentLoc, type: 'saved' }]);
+          setLocations([...locations, { ...currentLoc, type: 'saved', id: crypto.randomUUID() }]);
       }
       setShowLocationModal(false);
   };
@@ -1415,24 +1461,35 @@ export default function WeatherApp() {
   const processedShort = useMemo(() => {
     if (!shortTermData?.hourly) return [];
     const h = shortTermData.hourly;
-    const now = new Date(); 
+    const now = new Date(); // Browser-Zeit für Vergleich (Vergangenheit ausblenden)
     const res = [];
     const isDayArray = h.is_day_icon_d2 || h.is_day || h.is_day_gfs_seamless;
 
     for (let i = 0; i < h.time.length; i++) {
+      // WICHTIG: parseLocalTime verwenden
       const t = parseLocalTime(h.time[i]);
+      
       const nextT = i < h.time.length - 1 ? parseLocalTime(h.time[i+1]) : null;
-      if (t < now && nextT && nextT > now) {} else if (t < now) { continue; }
+      if (t < now && nextT && nextT > now) {
+         // Das ist das aktuelle Intervall, behalten
+      } else if (t < now) {
+         continue; 
+      }
 
       const getVal = (key) => h[key]?.[i] ?? h[`${key}_icon_d2`]?.[i] ?? h[`${key}_gfs_seamless`]?.[i] ?? h[`${key}_arome_seamless`]?.[i] ?? 0;
+      
+      // Neue Modelle auslesen (wenn vorhanden)
       const temp_icon = h.temperature_2m_icon_d2?.[i] ?? null;
       const temp_gfs = h.temperature_2m_gfs_seamless?.[i] ?? null;
       const temp_arome = h.temperature_2m_arome_seamless?.[i] ?? null;
       const temp_knmi = h.temperature_2m_knmi_harmonie_arome_europe?.[i] ?? null;
       const temp_gem = h.temperature_2m_gem_seamless?.[i] ?? null;
+      
+      // Mittelwert jetzt aus 5 Modellen (wo verfügbar)
       const t_vals = [temp_icon, temp_gfs, temp_arome, temp_knmi, temp_gem].filter(v => v !== null && v !== undefined);
       const temp = t_vals.length > 0 ? t_vals.reduce((a,b)=>a+b,0) / t_vals.length : 0;
       
+      // Auch bei Regen/Schnee/Wind alle Modelle einbeziehen
       const getAvg = (key) => {
          const v1 = h[`${key}_icon_d2`]?.[i];
          const v2 = h[`${key}_gfs_seamless`]?.[i];
@@ -1452,11 +1509,8 @@ export default function WeatherApp() {
          const vals = [v1, v2, v3, v4, v5].filter(v => v !== undefined && v !== null);
          return vals.length > 0 ? Math.max(...vals) : 0;
       };
-      
-      const getProb = () => {
-         return h.precipitation_probability?.[i] ?? h.precipitation_probability_icon_d2?.[i] ?? 0;
-      };
 
+      // Zuverlässigkeit
       const t_spread = t_vals.length > 1 ? Math.max(...t_vals) - Math.min(...t_vals) : 0;
       const reliability = Math.round(Math.max(0, 100 - (t_spread * 15)));
 
@@ -1466,10 +1520,9 @@ export default function WeatherApp() {
         temp: temp,
         temp_icon, temp_gfs, temp_arome, temp_knmi, temp_gem,
         precip: getAvg('precipitation'),
-        precipProb: getProb(), 
-        snow: getMax('snowfall'), 
+        snow: getMax('snowfall'), // Schnee lieber Max nehmen zur Sicherheit
         wind: Math.round(getAvg('windspeed_10m')),
-        gust: Math.round(getMax('windgusts_10m')), 
+        gust: Math.round(getMax('windgusts_10m')), // Böen immer Max Warnung
         dir: h.winddirection_10m_icon_d2?.[i] || 0,
         code: h.weathercode_icon_d2?.[i] || 0,
         isDay: isDayArray?.[i] ?? (t.getHours() >= 6 && t.getHours() <= 21 ? 1 : 0),
@@ -1493,6 +1546,8 @@ export default function WeatherApp() {
       const maxGfs = d.temperature_2m_max_gfs_seamless?.[i] ?? 0;
       const maxArome = d.temperature_2m_max_arome_seamless?.[i] ?? null;
       const maxGem = d.temperature_2m_max_gem_seamless?.[i] ?? null;
+      
+      // Mittelwert robuster
       const maxVals = [maxIcon, maxGfs, maxGem].filter(v => v !== null && v !== undefined);
       
       return {
@@ -1503,6 +1558,7 @@ export default function WeatherApp() {
         max: maxVals.length > 0 ? maxVals.reduce((a,b)=>a+b,0)/maxVals.length : maxIcon,
         min: ((d.temperature_2m_min_icon_seamless?.[i]??0) + (d.temperature_2m_min_gfs_seamless?.[i]??0)) / 2,
         max_icon: maxIcon, max_gfs: maxGfs, max_arome: maxArome, max_gem: maxGem,
+        // Auch hier GEM mit einbeziehen
         rain: Math.max(d.precipitation_sum_icon_seamless?.[i]||0, d.precipitation_sum_gfs_seamless?.[i]||0, d.precipitation_sum_gem_seamless?.[i]||0).toFixed(1),
         snow: Math.max(d.snowfall_sum_icon_seamless?.[i]||0, d.snowfall_sum_gfs_seamless?.[i]||0, d.snowfall_sum_gem_seamless?.[i]||0).toFixed(1),
         wind: Math.round(Math.max(d.windspeed_10m_max_icon_seamless?.[i]||0, d.windspeed_10m_max_gfs_seamless?.[i]||0, d.windspeed_10m_max_gem_seamless?.[i]||0)),
@@ -1684,7 +1740,7 @@ export default function WeatherApp() {
                       const conf = getWeatherConfig(row.code, row.isDay);
                       const HourIcon = conf.icon;
                       return (
-                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[140px] w-[140px] hover:bg-white/10 transition relative group">
+                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[130px] w-[130px] hover:bg-white/10 transition relative group">
                           {/* Time */}
                           <div className="text-lg font-bold opacity-90 mb-2">{row.displayTime}</div>
                           
@@ -1803,7 +1859,7 @@ export default function WeatherApp() {
           {activeTab === 'longterm' && (
              <div className="space-y-4">
                <AIReportBox report={longtermReport} dwdWarnings={dwdWarnings} />
-               <h3 className="text-sm font-bold uppercase opacity-70 ml-2">7-Tage Liste</h3>
+               <h3 className="text-sm font-bold uppercase tracking-wide opacity-70 ml-2">7-Tage Liste</h3>
                
                {/* Horizontal Scroll Container for 7-Day Forecast */}
                <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide"> 
@@ -1816,13 +1872,13 @@ export default function WeatherApp() {
                       if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
 
                       return (
-                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[140px] w-[140px] hover:bg-white/10 transition relative group">
+                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[160px] w-[160px] hover:bg-white/10 transition relative group">
                           {/* Day & Date */}
-                          <div className="text-lg font-bold opacity-90 mb-0.5">{day.dayName}</div>
+                          <div className="text-base font-bold opacity-90 mb-0.5">{day.dayName}</div>
                           <div className="text-xs opacity-60 mb-2">{day.dateShort}</div>
                           
                           {/* Icon */}
-                          <DayIcon size={40} className="opacity-90 mb-2" />
+                          <DayIcon size={48} className="opacity-90 mb-2" />
                           
                           {/* Temp Range */}
                           <div className="flex items-center gap-2 mb-2 w-full justify-center">
@@ -1835,22 +1891,22 @@ export default function WeatherApp() {
                           
                           {/* Precip */}
                            <div className="mb-1 h-4 flex items-center justify-center w-full">
-                             {isDaySnow ? <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {day.snow}cm</span> : parseFloat(day.rain) > 0.1 ? <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={10}/> {day.rain}mm</span> : <span className="opacity-20 text-xs">-</span>}
+                             {isDaySnow ? <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {day.snow}cm</span> : parseFloat(day.rain) > 0.1 ? <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {day.rain}mm</span> : <span className="opacity-20 text-xs">-</span>}
                            </div>
                            <div className={`text-[10px] mb-2 ${probColor} h-3`}>{day.prob > 0 ? `${day.prob}% Wahrsch.` : ''}</div>
                            
                            {/* Wind */}
                            <div className="flex flex-col items-center gap-0.5 mb-2 w-full">
                               <div className="flex items-center justify-center gap-1 opacity-80 w-full">
-                                 <Navigation size={10} style={{ transform: `rotate(${day.dir}deg)` }} />
-                                 <span className={`text-xs font-bold ${getWindColorClass(day.wind)}`}>{day.wind}</span>
+                                 <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
+                                 <span className={`text-sm font-bold ${getWindColorClass(day.wind)}`}>{day.wind}</span>
                               </div>
-                              <span className={`text-[9px] opacity-60 ${getWindColorClass(day.gust)}`}>Böen {day.gust}</span>
+                              <span className={`text-[10px] opacity-60 ${getWindColorClass(day.gust)}`}>Böen {day.gust}</span>
                            </div>
 
                            {/* Reliability Indicator */}
-                           <div className="mt-1 text-[9px] flex items-center gap-1 opacity-70 border border-white/10 px-2 py-0.5 rounded-full">
-                              <ShieldCheck size={9} className={confColor} />
+                           <div className="mt-1 text-[10px] flex items-center gap-1 opacity-70 border border-white/10 px-2 py-0.5 rounded-full">
+                              <ShieldCheck size={10} className={confColor} />
                               <span className={confColor}>{day.reliability}% Sicher</span>
                            </div>
                            
