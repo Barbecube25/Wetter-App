@@ -1,19 +1,40 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Star as StarIcon } from 'lucide-react';
 
 // --- 1. KONSTANTEN & CONFIG ---
 
-const DEFAULT_LOC = { name: "Jülich Daubenrath", lat: 50.938, lon: 6.388, isHome: true };
+const DEFAULT_LOC = { name: "Jülich Daubenrath", lat: 50.938, lon: 6.388, id: 'home_default', type: 'home' };
 
-const getSavedHomeLocation = () => {
-  try {
-    const saved = localStorage.getItem('weather_home_loc');
-    return saved ? JSON.parse(saved) : null;
-  } catch (e) {
-    console.error("Fehler beim Laden des Home-Standorts", e);
-    return null;
-  }
+// Hilfsfunktion: Entfernung in km
+const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
+  var R = 6371; // Radius der Erde in km
+  var dLat = deg2rad(lat2-lat1);  
+  var dLon = deg2rad(lon2-lon1); 
+  var a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  var d = R * c; 
+  return d;
+}
+
+const deg2rad = (deg) => {
+  return deg * (Math.PI/180)
+}
+
+const getSavedLocations = () => {
+    try {
+        const saved = localStorage.getItem('weather_locations');
+        return saved ? JSON.parse(saved) : [];
+    } catch (e) { return []; }
+};
+
+const getHomeLocation = () => {
+    try {
+        const saved = localStorage.getItem('weather_home_loc');
+        return saved ? JSON.parse(saved) : DEFAULT_LOC;
+    } catch (e) { return DEFAULT_LOC; }
 };
 
 // Hilfsfunktion: Datum strikt als lokale Zeit parsen
@@ -39,7 +60,7 @@ const styles = `
     0% { transform: translateY(-20px) scaleY(1); opacity: 0; } 
     20% { opacity: 0.8; } 
     90% { opacity: 0.8; transform: translateY(140px) scaleY(1); }
-    100% { transform: translateY(150px) scaleY(0.5) scaleX(1.5); opacity: 0; }
+    100% { transform: translateY(150px) scaleY(0.5) scaleX(1.5); opacity: 0; } /* Splash effect simulation */
   }
   
   @keyframes snow-fall-slow { 
@@ -74,6 +95,7 @@ const styles = `
   }
   
   /* --- BÄUME & STURM --- */
+  /* WICHTIG: transform-box: fill-box sorgt dafür, dass sich der Baum um sich selbst dreht */
   @keyframes tree-shake-gentle { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(1deg); } }
   @keyframes tree-shake-windy { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(4deg); } }
   @keyframes tree-shake-storm { 0%, 100% { transform: rotate(-5deg); } 20% { transform: rotate(10deg); } 40% { transform: rotate(-8deg); } 60% { transform: rotate(5deg); } }
@@ -319,8 +341,8 @@ const generateAIReport = (type, data) => {
         const tMorning = tomorrowDayData.filter(d => d.time.getHours() < 12);
         const tAfternoon = tomorrowDayData.filter(d => d.time.getHours() >= 12);
         
-        const isRainyMorning = tMorning.some(d => d.precip > 0.1 && d.precipProb > 30);
-        const isRainyAfternoon = tAfternoon.some(d => d.precip > 0.1 && d.precipProb > 30);
+        const isRainyMorning = tMorning.some(d => d.precip > 0.1);
+        const isRainyAfternoon = tAfternoon.some(d => d.precip > 0.1);
 
         let tomorrowText = `🌅 Ausblick auf Morgen (${tomorrowDate.toLocaleDateString('de-DE', {weekday:'long'})}):\n`;
         tomorrowText += `Erwarten Sie Temperaturen zwischen ${Math.round(tMin)}°C am Morgen und bis zu ${Math.round(tMax)}°C am Nachmittag. `;
@@ -419,14 +441,7 @@ const generateAIReport = (type, data) => {
     if (weekend.length > 0) {
         const weTemp = Math.round(weekend.reduce((s, d) => s + d.max, 0) / weekend.length);
         const weRain = weekend.reduce((s, d) => s + parseFloat(d.rain), 0);
-        const weSun = weekend.every(d => d.code <= 2);
-        
-        let weText = `Temperatur um ${weTemp}°C. `;
-        if (weSun) weText += "Bestes Ausflugswetter mit viel Sonne!";
-        else if (weRain > 5) weText += "Leider eher verregnet.";
-        else weText += "Teils heiter, teils wolkig, meist trocken.";
-        
-        detailParts.push(`🎉 Wochenend-Check:\n${weText}`);
+        detailParts.push(`🎉 Wochenend-Check:\n${weRain < 1 ? "Perfektes Ausflugswetter" : "Eher ungemütlich"} bei ca. ${weTemp}°C.`);
     }
 
     // 5. Reliability Context
@@ -785,7 +800,7 @@ const PrecipitationTile = ({ data }) => {
     
     // Ist es gerade nass? (in der aktuellen Stunde oder nächsten Stunde)
     const current = data[0]; 
-    const isRainingNow = current.precip > 0.1 || current.snow > 0.1 || current.precipProb > 30; // Erhöhter Threshold
+    const isRainingNow = current.precip > 0.05 || current.snow > 0.05; // kleiner Threshold
     
     let result = { 
        type: 'none', // none, rain_now, rain_later, snow_now, snow_later
@@ -803,31 +818,30 @@ const PrecipitationTile = ({ data }) => {
     // Loop um Start und Ende zu finden
     for (let i = 0; i < futureData.length; i++) {
        const d = futureData[i];
-       // Erhöhter Threshold für "relevante" Nässe
-       const hasPrecip = (d.precip > 0.1 || d.snow > 0.1) && d.precipProb > 30;
+       const hasPrecip = d.precip > 0.05 || d.snow > 0.05;
        
        if (hasPrecip) {
            if (!foundStart) {
                foundStart = true;
                precipStartIdx = i;
                result.startTime = d.time;
-               result.isSnow = d.snow > 0.1; // Typerkennung beim Start
+               result.isSnow = d.snow > 0.05; // Typerkennung beim Start
            }
            const hourlyAmount = d.precip > 0 ? d.precip : d.snow;
-           result.amount += hourlyAmount; 
+           result.amount += hourlyAmount; // Schnee in mm Wasseräquivalent meist ähnlich in API
            result.maxIntensity = Math.max(result.maxIntensity, hourlyAmount);
            result.duration++;
        } else {
            if (foundStart) {
                // Regen hat aufgehört
-               result.endTime = d.time; 
+               result.endTime = d.time; // Endzeit ist Beginn der trockenen Stunde
                break; 
            }
        }
     }
     
     if (!foundStart && isRainingNow) {
-        // Es regnet jetzt, hört aber in <1h auf
+        // Es regnet jetzt, hört aber in <1h auf (in den futureData nicht mehr drin)
         const hourlyAmount = current.precip || current.snow;
         result.type = current.snow > 0 ? 'snow_now' : 'rain_now';
         result.duration = 1; 
@@ -848,40 +862,14 @@ const PrecipitationTile = ({ data }) => {
   if (!analysis) return null;
 
   const { type, startTime, duration, amount, isSnow, maxIntensity } = analysis;
-  const isRain = type.includes('rain');
-  const isNow = type.includes('now');
   
-  // Zeit-Logik
-  const now = new Date();
-  const diffMs = startTime ? startTime - now : 0;
-  // "Später" definiert als > 2h
-  const isLaterThan2h = !isNow && startTime && (diffMs > 2 * 60 * 60 * 1000);
-  // "Gleich" definiert als < 45min (2700000 ms) aber nicht "jetzt"
-  const isSoon = !isNow && startTime && (diffMs > 0 && diffMs < 45 * 60 * 1000);
-
-  // Datum Check
-  const isTomorrow = startTime && startTime.getDate() !== now.getDate();
-  const dayPrefix = isTomorrow ? "Morgen" : "";
-  const dayName = startTime ? new Intl.DateTimeFormat('de-DE', { weekday: 'short' }).format(startTime) + "." : "";
-
-  // Custom headline logic
-  let headline = "Nächster Niederschlag";
-  if (type === 'none' || isLaterThan2h) {
-      headline = "Aktuell kein Regen zu erwarten";
-  } else if (isNow) {
-      headline = "Aktueller Niederschlag";
-  } else if (isSoon) {
-      headline = "Regen beginnt gleich";
-  }
-
-  // If type is 'none', we just show the "No rain" box
   if (type === 'none') {
       return (
         <div className="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between shadow-sm mb-4">
             <div className="flex items-center gap-3">
                 <div className="p-2 bg-emerald-100 rounded-full text-emerald-600"><Sun size={20} /></div>
                 <div>
-                    <div className="font-bold text-slate-700 text-sm">{headline}</div>
+                    <div className="font-bold text-slate-700 text-sm">Kein Niederschlag</div>
                     <div className="text-xs text-slate-500 font-medium">In den nächsten 24h bleibt es trocken.</div>
                 </div>
             </div>
@@ -889,17 +877,20 @@ const PrecipitationTile = ({ data }) => {
       );
   }
 
+  const isRain = type.includes('rain');
+  const isNow = type.includes('now');
   const Icon = isSnow ? Snowflake : CloudRain;
   const colorClass = isSnow ? "text-cyan-600 bg-cyan-100 border-cyan-200" : "text-blue-600 bg-blue-100 border-blue-200";
   const bgClass = isSnow ? "bg-cyan-50/80" : "bg-blue-50/80";
 
-  const intensity = (rate) => {
+  // Intensitäts-Logik
+  const getIntensityInfo = (rate) => {
       if (rate < 1.0) return { label: 'Leicht', percent: 33, color: isSnow ? 'bg-cyan-400' : 'bg-blue-400' };
       if (rate < 4.0) return { label: 'Mäßig', percent: 66, color: isSnow ? 'bg-cyan-500' : 'bg-blue-600' };
       return { label: 'Stark', percent: 100, color: isSnow ? 'bg-cyan-700' : 'bg-blue-800' };
   };
 
-  const intens = intensity(maxIntensity);
+  const intensity = getIntensityInfo(maxIntensity);
 
   return (
     <div className={`${bgClass} border ${isSnow ? 'border-cyan-100' : 'border-blue-100'} rounded-2xl p-3 shadow-sm mb-3 relative overflow-hidden`}>
@@ -909,19 +900,15 @@ const PrecipitationTile = ({ data }) => {
                     <Icon size={24} strokeWidth={2.5} />
                 </div>
                 <div>
-                    <div className="font-bold text-slate-700 text-sm uppercase tracking-wide opacity-80 mb-0.5">
-                        {headline}
-                    </div>
                     <div className="flex items-center gap-2">
-                        {!isNow && isLaterThan2h && <span className="text-xs font-bold text-slate-600">Ab</span>}
                         <span className="text-xl font-black text-slate-800 tracking-tight leading-none">
-                            {isNow ? "Jetzt" : (isSoon ? "Gleich" : (startTime ? (isTomorrow ? (dayPrefix + " ") : "") + startTime.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'))}
+                            {isNow ? "Jetzt" : (startTime ? startTime.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--')}
                         </span>
-                        {!isNow && !isSoon && <span className="text-[10px] font-bold text-slate-500 uppercase">Uhr</span>}
+                        {!isNow && <span className="text-[10px] font-bold text-slate-500 uppercase">Uhr</span>}
                         {isNow && <span className="flex h-2 w-2 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span></span>}
                     </div>
                     <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wide mt-0.5">
-                        {isSnow ? "Schnee" : "Regen"} • {intens.label}
+                        {isSnow ? "Schnee" : "Regen"} • {intensity.label}
                     </div>
                 </div>
             </div>
@@ -934,8 +921,8 @@ const PrecipitationTile = ({ data }) => {
 
         <div className="mt-3 h-1.5 w-full bg-white/40 rounded-full overflow-hidden relative">
             <div 
-                className={`h-full ${intens.color} rounded-full transition-all duration-1000 ease-out`} 
-                style={{ width: `${intens.percent}%` }}
+                className={`h-full ${intensity.color} rounded-full transition-all duration-1000 ease-out`} 
+                style={{ width: `${intensity.percent}%` }}
             ></div>
         </div>
     </div>
@@ -945,25 +932,29 @@ const PrecipitationTile = ({ data }) => {
 // --- NEU: FEEDBACK MODAL (ERWEITERT) ---
 const FeedbackModal = ({ onClose, currentTemp }) => {
     const [sent, setSent] = useState(false);
-    const [tempAdjustment, setTempAdjustment] = useState(0); 
+    const [tempAdjustment, setTempAdjustment] = useState(0); // Offset in Grad
     const [selectedCondition, setSelectedCondition] = useState(null);
 
     const conditions = [
         { id: 'sun', label: 'Sonnig', icon: Sun, color: 'text-amber-500 bg-amber-50 border-amber-200' },
         { id: 'cloudy', label: 'Bewölkt', icon: Cloud, color: 'text-slate-500 bg-slate-50 border-slate-200' },
-        { id: 'overcast', label: 'Bedeckt', icon: Cloud, color: 'text-slate-700 bg-slate-100 border-slate-300' },
+        { id: 'overcast', label: 'Bedeckt', icon: Cloud, color: 'text-slate-700 bg-slate-100 border-slate-300' }, // Neu
         { id: 'fog', label: 'Nebel', icon: CloudFog, color: 'text-slate-400 bg-slate-50/50 border-slate-200' },
         { id: 'drizzle', label: 'Niesel', icon: CloudDrizzle, color: 'text-cyan-500 bg-cyan-50 border-cyan-200' },
         { id: 'rain', label: 'Regen', icon: CloudRain, color: 'text-blue-500 bg-blue-50 border-blue-200' },
-        { id: 'storm', label: 'Gewitter', icon: CloudLightning, color: 'text-purple-600 bg-purple-50 border-purple-200' },
-        { id: 'snow', label: 'Schnee', icon: CloudSnow, color: 'text-sky-300 bg-sky-50 border-sky-100' },
-        { id: 'hail', label: 'Hagel', icon: CloudHail, color: 'text-teal-600 bg-teal-50 border-teal-200' },
-        { id: 'wind', label: 'Windig', icon: Wind, color: 'text-slate-600 bg-slate-100 border-slate-300' },
+        { id: 'storm', label: 'Gewitter', icon: CloudLightning, color: 'text-purple-600 bg-purple-50 border-purple-200' }, // Neu
+        { id: 'snow', label: 'Schnee', icon: CloudSnow, color: 'text-sky-300 bg-sky-50 border-sky-100' }, // Neu
+        { id: 'hail', label: 'Hagel', icon: CloudHail, color: 'text-teal-600 bg-teal-50 border-teal-200' }, // Neu
+        { id: 'wind', label: 'Windig', icon: Wind, color: 'text-slate-600 bg-slate-100 border-slate-300' }, // Neu
     ];
 
     const handleSend = () => {
-        if (!selectedCondition && tempAdjustment === 0) return;
+        if (!selectedCondition && tempAdjustment === 0) return; // Nichts zu senden
+
         setSent(true);
+        // Hier würde normalerweise der API-Call zum Backend stehen mit:
+        // condition: selectedCondition
+        // tempCorrection: tempAdjustment
         setTimeout(() => {
             onClose();
             setSent(false);
@@ -995,6 +986,7 @@ const FeedbackModal = ({ onClose, currentTemp }) => {
                 </div>
                 
                 <div className="p-6 overflow-y-auto">
+                    {/* Temperatur Slider */}
                     <div className="mb-8">
                         <div className="flex justify-between items-end mb-4">
                             <label className="text-sm font-bold text-slate-500 uppercase tracking-wide">Temperatur</label>
@@ -1016,6 +1008,7 @@ const FeedbackModal = ({ onClose, currentTemp }) => {
                         </div>
                     </div>
 
+                    {/* Wetter Grid */}
                     <div className="mb-6">
                         <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 block">Aktuelles Wetter</label>
                         <div className="grid grid-cols-3 gap-2">
@@ -1184,15 +1177,70 @@ const AIReportBox = ({ report, dwdWarnings }) => {
   );
 };
 
+// --- LOCATION MODAL ---
+const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAddCurrentLocation, onDeleteLocation, currentLoc }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2"><MapIcon size={18} className="text-blue-500"/> Gespeicherte Orte</h3>
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={20} className="text-slate-400" /></button>
+                </div>
+                
+                <div className="p-4 overflow-y-auto">
+                    {/* Add Current Location Button */}
+                    <button 
+                        onClick={onAddCurrentLocation}
+                        className="w-full mb-4 p-3 rounded-xl border border-dashed border-blue-300 bg-blue-50 text-blue-600 font-bold flex items-center justify-center gap-2 hover:bg-blue-100 transition"
+                    >
+                        <Plus size={18} /> Aktuellen Ort hinzufügen
+                    </button>
+
+                    <div className="space-y-2">
+                        {savedLocations.length === 0 ? (
+                            <div className="text-center text-slate-400 py-8 text-sm">Keine Orte gespeichert.</div>
+                        ) : (
+                            savedLocations.map((loc, index) => (
+                                <div key={index} className={`p-3 rounded-xl border flex items-center justify-between group transition ${currentLoc.name === loc.name ? 'border-blue-500 bg-blue-50' : 'border-slate-100 hover:border-slate-300'}`}>
+                                    <button 
+                                        onClick={() => { onSelectLocation(loc); onClose(); }}
+                                        className="flex items-center gap-3 flex-1 text-left"
+                                    >
+                                        <div className={`p-2 rounded-full ${loc.type === 'home' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-600'}`}>
+                                            {loc.type === 'home' ? <Home size={16} /> : <MapPin size={16} />}
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-slate-700 text-sm">{loc.name}</div>
+                                            <div className="text-[10px] text-slate-400">Lat: {loc.lat.toFixed(2)}, Lon: {loc.lon.toFixed(2)}</div>
+                                        </div>
+                                    </button>
+                                    
+                                    <button 
+                                        onClick={() => onDeleteLocation(index)}
+                                        className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
 // --- 4. MAIN APP COMPONENT ---
 
 export default function WeatherApp() {
   const [loading, setLoading] = useState(true);
-  const [homeLoc, setHomeLoc] = useState(() => {
-    const saved = getSavedHomeLocation();
-    return saved ? saved : DEFAULT_LOC;
-  });
-  const [currentLoc, setCurrentLoc] = useState(homeLoc);
+  const [locations, setLocations] = useState(() => getSavedLocations());
+  const [homeLoc, setHomeLoc] = useState(() => getHomeLocation());
+  const [currentLoc, setCurrentLoc] = useState(homeLoc); // Initial Home or Default
   const [shortTermData, setShortTermData] = useState(null);
   const [longTermData, setLongTermData] = useState(null);
   const [dwdWarnings, setDwdWarnings] = useState([]);
@@ -1205,17 +1253,65 @@ export default function WeatherApp() {
   const [sunriseSunset, setSunriseSunset] = useState({ sunrise: null, sunset: null });
   const [modelRuns, setModelRuns] = useState({ icon: '', gfs: '', arome: '' });
   const [showIosInstall, setShowIosInstall] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false); // State für Feedback Modal
-  
-  // WIDGET MODE (View Parameter)
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
   const [viewMode, setViewMode] = useState(null);
 
+  // Initial Location Logic
   useEffect(() => {
-    // Check URL parameters for view mode
-    const urlParams = new URLSearchParams(window.location.search);
-    const view = urlParams.get('view');
-    if (view) setViewMode(view);
+    const initLocation = async () => {
+        // Check URL parameters for widget mode
+        const urlParams = new URLSearchParams(window.location.search);
+        const view = urlParams.get('view');
+        if (view) setViewMode(view);
+
+        if (!navigator.geolocation) {
+             // No GPS support, fallback to home
+             setCurrentLoc(homeLoc);
+             return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                
+                // Check distance to Home
+                const dist = getDistanceFromLatLonInKm(lat, lon, homeLoc.lat, homeLoc.lon);
+                if (dist < 2.0) { // If closer than 2km to home
+                    setCurrentLoc(homeLoc);
+                } else {
+                    // Fetch City Name
+                    try {
+                        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
+                        const data = await res.json();
+                        const city = data.results?.[0]?.name || "Mein Standort";
+                        setCurrentLoc({ name: city, lat, lon, type: 'gps' });
+                    } catch (e) {
+                        setCurrentLoc({ name: "Mein Standort", lat, lon, type: 'gps' });
+                    }
+                }
+            },
+            (err) => {
+                console.warn("GPS Access denied or failed", err);
+                setCurrentLoc(homeLoc); // Fallback to Home
+            }
+        );
+    };
+
+    initLocation();
   }, []);
+
+  // Update localStorage when locations change
+  useEffect(() => {
+      localStorage.setItem('weather_locations', JSON.stringify(locations));
+  }, [locations]);
+
+  // Update localStorage when home changes
+  useEffect(() => {
+    localStorage.setItem('weather_home_loc', JSON.stringify(homeLoc));
+  }, [homeLoc]);
+
 
   // NEU: iOS Erkennung
   useEffect(() => {
@@ -1224,16 +1320,6 @@ export default function WeatherApp() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     if (isIos && !isStandalone) {
       setShowIosInstall(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('weather_home_loc');
-    if (!saved && navigator.geolocation) {
-         navigator.geolocation.getCurrentPosition(
-           (pos) => setCurrentLoc({ name: "Mein Standort", lat: pos.coords.latitude, lon: pos.coords.longitude, isHome: false }),
-           (err) => console.warn("Auto-GPS nicht möglich", err)
-         );
     }
   }, []);
 
@@ -1254,20 +1340,28 @@ export default function WeatherApp() {
     if (outcome === 'accepted') setDeferredPrompt(null);
   };
 
-  const handleSetHome = () => setCurrentLoc(homeLoc);
-  const handleSaveAsHome = () => {
-    const newHome = { ...currentLoc, isHome: true, name: currentLoc.name === 'Mein Standort' ? 'Mein Zuhause' : currentLoc.name };
-    setHomeLoc(newHome);
-    setCurrentLoc(newHome);
-    localStorage.setItem('weather_home_loc', JSON.stringify(newHome));
-    alert("Neuer Heimatort erfolgreich gespeichert!");
+  const handleAddLocation = () => {
+      // Avoid duplicates based on name/coords
+      const exists = locations.some(l => l.name === currentLoc.name);
+      if (!exists) {
+          setLocations([...locations, { ...currentLoc, type: 'saved' }]);
+      }
+      setShowLocationModal(false);
   };
 
+  const handleDeleteLocation = (index) => {
+      const newLocs = [...locations];
+      newLocs.splice(index, 1);
+      setLocations(newLocs);
+  };
+
+  const handleSetHome = () => setCurrentLoc(homeLoc);
+  
   const handleSetCurrent = () => {
     setLoading(true);
     if (!navigator.geolocation) { setError("Kein GPS"); setLoading(false); return; }
     navigator.geolocation.getCurrentPosition(
-      (pos) => setCurrentLoc({ name: "Mein Standort", lat: pos.coords.latitude, lon: pos.coords.longitude, isHome: false }),
+      (pos) => setCurrentLoc({ name: "Mein Standort", lat: pos.coords.latitude, lon: pos.coords.longitude, type: 'gps' }),
       (err) => { setError("GPS verweigert"); setLoading(false); }
     );
   };
@@ -1278,11 +1372,9 @@ export default function WeatherApp() {
     setDwdWarnings([]);
     try {
       const { lat, lon } = currentLoc;
-      // HINZUFÜGEN von KNMI (Niederlande, super für NRW) und GEM (Kanada, globaler Check)
-      // WICHTIG: precipitation_probability in hourly hinzugefügt
       const modelsShort = "icon_d2,gfs_seamless,arome_seamless,knmi_harmonie_arome_europe,gem_seamless";
       const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability&models=${modelsShort}&timezone=Europe%2FBerlin&forecast_days=2`;
-      const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; // KNMI oft nur 48h
+      const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
       const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max,sunrise,sunset&models=${modelsLong}&timezone=Europe%2FBerlin&forecast_days=8`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
 
@@ -1311,35 +1403,24 @@ export default function WeatherApp() {
   const processedShort = useMemo(() => {
     if (!shortTermData?.hourly) return [];
     const h = shortTermData.hourly;
-    const now = new Date(); // Browser-Zeit für Vergleich (Vergangenheit ausblenden)
+    const now = new Date(); 
     const res = [];
     const isDayArray = h.is_day_icon_d2 || h.is_day || h.is_day_gfs_seamless;
 
     for (let i = 0; i < h.time.length; i++) {
-      // WICHTIG: parseLocalTime verwenden
       const t = parseLocalTime(h.time[i]);
-      
       const nextT = i < h.time.length - 1 ? parseLocalTime(h.time[i+1]) : null;
-      if (t < now && nextT && nextT > now) {
-         // Das ist das aktuelle Intervall, behalten
-      } else if (t < now) {
-         continue; 
-      }
+      if (t < now && nextT && nextT > now) {} else if (t < now) { continue; }
 
       const getVal = (key) => h[key]?.[i] ?? h[`${key}_icon_d2`]?.[i] ?? h[`${key}_gfs_seamless`]?.[i] ?? h[`${key}_arome_seamless`]?.[i] ?? 0;
-      
-      // Neue Modelle auslesen (wenn vorhanden)
       const temp_icon = h.temperature_2m_icon_d2?.[i] ?? null;
       const temp_gfs = h.temperature_2m_gfs_seamless?.[i] ?? null;
       const temp_arome = h.temperature_2m_arome_seamless?.[i] ?? null;
       const temp_knmi = h.temperature_2m_knmi_harmonie_arome_europe?.[i] ?? null;
       const temp_gem = h.temperature_2m_gem_seamless?.[i] ?? null;
-      
-      // Mittelwert jetzt aus 5 Modellen (wo verfügbar)
       const t_vals = [temp_icon, temp_gfs, temp_arome, temp_knmi, temp_gem].filter(v => v !== null && v !== undefined);
       const temp = t_vals.length > 0 ? t_vals.reduce((a,b)=>a+b,0) / t_vals.length : 0;
       
-      // Auch bei Regen/Schnee/Wind alle Modelle einbeziehen
       const getAvg = (key) => {
          const v1 = h[`${key}_icon_d2`]?.[i];
          const v2 = h[`${key}_gfs_seamless`]?.[i];
@@ -1360,14 +1441,10 @@ export default function WeatherApp() {
          return vals.length > 0 ? Math.max(...vals) : 0;
       };
       
-      // Neue Probability Logik
       const getProb = () => {
-         // Wir nehmen die Probability vom ICON Modell als Standard, da es für DE am besten ist
-         // Falls nicht vorhanden, GFS
          return h.precipitation_probability?.[i] ?? h.precipitation_probability_icon_d2?.[i] ?? 0;
       };
 
-      // Zuverlässigkeit
       const t_spread = t_vals.length > 1 ? Math.max(...t_vals) - Math.min(...t_vals) : 0;
       const reliability = Math.round(Math.max(0, 100 - (t_spread * 15)));
 
@@ -1377,7 +1454,7 @@ export default function WeatherApp() {
         temp: temp,
         temp_icon, temp_gfs, temp_arome, temp_knmi, temp_gem,
         precip: getAvg('precipitation'),
-        precipProb: getProb(), // NEU
+        precipProb: getProb(), 
         snow: getMax('snowfall'), 
         wind: Math.round(getAvg('windspeed_10m')),
         gust: Math.round(getMax('windgusts_10m')), 
@@ -1398,14 +1475,11 @@ export default function WeatherApp() {
     if (!longTermData?.daily) return [];
     const d = longTermData.daily;
     return d.time.map((t, i) => {
-      // WICHTIG: parseLocalTime verwenden
       const date = parseLocalTime(t);
       const maxIcon = d.temperature_2m_max_icon_seamless?.[i] ?? 0;
       const maxGfs = d.temperature_2m_max_gfs_seamless?.[i] ?? 0;
       const maxArome = d.temperature_2m_max_arome_seamless?.[i] ?? null;
       const maxGem = d.temperature_2m_max_gem_seamless?.[i] ?? null;
-      
-      // Mittelwert robuster
       const maxVals = [maxIcon, maxGfs, maxGem].filter(v => v !== null && v !== undefined);
       
       return {
@@ -1416,7 +1490,6 @@ export default function WeatherApp() {
         max: maxVals.length > 0 ? maxVals.reduce((a,b)=>a+b,0)/maxVals.length : maxIcon,
         min: ((d.temperature_2m_min_icon_seamless?.[i]??0) + (d.temperature_2m_min_gfs_seamless?.[i]??0)) / 2,
         max_icon: maxIcon, max_gfs: maxGfs, max_arome: maxArome, max_gem: maxGem,
-        // Auch hier GEM mit einbeziehen
         rain: Math.max(d.precipitation_sum_icon_seamless?.[i]||0, d.precipitation_sum_gfs_seamless?.[i]||0, d.precipitation_sum_gem_seamless?.[i]||0).toFixed(1),
         snow: Math.max(d.snowfall_sum_icon_seamless?.[i]||0, d.snowfall_sum_gfs_seamless?.[i]||0, d.snowfall_sum_gem_seamless?.[i]||0).toFixed(1),
         wind: Math.round(Math.max(d.windspeed_10m_max_icon_seamless?.[i]||0, d.windspeed_10m_max_gfs_seamless?.[i]||0, d.windspeed_10m_max_gem_seamless?.[i]||0)),
@@ -1429,7 +1502,6 @@ export default function WeatherApp() {
     });
   }, [longTermData]);
   
-  // LIVE oder DEMO Daten?
   const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: "0.0", precip: "0.0", wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0 };
   const current = liveCurrent;
 
@@ -1509,13 +1581,24 @@ export default function WeatherApp() {
       <style>{styles}</style>
       
       {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} currentTemp={current.temp} />}
+      {showLocationModal && (
+          <LocationModal 
+            isOpen={showLocationModal} 
+            onClose={() => setShowLocationModal(false)}
+            savedLocations={locations}
+            onSelectLocation={(loc) => { setCurrentLoc(loc); setShowLocationModal(false); }}
+            onAddCurrentLocation={handleAddLocation}
+            onDeleteLocation={handleDeleteLocation}
+            currentLoc={currentLoc}
+          />
+      )}
 
       <header className="pt-8 px-5 flex justify-between items-start z-10 relative">
         <div className={textColor}>
           <div className="flex gap-2 mb-2">
-             <button onClick={handleSetHome} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.isHome ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Home size={14} /> Home</button>
-             <button onClick={handleSetCurrent} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${!currentLoc.isHome ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Crosshair size={14} /> GPS</button>
-             {!currentLoc.isHome && (<button onClick={handleSaveAsHome} className="px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition bg-green-500/80 text-white hover:bg-green-600 shadow-md"><Save size={14} /> Speichern</button>)}
+             <button onClick={handleSetHome} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.id === homeLoc.id ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Home size={14} /> Home</button>
+             <button onClick={handleSetCurrent} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.type === 'gps' ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Crosshair size={14} /> GPS</button>
+             <button onClick={() => setShowLocationModal(true)} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${showLocationModal ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><MapIcon size={14} /> Orte</button>
           </div>
           <h1 className="text-3xl font-light mt-2 tracking-tight">{currentLoc.name}</h1>
           <div className="flex items-center gap-2 mt-1 opacity-80 text-xs font-medium"><Clock size={12} /><span>Stand: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} Uhr</span></div>
