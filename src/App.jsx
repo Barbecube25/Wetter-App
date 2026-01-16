@@ -633,9 +633,14 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
       {isDawn && <rect x="-100" y="0" width="600" height="160" fill="url(#dawnGradient)" opacity="0.3" className="anim-glow" />}
       {isDusk && <rect x="-100" y="0" width="600" height="160" fill="url(#duskGradient)" opacity="0.3" className="anim-glow" />}
 
-      {celestialType === 'sun' && !isOvercast && (
+      {/* SONNE UND MOND - IMMER GERENDERT, ABER HINTER WOLKEN WENN OVERCAST */}
+      {celestialType === 'sun' && (
         <g transform={`translate(${celestialX}, ${celestialY})`}>
+          {/* Outer Glow */}
+          <circle r="25" fill="#fbbf24" opacity="0.4" filter="blur(8px)" />
+          {/* Sun Body */}
           <circle r="14" fill="#fbbf24" className="animate-ray" />
+          {/* Rays */}
           <g className="animate-spin-slow">
             {[...Array(8)].map((_, i) => (
               <line key={i} x1="0" y1="-20" x2="0" y2="-16" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" transform={`rotate(${i * 45})`} />
@@ -644,8 +649,10 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
         </g>
       )}
 
-      {celestialType === 'moon' && !isOvercast && (
+      {celestialType === 'moon' && (
         <g transform={`translate(${celestialX}, ${celestialY})`}>
+           {/* Moon Glow */}
+           <circle r="20" fill="white" opacity="0.2" filter="blur(5px)" />
            <circle r="12" fill="white" opacity="0.9" />
            {moonPhase !== 4 && <circle r="12" fill="black" opacity="0.5" transform={`translate(${moonPhase < 4 ? -6 : 6}, 0)`} />}
         </g>
