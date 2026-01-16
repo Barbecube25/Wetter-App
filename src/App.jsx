@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus } from 'lucide-react';
+import { 
+  MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, 
+  CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, 
+  ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, 
+  Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, 
+  Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, 
+  CloudHail, ArrowLeft, Trash2, Plus 
+} from 'lucide-react';
 
 // --- 1. KONSTANTEN & CONFIG ---
 
@@ -46,6 +53,17 @@ const parseLocalTime = (isoString) => {
 };
 
 const styles = `
+  :root {
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+  }
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+  }
+
   @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
   @keyframes float-clouds { 0% { transform: translateX(0px); } 50% { transform: translateX(15px); } 100% { transform: translateX(0px); } }
   @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -131,6 +149,15 @@ const styles = `
   
   .anim-heat { animation: heat-shimmer 2s infinite linear; }
   .anim-sparkle { animation: ice-sparkle 3s infinite ease-in-out; }
+  
+  /* Scrollbar hide utility */
+  .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+  }
+  .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+  }
 `;
 
 // --- 2. HILFSFUNKTIONEN ---
@@ -474,7 +501,6 @@ const generateAIReport = (type, data) => {
 };
 
 // --- 4. KOMPONENTEN ---
-// --- HIER WURDE DIE MODEL INFO BOX EINGEFÜGT ---
 const ModelInfoBox = () => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -821,7 +847,6 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
   );
 };
 
-// --- NEU: PRECIPITATION TILE (Wann, Wie lang, Wie viel) ---
 const PrecipitationTile = ({ data }) => {
   // Analyse der nächsten 24h
   const analysis = useMemo(() => {
@@ -831,11 +856,21 @@ const PrecipitationTile = ({ data }) => {
     const now = new Date();
     const futureData = data.filter(d => d.time > now);
     
+    // Definition von Regen-Codes (WMO Weather Codes)
+    // 51-57: Niesel, 61-67: Regen, 71-77: Schnee, 80-82: Schauer, 85-86: Schneeschauer, 95-99: Gewitter
+    const precipCodes = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99];
+
+    // Sensiblere Prüfung: Ist Niederschlag vorhanden?
+    // Menge > 0 ODER Wahrscheinlichkeit >= 25% ODER Wettercode sagt "Regen"
+    const hasPrecipitation = (d) => {
+        return d.precip > 0 || d.snow > 0 || d.precipProb >= 25 || precipCodes.includes(d.code);
+    };
+    
     if (futureData.length === 0) return null;
     
     // Ist es gerade nass? (in der aktuellen Stunde oder nächsten Stunde)
     const current = data[0]; 
-    const isRainingNow = current.precip > 0.1 || current.snow > 0.1 || current.precipProb > 30; // kleiner Threshold
+    const isRainingNow = hasPrecipitation(current);
     
     let result = { 
        type: 'none', // none, rain_now, rain_later, snow_now, snow_later
@@ -853,17 +888,17 @@ const PrecipitationTile = ({ data }) => {
     // Loop um Start und Ende zu finden
     for (let i = 0; i < futureData.length; i++) {
        const d = futureData[i];
-       // Erhöhter Threshold für "relevante" Nässe
-       const hasPrecip = (d.precip > 0.1 || d.snow > 0.1) && d.precipProb > 30;
+       const isWet = hasPrecipitation(d);
        
-       if (hasPrecip) {
+       if (isWet) {
            if (!foundStart) {
                foundStart = true;
                precipStartIdx = i;
                result.startTime = d.time;
-               result.isSnow = d.snow > 0.1; // Typerkennung beim Start
+               result.isSnow = d.snow > 0.1 || [71, 73, 75, 77, 85, 86].includes(d.code); // Typerkennung beim Start
            }
-           const hourlyAmount = d.precip > 0 ? d.precip : d.snow;
+           // Fallback: Wenn Menge 0 ist, aber Code Regen sagt, nehmen wir 0.1mm an für die Anzeige
+           const hourlyAmount = (d.precip > 0 || d.snow > 0) ? (d.precip + d.snow) : 0.1;
            result.amount += hourlyAmount; 
            result.maxIntensity = Math.max(result.maxIntensity, hourlyAmount);
            result.duration++;
@@ -878,8 +913,8 @@ const PrecipitationTile = ({ data }) => {
     
     if (!foundStart && isRainingNow) {
         // Es regnet jetzt, hört aber in <1h auf
-        const hourlyAmount = current.precip || current.snow;
-        result.type = current.snow > 0 ? 'snow_now' : 'rain_now';
+        const hourlyAmount = (current.precip > 0 || current.snow > 0) ? (current.precip + current.snow) : 0.1;
+        result.type = (current.snow > 0 || [71, 73, 75, 77, 85, 86].includes(current.code)) ? 'snow_now' : 'rain_now';
         result.duration = 1; 
         result.amount = hourlyAmount;
         result.maxIntensity = hourlyAmount;
@@ -992,7 +1027,6 @@ const PrecipitationTile = ({ data }) => {
   );
 };
 
-// --- NEU: FEEDBACK MODAL (ERWEITERT) ---
 const FeedbackModal = ({ onClose, currentTemp }) => {
     const [sent, setSent] = useState(false);
     const [tempAdjustment, setTempAdjustment] = useState(0); // Offset in Grad
