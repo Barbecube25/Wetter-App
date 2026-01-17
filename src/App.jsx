@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { 
   MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, 
   CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, 
   ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, 
   Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, 
   Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, 
-  CloudHail, ArrowLeft, Trash2, Plus 
+  CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Check, Briefcase
 } from 'lucide-react';
 
 // --- 1. KONSTANTEN & CONFIG ---
@@ -27,6 +27,13 @@ const getSavedLocations = () => {
     } catch (e) { return []; }
 };
 
+const getSavedTrips = () => {
+    try {
+        const saved = localStorage.getItem('weather_trips');
+        return saved ? JSON.parse(saved) : [];
+    } catch (e) { return []; }
+};
+
 const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
   var R = 6371; 
   var dLat = deg2rad(lat2-lat1);  
@@ -39,7 +46,6 @@ const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
 
 const deg2rad = (deg) => deg * (Math.PI/180);
 
-// Hilfsfunktion: Datum strikt als lokale Zeit parsen
 const parseLocalTime = (isoString) => {
   if (!isoString) return new Date();
   if (isoString.length === 10) {
@@ -108,7 +114,6 @@ const styles = `
   }
   
   /* --- BÄUME & STURM --- */
-  /* WICHTIG: transform-box: fill-box sorgt dafür, dass sich der Baum um sich selbst dreht */
   @keyframes tree-shake-gentle { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(1deg); } }
   @keyframes tree-shake-windy { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(4deg); } }
   @keyframes tree-shake-storm { 0%, 100% { transform: rotate(-5deg); } 20% { transform: rotate(10deg); } 40% { transform: rotate(-8deg); } 60% { transform: rotate(5deg); } }
@@ -244,7 +249,7 @@ const getMoonPhase = (d) => {
   return Math.round((currentSec / phaseSeconds) * 8) % 8;
 };
 
-// --- 3. KI LOGIK (REVISED - MIT STRUKTURIERTEN DATEN) ---
+// --- 3. KI LOGIK ---
 const generateAIReport = (type, data) => {
   if (!data || data.length === 0) return { title: "Lade...", summary: "Warte auf Daten...", details: null, warning: null, confidence: null };
   
@@ -259,7 +264,6 @@ const generateAIReport = (type, data) => {
     const now = new Date();
     const currentHour = now.getHours();
     
-    // Basisdaten
     const current = data[0];
     let intro = `Aktuell (${current.displayTime} Uhr): ${Math.round(current.temp)}°C`;
     if (Math.abs(current.appTemp - current.temp) > 2) intro += `, gefühlt ${Math.round(current.appTemp)}°C.`;
@@ -284,7 +288,6 @@ const generateAIReport = (type, data) => {
         d.time.getDate() === tomorrowDate.getDate() && d.time.getHours() >= 6 && d.time.getHours() <= 22
     );
 
-    // TEIL A: HEUTE
     if (todayData.length > 0) {
         let todayText = "📅 Heute: ";
         const maxToday = Math.max(...todayData.map(d => d.temp));
@@ -325,7 +328,6 @@ const generateAIReport = (type, data) => {
         parts.push(todayText);
     }
 
-    // TEIL B: DIE NACHT
     if (nightData.length > 0) {
         const minNight = Math.min(...nightData.map(d => d.temp));
         const rainNight = nightData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
@@ -341,7 +343,6 @@ const generateAIReport = (type, data) => {
         parts.push(nightText);
     }
 
-    // TEIL C: MORGEN
     if (tomorrowDayData.length > 0) {
         const tMax = Math.max(...tomorrowDayData.map(d => d.temp));
         const tMin = Math.min(...tomorrowDayData.map(d => d.temp)); 
@@ -377,7 +378,6 @@ const generateAIReport = (type, data) => {
     summary = parts.join("\n\n");
     confidence = 90; 
     
-    // Globale Warnungen
     const maxGustNow = Math.max(...(todayData.map(d=>d.gust)||[]), 0);
     if (maxGustNow > 60) warning = "STURMBÖEN (Heute)";
   }
@@ -386,7 +386,6 @@ const generateAIReport = (type, data) => {
     title = "7-Tage-Wettertrend";
     const analysisData = data.slice(1);
     
-    // Stats
     const maxTempDay = analysisData.reduce((p, c) => (p.max > c.max) ? p : c);
     const minTempDay = analysisData.reduce((p, c) => (p.max < c.max) ? p : c);
     const absoluteMin = Math.min(...analysisData.map(d => d.min)); 
@@ -399,7 +398,6 @@ const generateAIReport = (type, data) => {
     const avgRel = Math.round(analysisData.reduce((a, b) => a + b.reliability, 0) / analysisData.length);
     confidence = avgRel;
 
-    // --- SUMMARY (Mehr Details) ---
     const startTemp = analysisData[0].max;
     const endTemp = analysisData[analysisData.length-1].max;
     
@@ -418,13 +416,10 @@ const generateAIReport = (type, data) => {
     
     if (windyDays.length > 0) summary += " Zeitweise wird es windig.";
 
-    // --- DETAILS (Sehr Ausführlich) ---
     let detailParts = [];
     
-    // 1. Temperaturen Detail
     detailParts.push(`🌡️ Temperatur-Verlauf:\nDie Woche startet mit ${Math.round(startTemp)}°C. Der Höhepunkt wird voraussichtlich am ${maxTempDay.dayNameFull} mit bis zu ${Math.round(maxTempDay.max)}°C erreicht. In den Nächten kühlt es auf ${Math.round(absoluteMin)}°C bis ${Math.round(Math.max(...analysisData.map(d=>d.min)))}°C ab.`);
     
-    // 2. Niederschlag & Wolken Detail
     let rainDetail = "";
     if (totalRain < 0.5) {
         rainDetail = "Es ist kaum mit Niederschlag zu rechnen. Gute Bedingungen für Outdoor-Aktivitäten.";
@@ -437,13 +432,11 @@ const generateAIReport = (type, data) => {
     }
     detailParts.push(`☁️/☔ Himmel & Nässe:\n${rainDetail}`);
 
-    // 3. Wind Detail
     if (windyDays.length > 0) {
         const stormDay = windyDays.reduce((p,c) => p.gust > c.gust ? p : c);
         detailParts.push(`💨 Wind:\nFrischer Wind an ${windyDays.length} Tagen. Vorsicht am ${stormDay.dayNameFull}: Hier sind Böen bis ${stormDay.gust} km/h möglich.`);
     }
 
-    // 4. Wochenende
     const weekend = analysisData.filter(d => d.dayName === 'Sa.' || d.dayName === 'So.');
     if (weekend.length > 0) {
         const weTemp = Math.round(weekend.reduce((s, d) => s + d.max, 0) / weekend.length);
@@ -465,7 +458,6 @@ const generateAIReport = (type, data) => {
   
   if (type === 'model-hourly') {
      title = "Modell-Check (48h)";
-     // Simple diff logic
      let totalDiff = 0;
      data.forEach(d => { if (d.temp_icon !== null && d.temp_gfs !== null) totalDiff += Math.abs(d.temp_icon - d.temp_gfs); });
      const avgDiff = totalDiff / data.length;
@@ -501,55 +493,6 @@ const generateAIReport = (type, data) => {
 };
 
 // --- 4. KOMPONENTEN ---
-const ModelInfoBox = () => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="mt-6 bg-white/40 border border-white/40 rounded-xl overflow-hidden transition-all shadow-sm">
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-4 flex items-center justify-between text-left hover:bg-white/20 transition"
-      >
-         <div className="flex items-center gap-2 font-bold text-slate-700 text-lg">
-            <Info size={24} className="text-blue-600"/> 
-            <span>Hilfe: Was bedeuten die Modelle?</span>
-         </div>
-         {isOpen ? <ChevronUp size={24} className="opacity-50 text-slate-600"/> : <ChevronDown size={24} className="opacity-50 text-slate-600"/>}
-      </button>
-      
-      {isOpen && (
-        <div className="px-4 pb-4 pt-0 text-base text-slate-700 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
-            <p className="opacity-90 leading-relaxed">
-                Jede Linie zeigt die Berechnung eines anderen Supercomputers.
-                <br/><strong>Faustregel:</strong> Liegen alle Linien eng beisammen, ist die Vorhersage sehr sicher. Gehen sie weit auseinander, ist die Wetterlage noch unklar.
-            </p>
-            <div className="grid gap-3 text-sm">
-                <div className="p-3 bg-blue-50/80 rounded-lg border border-blue-100">
-                    <span className="font-black text-blue-700 block mb-0.5 text-base">ICON (Deutschland)</span>
-                    Vom Deutschen Wetterdienst (DWD). Unser "Heimvorteil" und meist sehr zuverlässig für lokale Details.
-                </div>
-                <div className="p-3 bg-purple-50/80 rounded-lg border border-purple-100">
-                    <span className="font-black text-purple-700 block mb-0.5 text-base">GFS (USA)</span>
-                    Das amerikanische Modell. Der weltweite Standard, gut für den groben Trend über längere Zeiträume.
-                </div>
-                <div className="p-3 bg-green-50/80 rounded-lg border border-green-100">
-                    <span className="font-black text-green-700 block mb-0.5 text-base">AROME (Frankreich)</span>
-                    Extrem hochauflösendes Modell. Erkennt lokale Gewitter und Regenfronten oft besser als andere.
-                </div>
-                <div className="p-3 bg-orange-50/80 rounded-lg border border-orange-100">
-                    <span className="font-black text-orange-700 block mb-0.5 text-base">KNMI (Niederlande)</span>
-                    Oft ein Geheimtipp für Westdeutschland (NRW), da das Wetter meist von dort zu uns zieht.
-                </div>
-                 <div className="p-3 bg-red-50/80 rounded-lg border border-red-100">
-                    <span className="font-black text-red-700 block mb-0.5 text-base">GEM (Kanada)</span>
-                    Dient oft als gute "dritte Meinung" bei langfristigen Trends (7-Tage-Vorschau).
-                </div>
-            </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed }) => {
   const isNight = isDay === 0;
@@ -847,327 +790,6 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
   );
 };
 
-const PrecipitationTile = ({ data }) => {
-  // Analyse der nächsten 24h
-  const analysis = useMemo(() => {
-    if (!data || data.length === 0) return null;
-    
-    // Wir betrachten nur die Zukunft (ab jetzt)
-    const now = new Date();
-    const futureData = data.filter(d => d.time > now);
-    
-    // Definition von Regen-Codes (WMO Weather Codes)
-    // 51-57: Niesel, 61-67: Regen, 71-77: Schnee, 80-82: Schauer, 85-86: Schneeschauer, 95-99: Gewitter
-    const precipCodes = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99];
-
-    // Sensiblere Prüfung: Ist Niederschlag vorhanden?
-    // Menge > 0 ODER Wahrscheinlichkeit >= 25% ODER Wettercode sagt "Regen"
-    const hasPrecipitation = (d) => {
-        return d.precip > 0 || d.snow > 0 || d.precipProb >= 25 || precipCodes.includes(d.code);
-    };
-    
-    if (futureData.length === 0) return null;
-    
-    // Ist es gerade nass? (in der aktuellen Stunde oder nächsten Stunde)
-    const current = data[0]; 
-    const isRainingNow = hasPrecipitation(current);
-    
-    let result = { 
-       type: 'none', // none, rain_now, rain_later, snow_now, snow_later
-       startTime: null,
-       endTime: null,
-       amount: 0,
-       duration: 0,
-       isSnow: false,
-       maxIntensity: 0
-    };
-
-    let foundStart = false;
-    let precipStartIdx = -1;
-    
-    // Loop um Start und Ende zu finden
-    for (let i = 0; i < futureData.length; i++) {
-       const d = futureData[i];
-       const isWet = hasPrecipitation(d);
-       
-       if (isWet) {
-           if (!foundStart) {
-               foundStart = true;
-               precipStartIdx = i;
-               result.startTime = d.time;
-               result.isSnow = d.snow > 0.1 || [71, 73, 75, 77, 85, 86].includes(d.code); // Typerkennung beim Start
-           }
-           // Fallback: Wenn Menge 0 ist, aber Code Regen sagt, nehmen wir 0.1mm an für die Anzeige
-           const hourlyAmount = (d.precip > 0 || d.snow > 0) ? (d.precip + d.snow) : 0.1;
-           result.amount += hourlyAmount; 
-           result.maxIntensity = Math.max(result.maxIntensity, hourlyAmount);
-           result.duration++;
-       } else {
-           if (foundStart) {
-               // Regen hat aufgehört
-               result.endTime = d.time; 
-               break; 
-           }
-       }
-    }
-    
-    if (!foundStart && isRainingNow) {
-        // Es regnet jetzt, hört aber in <1h auf
-        const hourlyAmount = (current.precip > 0 || current.snow > 0) ? (current.precip + current.snow) : 0.1;
-        result.type = (current.snow > 0 || [71, 73, 75, 77, 85, 86].includes(current.code)) ? 'snow_now' : 'rain_now';
-        result.duration = 1; 
-        result.amount = hourlyAmount;
-        result.maxIntensity = hourlyAmount;
-        result.startTime = current.time;
-    } else if (foundStart) {
-        if (precipStartIdx === 0 && isRainingNow) {
-            result.type = result.isSnow ? 'snow_now' : 'rain_now';
-        } else {
-            result.type = result.isSnow ? 'snow_later' : 'rain_later';
-        }
-    }
-    
-    return result;
-  }, [data]);
-
-  if (!analysis) return null;
-
-  const { type, startTime, duration, amount, isSnow, maxIntensity } = analysis;
-  const isRain = type.includes('rain');
-  const isNow = type.includes('now');
-  
-  // Zeit-Logik
-  const now = new Date();
-  const diffMs = startTime ? startTime - now : 0;
-  // "Später" definiert als > 2h
-  const isLaterThan2h = !isNow && startTime && (diffMs > 2 * 60 * 60 * 1000);
-  // "Gleich" definiert als < 45min (2700000 ms) aber nicht "jetzt"
-  const isSoon = !isNow && startTime && (diffMs > 0 && diffMs < 45 * 60 * 1000);
-
-  // Datum Check
-  const isTomorrow = startTime && startTime.getDate() !== now.getDate();
-  const dayPrefix = isTomorrow ? "Morgen" : "";
-  
-  // Custom headline logic
-  let headline = "Nächster Niederschlag";
-  if (type === 'none' || isLaterThan2h) {
-      headline = "Aktuell kein Regen zu erwarten";
-  } else if (isNow) {
-      headline = "Aktueller Niederschlag";
-  } else if (isSoon) {
-      headline = "Regen beginnt gleich";
-  }
-
-  // If type is 'none', we just show the "No rain" box
-  if (type === 'none') {
-      return (
-        <div className="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between shadow-sm mb-4">
-            <div className="flex items-center gap-3">
-                <div className="p-3 bg-emerald-100 rounded-full text-emerald-600"><Sun size={28} /></div>
-                <div>
-                    <div className="font-bold text-slate-700 text-lg">{headline}</div>
-                    <div className="text-base text-slate-500 font-medium">In den nächsten 24h bleibt es trocken.</div>
-                </div>
-            </div>
-        </div>
-      );
-  }
-
-  const Icon = isSnow ? Snowflake : CloudRain;
-  const colorClass = isSnow ? "text-cyan-600 bg-cyan-100 border-cyan-200" : "text-blue-600 bg-blue-100 border-blue-200";
-  const bgClass = isSnow ? "bg-cyan-50/80" : "bg-blue-50/80";
-
-  // Intensitäts-Logik
-  const getIntensityInfo = (rate) => {
-      if (rate < 1.0) return { label: 'Leicht', percent: 33, color: isSnow ? 'bg-cyan-400' : 'bg-blue-400' };
-      if (rate < 4.0) return { label: 'Mäßig', percent: 66, color: isSnow ? 'bg-cyan-500' : 'bg-blue-600' };
-      return { label: 'Stark', percent: 100, color: isSnow ? 'bg-cyan-700' : 'bg-blue-800' };
-  };
-
-  const intensity = getIntensityInfo(maxIntensity);
-
-  return (
-    <div className={`${bgClass} border ${isSnow ? 'border-cyan-100' : 'border-blue-100'} rounded-2xl p-4 shadow-sm mb-4 relative overflow-hidden`}>
-        <div className="flex justify-between items-center z-10 relative">
-            <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-lg ${colorClass} bg-opacity-30`}>
-                    <Icon size={32} strokeWidth={2.5} />
-                </div>
-                <div>
-                    <div className="font-bold text-slate-700 text-lg uppercase tracking-wide opacity-80 mb-0.5">
-                        {headline}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {!isNow && isLaterThan2h && <span className="text-base font-bold text-slate-600">Ab</span>}
-                        <span className="text-4xl font-black text-slate-800 tracking-tight leading-none">
-                            {isNow ? "Jetzt" : (isSoon ? "Gleich" : (startTime ? (isTomorrow ? (dayPrefix + " ") : "") + startTime.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'))}
-                        </span>
-                        {!isNow && !isSoon && <span className="text-sm font-bold text-slate-500 uppercase">Uhr</span>}
-                        {isNow && <span className="flex h-4 w-4 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span className="relative inline-flex rounded-full h-4 w-4 bg-blue-500"></span></span>}
-                    </div>
-                    <div className="text-sm font-bold uppercase text-slate-500 tracking-wide mt-1">
-                        {isSnow ? "Schnee" : "Regen"} • {intensity.label}
-                    </div>
-                </div>
-            </div>
-
-            <div className="text-right">
-                <div className="text-xl font-bold text-slate-700 leading-tight">{amount.toFixed(1)}<span className="text-sm text-slate-500 font-normal ml-0.5">mm</span></div>
-                <div className="text-lg font-medium text-slate-500 leading-tight">{duration} <span className="text-sm">Std</span></div>
-            </div>
-        </div>
-
-        <div className="mt-4 h-3 w-full bg-white/40 rounded-full overflow-hidden relative">
-            <div 
-                className={`h-full ${intensity.color} rounded-full transition-all duration-1000 ease-out`} 
-                style={{ width: `${intensity.percent}%` }}
-            ></div>
-        </div>
-    </div>
-  );
-};
-
-const FeedbackModal = ({ onClose, currentTemp }) => {
-    const [sent, setSent] = useState(false);
-    const [tempAdjustment, setTempAdjustment] = useState(0); // Offset in Grad
-    const [selectedCondition, setSelectedCondition] = useState(null);
-
-    const conditions = [
-        { id: 'sun', label: 'Sonnig', icon: Sun, color: 'text-amber-500 bg-amber-50 border-amber-200' },
-        { id: 'cloudy', label: 'Bewölkt', icon: Cloud, color: 'text-slate-500 bg-slate-50 border-slate-200' },
-        { id: 'overcast', label: 'Bedeckt', icon: Cloud, color: 'text-slate-700 bg-slate-100 border-slate-300' }, // Neu
-        { id: 'fog', label: 'Nebel', icon: CloudFog, color: 'text-slate-400 bg-slate-50/50 border-slate-200' },
-        { id: 'drizzle', label: 'Niesel', icon: CloudDrizzle, color: 'text-cyan-500 bg-cyan-50 border-cyan-200' },
-        { id: 'rain', label: 'Regen', icon: CloudRain, color: 'text-blue-500 bg-blue-50 border-blue-200' },
-        { id: 'storm', label: 'Gewitter', icon: CloudLightning, color: 'text-purple-600 bg-purple-50 border-purple-200' }, // Neu
-        { id: 'snow', label: 'Schnee', icon: CloudSnow, color: 'text-sky-300 bg-sky-50 border-sky-100' }, // Neu
-        { id: 'hail', label: 'Hagel', icon: CloudHail, color: 'text-teal-600 bg-teal-50 border-teal-200' }, // Neu
-        { id: 'wind', label: 'Windig', icon: Wind, color: 'text-slate-600 bg-slate-100 border-slate-300' }, // Neu
-    ];
-
-    const handleSend = () => {
-        if (!selectedCondition && tempAdjustment === 0) return; // Nichts zu senden
-
-        setSent(true);
-        // Hier würde normalerweise der API-Call zum Backend stehen mit:
-        // condition: selectedCondition
-        // tempCorrection: tempAdjustment
-        setTimeout(() => {
-            onClose();
-            setSent(false);
-        }, 2000);
-    };
-
-    if (sent) {
-        return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
-                    <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-600">
-                        <CheckCircle2 size={32} />
-                    </div>
-                    <h3 className="text-xl font-black text-slate-800 mb-2">Danke!</h3>
-                    <p className="text-slate-500">Dein Feedback hilft uns, die lokalen Daten zu vergleichen.</p>
-                </div>
-            </div>
-        );
-    }
-
-    const displayTemp = Math.round(currentTemp + tempAdjustment);
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <h3 className="font-bold text-slate-800 flex items-center gap-2"><MessageSquarePlus size={18} className="text-blue-500"/> Wetter melden</h3>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={20} className="text-slate-400" /></button>
-                </div>
-                
-                <div className="p-6 overflow-y-auto">
-                    {/* Temperatur Slider */}
-                    <div className="mb-8">
-                        <div className="flex justify-between items-end mb-4">
-                            <label className="text-sm font-bold text-slate-500 uppercase tracking-wide">Temperatur</label>
-                            <div className="text-3xl font-black text-slate-800">{displayTemp}°C</div>
-                        </div>
-                        <input 
-                            type="range" 
-                            min="-10" 
-                            max="10" 
-                            step="1" 
-                            value={tempAdjustment} 
-                            onChange={(e) => setTempAdjustment(parseInt(e.target.value))}
-                            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                        />
-                        <div className="flex justify-between text-xs text-slate-400 mt-2 font-medium">
-                            <span>Kälter (-10°)</span>
-                            <span>Genau richtig</span>
-                            <span>Wärmer (+10°)</span>
-                        </div>
-                    </div>
-
-                    {/* Wetter Grid */}
-                    <div className="mb-6">
-                        <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 block">Aktuelles Wetter</label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {conditions.map((c) => (
-                                <button 
-                                    key={c.id}
-                                    onClick={() => setSelectedCondition(c.id)}
-                                    className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200 ${selectedCondition === c.id ? `ring-2 ring-offset-1 ring-blue-500 ${c.color}` : 'border-slate-100 hover:bg-slate-50'}`}
-                                >
-                                    <c.icon size={24} className={selectedCondition === c.id ? '' : 'text-slate-400'} />
-                                    <span className={`text-xs font-medium mt-2 ${selectedCondition === c.id ? '' : 'text-slate-600'}`}>{c.label}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <button 
-                        onClick={handleSend} 
-                        disabled={!selectedCondition && tempAdjustment === 0}
-                        className="w-full py-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20"
-                    >
-                        Feedback senden
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const DwdAlertItem = ({ alert }) => {
-  const [expanded, setExpanded] = useState(false);
-  const colorClass = getDwdColorClass(alert.severity);
-
-  return (
-    <div className={`rounded-xl border-l-4 shadow-sm relative overflow-hidden transition-all duration-300 ${colorClass} mb-3`}>
-      <div className="p-4 flex items-start gap-3 relative z-10 cursor-pointer" onClick={() => setExpanded(!expanded)}>
-        <Siren className="shrink-0 animate-pulse-red mt-1" size={24} />
-        <div className="flex-1">
-           <div className="flex justify-between items-start">
-              <div>
-                <div className="font-extrabold uppercase text-xs tracking-wider opacity-80 mb-0.5">Amtliche Warnung ({alert.severity})</div>
-                <div className="font-bold text-lg leading-tight">{alert.headline_de || alert.event_de}</div>
-              </div>
-              <div className="opacity-60 ml-2 mt-1">{expanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}</div>
-           </div>
-           {!expanded && <div className="text-xs font-medium opacity-70 mt-1">Klicken für Details...</div>}
-        </div>
-      </div>
-      {expanded && (
-        <div className="px-4 pb-4 pl-12 relative z-10 animate-in fade-in slide-in-from-top-2 duration-200">
-           <p className="text-sm opacity-90 leading-relaxed whitespace-pre-line mb-3 border-t border-black/10 pt-2">{alert.description_de}</p>
-           <div className="text-xs font-medium opacity-70 flex flex-col sm:flex-row sm:justify-between gap-1 bg-white/30 p-2 rounded">
-              <span><strong>Von:</strong> {new Date(alert.effective).toLocaleString('de-DE')}</span>
-              <span><strong>Bis:</strong> {new Date(alert.expires).toLocaleString('de-DE')}</span>
-           </div>
-           {alert.instruction_de && <div className="mt-2 text-xs opacity-80 italic"><span className="font-bold not-italic">Handlungsempfehlung:</span> {alert.instruction_de}</div>}
-        </div>
-      )}
-    </div>
-  );
-};
-
 const AIReportBox = ({ report, dwdWarnings }) => {
   const [expanded, setExpanded] = useState(false);
   if (!report) return null;
@@ -1215,7 +837,22 @@ const AIReportBox = ({ report, dwdWarnings }) => {
                 </button>
                 {expanded && (
                    <div className="mt-3 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                      {dwdWarnings.map((alert, i) => <DwdAlertItem key={i} alert={alert} />)}
+                      {dwdWarnings.map((alert, i) => (
+                        <div key={i} className={`rounded-xl border-l-4 shadow-sm relative overflow-hidden transition-all duration-300 ${getDwdColorClass(alert.severity)} mb-3`}>
+                          <div className="p-4 flex items-start gap-3 relative z-10">
+                            <Siren className="shrink-0 animate-pulse-red mt-1" size={24} />
+                            <div className="flex-1">
+                              <div className="font-extrabold uppercase text-xs tracking-wider opacity-80 mb-0.5">Amtliche Warnung ({alert.severity})</div>
+                              <div className="font-bold text-lg leading-tight">{alert.headline_de || alert.event_de}</div>
+                               <p className="text-sm opacity-90 leading-relaxed whitespace-pre-line mt-2 border-t border-black/10 pt-2">{alert.description_de}</p>
+                               <div className="text-xs font-medium opacity-70 flex flex-col sm:flex-row sm:justify-between gap-1 bg-white/30 p-2 rounded mt-2">
+                                  <span><strong>Von:</strong> {new Date(alert.effective).toLocaleString('de-DE')}</span>
+                                  <span><strong>Bis:</strong> {new Date(alert.expires).toLocaleString('de-DE')}</span>
+                               </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                       <div className="text-[10px] text-center opacity-50 pt-1">Quelle: DWD via Brightsky</div>
                    </div>
                 )}
@@ -1246,7 +883,6 @@ const AIReportBox = ({ report, dwdWarnings }) => {
                 )}
             </div>
             
-            {/* Hinzugefügt: whitespace-pre-line für korrekte Zeilenumbrüche im Daily Report */}
             <p className="text-lg text-slate-800 leading-relaxed font-semibold relative z-10 whitespace-pre-line">{summary}</p>
             
             {/* Toggle Button */}
@@ -1274,70 +910,209 @@ const AIReportBox = ({ report, dwdWarnings }) => {
   );
 };
 
-// --- LOCATION MODAL ---
-const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAddCurrentLocation, onDeleteLocation, currentLoc }) => {
+const ConfidenceGauge = ({ percentage, label }) => {
+    let color = "text-red-500";
+    let text = "Unsicher";
+    
+    if (percentage >= 80) {
+        color = "text-green-500";
+        text = "Sehr Sicher";
+    } else if (percentage >= 50) {
+        color = "text-yellow-500";
+        text = "Mittel";
+    }
+    
+    return (
+        <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-white/40 border border-white/40 backdrop-blur-sm">
+             <div className="relative w-16 h-16 flex items-center justify-center">
+                 <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
+                     <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" strokeWidth="3" />
+                     <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray={`${percentage}, 100`} className={color} />
+                 </svg>
+                 <span className={`absolute text-sm font-bold ${color}`}>{percentage}%</span>
+             </div>
+             <div className="text-xs font-bold text-slate-600 uppercase mt-1">{label || text}</div>
+        </div>
+    );
+};
+
+const AddTripModal = ({ isOpen, onClose, onAdd }) => {
+    const [step, setStep] = useState('location'); // location, dates
+    const [search, setSearch] = useState('');
+    const [results, setResults] = useState([]);
+    const [selectedLoc, setSelectedLoc] = useState(null);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [startTime, setStartTime] = useState('00:00');
+    const [endTime, setEndTime] = useState('23:59');
+    const [loading, setLoading] = useState(false);
+
+    const handleSearch = async () => {
+        if (!search) return;
+        setLoading(true);
+        try {
+            const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(search)}&count=5&language=de&format=json`);
+            const data = await res.json();
+            setResults(data.results || []);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSave = () => {
+        if (!selectedLoc || !startDate || !endDate) return;
+        onAdd({
+            id: crypto.randomUUID(),
+            location: selectedLoc,
+            startDate,
+            endDate,
+            startTime,
+            endTime
+        });
+        onClose();
+        // Reset
+        setStep('location');
+        setSearch('');
+        setSelectedLoc(null);
+        setStartDate('');
+        setEndDate('');
+    };
+
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <h3 className="font-bold text-slate-800 flex items-center gap-2"><MapIcon size={18} className="text-blue-500"/> Gespeicherte Orte</h3>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2"><Plane size={20} className="text-blue-500"/> Reise planen</h3>
                     <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={20} className="text-slate-400" /></button>
                 </div>
-                
-                <div className="p-4 overflow-y-auto">
-                    {/* Add Current Location Button */}
-                    <button 
-                        onClick={onAddCurrentLocation}
-                        className="w-full mb-4 p-3 rounded-xl border border-dashed border-blue-300 bg-blue-50 text-blue-600 font-bold flex items-center justify-center gap-2 hover:bg-blue-100 transition"
-                    >
-                        <Plus size={18} /> Aktuellen Ort hinzufügen
-                    </button>
 
-                    <div className="space-y-2">
-                        {savedLocations.length === 0 ? (
-                            <div className="text-center text-slate-400 py-8 text-sm">Keine Orte gespeichert.</div>
-                        ) : (
-                            savedLocations.map((loc, index) => (
-                                <div key={index} className={`p-3 rounded-xl border flex items-center justify-between group transition ${currentLoc.name === loc.name ? 'border-blue-500 bg-blue-50' : 'border-slate-100 hover:border-slate-300'}`}>
+                <div className="p-6 overflow-y-auto">
+                    {step === 'location' ? (
+                        <div className="space-y-4">
+                            <label className="block text-sm font-bold text-slate-500 uppercase">Wohin soll es gehen?</label>
+                            <div className="flex gap-2">
+                                <input 
+                                    type="text" 
+                                    placeholder="Stadt suchen..." 
+                                    className="flex-1 p-3 bg-slate-100 rounded-xl border-none outline-none focus:ring-2 focus:ring-blue-500"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                />
+                                <button onClick={handleSearch} className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700">{loading ? <RefreshCw className="animate-spin"/> : <Search />}</button>
+                            </div>
+                            <div className="space-y-2 mt-4 max-h-[300px] overflow-y-auto">
+                                {results.map((loc) => (
                                     <button 
-                                        onClick={() => { onSelectLocation(loc); onClose(); }}
-                                        className="flex items-center gap-3 flex-1 text-left"
+                                        key={loc.id} 
+                                        onClick={() => { setSelectedLoc({ name: loc.name, lat: loc.latitude, lon: loc.longitude, country: loc.country }); setStep('dates'); }}
+                                        className="w-full p-3 text-left bg-white border border-slate-100 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition flex items-center gap-3"
                                     >
-                                        <div className={`p-2 rounded-full ${loc.type === 'home' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-600'}`}>
-                                            {loc.type === 'home' ? <Home size={16} /> : <MapPin size={16} />}
-                                        </div>
+                                        <MapPin size={18} className="text-slate-400" />
                                         <div>
-                                            <div className="font-bold text-slate-700 text-sm">{loc.name}</div>
-                                            <div className="text-[10px] text-slate-400">Lat: {loc.lat.toFixed(2)}, Lon: {loc.lon.toFixed(2)}</div>
+                                            <div className="font-bold text-slate-700">{loc.name}</div>
+                                            <div className="text-xs text-slate-500">{loc.admin1}, {loc.country}</div>
                                         </div>
                                     </button>
-                                    
-                                    <button 
-                                        onClick={() => onDeleteLocation(index)}
-                                        className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-6">
+                            <div className="bg-blue-50 p-3 rounded-xl flex items-center justify-between border border-blue-100">
+                                <div className="flex items-center gap-2">
+                                    <MapPin size={18} className="text-blue-500" />
+                                    <span className="font-bold text-blue-900">{selectedLoc.name}</span>
                                 </div>
-                            ))
-                        )}
-                    </div>
+                                <button onClick={() => setStep('location')} className="text-xs font-bold text-blue-500 hover:underline">Ändern</button>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Startdatum</label>
+                                    <input type="date" className="w-full p-3 bg-slate-100 rounded-xl font-bold text-slate-700" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Enddatum</label>
+                                    <input type="date" className="w-full p-3 bg-slate-100 rounded-xl font-bold text-slate-700" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                                </div>
+                            </div>
+                            
+                             <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Startzeit (Optional)</label>
+                                    <input type="time" className="w-full p-3 bg-slate-100 rounded-xl font-bold text-slate-700" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Endzeit (Optional)</label>
+                                    <input type="time" className="w-full p-3 bg-slate-100 rounded-xl font-bold text-slate-700" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick={handleSave} 
+                                disabled={!startDate || !endDate}
+                                className="w-full py-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
+                            >
+                                <Save size={18} /> Reise speichern
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 };
 
+const TripCard = ({ trip, onDelete, onClick, isActive }) => {
+    const start = new Date(trip.startDate);
+    const end = new Date(trip.endDate);
+    const now = new Date();
+    const isPast = end < now;
+    
+    return (
+        <div 
+            onClick={onClick}
+            className={`p-4 rounded-2xl border transition-all cursor-pointer relative group ${isActive ? 'bg-blue-50 border-blue-400 shadow-md ring-1 ring-blue-300' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'}`}
+        >
+            <button 
+                onClick={(e) => { e.stopPropagation(); onDelete(); }} 
+                className="absolute top-3 right-3 p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition z-10"
+            >
+                <Trash2 size={16} />
+            </button>
+            
+            <div className="flex items-center gap-3 mb-3">
+                <div className={`p-3 rounded-full ${isPast ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-600'}`}>
+                    <Briefcase size={20} />
+                </div>
+                <div>
+                    <div className="font-bold text-slate-800 text-lg leading-tight">{trip.location.name}</div>
+                    <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">{trip.location.country}</div>
+                </div>
+            </div>
+            
+            <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 p-2 rounded-lg">
+                <Calendar size={14} className="text-slate-400" />
+                <span className="font-semibold">{start.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})} - {end.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'2-digit'})}</span>
+            </div>
+            {isActive && <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-blue-400 rotate-45"></div>}
+        </div>
+    );
+};
 
-// --- 4. MAIN APP COMPONENT ---
+// --- 5. MAIN APP COMPONENT ---
 
 export default function WeatherApp() {
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState(() => getSavedLocations());
+  const [trips, setTrips] = useState(() => getSavedTrips());
   const [homeLoc, setHomeLoc] = useState(() => getSavedHomeLocation());
-  const [currentLoc, setCurrentLoc] = useState(homeLoc); // Initial Home or Default
+  const [currentLoc, setCurrentLoc] = useState(homeLoc); 
   const [shortTermData, setShortTermData] = useState(null);
   const [longTermData, setLongTermData] = useState(null);
   const [dwdWarnings, setDwdWarnings] = useState([]);
@@ -1346,24 +1121,23 @@ export default function WeatherApp() {
   const [chartView, setChartView] = useState('hourly');
   const [lastUpdated, setLastUpdated] = useState(null);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showAllHours, setShowAllHours] = useState(false); 
   const [sunriseSunset, setSunriseSunset] = useState({ sunrise: null, sunset: null });
   const [modelRuns, setModelRuns] = useState({ icon: '', gfs: '', arome: '' });
   const [showIosInstall, setShowIosInstall] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showTripModal, setShowTripModal] = useState(false);
   const [viewMode, setViewMode] = useState(null);
+  const [activeTripId, setActiveTripId] = useState(null);
 
-  // Initial Location Logic
+  // Initial Location
   useEffect(() => {
     const initLocation = async () => {
-        // Check URL parameters for widget mode
         const urlParams = new URLSearchParams(window.location.search);
         const view = urlParams.get('view');
         if (view) setViewMode(view);
 
         if (!navigator.geolocation) {
-             // No GPS support, fallback to home
              setCurrentLoc(homeLoc);
              return;
         }
@@ -1372,13 +1146,10 @@ export default function WeatherApp() {
             async (pos) => {
                 const lat = pos.coords.latitude;
                 const lon = pos.coords.longitude;
-                
-                // Check distance to Home
                 const dist = getDistanceFromLatLonInKm(lat, lon, homeLoc.lat, homeLoc.lon);
-                if (dist < 2.0) { // If closer than 2km to home
+                if (dist < 2.0) { 
                     setCurrentLoc(homeLoc);
                 } else {
-                    // Fetch City Name
                     try {
                         const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
                         const data = await res.json();
@@ -1390,8 +1161,7 @@ export default function WeatherApp() {
                 }
             },
             (err) => {
-                console.warn("GPS Access denied or failed", err);
-                setCurrentLoc(homeLoc); // Fallback to Home
+                setCurrentLoc(homeLoc); 
             }
         );
     };
@@ -1399,33 +1169,18 @@ export default function WeatherApp() {
     initLocation();
   }, []);
 
-  // Update localStorage when locations change
-  useEffect(() => {
-      localStorage.setItem('weather_locations', JSON.stringify(locations));
-  }, [locations]);
+  useEffect(() => { localStorage.setItem('weather_locations', JSON.stringify(locations)); }, [locations]);
+  useEffect(() => { localStorage.setItem('weather_home_loc', JSON.stringify(homeLoc)); }, [homeLoc]);
+  useEffect(() => { localStorage.setItem('weather_trips', JSON.stringify(trips)); }, [trips]);
 
-  // Update localStorage when home changes
-  useEffect(() => {
-    localStorage.setItem('weather_home_loc', JSON.stringify(homeLoc));
-  }, [homeLoc]);
-
-
-  // NEU: iOS Erkennung
   useEffect(() => {
     const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    // Zeige Hinweis nur, wenn noch nicht installiert (standalone check)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    if (isIos && !isStandalone) {
-      setShowIosInstall(true);
-    }
+    if (isIos && !isStandalone) setShowIosInstall(true);
   }, []);
 
   useEffect(() => {
-    const handler = (e) => { 
-        e.preventDefault(); 
-        setDeferredPrompt(e); 
-        console.log("Install prompt captured");
-    };
+    const handler = (e) => { e.preventDefault(); setDeferredPrompt(e); };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
@@ -1438,7 +1193,6 @@ export default function WeatherApp() {
   };
 
   const handleAddLocation = () => {
-      // Avoid duplicates based on name/coords
       const exists = locations.some(l => l.name === currentLoc.name);
       if (!exists) {
           setLocations([...locations, { ...currentLoc, type: 'saved', id: crypto.randomUUID() }]);
@@ -1452,10 +1206,29 @@ export default function WeatherApp() {
       setLocations(newLocs);
   };
 
-  const handleSetHome = () => setCurrentLoc(homeLoc);
+  const handleAddTrip = (trip) => {
+      setTrips([...trips, trip]);
+  };
+  
+  const handleDeleteTrip = (id) => {
+      setTrips(trips.filter(t => t.id !== id));
+      if (activeTripId === id) setActiveTripId(null);
+  };
+
+  const handleTripClick = (trip) => {
+      setActiveTripId(trip.id);
+      setCurrentLoc({ ...trip.location, id: 'trip_'+trip.id, type: 'trip' });
+      setActiveTab('trip_analysis'); 
+  };
+
+  const handleSetHome = () => {
+      setCurrentLoc(homeLoc);
+      setActiveTripId(null);
+  };
   
   const handleSetCurrent = () => {
     setLoading(true);
+    setActiveTripId(null);
     if (!navigator.geolocation) { setError("Kein GPS"); setLoading(false); return; }
     navigator.geolocation.getCurrentPosition(
       (pos) => setCurrentLoc({ name: "Mein Standort", lat: pos.coords.latitude, lon: pos.coords.longitude, type: 'gps' }),
@@ -1469,12 +1242,11 @@ export default function WeatherApp() {
     setDwdWarnings([]);
     try {
       const { lat, lon } = currentLoc;
-      // HINZUFÜGEN von KNMI (Niederlande, super für NRW) und GEM (Kanada, globaler Check)
-      // WICHTIG: precipitation_probability in hourly hinzugefügt
       const modelsShort = "icon_d2,gfs_seamless,arome_seamless,knmi_harmonie_arome_europe,gem_seamless";
       const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability&models=${modelsShort}&timezone=Europe%2FBerlin&forecast_days=2`;
+      // Updated to 16 days for better trip planning
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
-      const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max,sunrise,sunset&models=${modelsLong}&timezone=Europe%2FBerlin&forecast_days=8`;
+      const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max,sunrise,sunset&models=${modelsLong}&timezone=Europe%2FBerlin&forecast_days=16`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
 
       const [resShort, resLong, resDwd] = await Promise.all([fetch(urlShort), fetch(urlLong), fetch(urlDwd).catch(() => ({ ok: false }))]);
@@ -1502,35 +1274,26 @@ export default function WeatherApp() {
   const processedShort = useMemo(() => {
     if (!shortTermData?.hourly) return [];
     const h = shortTermData.hourly;
-    const now = new Date(); // Browser-Zeit für Vergleich (Vergangenheit ausblenden)
+    const now = new Date(); 
     const res = [];
     const isDayArray = h.is_day_icon_d2 || h.is_day || h.is_day_gfs_seamless;
 
     for (let i = 0; i < h.time.length; i++) {
-      // WICHTIG: parseLocalTime verwenden
       const t = parseLocalTime(h.time[i]);
-      
       const nextT = i < h.time.length - 1 ? parseLocalTime(h.time[i+1]) : null;
-      if (t < now && nextT && nextT > now) {
-         // Das ist das aktuelle Intervall, behalten
-      } else if (t < now) {
-         continue; 
-      }
+      if (t < now && nextT && nextT > now) { } else if (t < now) { continue; }
 
       const getVal = (key) => h[key]?.[i] ?? h[`${key}_icon_d2`]?.[i] ?? h[`${key}_gfs_seamless`]?.[i] ?? h[`${key}_arome_seamless`]?.[i] ?? 0;
       
-      // Neue Modelle auslesen (wenn vorhanden)
       const temp_icon = h.temperature_2m_icon_d2?.[i] ?? null;
       const temp_gfs = h.temperature_2m_gfs_seamless?.[i] ?? null;
       const temp_arome = h.temperature_2m_arome_seamless?.[i] ?? null;
       const temp_knmi = h.temperature_2m_knmi_harmonie_arome_europe?.[i] ?? null;
       const temp_gem = h.temperature_2m_gem_seamless?.[i] ?? null;
       
-      // Mittelwert jetzt aus 5 Modellen (wo verfügbar)
       const t_vals = [temp_icon, temp_gfs, temp_arome, temp_knmi, temp_gem].filter(v => v !== null && v !== undefined);
       const temp = t_vals.length > 0 ? t_vals.reduce((a,b)=>a+b,0) / t_vals.length : 0;
       
-      // Auch bei Regen/Schnee/Wind alle Modelle einbeziehen
       const getAvg = (key) => {
          const v1 = h[`${key}_icon_d2`]?.[i];
          const v2 = h[`${key}_gfs_seamless`]?.[i];
@@ -1551,7 +1314,6 @@ export default function WeatherApp() {
          return vals.length > 0 ? Math.max(...vals) : 0;
       };
 
-      // Zuverlässigkeit
       const t_spread = t_vals.length > 1 ? Math.max(...t_vals) - Math.min(...t_vals) : 0;
       const reliability = Math.round(Math.max(0, 100 - (t_spread * 15)));
 
@@ -1561,9 +1323,9 @@ export default function WeatherApp() {
         temp: temp,
         temp_icon, temp_gfs, temp_arome, temp_knmi, temp_gem,
         precip: getAvg('precipitation'),
-        snow: getMax('snowfall'), // Schnee lieber Max nehmen zur Sicherheit
+        snow: getMax('snowfall'),
         wind: Math.round(getAvg('windspeed_10m')),
-        gust: Math.round(getMax('windgusts_10m')), // Böen immer Max Warnung
+        gust: Math.round(getMax('windgusts_10m')),
         dir: h.winddirection_10m_icon_d2?.[i] || 0,
         code: h.weathercode_icon_d2?.[i] || 0,
         isDay: isDayArray?.[i] ?? (t.getHours() >= 6 && t.getHours() <= 21 ? 1 : 0),
@@ -1581,14 +1343,12 @@ export default function WeatherApp() {
     if (!longTermData?.daily) return [];
     const d = longTermData.daily;
     return d.time.map((t, i) => {
-      // WICHTIG: parseLocalTime verwenden
       const date = parseLocalTime(t);
       const maxIcon = d.temperature_2m_max_icon_seamless?.[i] ?? 0;
       const maxGfs = d.temperature_2m_max_gfs_seamless?.[i] ?? 0;
       const maxArome = d.temperature_2m_max_arome_seamless?.[i] ?? null;
       const maxGem = d.temperature_2m_max_gem_seamless?.[i] ?? null;
       
-      // Mittelwert robuster
       const maxVals = [maxIcon, maxGfs, maxGem].filter(v => v !== null && v !== undefined);
       
       return {
@@ -1599,7 +1359,6 @@ export default function WeatherApp() {
         max: maxVals.length > 0 ? maxVals.reduce((a,b)=>a+b,0)/maxVals.length : maxIcon,
         min: ((d.temperature_2m_min_icon_seamless?.[i]??0) + (d.temperature_2m_min_gfs_seamless?.[i]??0)) / 2,
         max_icon: maxIcon, max_gfs: maxGfs, max_arome: maxArome, max_gem: maxGem,
-        // Auch hier GEM mit einbeziehen
         rain: Math.max(d.precipitation_sum_icon_seamless?.[i]||0, d.precipitation_sum_gfs_seamless?.[i]||0, d.precipitation_sum_gem_seamless?.[i]||0).toFixed(1),
         snow: Math.max(d.snowfall_sum_icon_seamless?.[i]||0, d.snowfall_sum_gfs_seamless?.[i]||0, d.snowfall_sum_gem_seamless?.[i]||0).toFixed(1),
         wind: Math.round(Math.max(d.windspeed_10m_max_icon_seamless?.[i]||0, d.windspeed_10m_max_gfs_seamless?.[i]||0, d.windspeed_10m_max_gem_seamless?.[i]||0)),
@@ -1612,13 +1371,52 @@ export default function WeatherApp() {
     });
   }, [longTermData]);
   
-  // LIVE oder DEMO Daten?
+  // Trip Analysis Logic
+  const tripAnalysis = useMemo(() => {
+      if (!activeTripId) return null;
+      const trip = trips.find(t => t.id === activeTripId);
+      if (!trip || !processedLong.length) return null;
+      
+      const start = new Date(trip.startDate);
+      const end = new Date(trip.endDate);
+      start.setHours(0,0,0,0);
+      end.setHours(23,59,59,999);
+      
+      // Filter forecast for trip duration
+      const relevantDays = processedLong.filter(d => {
+          const dTime = new Date(d.date);
+          return dTime >= start && dTime <= end;
+      });
+      
+      if (relevantDays.length === 0) return { status: 'no_data', trip };
+
+      const avgMax = relevantDays.reduce((a,b) => a + b.max, 0) / relevantDays.length;
+      const totalRain = relevantDays.reduce((a,b) => a + parseFloat(b.rain), 0);
+      const maxRainProb = Math.max(...relevantDays.map(d => d.prob));
+      const avgReliability = relevantDays.reduce((a,b) => a + b.reliability, 0) / relevantDays.length;
+      const badWeatherDays = relevantDays.filter(d => d.code > 45 || d.prob > 60).length;
+      const sunDays = relevantDays.filter(d => d.code <= 2 && d.prob < 20).length;
+      
+      let verdict = "Wechselhaft";
+      if (sunDays / relevantDays.length > 0.6) verdict = "Überwiegend Sonnig";
+      if (badWeatherDays / relevantDays.length > 0.5) verdict = "Regnerisch / Unbeständig";
+      if (avgMax > 28) verdict = "Heißes Wetter";
+      if (avgMax < 5) verdict = "Kalt / Winterlich";
+
+      return {
+          status: 'ok',
+          trip,
+          days: relevantDays,
+          avgMax,
+          totalRain,
+          maxRainProb,
+          avgReliability,
+          verdict
+      };
+  }, [activeTripId, trips, processedLong]);
+
   const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: "0.0", precip: "0.0", wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0 };
   const current = liveCurrent;
-
-  const dailyRainSum = processedLong.length > 0 ? processedLong[0].rain : "0.0";
-  const dailySnowSum = processedLong.length > 0 ? processedLong[0].snow : "0.0";
-  const isSnowing = parseFloat(current.snow) > 0;
   const weatherConf = getWeatherConfig(current.code || 0, current.isDay);
   const isNight = current.isDay === 0;
   const bgGradient = isNight ? 'from-slate-900 to-slate-800' : 'from-blue-500 to-sky-400';
@@ -1629,140 +1427,85 @@ export default function WeatherApp() {
   const dailyReport = useMemo(() => generateAIReport('daily', processedShort), [processedShort]);
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong), [chartView, processedShort, processedLong]);
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, processedShort), [processedLong, processedShort]);
-
   const displayedHours = processedShort.slice(0, 24);
 
-  // --- WIDGET VIEWS ---
-  if (viewMode === 'animation') {
-    if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-900 text-white">Lade...</div>;
-    return (
-      <div className={`h-screen w-screen overflow-hidden relative bg-gradient-to-br ${bgGradient}`}>
-        <style>{styles}</style>
-        <div className="absolute top-4 left-4 z-50">
-            <a href="/" className="bg-black/20 p-2 rounded-full text-white backdrop-blur-md block"><ArrowLeft size={24}/></a>
-        </div>
-        <div className="h-full w-full">
-            <WeatherLandscape code={current.code} isDay={current.isDay} date={current.time} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} />
-        </div>
-        <div className="absolute bottom-8 left-0 right-0 text-center text-white drop-shadow-md pointer-events-none">
-            <div className="text-6xl font-bold">{Math.round(current.temp)}°</div>
-            <div className="text-xl opacity-90">{weatherConf.text}</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (viewMode === 'report') {
-     if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-50">Lade...</div>;
-     return (
-        <div className="min-h-screen bg-slate-100 p-4">
-            <div className="mb-4">
-                <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
-            </div>
-            <h2 className="text-2xl font-bold mb-4 text-slate-800">Tages-Bericht</h2>
-            <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} />
-            <div className="mt-8">
-                 <h2 className="text-2xl font-bold mb-4 text-slate-800">7-Tage-Trend</h2>
-                 <AIReportBox report={longtermReport} dwdWarnings={[]} />
-            </div>
-        </div>
-     );
-  }
-
-  if (viewMode === 'precip') {
-    if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-50">Lade...</div>;
-    return (
-       <div className="min-h-screen bg-slate-100 p-4 flex flex-col justify-center">
-           <div className="absolute top-4 left-4">
-               <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
-           </div>
-           <h2 className="text-2xl font-bold mb-6 text-slate-800 text-center">Niederschlags-Radar</h2>
-           <PrecipitationTile data={processedShort} />
-       </div>
-    );
- }
-
-  // --- STANDARD APP ---
-
-  if (loading) return <div className="min-h-screen bg-slate-100 flex items-center justify-center"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
-  if (error) return <div className="min-h-screen flex items-center justify-center p-8 bg-red-50 text-red-900 font-bold">{error} <button onClick={() => setCurrentLoc(homeLoc)} className="ml-4 underline">Reset</button></div>;
+  if (loading && !processedShort.length) return <div className="min-h-screen bg-slate-100 flex items-center justify-center"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
 
   return (
-    <div className={`min-h-screen transition-all duration-1000 bg-gradient-to-br ${bgGradient} font-sans pb-20 overflow-hidden relative`}>
+    <div className={`min-h-screen transition-all duration-1000 bg-gradient-to-br ${bgGradient} font-sans pb-24 overflow-hidden relative`}>
       <style>{styles}</style>
       
-      {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} currentTemp={current.temp} />}
+      {showFeedback && <div onClick={() => setShowFeedback(false)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"><div className="bg-white p-6 rounded-2xl max-w-sm m-4 text-center"><h3 className="text-xl font-bold mb-2 text-slate-800">Feedback Senden</h3><p className="text-slate-500 mb-4">Hilf uns, die App zu verbessern!</p><button className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold" onClick={() => setShowFeedback(false)}>Alles Klar</button></div></div>}
+      
       {showLocationModal && (
-          <LocationModal 
-            isOpen={showLocationModal} 
-            onClose={() => setShowLocationModal(false)}
-            savedLocations={locations}
-            onSelectLocation={(loc) => { setCurrentLoc(loc); setShowLocationModal(false); }}
-            onAddCurrentLocation={handleAddLocation}
-            onDeleteLocation={handleDeleteLocation}
-            currentLoc={currentLoc}
-          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2"><MapIcon size={18} className="text-blue-500"/> Gespeicherte Orte</h3>
+                    <button onClick={() => setShowLocationModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={20} className="text-slate-400" /></button>
+                </div>
+                <div className="p-4 overflow-y-auto">
+                    <button onClick={handleAddLocation} className="w-full mb-4 p-3 rounded-xl border border-dashed border-blue-300 bg-blue-50 text-blue-600 font-bold flex items-center justify-center gap-2 hover:bg-blue-100 transition"><Plus size={18} /> Aktuellen Ort hinzufügen</button>
+                    <div className="space-y-2">
+                        {locations.map((loc, index) => (
+                                <div key={index} className={`p-3 rounded-xl border flex items-center justify-between group transition ${currentLoc.name === loc.name ? 'border-blue-500 bg-blue-50' : 'border-slate-100 hover:border-slate-300'}`}>
+                                    <button onClick={() => { setCurrentLoc(loc); setShowLocationModal(false); }} className="flex items-center gap-3 flex-1 text-left">
+                                        <div className={`p-2 rounded-full ${loc.type === 'home' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-600'}`}>{loc.type === 'home' ? <Home size={16} /> : <MapPin size={16} />}</div>
+                                        <div><div className="font-bold text-slate-700 text-sm">{loc.name}</div><div className="text-[10px] text-slate-400">Lat: {loc.lat.toFixed(2)}, Lon: {loc.lon.toFixed(2)}</div></div>
+                                    </button>
+                                    <button onClick={() => handleDeleteLocation(index)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition"><Trash2 size={16} /></button>
+                                </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
       )}
+
+      <AddTripModal 
+        isOpen={showTripModal} 
+        onClose={() => setShowTripModal(false)} 
+        onAdd={handleAddTrip} 
+      />
 
       <header className="pt-8 px-5 flex justify-between items-start z-10 relative">
         <div className={textColor}>
           <div className="flex gap-2 mb-2">
              <button onClick={handleSetHome} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.id === homeLoc.id ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Home size={14} /> Home</button>
              <button onClick={handleSetCurrent} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.type === 'gps' ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Crosshair size={14} /> GPS</button>
-             <button onClick={() => setShowLocationModal(true)} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${showLocationModal ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><MapIcon size={14} /> Orte</button>
           </div>
           <h1 className="text-3xl font-light mt-2 tracking-tight">{currentLoc.name}</h1>
           <div className="flex items-center gap-2 mt-1 opacity-80 text-xs font-medium"><Clock size={12} /><span>Stand: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} Uhr</span></div>
         </div>
         <div className="flex flex-col gap-2 items-end">
-           {deferredPrompt && (<button onClick={handleInstallClick} className="p-3 rounded-full backdrop-blur-md bg-blue-600 text-white animate-pulse shadow-lg"><Download size={20} /></button>)}
-           
-           {/* iOS Install Tip */}
-           {showIosInstall && (
-             <div className="bg-white/90 backdrop-blur-md p-3 rounded-xl shadow-xl text-black max-w-[200px] text-xs relative animate-in fade-in slide-in-from-top-4 duration-500">
-                <button onClick={() => setShowIosInstall(false)} className="absolute top-1 right-1 opacity-50"><X size={14}/></button>
-                <div className="font-bold mb-1 flex items-center gap-1"><Share size={12} /> App installieren</div>
-                <p>Tippen Sie unten auf <strong>"Teilen"</strong> und dann <strong>"Zum Home-Bildschirm"</strong>.</p>
-                <div className="w-3 h-3 bg-white/90 absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-45"></div>
-             </div>
-           )}
-
            <div className="flex gap-2">
-               {/* FEEDBACK BUTTON */}
-               <button onClick={() => setShowFeedback(true)} className={`p-3 rounded-full backdrop-blur-md transition shadow-md ${textColor} bg-white/20 hover:bg-white/30`}>
-                   <MessageSquarePlus size={20} />
-               </button>
-
+               <button onClick={() => setShowLocationModal(true)} className={`p-3 rounded-full backdrop-blur-md transition shadow-md ${textColor} bg-white/20 hover:bg-white/30`}><MapIcon size={20} /></button>
                <button onClick={fetchData} className={`p-3 rounded-full backdrop-blur-md bg-white/20 transition shadow-md ${textColor}`}><RefreshCw size={20} /></button>
            </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto p-4 z-10 relative space-y-6">
-        <div className={`rounded-3xl p-6 ${cardBg} shadow-lg relative overflow-hidden min-h-[240px] flex items-center`}>
-          <div className="absolute inset-0 z-0 pointer-events-none"><WeatherLandscape code={current.code} isDay={current.isDay} date={current.time} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} /></div>
+        
+        {/* HEADER CARD - Zeigt immer aktuelles Wetter der gewählten Location */}
+        <div className={`rounded-3xl p-6 ${cardBg} shadow-lg relative overflow-hidden min-h-[220px] flex items-center`}>
+          <div className="absolute inset-0 z-0 pointer-events-none opacity-40"><WeatherLandscape code={current.code} isDay={current.isDay} date={current.time} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} /></div>
           <div className="flex items-center justify-between w-full relative z-10">
             <div className="flex flex-col">
                <span className="text-7xl font-bold tracking-tighter leading-none drop-shadow-lg text-white">{Math.round(current.temp)}°</span>
                <div className="flex items-center gap-1.5 mt-2 opacity-90 font-medium text-sm text-white drop-shadow-md"><Thermometer size={16} /><span>Gefühlt {Math.round(current.appTemp)}°</span></div>
-               <div className="flex items-center gap-2 mt-1 opacity-80 font-medium text-sm text-white drop-shadow-md"><span>H: {Math.round(processedLong[0]?.max)}°</span><span>T: {Math.round(processedLong[0]?.min)}°</span></div>
                <div className="mt-1 text-lg font-medium tracking-wide text-white drop-shadow-md">{weatherConf.text}</div>
             </div>
             <div className="flex flex-col gap-2 items-end text-right pl-3 border-l border-white/20 ml-2 backdrop-blur-sm bg-black/5 rounded-xl p-2">
-               <div className="flex flex-col items-end"><div className={`flex items-center gap-1 opacity-90 text-sm font-bold ${getUvColorClass(current.uvIndex)} drop-shadow-sm`}><Sun size={14} /> <span>{current.uvIndex}</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">UV</span></div>
-               <div className="flex items-center gap-3">
-                  <div className="flex flex-col items-end"><div className="flex items-center gap-1 opacity-90 text-sm font-bold text-white drop-shadow-sm"><Waves size={14} /> <span>{current.humidity}%</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Feuchte</span></div>
-                  <div className="flex flex-col items-end"><div className="flex items-center gap-1 opacity-90 text-sm font-bold text-white drop-shadow-sm"><Thermometer size={14} /> <span>{current.dewPoint}°</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Taupkt.</span></div>
-               </div>
-               <div className="flex flex-col items-end mt-1"><div className={`flex items-center gap-1.5 text-sm font-bold ${windColorClass} drop-shadow-sm`}><Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }}/><span>{current.wind} <span className="text-xs font-normal opacity-80">({current.gust})</span></span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Wind (Böen) km/h</span></div>
-               {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0) && (<div className="flex flex-col items-end mt-1"><div className="flex items-center gap-1.5 opacity-90 text-sm font-bold text-blue-300 drop-shadow-sm">{isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>}<span>{isSnowing ? dailySnowSum : dailyRainSum} {isSnowing ? 'cm' : 'mm'}</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Niederschlag (24h)</span></div>)}
+               <div className="flex flex-col items-end mt-1"><div className={`flex items-center gap-1.5 text-sm font-bold ${windColorClass} drop-shadow-sm`}><Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }}/><span>{current.wind} <span className="text-xs font-normal opacity-80">({current.gust})</span></span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Wind km/h</span></div>
             </div>
           </div>
         </div>
 
+        {/* TABS */}
         <div className={`p-1.5 rounded-full backdrop-blur-md flex shadow-md border border-white/20 ${cardBg}`}>
-           {[{id:'overview', label:'Verlauf', icon: List}, {id:'longterm', label:'7 Tage', icon: CalendarDays}, {id:'radar', label:'Radar', icon: MapIcon}, {id:'chart', label:'Vergleich', icon: BarChart2}].map(tab => (
-             <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 py-3 rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === tab.id ? 'bg-white/90 text-slate-900 shadow-md' : 'hover:bg-white/10 opacity-70'}`}><tab.icon size={16} /> <span className="hidden sm:inline">{tab.label}</span></button>
+           {[{id:'overview', label:'Verlauf', icon: List}, {id:'longterm', label:'7 Tage', icon: CalendarDays}, {id:'trips', label:'Reise', icon: Plane}, {id:'chart', label:'Vergleich', icon: BarChart2}].map(tab => (
+             <button key={tab.id} onClick={() => { setActiveTab(tab.id); if(tab.id !== 'trips' && activeTripId) setActiveTripId(null); }} className={`flex-1 py-3 rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === tab.id ? 'bg-white/90 text-slate-900 shadow-md' : 'hover:bg-white/10 opacity-70'}`}><tab.icon size={16} /> <span className="hidden sm:inline">{tab.label}</span></button>
            ))}
         </div>
 
@@ -1770,65 +1513,47 @@ export default function WeatherApp() {
           
           {activeTab === 'overview' && (
             <div className="space-y-4">
-               <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} />
-               <PrecipitationTile data={processedShort} />
+               {!activeTripId && <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} />}
+               {activeTripId && tripAnalysis && tripAnalysis.status === 'ok' && (
+                   <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 text-slate-800">
+                       <h3 className="font-bold text-indigo-900 flex items-center gap-2 mb-2"><Briefcase size={18}/> Reise-Analyse: {tripAnalysis.trip.location.name}</h3>
+                       <div className="text-sm mb-4">Prognose für {new Date(tripAnalysis.trip.startDate).toLocaleDateString()} - {new Date(tripAnalysis.trip.endDate).toLocaleDateString()}</div>
+                       
+                       <div className="grid grid-cols-2 gap-4 mb-4">
+                           <ConfidenceGauge percentage={Math.round(tripAnalysis.avgReliability)} label="Vorhersage-Güte" />
+                           <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-white/60 border border-white/60">
+                               <div className="text-3xl font-black text-slate-800 mb-1">{Math.round(tripAnalysis.avgMax)}°</div>
+                               <div className="text-xs font-bold text-slate-500 uppercase">Ø Max Temp</div>
+                           </div>
+                       </div>
+                       
+                       <div className="space-y-2">
+                           <div className="flex justify-between text-sm font-medium border-b border-indigo-100 pb-2">
+                               <span>Wetter-Charakter</span>
+                               <span className="font-bold text-indigo-700">{tripAnalysis.verdict}</span>
+                           </div>
+                           <div className="flex justify-between text-sm font-medium border-b border-indigo-100 pb-2">
+                               <span>Regen-Risiko (Max)</span>
+                               <span className={`${tripAnalysis.maxRainProb > 50 ? 'text-red-500' : 'text-green-600'} font-bold`}>{tripAnalysis.maxRainProb}%</span>
+                           </div>
+                       </div>
+                   </div>
+               )}
+
                <h3 className="text-sm font-bold uppercase tracking-wide opacity-70 ml-2">Stündlicher Verlauf (24h)</h3>
-               
-               {/* Horizontal Scroll Container */}
                <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide"> 
                   <div className="flex gap-3 w-max">
                     {displayedHours.map((row, i) => {
                       const conf = getWeatherConfig(row.code, row.isDay);
                       const HourIcon = conf.icon;
                       return (
-                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[130px] w-[130px] hover:bg-white/10 transition relative group">
-                          {/* Time */}
-                          <div className="text-lg font-bold opacity-90 mb-2">{row.displayTime}</div>
-                          
-                          {/* Icon */}
-                          <HourIcon size={40} className="opacity-90 mb-2" />
-                          
-                          {/* Temp */}
-                          <div className="text-4xl font-bold mb-1 tracking-tighter">{Math.round(row.temp)}°</div>
-                          
-                          {/* Desc */}
-                          <div className="text-sm opacity-60 text-center leading-tight h-8 flex items-center justify-center line-clamp-2 w-full mb-2">
-                            {conf.text}
-                          </div>
-                          
-                          {/* Precip */}
-                           <div className="mb-2 h-4">
-                             {parseFloat(row.snow) > 0 ? (
-                               <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {row.snow.toFixed(1)}</span>
-                             ) : parseFloat(row.precip) > 0 ? (
-                               <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={10}/> {row.precip.toFixed(1)}</span>
-                             ) : (
-                               <span className="opacity-20 text-xs">-</span>
-                             )}
+                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[100px] w-[100px] hover:bg-white/10 transition">
+                          <div className="text-base font-bold opacity-90 mb-2">{row.displayTime}</div>
+                          <HourIcon size={32} className="opacity-90 mb-2" />
+                          <div className="text-2xl font-bold mb-1 tracking-tighter">{Math.round(row.temp)}°</div>
+                          <div className="mb-2 h-4">
+                             {parseFloat(row.precip) > 0 ? <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={10}/> {row.precip.toFixed(1)}</span> : <span className="opacity-20 text-xs">-</span>}
                            </div>
-                           
-                           {/* Wind */}
-                           <div className="flex flex-col items-center gap-0.5 mb-2">
-                              <div className="flex items-center gap-1 opacity-80">
-                                 <Navigation size={10} style={{ transform: `rotate(${row.dir}deg)` }} />
-                                 <span className={`text-xs font-bold ${getWindColorClass(row.wind)}`}>{row.wind}</span>
-                              </div>
-                              <span className={`text-[9px] opacity-60 ${getWindColorClass(row.gust)}`}>Böen {row.gust}</span>
-                           </div>
-
-                           {/* UV */}
-                           {row.uvIndex >= 1 && (
-                             <div className={`px-1.5 py-0.5 rounded text-[9px] font-bold border ${getUvBadgeClass(row.uvIndex)}`}>
-                               UV {(row.uvIndex).toFixed(0)}
-                             </div>
-                           )}
-
-                           {/* Reliability Indicator */}
-                           <div className="mt-2 text-[10px] flex items-center gap-1 opacity-70">
-                              <ShieldCheck size={10} className={getConfidenceColor(row.reliability)} />
-                              <span className={`${getConfidenceColor(row.reliability)} font-medium`}>{row.reliability}% Sicher</span>
-                           </div>
-                           
                         </div>
                       );
                     })}
@@ -1837,19 +1562,81 @@ export default function WeatherApp() {
             </div>
           )}
 
+          {activeTab === 'trips' && (
+             <div className="space-y-4">
+                <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Plane className="text-blue-500"/> Meine Reisen</h3>
+                    <button onClick={() => setShowTripModal(true)} className="px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg hover:bg-blue-700 transition flex items-center gap-2"><Plus size={16}/> Hinzufügen</button>
+                </div>
+                
+                {trips.length === 0 ? (
+                    <div className="text-center py-12 bg-white/30 rounded-3xl border border-white/40">
+                        <div className="w-16 h-16 bg-blue-100 text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4"><Plane size={32}/></div>
+                        <h4 className="font-bold text-slate-700 text-lg mb-1">Keine Reisen geplant</h4>
+                        <p className="text-slate-500 text-sm max-w-[200px] mx-auto">Fügen Sie einen Ausflug oder Urlaub hinzu, um das Wetter zu prüfen.</p>
+                    </div>
+                ) : (
+                    <div className="grid gap-3">
+                        {trips.map(trip => (
+                            <TripCard 
+                                key={trip.id} 
+                                trip={trip} 
+                                isActive={activeTripId === trip.id}
+                                onClick={() => handleTripClick(trip)}
+                                onDelete={() => handleDeleteTrip(trip.id)}
+                            />
+                        ))}
+                    </div>
+                )}
+                
+                {activeTripId && tripAnalysis && (
+                    <div className="mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="bg-white/80 backdrop-blur-md rounded-2xl p-5 border border-white shadow-lg">
+                            <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Sparkles className="text-amber-500"/> Prognose-Übersicht</h4>
+                            {tripAnalysis.status === 'ok' ? (
+                                <div className="space-y-4">
+                                     <div className="flex items-center gap-4">
+                                         <div className="flex-1 text-center p-3 bg-blue-50 rounded-xl border border-blue-100">
+                                             <div className="text-2xl font-black text-blue-600">{tripAnalysis.totalRain.toFixed(1)}<span className="text-sm font-normal text-blue-400">mm</span></div>
+                                             <div className="text-[10px] font-bold uppercase text-blue-400">Gesamt-Regen</div>
+                                         </div>
+                                         <div className="flex-1 text-center p-3 bg-amber-50 rounded-xl border border-amber-100">
+                                             <div className="text-2xl font-black text-amber-600">{Math.round(tripAnalysis.avgMax)}°</div>
+                                             <div className="text-[10px] font-bold uppercase text-amber-400">Ø Temp</div>
+                                         </div>
+                                     </div>
+                                     
+                                     <div>
+                                         <div className="flex justify-between text-xs font-bold text-slate-500 uppercase mb-2">
+                                             <span>Unsicher</span>
+                                             <span>Sicher</span>
+                                         </div>
+                                         <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                                             <div className={`h-full ${tripAnalysis.avgReliability > 70 ? 'bg-green-500' : tripAnalysis.avgReliability > 40 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{width: `${tripAnalysis.avgReliability}%`}}></div>
+                                         </div>
+                                         <p className="text-xs text-center mt-2 text-slate-500 italic">
+                                             Die Prognose ist zu {Math.round(tripAnalysis.avgReliability)}% sicher. {tripAnalysis.avgReliability < 50 && "Da der Termin noch weit entfernt ist, können sich Details ändern."}
+                                         </p>
+                                     </div>
+                                     
+                                     <button onClick={() => setActiveTab('longterm')} className="w-full py-3 bg-slate-800 text-white rounded-xl font-bold text-sm hover:bg-slate-700 transition">Details im Kalender ansehen</button>
+                                </div>
+                            ) : (
+                                <div className="text-center py-4 text-slate-500">
+                                    <p>Daten für diesen Zeitraum noch nicht verfügbar oder Zeitraum liegt in der Vergangenheit.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+             </div>
+          )}
+
           {activeTab === 'chart' && (
             <div className="h-full flex flex-col">
                <AIReportBox report={modelReport} dwdWarnings={dwdWarnings} />
-               <div className="flex justify-between items-center mb-6">
-                 <h3 className="text-sm font-bold uppercase opacity-70">Modell-Check</h3>
-                 <div className="flex bg-black/10 rounded-lg p-1">
-                    <button onClick={() => setChartView('hourly')} className={`px-3 py-1 rounded-md text-xs font-bold transition ${chartView==='hourly' ? 'bg-white text-black shadow-sm' : 'opacity-60'}`}>48h</button>
-                    <button onClick={() => setChartView('daily')} className={`px-3 py-1 rounded-md text-xs font-bold transition ${chartView==='daily' ? 'bg-white text-black shadow-sm' : 'opacity-60'}`}>6 Tage</button>
-                 </div>
-               </div>
                <div className="w-full h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
-                      {chartView === 'hourly' ? (
                         <LineChart data={processedShort} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
                           <XAxis dataKey="displayTime" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={3} />
@@ -1857,127 +1644,48 @@ export default function WeatherApp() {
                           <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => Math.round(value)} />
                           <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={2} dot={false} name="ICON" />
                           <Line type="monotone" dataKey="temp_gfs" stroke="#d8b4fe" strokeWidth={2} dot={false} name="GFS" />
-                          <Line type="monotone" dataKey="temp_arome" stroke="#86efac" strokeWidth={2} dot={false} name="AROME" />
-                          {/* KNMI ist besonders wichtig, daher in markantem Orange */}
-                          <Line type="monotone" dataKey="temp_knmi" stroke="#fb923c" strokeWidth={2} dot={false} name="KNMI (NL)" />
-                          <Line type="monotone" dataKey="temp" stroke="#2563eb" strokeWidth={4} dot={{r:0}} name="Mittel (5)" />
+                          <Line type="monotone" dataKey="temp" stroke="#2563eb" strokeWidth={4} dot={{r:0}} name="Mittel" />
                         </LineChart>
-                      ) : (
-                        <LineChart data={processedLong.slice(0, 6)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
-                          <XAxis dataKey="dateShort" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={0} />
-                          <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
-                          <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => Math.round(value)} />
-                          <Line type="monotone" dataKey="max_icon" stroke="#93c5fd" strokeWidth={3} dot={{r:3}} name="ICON Max" />
-                          <Line type="monotone" dataKey="max_gfs" stroke="#d8b4fe" strokeWidth={3} dot={{r:3}} name="GFS Max" />
-                          <Line type="monotone" dataKey="max_gem" stroke="#fca5a5" strokeWidth={3} dot={{r:3}} name="GEM Max" />
-                          <Line type="monotone" dataKey="max_arome" stroke="#86efac" strokeWidth={3} dot={{r:3}} name="AROME Max" connectNulls={false} />
-                        </LineChart>
-                      )}
                   </ResponsiveContainer>
-               </div>
-               <div className="flex justify-center gap-4 mt-6 text-xs font-medium opacity-80 flex-wrap">
-                  {chartView === 'hourly' ? (
-                    <>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400"></div> KNMI</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div> Ø</span>
-                    </>
-                  ) : (
-                    <>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-300"></div> GEM</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
-                    </>
-                  )}
                </div>
             </div>
           )}
 
           {activeTab === 'longterm' && (
              <div className="space-y-4">
-               <AIReportBox report={longtermReport} dwdWarnings={dwdWarnings} />
-               <h3 className="text-sm font-bold uppercase tracking-wide opacity-70 ml-2">7-Tage Liste</h3>
-               
-               {/* Horizontal Scroll Container for 7-Day Forecast */}
+               {!activeTripId && <AIReportBox report={longtermReport} dwdWarnings={dwdWarnings} />}
+               <h3 className="text-sm font-bold uppercase tracking-wide opacity-70 ml-2">16-Tage Trend</h3>
                <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide"> 
                   <div className="flex gap-3 w-max">
                     {processedLong.map((day, i) => {
                       const DayIcon = getWeatherConfig(day.code, 1).icon;
                       const confColor = getConfidenceColor(day.reliability);
-                      const isDaySnow = parseFloat(day.snow) > 0;
-                      let probColor = "text-slate-400 opacity-50"; 
-                      if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
-
+                      const isTripDay = activeTripId && tripAnalysis && tripAnalysis.days.some(d => d.dateShort === day.dateShort);
+                      
                       return (
-                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[160px] w-[160px] hover:bg-white/10 transition relative group">
-                          {/* Day & Date */}
+                        <div key={i} className={`flex flex-col items-center border rounded-2xl p-3 min-w-[140px] w-[140px] transition relative group ${isTripDay ? 'bg-blue-500/20 border-blue-400 ring-1 ring-blue-300' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+                          {isTripDay && <div className="absolute top-2 right-2 w-2 h-2 bg-blue-400 rounded-full"></div>}
                           <div className="text-base font-bold opacity-90 mb-0.5">{day.dayName}</div>
                           <div className="text-xs opacity-60 mb-2">{day.dateShort}</div>
-                          
-                          {/* Icon */}
-                          <DayIcon size={48} className="opacity-90 mb-2" />
-                          
-                          {/* Temp Range */}
+                          <DayIcon size={40} className="opacity-90 mb-2" />
                           <div className="flex items-center gap-2 mb-2 w-full justify-center">
-                            <span className="text-2xl font-bold text-blue-400">{Math.round(day.min)}°</span>
-                            <div className="h-1 w-6 bg-white/10 rounded-full overflow-hidden">
-                               <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
-                            </div>
-                            <span className="text-2xl font-bold text-red-400">{Math.round(day.max)}°</span>
+                            <span className="text-xl font-bold text-blue-400">{Math.round(day.min)}°</span>
+                            <div className="h-1 w-4 bg-white/10 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" /></div>
+                            <span className="text-xl font-bold text-red-400">{Math.round(day.max)}°</span>
                          </div>
-                          
-                          {/* Precip */}
                            <div className="mb-1 h-4 flex items-center justify-center w-full">
-                             {isDaySnow ? <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {day.snow}cm</span> : parseFloat(day.rain) > 0.1 ? <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {day.rain}mm</span> : <span className="opacity-20 text-xs">-</span>}
+                             {parseFloat(day.rain) > 0.1 ? <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {day.rain}mm</span> : <span className="opacity-20 text-xs">-</span>}
                            </div>
-                           <div className={`text-[10px] mb-2 ${probColor} h-3`}>{day.prob > 0 ? `${day.prob}% Wahrsch.` : ''}</div>
-                           
-                           {/* Wind */}
-                           <div className="flex flex-col items-center gap-0.5 mb-2 w-full">
-                              <div className="flex items-center justify-center gap-1 opacity-80 w-full">
-                                 <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
-                                 <span className={`text-sm font-bold ${getWindColorClass(day.wind)}`}>{day.wind}</span>
-                              </div>
-                              <span className={`text-[10px] opacity-60 ${getWindColorClass(day.gust)}`}>Böen {day.gust}</span>
-                           </div>
-
-                           {/* Reliability Indicator */}
                            <div className="mt-1 text-[10px] flex items-center gap-1 opacity-70 border border-white/10 px-2 py-0.5 rounded-full">
                               <ShieldCheck size={10} className={confColor} />
-                              <span className={confColor}>{day.reliability}% Sicher</span>
+                              <span className={confColor}>{day.reliability}%</span>
                            </div>
-                           
                         </div>
                       );
                     })}
                   </div>
                </div>
              </div>
-          )}
-
-          {activeTab === 'radar' && (
-            <div className="h-full flex flex-col">
-               <h3 className="text-sm font-bold uppercase opacity-70 mb-4 ml-2">Live-Radar (Windy)</h3>
-               <div className="w-full aspect-square rounded-xl overflow-hidden shadow-inner border border-black/10 bg-gray-200 relative">
-                  <iframe width="100%" height="100%" src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=450&height=450&zoom=9&level=surface&overlay=radar&product=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`} frameBorder="0" title="Windy Radar" className="absolute inset-0"></iframe>
-               </div>
-               <div className="mt-4 text-xs text-center opacity-60">Radarbild bereitgestellt von Windy.com</div>
-            </div>
-          )}
-
-          {activeTab !== 'radar' && (
-            <div className="mt-8 text-xs text-center opacity-60 px-6 font-medium space-y-2">
-               <p className="flex items-center justify-center gap-2 mb-2"><Database size={14} /> Datenbasis & Laufzeiten (Geschätzt)</p>
-               <div className="flex flex-wrap justify-center gap-4">
-                 <span className="bg-blue-500/10 px-2 py-1 rounded text-blue-500 border border-blue-500/20">ICON-D2: {modelRuns.icon || '--:--'}</span>
-                 <span className="bg-purple-500/10 px-2 py-1 rounded text-purple-500 border border-purple-500/20">GFS: {modelRuns.gfs || '--:--'}</span>
-                 <span className="bg-green-500/10 px-2 py-1 rounded text-green-500 border border-green-500/20">AROME: {modelRuns.arome || '--:--'}</span>
-               </div>
-            </div>
           )}
 
         </div>
