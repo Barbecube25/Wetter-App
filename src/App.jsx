@@ -2032,8 +2032,8 @@ export default function WeatherApp() {
           {activeTab === 'travel' && (
               <div className="space-y-6">
                   <div className="text-center mb-6">
-                      <h3 className="text-xl font-bold text-slate-800 flex items-center justify-center gap-2"><Plane className="text-blue-500"/> Reiseplaner</h3>
-                      <p className="text-sm text-slate-500">Planen Sie Ihren Ausflug und checken Sie die Wetter-Wahrscheinlichkeit.</p>
+                      <h3 className="text-xl font-bold flex items-center justify-center gap-2"><Plane className="text-blue-500"/> Reiseplaner</h3>
+                      <p className="text-sm opacity-70">Planen Sie Ihren Ausflug und checken Sie die Wetter-Wahrscheinlichkeit.</p>
                   </div>
 
                   <div className="bg-white/50 border border-white/40 rounded-2xl p-4 shadow-sm space-y-3">
