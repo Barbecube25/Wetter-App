@@ -244,6 +244,7 @@ const generateAIReport = (type, data) => {
   let details = null; 
   let warning = null;
   let confidence = null;
+  let structuredDetails = null; // New field for list view
 
   if (type === 'trip') {
       const { location, mode, startDate, endDate, summary: daySummary, items, reliability } = data;
@@ -275,7 +276,6 @@ const generateAIReport = (type, data) => {
           }
       } else {
           const daysCount = items.length;
-          // Calculate true trip duration
           const tripDuration = Math.round((new Date(endDate).setHours(0,0,0,0) - new Date(startDate).setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)) + 1;
           
           const startStr = startDate.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
@@ -437,25 +437,29 @@ const generateAIReport = (type, data) => {
     summary = parts.join("\n\n");
     confidence = Math.round(overallConfidence);
     
-    // Detailed list for expandable section
-    let detailParts = [];
-    const formatDay = (d) => `${d.dayName} (${d.dateShort}): ${Math.round(d.max)}°/${Math.round(d.min)}°, ${d.rain}mm Regen`;
-    
-    if(thisWeek.length > 0) {
-        if (thisWeek.length === 1 && thisWeek[0].date.getDay() === 0) {
-             detailParts.push("--- Morgen (Sonntag) ---");
-        } else {
-             detailParts.push("--- Restliche Woche ---");
-        }
-        thisWeek.forEach(d => detailParts.push(formatDay(d)));
+    // STRUCTURED DETAILS for List View
+    structuredDetails = [];
+    const formatItem = (d) => ({
+        day: d.dayName,
+        date: d.dateShort,
+        code: d.code,
+        min: Math.round(d.min),
+        max: Math.round(d.max),
+        rain: parseFloat(d.rain),
+        wind: d.wind
+    });
+
+    if (thisWeek.length > 0) {
+        structuredDetails.push({ 
+            title: (thisWeek.length === 1 && thisWeek[0].date.getDay() === 0) ? "Morgen (Sonntag)" : "Restliche Woche", 
+            items: thisWeek.map(formatItem) 
+        });
     }
-    
-    if(nextWeek.length > 0) {
-        if(thisWeek.length > 0) detailParts.push(""); // Spacer
-        detailParts.push("--- Nächste Woche ---");
-        nextWeek.forEach(d => detailParts.push(formatDay(d)));
+    if (nextWeek.length > 0) {
+        structuredDetails.push({ title: "Nächste Woche", items: nextWeek.map(formatItem) });
     }
-    details = detailParts.join("\n");
+    // Set text details to null to force usage of structured view in UI
+    details = null; 
   }
   
   if (type === 'model-hourly') {
@@ -480,7 +484,7 @@ const generateAIReport = (type, data) => {
     confidence = 80;
   }
 
-  return { title, summary, details, warning, confidence };
+  return { title, summary, details, structuredDetails, warning, confidence };
 };
 
 // --- 4. KOMPONENTEN ---
@@ -1209,7 +1213,7 @@ const DwdAlertItem = ({ alert }) => {
 const AIReportBox = ({ report, dwdWarnings }) => {
   const [expanded, setExpanded] = useState(false);
   if (!report) return null;
-  const { title, summary, details, warning: localWarning, confidence } = report;
+  const { title, summary, details, warning: localWarning, confidence, structuredDetails } = report;
   
   const hasDwd = dwdWarnings && dwdWarnings.length > 0;
   
@@ -1288,7 +1292,7 @@ const AIReportBox = ({ report, dwdWarnings }) => {
             <p className="text-lg text-slate-800 leading-relaxed font-semibold relative z-10 whitespace-pre-line">{summary}</p>
             
             {/* Toggle Button */}
-            {details && (
+            {(details || structuredDetails) && (
                 <button 
                     onClick={() => setExpanded(!expanded)} 
                     className="mt-3 text-sm font-bold text-indigo-600 flex items-center gap-1 hover:text-indigo-800 transition-colors"
@@ -1299,12 +1303,67 @@ const AIReportBox = ({ report, dwdWarnings }) => {
         </div>
 
         {/* EXPANDABLE DETAILS */}
-        {expanded && details && (
+        {expanded && (
             <div className="px-4 pb-4 pt-0 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="h-px w-full bg-indigo-200/50 mb-3"></div>
-                <div className="text-base text-slate-700 leading-relaxed space-y-2 whitespace-pre-line">
-                    {details}
-                </div>
+                
+                {/* Fallback Text Details */}
+                {details && (
+                    <div className="text-base text-slate-700 leading-relaxed space-y-2 whitespace-pre-line mb-4">
+                        {details}
+                    </div>
+                )}
+
+                {/* Structured Details (List View) */}
+                {structuredDetails && (
+                   <div className="space-y-6 mt-2">
+                       {structuredDetails.map((group, idx) => (
+                           <div key={idx}>
+                               <h4 className="text-[10px] font-extrabold uppercase text-indigo-400 mb-2 tracking-widest pl-1">{group.title}</h4>
+                               <div className="space-y-2">
+                                   {group.items.map((item, i) => {
+                                       const Icon = getWeatherConfig(item.code, 1).icon;
+                                       return (
+                                           <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-white/60 hover:bg-white/80 transition border border-white/40 shadow-sm text-sm">
+                                               {/* Date & Icon */}
+                                               <div className="flex items-center gap-3 min-w-[100px]">
+                                                   <div className="w-10 text-center">
+                                                       <div className="font-bold text-slate-700">{item.day}</div>
+                                                       <div className="text-[10px] font-medium text-slate-400">{item.date}</div>
+                                                   </div>
+                                                   <div className="p-1.5 bg-indigo-50 rounded-lg text-indigo-600">
+                                                        <Icon size={20}/>
+                                                   </div>
+                                               </div>
+                                               
+                                               {/* Temp */}
+                                               <div className="flex items-center gap-1 flex-1 justify-center">
+                                                    <span className="font-bold text-slate-800 text-base">{item.max}°</span>
+                                                    <span className="text-slate-400 text-xs font-medium">/ {item.min}°</span>
+                                               </div>
+
+                                               {/* Rain/Wind */}
+                                               <div className="text-right min-w-[80px] flex flex-col items-end gap-0.5">
+                                                   {item.rain > 0.1 ? (
+                                                       <div className="flex items-center justify-end gap-1 text-blue-600 font-bold text-xs bg-blue-50 px-1.5 py-0.5 rounded-md w-max">
+                                                           <Droplets size={10}/> {item.rain.toFixed(1)}mm
+                                                       </div>
+                                                   ) : <span className="text-[10px] text-slate-400 font-medium px-1.5 py-0.5">Trocken</span>}
+                                                   
+                                                   {item.wind > 20 && (
+                                                       <div className={`flex items-center justify-end gap-1 text-[10px] font-bold ${getWindColorClass(item.wind)}`}>
+                                                           <Wind size={10}/> {item.wind} km/h
+                                                       </div>
+                                                   )}
+                                               </div>
+                                           </div>
+                                       );
+                                   })}
+                               </div>
+                           </div>
+                       ))}
+                   </div>
+               )}
             </div>
         )}
       </div>
@@ -1609,7 +1668,6 @@ export default function WeatherApp() {
       const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2`;
       
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
-      // INCREASED forecast_days to 14 for the new weekly report
       const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max,sunrise,sunset&models=${modelsLong}&timezone=auto&forecast_days=14`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
 
@@ -2109,7 +2167,7 @@ export default function WeatherApp() {
             <h2 className="text-2xl font-bold mb-4 text-slate-800">Tages-Bericht</h2>
             <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} />
             <div className="mt-8">
-                 <h2 className="text-2xl font-bold mb-4 text-slate-800">14-Tage-Trend</h2>
+                 <h2 className="text-2xl font-bold mb-4 text-slate-800">7-Tage-Trend</h2>
                  <AIReportBox report={longtermReport} dwdWarnings={[]} />
             </div>
         </div>
@@ -2124,7 +2182,7 @@ export default function WeatherApp() {
                <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
            </div>
            <h2 className="text-2xl font-bold mb-6 text-slate-800 text-center">Niederschlags-Radar</h2>
-           <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} />
+           <PrecipitationTile data={processedShort} />
        </div>
     );
  }
@@ -2297,6 +2355,24 @@ export default function WeatherApp() {
                       )}
                   </ResponsiveContainer>
                </div>
+               <div className="flex justify-center gap-4 mt-6 text-xs font-medium opacity-80 flex-wrap">
+                  {chartView === 'hourly' ? (
+                    <>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400"></div> KNMI</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div> Ø</span>
+                    </>
+                  ) : (
+                    <>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-300"></div> GEM</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
+                    </>
+                  )}
+               </div>
             </div>
           )}
 
@@ -2312,20 +2388,32 @@ export default function WeatherApp() {
                       const isDaySnow = parseFloat(day.snow) > 0;
                       let probColor = "text-slate-400 opacity-50"; 
                       if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
+
                       return (
                         <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[160px] w-[160px] hover:bg-white/10 transition relative group">
+                          {/* Day & Date */}
                           <div className="text-base font-bold opacity-90 mb-0.5">{day.dayName}</div>
                           <div className="text-xs opacity-60 mb-2">{day.dateShort}</div>
+                          
+                          {/* Icon */}
                           <DayIcon size={48} className="opacity-90 mb-2" />
+                          
+                          {/* Temp Range */}
                           <div className="flex items-center gap-2 mb-2 w-full justify-center">
                             <span className="text-2xl font-bold text-blue-400">{Math.round(day.min)}°</span>
-                            <div className="h-1 w-6 bg-white/10 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" /></div>
+                            <div className="h-1 w-6 bg-white/10 rounded-full overflow-hidden">
+                               <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
+                            </div>
                             <span className="text-2xl font-bold text-red-400">{Math.round(day.max)}°</span>
                          </div>
+                          
+                          {/* Precip */}
                            <div className="mb-1 h-4 flex items-center justify-center w-full">
                              {isDaySnow ? <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {day.snow}cm</span> : parseFloat(day.rain) > 0.1 ? <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {day.rain}mm</span> : <span className="opacity-20 text-xs">-</span>}
                            </div>
                            <div className={`text-[10px] mb-2 ${probColor} h-3`}>{day.prob > 0 ? `${day.prob}% Wahrsch.` : ''}</div>
+                           
+                           {/* Wind */}
                            <div className="flex flex-col items-center gap-0.5 mb-2 w-full">
                               <div className="flex items-center justify-center gap-1 opacity-80 w-full">
                                  <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
@@ -2333,10 +2421,13 @@ export default function WeatherApp() {
                               </div>
                               <span className={`text-[10px] opacity-60 ${getWindColorClass(day.gust)}`}>Böen {day.gust}</span>
                            </div>
+
+                           {/* Reliability Indicator */}
                            <div className="mt-1 text-[10px] flex items-center gap-1 opacity-70 border border-white/10 px-2 py-0.5 rounded-full">
                               <ShieldCheck size={10} className={confColor} />
                               <span className={confColor}>{day.reliability}% Sicher</span>
                            </div>
+                           
                         </div>
                       );
                     })}
@@ -2476,7 +2567,7 @@ export default function WeatherApp() {
                           </div>
 
                           {/* SINGLE DAY DETAILS */}
-                          {travelResult.mode === 'single' && travelResult.summary.maxTemp && (
+                          {travelResult.mode === 'single' && (
                               <>
                                 <div className="flex items-center gap-4 mb-4 relative z-10">
                                     <div className="p-3 bg-blue-100 text-blue-600 rounded-full">
