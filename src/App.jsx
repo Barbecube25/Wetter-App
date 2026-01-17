@@ -439,15 +439,20 @@ const generateAIReport = (type, data) => {
     
     // Detailed list for expandable section
     let detailParts = [];
-    detailParts.push("Detaillierter Verlauf:");
     const formatDay = (d) => `${d.dayName} (${d.dateShort}): ${Math.round(d.max)}°/${Math.round(d.min)}°, ${d.rain}mm Regen`;
     
     if(thisWeek.length > 0) {
-        detailParts.push("--- Diese Woche ---");
+        if (thisWeek.length === 1 && thisWeek[0].date.getDay() === 0) {
+             detailParts.push("--- Morgen (Sonntag) ---");
+        } else {
+             detailParts.push("--- Restliche Woche ---");
+        }
         thisWeek.forEach(d => detailParts.push(formatDay(d)));
     }
+    
     if(nextWeek.length > 0) {
-        detailParts.push("\n--- Nächste Woche ---");
+        if(thisWeek.length > 0) detailParts.push(""); // Spacer
+        detailParts.push("--- Nächste Woche ---");
         nextWeek.forEach(d => detailParts.push(formatDay(d)));
     }
     details = detailParts.join("\n");
@@ -1604,6 +1609,7 @@ export default function WeatherApp() {
       const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2`;
       
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
+      // INCREASED forecast_days to 14 for the new weekly report
       const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max,sunrise,sunset&models=${modelsLong}&timezone=auto&forecast_days=14`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
 
@@ -2370,6 +2376,7 @@ export default function WeatherApp() {
                           />
                       </div>
                       
+                      {/* Date Range Inputs */}
                       <div className="flex gap-2">
                           <div className="relative flex-1">
                               <Calendar className="absolute left-3 top-3 text-slate-400" size={18} />
@@ -2395,6 +2402,7 @@ export default function WeatherApp() {
                           </div>
                       </div>
 
+                      {/* Time Range Inputs */}
                       <div className="flex gap-2">
                           <div className="relative flex-1">
                               <Clock className="absolute left-3 top-3 text-slate-400" size={18} />
@@ -2430,6 +2438,7 @@ export default function WeatherApp() {
 
                   {travelResult && (
                       <div className="bg-white/80 border border-white/50 rounded-2xl p-6 shadow-md animate-in fade-in slide-in-from-bottom-4 duration-500 relative overflow-hidden">
+                          {/* AI Report Box Added Here */}
                           <div className="mb-6 relative z-20">
                               <AIReportBox report={tripReport} dwdWarnings={[]} />
                           </div>
@@ -2466,6 +2475,7 @@ export default function WeatherApp() {
                               </div>
                           </div>
 
+                          {/* SINGLE DAY DETAILS */}
                           {travelResult.mode === 'single' && travelResult.summary.maxTemp && (
                               <>
                                 <div className="flex items-center gap-4 mb-4 relative z-10">
@@ -2498,6 +2508,7 @@ export default function WeatherApp() {
                               </>
                           )}
 
+                          {/* MULTI DAY LIST */}
                           {travelResult.mode === 'multi' && (
                               <div className="space-y-2 mb-4 relative z-10 max-h-[200px] overflow-y-auto pr-1">
                                   {travelResult.items.map((day, i) => (
