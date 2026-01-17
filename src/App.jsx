@@ -272,17 +272,21 @@ const generateAIReport = (type, data) => {
       } else {
           // Multi Day
           const daysCount = items.length;
-          const avgMax = Math.round(items.reduce((a,b)=>a+b.max,0)/daysCount);
-          const totalRain = items.reduce((a,b)=>a+b.precipSum,0);
-          const rainDays = items.filter(d=>d.precipSum > 1.0).length;
+          if (daysCount === 0) {
+              summary = "Keine Daten für diesen Zeitraum verfügbar.";
+          } else {
+              const avgMax = Math.round(items.reduce((a,b)=>a+b.max,0)/daysCount);
+              const totalRain = items.reduce((a,b)=>a+b.precipSum,0);
+              const rainDays = items.filter(d=>d.precipSum > 1.0).length;
 
-          summary = `🧳 Urlaub (${daysCount} Tage):\nIm Schnitt ${avgMax}°C. `;
-          if (rainDays === 0) summary += "Es sieht nach einer trockenen Periode aus.";
-          else if (rainDays >= daysCount/2) summary += "Eher unbeständiges Wetter erwartet.";
-          else summary += "Ein Mix aus Sonne und Wolken.";
+              summary = `🧳 Urlaub (${daysCount} Tage):\nIm Schnitt ${avgMax}°C. `;
+              if (rainDays === 0) summary += "Es sieht nach einer trockenen Periode aus.";
+              else if (rainDays >= daysCount/2) summary += "Eher unbeständiges Wetter erwartet.";
+              else summary += "Ein Mix aus Sonne und Wolken.";
 
-          let detailList = items.map(d => `- ${d.date.toLocaleDateString('de-DE',{weekday:'short'})}: ${Math.round(d.max)}°C, ${d.precipSum > 0.5 ? d.precipSum.toFixed(1)+'mm Regen' : 'Trocken'}`).join('\n');
-          details = `Wettertrend für ${location.name}:\n${detailList}\n\nGesamtniederschlag ca. ${totalRain.toFixed(1)}mm über den gesamten Zeitraum.`;
+              let detailList = items.map(d => `- ${d.date.toLocaleDateString('de-DE',{weekday:'short'})}: ${Math.round(d.max)}°C, ${d.precipSum > 0.5 ? d.precipSum.toFixed(1)+'mm Regen' : 'Trocken'}`).join('\n');
+              details = `Wettertrend für ${location.name}:\n${detailList}\n\nGesamtniederschlag ca. ${totalRain.toFixed(1)}mm über den gesamten Zeitraum.`;
+          }
       }
   }
 
@@ -1670,11 +1674,21 @@ export default function WeatherApp() {
         if(!wData || !wData.hourly || !wData.hourly.time) throw new Error("Keine Vorhersage verfügbar.");
 
         // 3. Process Data
-        const startDate = new Date(overrideData ? overrideData.startDate : travelStartDate || new Date());
-        const endDate = (overrideData ? overrideData.endDate : travelEndDate) ? new Date(overrideData ? overrideData.endDate : travelEndDate) : startDate;
+        // CRITICAL FIX: Ensure dates are handled as simple ISO strings for comparison to avoid timezone issues
+        const startDateStr = overrideData ? overrideData.startDate : travelStartDate;
+        const endDateStr = (overrideData ? overrideData.endDate : travelEndDate) || startDateStr;
+        
+        if (!startDateStr) {
+             alert("Bitte Startdatum wählen.");
+             setTravelLoading(false);
+             return;
+        }
+
+        const startDate = new Date(startDateStr); // Keep Date object for display formatting
+        const endDate = new Date(endDateStr);
         
         // Determine Mode: Single Day or Multi Day
-        const isMultiDay = startDate.toDateString() !== endDate.toDateString();
+        const isMultiDay = startDateStr !== endDateStr;
         
         let result = {
             location: loc,
@@ -1686,6 +1700,21 @@ export default function WeatherApp() {
             reliability: 0
         };
 
+        // HELPER: Safely get value from potentially model-suffixed response
+        const getSafeValue = (sourceObj, index, baseKey) => {
+            if (!sourceObj) return null;
+            // 1. Try base key directly (e.g. temperature_2m)
+            if (sourceObj[baseKey] && sourceObj[baseKey][index] !== undefined) return sourceObj[baseKey][index];
+            
+            // 2. Try common model suffixes
+            const models = ['icon_seamless', 'gfs_seamless', 'gem_seamless', 'arome_seamless'];
+            for (const m of models) {
+                const key = `${baseKey}_${m}`;
+                if (sourceObj[key] && sourceObj[key][index] !== undefined) return sourceObj[key][index];
+            }
+            return null;
+        };
+
         if (isMultiDay) {
             // MULTI DAY LOGIC
             const daily = wData.daily;
@@ -1694,26 +1723,30 @@ export default function WeatherApp() {
             let count = 0;
 
             for(let i=0; i<daily.time.length; i++) {
-                const dayDate = new Date(daily.time[i]);
-                // Check if date is within range
-                // Reset times to compare dates only
-                const d = new Date(dayDate).setHours(0,0,0,0);
-                const s = new Date(startDate).setHours(0,0,0,0);
-                const e = new Date(endDate).setHours(0,0,0,0);
+                const dayDateStr = daily.time[i]; // "YYYY-MM-DD"
+                
+                // Compare strings directly: "2023-10-01" >= "2023-10-01"
+                if (dayDateStr >= startDateStr && dayDateStr <= endDateStr) {
+                    
+                    const maxT = getSafeValue(daily, i, 'temperature_2m_max') ?? 0;
+                    const minT = getSafeValue(daily, i, 'temperature_2m_min') ?? 0;
+                    const code = getSafeValue(daily, i, 'weathercode') ?? 0;
+                    const prob = getSafeValue(daily, i, 'precipitation_probability_max') ?? 0;
+                    const sum = getSafeValue(daily, i, 'precipitation_sum') ?? 0;
+                    const gust = getSafeValue(daily, i, 'windgusts_10m_max') ?? 0;
 
-                if (d >= s && d <= e) {
                     dailyItems.push({
-                        date: dayDate,
-                        max: daily.temperature_2m_max[i],
-                        min: daily.temperature_2m_min[i],
-                        code: daily.weathercode[i],
-                        precipProb: daily.precipitation_probability_max[i],
-                        precipSum: daily.precipitation_sum[i],
-                        wind: daily.windgusts_10m_max[i]
+                        date: new Date(dayDateStr),
+                        max: maxT,
+                        min: minT,
+                        code: code,
+                        precipProb: prob,
+                        precipSum: sum,
+                        wind: gust
                     });
                     
-                    // Simple reliability sim based on forecast distance
-                    const daysInFuture = (d - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24);
+                    const d = new Date(dayDateStr).getTime();
+                    const daysInFuture = (d - new Date().getTime()) / (1000 * 60 * 60 * 24);
                     const rel = Math.max(10, 100 - (daysInFuture * 5));
                     totalRel += rel;
                     count++;
@@ -1744,18 +1777,28 @@ export default function WeatherApp() {
             let codes = [];
             let probs = [];
             
-            let targetDateStr = startDate.toDateString();
+            // Use the date string for matching
+            const targetDateStr = startDateStr; 
 
             for(let i=0; i<hourly.time.length; i++) {
-                const t = new Date(hourly.time[i]);
-                if (t.toDateString() === targetDateStr) {
-                    const h = t.getHours();
+                // hourly.time is usually ISO string "YYYY-MM-DDTHH:mm"
+                const tStr = hourly.time[i];
+                if (tStr.startsWith(targetDateStr)) {
+                    // Extract hour from ISO string "2023-10-27T14:00" -> 14
+                    const h = parseInt(tStr.split('T')[1].split(':')[0]);
+                    
                     if (h >= startH && h <= endH) {
-                        temps.push(hourly.temperature_2m[i]);
-                        precips.push(hourly.precipitation[i]);
-                        winds.push(hourly.windspeed_10m[i]);
-                        codes.push(hourly.weathercode[i]);
-                        probs.push(hourly.precipitation_probability[i]);
+                        const temp = getSafeValue(hourly, i, 'temperature_2m');
+                        const precip = getSafeValue(hourly, i, 'precipitation');
+                        const wind = getSafeValue(hourly, i, 'windspeed_10m');
+                        const code = getSafeValue(hourly, i, 'weathercode');
+                        const prob = getSafeValue(hourly, i, 'precipitation_probability');
+
+                        if (temp !== null) temps.push(temp);
+                        if (precip !== null) precips.push(precip);
+                        if (wind !== null) winds.push(wind);
+                        if (code !== null) codes.push(code);
+                        if (prob !== null) probs.push(prob);
                     }
                 }
             }
