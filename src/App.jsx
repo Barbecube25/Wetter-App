@@ -1452,16 +1452,28 @@ export default function WeatherApp() {
     setDwdWarnings([]);
     try {
       const { lat, lon } = currentLoc;
-      // HINZUFÜGEN von KNMI (Niederlande, super für NRW) und GEM (Kanada, globaler Check)
-      // WICHTIG: precipitation_probability in hourly hinzugefügt
-      const modelsShort = "icon_d2,gfs_seamless,arome_seamless,knmi_harmonie_arome_europe,gem_seamless";
-      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,temperature_2m_icon_d2,temperature_2m_gfs_seamless,temperature_2m_arome_seamless,temperature_2m_knmi_harmonie_arome_europe,temperature_2m_gem_seamless&models=${modelsShort}&timezone=Europe%2FBerlin&forecast_days=2`;
+      
+      // FIX: Verwendung globaler Modelle für weltweite Stabilität (Reise-Modus)
+      // Regionale Modelle wie AROME/KNMI führen zu Fehlern außerhalb von EU
+      const modelsShort = "icon_seamless,gfs_seamless,gem_seamless";
+      
+      // FIX: timezone=auto sorgt dafür, dass die Zeiten am Zielort korrekt sind
+      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,temperature_2m_icon_seamless,temperature_2m_gfs_seamless,temperature_2m_gem_seamless&models=${modelsShort}&timezone=auto&forecast_days=2`;
+      
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
-      const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max,sunrise,sunset&models=${modelsLong}&timezone=Europe%2FBerlin&forecast_days=8`;
+      const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max,sunrise,sunset&models=${modelsLong}&timezone=auto&forecast_days=8`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
 
       const [resShort, resLong, resDwd] = await Promise.all([fetch(urlShort), fetch(urlLong), fetch(urlDwd).catch(() => ({ ok: false }))]);
-      if (!resShort.ok || !resLong.ok) throw new Error("Fehler beim Datenabruf");
+      
+      if (!resShort.ok) {
+          const errText = await resShort.text();
+          throw new Error(`Fehler (Short): ${errText}`);
+      }
+      if (!resLong.ok) {
+          const errText = await resLong.text();
+          throw new Error(`Fehler (Long): ${errText}`);
+      }
       
       setShortTermData(await resShort.json());
       const longData = await resLong.json();
@@ -1476,7 +1488,10 @@ export default function WeatherApp() {
       setModelRuns({ icon: getModelRunTime(3, 2.5), gfs: getModelRunTime(6, 4), arome: getModelRunTime(3, 2) });
       if (longData.daily?.sunrise?.[0]) setSunriseSunset({ sunrise: longData.daily.sunrise[0], sunset: longData.daily.sunset[0] });
 
-    } catch (err) { setError(err.message); } finally { setLoading(false); }
+    } catch (err) { 
+        console.error("API Error:", err);
+        setError(err.message); 
+    } finally { setLoading(false); }
   };
 
   useEffect(() => { fetchData(); }, [currentLoc]);
@@ -1590,37 +1605,34 @@ export default function WeatherApp() {
          continue; 
       }
 
-      const getVal = (key) => h[key]?.[i] ?? h[`${key}_icon_d2`]?.[i] ?? h[`${key}_gfs_seamless`]?.[i] ?? h[`${key}_arome_seamless`]?.[i] ?? 0;
+      // FIX: Verwendung der globalen Seamless-Keys
+      const getVal = (key) => h[key]?.[i] ?? h[`${key}_icon_seamless`]?.[i] ?? h[`${key}_gfs_seamless`]?.[i] ?? 0;
       
       // Neue Modelle auslesen (wenn vorhanden)
-      const temp_icon = h.temperature_2m_icon_d2?.[i] ?? null;
+      const temp_icon = h.temperature_2m_icon_seamless?.[i] ?? null;
       const temp_gfs = h.temperature_2m_gfs_seamless?.[i] ?? null;
-      const temp_arome = h.temperature_2m_arome_seamless?.[i] ?? null;
-      const temp_knmi = h.temperature_2m_knmi_harmonie_arome_europe?.[i] ?? null;
+      // Optional: Weitere Modelle, falls vorhanden, aber Fokus auf Global
+      const temp_arome = h.temperature_2m_arome_seamless?.[i] ?? null; 
       const temp_gem = h.temperature_2m_gem_seamless?.[i] ?? null;
       
-      // Mittelwert jetzt aus 5 Modellen (wo verfügbar)
-      const t_vals = [temp_icon, temp_gfs, temp_arome, temp_knmi, temp_gem].filter(v => v !== null && v !== undefined);
+      // Mittelwert jetzt aus verfügbaren Modellen
+      const t_vals = [temp_icon, temp_gfs, temp_gem].filter(v => v !== null && v !== undefined);
       const temp = t_vals.length > 0 ? t_vals.reduce((a,b)=>a+b,0) / t_vals.length : 0;
       
       // Auch bei Regen/Schnee/Wind alle Modelle einbeziehen
       const getAvg = (key) => {
-         const v1 = h[`${key}_icon_d2`]?.[i];
+         const v1 = h[`${key}_icon_seamless`]?.[i];
          const v2 = h[`${key}_gfs_seamless`]?.[i];
-         const v3 = h[`${key}_arome_seamless`]?.[i];
-         const v4 = h[`${key}_knmi_harmonie_arome_europe`]?.[i];
-         const v5 = h[`${key}_gem_seamless`]?.[i];
-         const vals = [v1, v2, v3, v4, v5].filter(v => v !== undefined && v !== null);
+         const v3 = h[`${key}_gem_seamless`]?.[i];
+         const vals = [v1, v2, v3].filter(v => v !== undefined && v !== null);
          return vals.length > 0 ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
       };
 
       const getMax = (key) => {
-         const v1 = h[`${key}_icon_d2`]?.[i];
+         const v1 = h[`${key}_icon_seamless`]?.[i];
          const v2 = h[`${key}_gfs_seamless`]?.[i];
-         const v3 = h[`${key}_arome_seamless`]?.[i];
-         const v4 = h[`${key}_knmi_harmonie_arome_europe`]?.[i];
-         const v5 = h[`${key}_gem_seamless`]?.[i];
-         const vals = [v1, v2, v3, v4, v5].filter(v => v !== undefined && v !== null);
+         const v3 = h[`${key}_gem_seamless`]?.[i];
+         const vals = [v1, v2, v3].filter(v => v !== undefined && v !== null);
          return vals.length > 0 ? Math.max(...vals) : 0;
       };
 
@@ -1632,13 +1644,13 @@ export default function WeatherApp() {
         time: t,
         displayTime: t.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}),
         temp: temp,
-        temp_icon, temp_gfs, temp_arome, temp_knmi, temp_gem,
+        temp_icon, temp_gfs, temp_arome, temp_gem,
         precip: getAvg('precipitation'),
         snow: getMax('snowfall'), // Schnee lieber Max nehmen zur Sicherheit
         wind: Math.round(getAvg('windspeed_10m')),
         gust: Math.round(getMax('windgusts_10m')), // Böen immer Max Warnung
-        dir: h.winddirection_10m_icon_d2?.[i] || 0,
-        code: h.weathercode_icon_d2?.[i] || 0,
+        dir: h.winddirection_10m_icon_seamless?.[i] || 0,
+        code: h.weathercode_icon_seamless?.[i] || h.weathercode?.[i] || 0,
         isDay: isDayArray?.[i] ?? (t.getHours() >= 6 && t.getHours() <= 21 ? 1 : 0),
         appTemp: getVal('apparent_temperature'),
         humidity: getVal('relative_humidity_2m'),
