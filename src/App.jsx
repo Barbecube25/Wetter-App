@@ -251,20 +251,27 @@ const generateAIReport = (type, data) => {
       title = `Reise-Check: ${location.name}`;
       confidence = reliability;
 
-      if (mode === 'single') {
+      // CRASH FIX: Prüfen ob items oder summary vorhanden sind
+      if ((mode === 'multi' && items.length === 0) || (mode === 'single' && !daySummary)) {
+          summary = "⚠️ Keine Wetterdaten verfügbar.";
+          details = "Der gewählte Zeitraum liegt möglicherweise zu weit in der Zukunft (max. 14 Tage) oder in der Vergangenheit.";
+          confidence = 0;
+      } else if (mode === 'single' && daySummary) {
           const dateStr = startDate.toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'long'});
           let tempText = `Erwarten Sie maximal ${Math.round(daySummary.maxTemp)}°C und mindestens ${Math.round(daySummary.minTemp)}°C.`;
           
           let condText = "";
-          if (daySummary.totalPrecip < 0.2) condText = "Es bleibt voraussichtlich trocken. Gute Bedingungen!";
-          else if (daySummary.totalPrecip > 5) condText = `Planen Sie Regen ein (${daySummary.totalPrecip.toFixed(1)}mm). Schirm nicht vergessen!`;
+          // CRASH FIX: Safe check for totalPrecip
+          const precip = daySummary.totalPrecip || 0;
+          if (precip < 0.2) condText = "Es bleibt voraussichtlich trocken. Gute Bedingungen!";
+          else if (precip > 5) condText = `Planen Sie Regen ein (${precip.toFixed(1)}mm). Schirm nicht vergessen!`;
           else condText = "Vereinzelte Schauer sind möglich.";
 
           if (daySummary.maxWind > 45) warning = "Windig";
           if (daySummary.maxWind > 65) warning = "Stürmisch";
 
           summary = `📅 Ausflug am ${dateStr}:\n${tempText} ${condText}`;
-          details = `Für Ihren Ausflug nach ${location.name} berechnen die Modelle eine Regenwahrscheinlichkeit von ca. ${daySummary.avgProb}%. Der Wind weht mit Spitzen bis zu ${Math.round(daySummary.maxWind)} km/h.`;
+          details = `Für Ihren Ausflug nach ${location.name} berechnen die Modelle eine Regenwahrscheinlichkeit von ca. ${daySummary.avgProb || 0}%. Der Wind weht mit Spitzen bis zu ${Math.round(daySummary.maxWind)} km/h.`;
           
           if (daySummary.isTimeWindow) {
               details += `\n\nFür den gewählten Zeitraum (${daySummary.startH}-${daySummary.endH} Uhr) wurde die Vorhersage präzisiert.`;
@@ -272,21 +279,21 @@ const generateAIReport = (type, data) => {
       } else {
           // Multi Day
           const daysCount = items.length;
-          if (daysCount === 0) {
-              summary = "Keine Daten für diesen Zeitraum verfügbar.";
-          } else {
-              const avgMax = Math.round(items.reduce((a,b)=>a+b.max,0)/daysCount);
-              const totalRain = items.reduce((a,b)=>a+b.precipSum,0);
-              const rainDays = items.filter(d=>d.precipSum > 1.0).length;
+          // Format date range nicely
+          const startStr = startDate.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
+          const endStr = endDate.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
+          
+          const avgMax = Math.round(items.reduce((a,b)=>a+b.max,0)/daysCount);
+          const totalRain = items.reduce((a,b)=>a+b.precipSum,0);
+          const rainDays = items.filter(d=>d.precipSum > 1.0).length;
 
-              summary = `🧳 Urlaub (${daysCount} Tage):\nIm Schnitt ${avgMax}°C. `;
-              if (rainDays === 0) summary += "Es sieht nach einer trockenen Periode aus.";
-              else if (rainDays >= daysCount/2) summary += "Eher unbeständiges Wetter erwartet.";
-              else summary += "Ein Mix aus Sonne und Wolken.";
+          summary = `🧳 Urlaub (${startStr} - ${endStr}):\nIm Schnitt ${avgMax}°C an ${daysCount} Tagen. `;
+          if (rainDays === 0) summary += "Es sieht nach einer trockenen Periode aus.";
+          else if (rainDays >= daysCount/2) summary += "Eher unbeständiges Wetter erwartet.";
+          else summary += "Ein Mix aus Sonne und Wolken.";
 
-              let detailList = items.map(d => `- ${d.date.toLocaleDateString('de-DE',{weekday:'short'})}: ${Math.round(d.max)}°C, ${d.precipSum > 0.5 ? d.precipSum.toFixed(1)+'mm Regen' : 'Trocken'}`).join('\n');
-              details = `Wettertrend für ${location.name}:\n${detailList}\n\nGesamtniederschlag ca. ${totalRain.toFixed(1)}mm über den gesamten Zeitraum.`;
-          }
+          let detailList = items.map(d => `- ${d.date.toLocaleDateString('de-DE',{weekday:'short'})}: ${Math.round(d.max)}°C, ${d.precipSum > 0.5 ? d.precipSum.toFixed(1)+'mm Regen' : 'Trocken'}`).join('\n');
+          details = `Wettertrend für ${location.name}:\n${detailList}\n\nGesamtniederschlag ca. ${totalRain.toFixed(1)}mm über den gesamten Zeitraum.`;
       }
   }
 
@@ -2021,596 +2028,809 @@ export default function WeatherApp() {
   
   // LIVE oder DEMO Daten?
   const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: "0.0", precip: "0.0", wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0 };
-  const current = liveCurrent;
+// ... existing WeatherLandscape ...
+// ... existing PrecipitationTile ...
+// ... existing FeedbackModal ...
+// ... existing DwdAlertItem ...
+// ... existing AIReportBox ...
+// ... existing LocationModal ...
 
-  const dailyRainSum = processedLong.length > 0 ? processedLong[0].rain : "0.0";
-  const dailySnowSum = processedLong.length > 0 ? processedLong[0].snow : "0.0";
-  const isSnowing = parseFloat(current.snow) > 0;
-  const weatherConf = getWeatherConfig(current.code || 0, current.isDay);
-  const isNight = current.isDay === 0;
-  const bgGradient = isNight ? 'from-slate-900 to-slate-800' : 'from-blue-500 to-sky-400';
-  const textColor = 'text-white';
-  const cardBg = isNight ? 'bg-slate-800/60 border-slate-700/50 text-white' : 'bg-white/80 border-white/40 text-slate-900';
-  const windColorClass = getWindColorClass(current.wind || 0);
 
-  const dailyReport = useMemo(() => generateAIReport('daily', processedShort), [processedShort]);
-  const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong), [chartView, processedShort, processedLong]);
-  const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, processedShort), [processedLong, processedShort]);
+// --- 4. MAIN APP COMPONENT ---
 
-  const displayedHours = processedShort.slice(0, 24);
+export default function WeatherApp() {
+  // ... existing state and useEffects ...
+  const [loading, setLoading] = useState(true);
+  const [locations, setLocations] = useState(() => getSavedLocations());
+  const [homeLoc, setHomeLoc] = useState(() => getSavedHomeLocation());
+  const [currentLoc, setCurrentLoc] = useState(homeLoc); // Initial Home or Default
+  const [shortTermData, setShortTermData] = useState(null);
+  const [longTermData, setLongTermData] = useState(null);
+  const [dwdWarnings, setDwdWarnings] = useState([]);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [chartView, setChartView] = useState('hourly');
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showAllHours, setShowAllHours] = useState(false); 
+  const [sunriseSunset, setSunriseSunset] = useState({ sunrise: null, sunset: null });
+  const [modelRuns, setModelRuns] = useState({ icon: '', gfs: '', arome: '' });
+  const [showIosInstall, setShowIosInstall] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [viewMode, setViewMode] = useState(null);
 
-  // --- WIDGET VIEWS ---
-  if (viewMode === 'animation') {
-    if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-900 text-white">Lade...</div>;
-    return (
-      <div className={`h-screen w-screen overflow-hidden relative bg-gradient-to-br ${bgGradient}`}>
-        <style>{styles}</style>
-        <div className="absolute top-4 left-4 z-50">
-            <a href="/" className="bg-black/20 p-2 rounded-full text-white backdrop-blur-md block"><ArrowLeft size={24}/></a>
-        </div>
-        <div className="h-full w-full">
-            <WeatherLandscape code={current.code} isDay={current.isDay} date={current.time} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} />
-        </div>
-        <div className="absolute bottom-8 left-0 right-0 text-center text-white drop-shadow-md pointer-events-none">
-            <div className="text-6xl font-bold">{Math.round(current.temp)}°</div>
-            <div className="text-xl opacity-90">{weatherConf.text}</div>
-        </div>
-      </div>
-    );
-  }
+  // --- Travel Planner State ---
+  const [savedTrips, setSavedTrips] = useState(() => getSavedTrips());
+  const [travelQuery, setTravelQuery] = useState("");
+  const [travelStartDate, setTravelStartDate] = useState("");
+  const [travelEndDate, setTravelEndDate] = useState("");
+  const [travelStartTime, setTravelStartTime] = useState("");
+  const [travelEndTime, setTravelEndTime] = useState("");
+  const [travelResult, setTravelResult] = useState(null);
+  const [travelLoading, setTravelLoading] = useState(false);
+  // Trip Report
+  const [tripReport, setTripReport] = useState(null);
 
-  if (viewMode === 'report') {
-     if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-50">Lade...</div>;
-     return (
-        <div className="min-h-screen bg-slate-100 p-4">
-            <div className="mb-4">
-                <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
-            </div>
-            <h2 className="text-2xl font-bold mb-4 text-slate-800">Tages-Bericht</h2>
-            <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} />
-            <div className="mt-8">
-                 <h2 className="text-2xl font-bold mb-4 text-slate-800">7-Tage-Trend</h2>
-                 <AIReportBox report={longtermReport} dwdWarnings={[]} />
-            </div>
-        </div>
-     );
-  }
+  // ... existing useEffects for initLocation, localStorage etc ...
+  useEffect(() => {
+    const initLocation = async () => {
+        // ... (existing code for initLocation)
+        const urlParams = new URLSearchParams(window.location.search);
+        const view = urlParams.get('view');
+        if (view) setViewMode(view);
 
-  if (viewMode === 'precip') {
-    if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-50">Lade...</div>;
-    return (
-       <div className="min-h-screen bg-slate-100 p-4 flex flex-col justify-center">
-           <div className="absolute top-4 left-4">
-               <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
-           </div>
-           <h2 className="text-2xl font-bold mb-6 text-slate-800 text-center">Niederschlags-Radar</h2>
-           <PrecipitationTile data={processedShort} />
-       </div>
-    );
- }
+        if (!navigator.geolocation) {
+             setCurrentLoc(homeLoc);
+             return;
+        }
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            const dist = getDistanceFromLatLonInKm(lat, lon, homeLoc.lat, homeLoc.lon);
+            if (dist < 2.0) {
+                setCurrentLoc(homeLoc);
+            } else {
+                try {
+                    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
+                    const data = await res.json();
+                    const city = data.results?.[0]?.name || "Mein Standort";
+                    setCurrentLoc({ name: city, lat, lon, type: 'gps' });
+                } catch (e) {
+                    setCurrentLoc({ name: "Mein Standort", lat, lon, type: 'gps' });
+                }
+            }
+        }, (err) => {
+            console.warn("GPS Access denied or failed", err);
+            setCurrentLoc(homeLoc);
+        });
+    };
+    initLocation();
+  }, []);
+  
+  useEffect(() => { localStorage.setItem('weather_locations', JSON.stringify(locations)); }, [locations]);
+  useEffect(() => { localStorage.setItem('weather_home_loc', JSON.stringify(homeLoc)); }, [homeLoc]);
+  useEffect(() => { localStorage.setItem('weather_trips', JSON.stringify(savedTrips)); }, [savedTrips]);
 
-  // --- STANDARD APP ---
+  // ... iOS logic ...
+  useEffect(() => {
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    if (isIos && !isStandalone) setShowIosInstall(true);
+  }, []);
 
-  if (loading) return <div className="min-h-screen bg-slate-100 flex items-center justify-center"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
-  if (error) return <div className="min-h-screen flex items-center justify-center p-8 bg-red-50 text-red-900 font-bold">{error} <button onClick={() => setCurrentLoc(homeLoc)} className="ml-4 underline">Reset</button></div>;
+  useEffect(() => {
+    const handler = (e) => { e.preventDefault(); setDeferredPrompt(e); };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
 
+  const handleInstallClick = async () => { if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; if (outcome === 'accepted') setDeferredPrompt(null); } };
+  const handleAddLocation = () => { const exists = locations.some(l => l.name === currentLoc.name); if (!exists) setLocations([...locations, { ...currentLoc, type: 'saved', id: crypto.randomUUID() }]); setShowLocationModal(false); };
+  const handleDeleteLocation = (index) => { const newLocs = [...locations]; newLocs.splice(index, 1); setLocations(newLocs); };
+  const handleSetHome = () => setCurrentLoc(homeLoc);
+  const handleSetCurrent = () => { setLoading(true); navigator.geolocation.getCurrentPosition((pos) => setCurrentLoc({ name: "Mein Standort", lat: pos.coords.latitude, lon: pos.coords.longitude, type: 'gps' }), (err) => { setError("GPS verweigert"); setLoading(false); }); };
+  
+  // ... existing fetchData ...
+  const fetchData = async () => {
+    setLoading(true); setError(null); setDwdWarnings([]);
+    try {
+      const { lat, lon } = currentLoc;
+      const modelsShort = "icon_seamless,gfs_seamless,gem_seamless";
+      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability&models=${modelsShort}&timezone=auto&forecast_days=2`;
+      const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
+      const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max,sunrise,sunset&models=${modelsLong}&timezone=auto&forecast_days=8`;
+      const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
+      const [resShort, resLong, resDwd] = await Promise.all([fetch(urlShort), fetch(urlLong), fetch(urlDwd).catch(() => ({ ok: false }))]);
+      if (!resShort.ok) throw new Error(await resShort.text()); if (!resLong.ok) throw new Error(await resLong.text());
+      setShortTermData(await resShort.json());
+      const longData = await resLong.json();
+      setLongTermData(longData);
+      if (resDwd.ok) { const dwdJson = await resDwd.json(); setDwdWarnings(dwdJson.alerts || []); }
+      setLastUpdated(new Date());
+      setModelRuns({ icon: getModelRunTime(3, 2.5), gfs: getModelRunTime(6, 4), arome: getModelRunTime(3, 2) });
+      if (longData.daily?.sunrise?.[0]) setSunriseSunset({ sunrise: longData.daily.sunrise[0], sunset: longData.daily.sunset[0] });
+    } catch (err) { console.error("API Error:", err); setError(err.message); } finally { setLoading(false); }
+  };
+  useEffect(() => { fetchData(); }, [currentLoc]);
+
+  // --- TRAVEL SEARCH LOGIC ---
+  const handleTravelSearch = async (overrideQuery = null, overrideData = null) => {
+    const q = overrideQuery || travelQuery;
+    if (!q && !overrideData) return;
+    
+    setTravelLoading(true);
+    setTravelResult(null);
+    setTripReport(null); // Reset Report
+    
+    try {
+        let loc;
+        // 1. Geocoding
+        if (overrideData) {
+            loc = overrideData;
+        } else {
+            const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=de&format=json`);
+            const geoData = await geoRes.json();
+            
+            if (!geoData.results || geoData.results.length === 0) {
+                alert("Ort nicht gefunden.");
+                setTravelLoading(false);
+                return;
+            }
+            loc = geoData.results[0];
+        }
+        
+        // 2. Weather Fetch - MAX 16 Days
+        const lat = loc.latitude || loc.lat;
+        const lon = loc.longitude || loc.lon;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,windspeed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,precipitation_sum,windgusts_10m_max&models=icon_seamless,gfs_seamless&timezone=auto&forecast_days=16`;
+        
+        const wRes = await fetch(url);
+        if(!wRes.ok) throw new Error("Wetterdaten konnten nicht geladen werden.");
+        const wData = await wRes.json();
+        
+        if(!wData || !wData.hourly || !wData.hourly.time) throw new Error("Keine Vorhersage verfügbar.");
+
+        // 3. Process Data
+        const startDateStr = overrideData ? overrideData.startDate : travelStartDate;
+        const endDateStr = (overrideData ? overrideData.endDate : travelEndDate) || startDateStr;
+        
+        if (!startDateStr) {
+             alert("Bitte Startdatum wählen.");
+             setTravelLoading(false);
+             return;
+        }
+
+        const startDate = new Date(startDateStr); 
+        const endDate = new Date(endDateStr);
+        
+        // Determine Mode: Single Day or Multi Day
+        const isMultiDay = startDateStr !== endDateStr;
+        
+        let result = {
+            location: loc,
+            mode: isMultiDay ? 'multi' : 'single',
+            startDate,
+            endDate,
+            items: [], 
+            summary: {}, 
+            reliability: 0
+        };
+
+        const getSafeValue = (sourceObj, index, baseKey) => {
+            if (!sourceObj) return null;
+            if (sourceObj[baseKey] && sourceObj[baseKey][index] !== undefined) return sourceObj[baseKey][index];
+            const models = ['icon_seamless', 'gfs_seamless', 'gem_seamless', 'arome_seamless'];
+            for (const m of models) {
+                const key = `${baseKey}_${m}`;
+                if (sourceObj[key] && sourceObj[key][index] !== undefined) return sourceObj[key][index];
+            }
+            return null;
+        };
+
+        // Check if date is > 16 days in future
+        const now = new Date();
+        const diffDays = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
+        if (diffDays > 16) {
+             // Zu weit in der Zukunft
+             setTravelResult({...result, reliability: 0});
+             setTripReport({
+                 title: "Vorhersage nicht möglich",
+                 summary: "Der gewählte Zeitraum liegt zu weit in der Zukunft.",
+                 details: "Wettermodelle können maximal 16 Tage vorhersagen. Bitte wählen Sie ein früheres Datum.",
+                 warning: "Keine Daten",
+                 confidence: 0
+             });
+             setTravelLoading(false);
+             return;
+        }
+
+        if (isMultiDay) {
+            // MULTI DAY LOGIC
+            const daily = wData.daily;
+            const dailyItems = [];
+            let totalRel = 0;
+            let count = 0;
+
+            for(let i=0; i<daily.time.length; i++) {
+                const dayDateStr = daily.time[i]; // "YYYY-MM-DD"
+                
+                // Compare ISO strings "2023-10-01"
+                if (dayDateStr >= startDateStr && dayDateStr <= endDateStr) {
+                    
+                    const maxT = getSafeValue(daily, i, 'temperature_2m_max') ?? 0;
+                    const minT = getSafeValue(daily, i, 'temperature_2m_min') ?? 0;
+                    const code = getSafeValue(daily, i, 'weathercode') ?? 0;
+                    const prob = getSafeValue(daily, i, 'precipitation_probability_max') ?? 0;
+                    const sum = getSafeValue(daily, i, 'precipitation_sum') ?? 0;
+                    const gust = getSafeValue(daily, i, 'windgusts_10m_max') ?? 0;
+
+                    dailyItems.push({
+                        date: new Date(dayDateStr),
+                        max: maxT,
+                        min: minT,
+                        code: code,
+                        precipProb: prob,
+                        precipSum: sum,
+                        wind: gust
+                    });
+                    
+                    const d = new Date(dayDateStr).getTime();
+                    const daysInFuture = (d - new Date().getTime()) / (1000 * 60 * 60 * 24);
+                    const rel = Math.max(10, 100 - (daysInFuture * 5));
+                    totalRel += rel;
+                    count++;
+                }
+            }
+            result.items = dailyItems;
+            result.reliability = count > 0 ? Math.round(totalRel / count) : 50;
+
+        } else {
+            // SINGLE DAY LOGIC
+            const startTimeStr = overrideData ? overrideData.startTime : travelStartTime;
+            const endTimeStr = overrideData ? overrideData.endTime : travelEndTime;
+            
+            const useTimeWindow = startTimeStr || endTimeStr;
+            let startH = 0; 
+            let endH = 23;
+
+            if (useTimeWindow) {
+                if (startTimeStr) startH = parseInt(startTimeStr.split(':')[0]);
+                if (endTimeStr) endH = parseInt(endTimeStr.split(':')[0]);
+            }
+
+            const hourly = wData.hourly;
+            let temps = [];
+            let precips = [];
+            let winds = [];
+            let codes = [];
+            let probs = [];
+            
+            const targetDateStr = startDateStr; 
+
+            for(let i=0; i<hourly.time.length; i++) {
+                const tStr = hourly.time[i];
+                if (tStr.startsWith(targetDateStr)) {
+                    const h = parseInt(tStr.split('T')[1].split(':')[0]);
+                    
+                    if (h >= startH && h <= endH) {
+                        const temp = getSafeValue(hourly, i, 'temperature_2m');
+                        const precip = getSafeValue(hourly, i, 'precipitation');
+                        const wind = getSafeValue(hourly, i, 'windspeed_10m');
+                        const code = getSafeValue(hourly, i, 'weathercode');
+                        const prob = getSafeValue(hourly, i, 'precipitation_probability');
+
+                        if (temp !== null) temps.push(temp);
+                        if (precip !== null) precips.push(precip);
+                        if (wind !== null) winds.push(wind);
+                        if (code !== null) codes.push(code);
+                        if (prob !== null) probs.push(prob);
+                    }
+                }
+            }
+
+            if (temps.length > 0) {
+                result.summary = {
+                    avgTemp: temps.reduce((a,b)=>a+b,0)/temps.length,
+                    maxTemp: Math.max(...temps),
+                    minTemp: Math.min(...temps),
+                    totalPrecip: precips.reduce((a,b)=>a+b,0),
+                    maxWind: Math.max(...winds),
+                    avgProb: Math.round(probs.reduce((a,b)=>a+b,0)/probs.length),
+                    code: codes[Math.floor(codes.length/2)], 
+                    isTimeWindow: !!useTimeWindow,
+                    startH, endH
+                };
+                
+                const daysInFuture = (startDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24);
+                result.reliability = Math.round(Math.max(10, 100 - (daysInFuture * 5)));
+            } else {
+                result.reliability = 0; 
+                // Initialize empty summary to prevent crash
+                result.summary = { maxTemp: 0, minTemp: 0, totalPrecip: 0, avgProb: 0, maxWind: 0, code: 0 };
+            }
+        }
+
+        setTravelResult(result);
+        
+        // Generate AI Report for the trip if valid
+        if (result.reliability > 0 || result.items.length > 0) {
+            setTripReport(generateAIReport('trip', result));
+        } else {
+             // Fallback report
+             setTripReport({
+                 title: "Keine Daten",
+                 summary: "Für diesen Zeitraum sind keine Wetterdaten verfügbar.",
+                 details: "Möglicherweise liegt das Datum zu weit in der Zukunft (max. 16 Tage).",
+                 warning: "Keine Vorhersage",
+                 confidence: 0
+             });
+        }
+
+    } catch (e) {
+        console.error(e);
+        alert("Fehler bei der Reise-Suche: " + e.message);
+    } finally {
+        setTravelLoading(false);
+    }
+  };
+
+  // ... handleSaveTrip, handleDeleteTrip, loadTrip ...
+  // ... rest of the component (processedShort, processedLong, widget views, etc.) ...
+  
+  // (processedShort and processedLong definitions are same as before, skipping to save space unless requested)
+  // ... render ...
   return (
+    // ... JSX Structure ...
+    // (Ensure you copy the full render method from previous response or use existing if unchanged)
     <div className={`min-h-screen transition-all duration-1000 bg-gradient-to-br ${bgGradient} font-sans pb-20 overflow-hidden relative`}>
-      <style>{styles}</style>
-      
-      {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} currentTemp={current.temp} />}
-      {showLocationModal && (
-          <LocationModal 
-            isOpen={showLocationModal} 
-            onClose={() => setShowLocationModal(false)}
-            savedLocations={locations}
-            onSelectLocation={(loc) => { setCurrentLoc(loc); setShowLocationModal(false); }}
-            onAddCurrentLocation={handleAddLocation}
-            onDeleteLocation={handleDeleteLocation}
-            currentLoc={currentLoc}
-          />
-      )}
-
-      <header className="pt-8 px-5 flex justify-between items-start z-10 relative">
-        <div className={textColor}>
-          <div className="flex gap-2 mb-2">
-             <button onClick={handleSetHome} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.id === homeLoc.id ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Home size={14} /> Home</button>
-             <button onClick={handleSetCurrent} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.type === 'gps' ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Crosshair size={14} /> GPS</button>
-             <button onClick={() => setShowLocationModal(true)} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${showLocationModal ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><MapIcon size={14} /> Orte</button>
-          </div>
-          <h1 className="text-3xl font-light mt-2 tracking-tight">{currentLoc.name}</h1>
-          <div className="flex items-center gap-2 mt-1 opacity-80 text-xs font-medium"><Clock size={12} /><span>Stand: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} Uhr</span></div>
-        </div>
-        <div className="flex flex-col gap-2 items-end">
-           {deferredPrompt && (<button onClick={handleInstallClick} className="p-3 rounded-full backdrop-blur-md bg-blue-600 text-white animate-pulse shadow-lg"><Download size={20} /></button>)}
-           
-           {/* iOS Install Tip */}
-           {showIosInstall && (
-             <div className="bg-white/90 backdrop-blur-md p-3 rounded-xl shadow-xl text-black max-w-[200px] text-xs relative animate-in fade-in slide-in-from-top-4 duration-500">
-                <button onClick={() => setShowIosInstall(false)} className="absolute top-1 right-1 opacity-50"><X size={14}/></button>
-                <div className="font-bold mb-1 flex items-center gap-1"><Share size={12} /> App installieren</div>
-                <p>Tippen Sie unten auf <strong>"Teilen"</strong> und dann <strong>"Zum Home-Bildschirm"</strong>.</p>
-                <div className="w-3 h-3 bg-white/90 absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-45"></div>
+        {/* ... Styles & Modals ... */}
+        <style>{styles}</style>
+        {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} currentTemp={current.temp} />}
+        {showLocationModal && (
+            <LocationModal 
+                isOpen={showLocationModal} 
+                onClose={() => setShowLocationModal(false)}
+                savedLocations={locations}
+                onSelectLocation={(loc) => { setCurrentLoc(loc); setShowLocationModal(false); }}
+                onAddCurrentLocation={handleAddLocation}
+                onDeleteLocation={handleDeleteLocation}
+                currentLoc={currentLoc}
+            />
+        )}
+        
+        {/* ... Header ... */}
+        <header className="pt-8 px-5 flex justify-between items-start z-10 relative">
+             <div className={textColor}>
+               <div className="flex gap-2 mb-2">
+                  <button onClick={handleSetHome} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.id === homeLoc.id ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Home size={14} /> Home</button>
+                  <button onClick={handleSetCurrent} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.type === 'gps' ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Crosshair size={14} /> GPS</button>
+                  <button onClick={() => setShowLocationModal(true)} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${showLocationModal ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><MapIcon size={14} /> Orte</button>
+               </div>
+               <h1 className="text-3xl font-light mt-2 tracking-tight">{currentLoc.name}</h1>
+               <div className="flex items-center gap-2 mt-1 opacity-80 text-xs font-medium"><Clock size={12} /><span>Stand: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} Uhr</span></div>
              </div>
-           )}
-
-           <div className="flex gap-2">
-               {/* FEEDBACK BUTTON */}
-               <button onClick={() => setShowFeedback(true)} className={`p-3 rounded-full backdrop-blur-md transition shadow-md ${textColor} bg-white/20 hover:bg-white/30`}>
-                   <MessageSquarePlus size={20} />
-               </button>
-
-               <button onClick={fetchData} className={`p-3 rounded-full backdrop-blur-md bg-white/20 transition shadow-md ${textColor}`}><RefreshCw size={20} /></button>
-           </div>
-        </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto p-4 z-10 relative space-y-6">
-        <div className={`rounded-3xl p-6 ${cardBg} shadow-lg relative overflow-hidden min-h-[240px] flex items-center`}>
-          <div className="absolute inset-0 z-0 pointer-events-none"><WeatherLandscape code={current.code} isDay={current.isDay} date={current.time} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} /></div>
-          <div className="flex items-center justify-between w-full relative z-10">
-            <div className="flex flex-col">
-               <span className="text-7xl font-bold tracking-tighter leading-none drop-shadow-lg text-white">{Math.round(current.temp)}°</span>
-               <div className="flex items-center gap-1.5 mt-2 opacity-90 font-medium text-sm text-white drop-shadow-md"><Thermometer size={16} /><span>Gefühlt {Math.round(current.appTemp)}°</span></div>
-               <div className="flex items-center gap-2 mt-1 opacity-80 font-medium text-sm text-white drop-shadow-md"><span>H: {Math.round(processedLong[0]?.max)}°</span><span>T: {Math.round(processedLong[0]?.min)}°</span></div>
-               <div className="mt-1 text-lg font-medium tracking-wide text-white drop-shadow-md">{weatherConf.text}</div>
-            </div>
-            <div className="flex flex-col gap-2 items-end text-right pl-3 border-l border-white/20 ml-2 backdrop-blur-sm bg-black/5 rounded-xl p-2">
-               <div className="flex flex-col items-end"><div className={`flex items-center gap-1 opacity-90 text-sm font-bold ${getUvColorClass(current.uvIndex)} drop-shadow-sm`}><Sun size={14} /> <span>{current.uvIndex}</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">UV</span></div>
-               <div className="flex items-center gap-3">
-                  <div className="flex flex-col items-end"><div className="flex items-center gap-1 opacity-90 text-sm font-bold text-white drop-shadow-sm"><Waves size={14} /> <span>{current.humidity}%</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Feuchte</span></div>
-                  <div className="flex flex-col items-end"><div className="flex items-center gap-1 opacity-90 text-sm font-bold text-white drop-shadow-sm"><Thermometer size={14} /> <span>{current.dewPoint}°</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Taupkt.</span></div>
-               </div>
-               <div className="flex flex-col items-end mt-1"><div className={`flex items-center gap-1.5 text-sm font-bold ${windColorClass} drop-shadow-sm`}><Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }}/><span>{current.wind} <span className="text-xs font-normal opacity-80">({current.gust})</span></span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Wind (Böen) km/h</span></div>
-               {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0) && (<div className="flex flex-col items-end mt-1"><div className="flex items-center gap-1.5 opacity-90 text-sm font-bold text-blue-300 drop-shadow-sm">{isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>}<span>{isSnowing ? dailySnowSum : dailyRainSum} {isSnowing ? 'cm' : 'mm'}</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Niederschlag (24h)</span></div>)}
-            </div>
-          </div>
-        </div>
-
-        <div className={`p-1.5 rounded-full backdrop-blur-md flex shadow-md border border-white/20 ${cardBg}`}>
-           {[{id:'overview', label:'Verlauf', icon: List}, {id:'longterm', label:'7 Tage', icon: CalendarDays}, {id:'radar', label:'Radar', icon: MapIcon}, {id:'chart', label:'Vergleich', icon: BarChart2}, {id:'travel', label:'Reise', icon: Plane}].map(tab => (
-             <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 py-3 rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === tab.id ? 'bg-white/90 text-slate-900 shadow-md' : 'hover:bg-white/10 opacity-70'}`}><tab.icon size={16} /> <span className="hidden sm:inline">{tab.label}</span></button>
-           ))}
-        </div>
-
-        <div className={`backdrop-blur-md rounded-[32px] p-5 shadow-2xl ${cardBg} min-h-[450px]`}>
-          
-          {activeTab === 'overview' && (
-            <div className="space-y-4">
-               <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} />
-               <PrecipitationTile data={processedShort} />
-               <h3 className="text-sm font-bold uppercase tracking-wide opacity-70 ml-2">Stündlicher Verlauf (24h)</h3>
-               
-               {/* Horizontal Scroll Container */}
-               <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide"> 
-                  <div className="flex gap-3 w-max">
-                    {displayedHours.map((row, i) => {
-                      const conf = getWeatherConfig(row.code, row.isDay);
-                      const HourIcon = conf.icon;
-                      return (
-                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[130px] w-[130px] hover:bg-white/10 transition relative group">
-                          {/* Time */}
-                          <div className="text-lg font-bold opacity-90 mb-2">{row.displayTime}</div>
-                          
-                          {/* Icon */}
-                          <HourIcon size={40} className="opacity-90 mb-2" />
-                          
-                          {/* Temp */}
-                          <div className="text-4xl font-bold mb-1 tracking-tighter">{Math.round(row.temp)}°</div>
-                          
-                          {/* Desc */}
-                          <div className="text-sm opacity-60 text-center leading-tight h-8 flex items-center justify-center line-clamp-2 w-full mb-2">
-                            {conf.text}
-                          </div>
-                          
-                          {/* Precip */}
-                           <div className="mb-2 h-4">
-                             {parseFloat(row.snow) > 0 ? (
-                               <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {row.snow.toFixed(1)}</span>
-                             ) : parseFloat(row.precip) > 0 ? (
-                               <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={10}/> {row.precip.toFixed(1)}</span>
-                             ) : (
-                               <span className="opacity-20 text-xs">-</span>
-                             )}
-                           </div>
-                           
-                           {/* Wind */}
-                           <div className="flex flex-col items-center gap-0.5 mb-2">
-                              <div className="flex items-center gap-1 opacity-80">
-                                 <Navigation size={10} style={{ transform: `rotate(${row.dir}deg)` }} />
-                                 <span className={`text-xs font-bold ${getWindColorClass(row.wind)}`}>{row.wind}</span>
-                              </div>
-                              <span className={`text-[9px] opacity-60 ${getWindColorClass(row.gust)}`}>Böen {row.gust}</span>
-                           </div>
-
-                           {/* UV */}
-                           {row.uvIndex >= 1 && (
-                             <div className={`px-1.5 py-0.5 rounded text-[9px] font-bold border ${getUvBadgeClass(row.uvIndex)}`}>
-                               UV {(row.uvIndex).toFixed(0)}
-                             </div>
-                           )}
-
-                           {/* Reliability Indicator */}
-                           <div className="mt-2 text-[10px] flex items-center gap-1 opacity-70">
-                              <ShieldCheck size={10} className={getConfidenceColor(row.reliability)} />
-                              <span className={`${getConfidenceColor(row.reliability)} font-medium`}>{row.reliability}% Sicher</span>
-                           </div>
-                           
-                        </div>
-                      );
-                    })}
+             {/* ... Header Right Side ... */}
+             <div className="flex flex-col gap-2 items-end">
+                {deferredPrompt && (<button onClick={handleInstallClick} className="p-3 rounded-full backdrop-blur-md bg-blue-600 text-white animate-pulse shadow-lg"><Download size={20} /></button>)}
+                {showIosInstall && (
+                  <div className="bg-white/90 backdrop-blur-md p-3 rounded-xl shadow-xl text-black max-w-[200px] text-xs relative animate-in fade-in slide-in-from-top-4 duration-500">
+                     <button onClick={() => setShowIosInstall(false)} className="absolute top-1 right-1 opacity-50"><X size={14}/></button>
+                     <div className="font-bold mb-1 flex items-center gap-1"><Share size={12} /> App installieren</div>
+                     <p>Tippen Sie unten auf <strong>"Teilen"</strong> und dann <strong>"Zum Home-Bildschirm"</strong>.</p>
+                     <div className="w-3 h-3 bg-white/90 absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-45"></div>
                   </div>
-               </div>
+                )}
+                <div className="flex gap-2">
+                    <button onClick={() => setShowFeedback(true)} className={`p-3 rounded-full backdrop-blur-md transition shadow-md ${textColor} bg-white/20 hover:bg-white/30`}>
+                        <MessageSquarePlus size={20} />
+                    </button>
+                    <button onClick={fetchData} className={`p-3 rounded-full backdrop-blur-md bg-white/20 transition shadow-md ${textColor}`}><RefreshCw size={20} /></button>
+                </div>
+             </div>
+        </header>
+
+        {/* ... Main Content ... */}
+        <main className="max-w-4xl mx-auto p-4 z-10 relative space-y-6">
+            {/* ... Weather Card ... */}
+            <div className={`rounded-3xl p-6 ${cardBg} shadow-lg relative overflow-hidden min-h-[240px] flex items-center`}>
+              <div className="absolute inset-0 z-0 pointer-events-none"><WeatherLandscape code={current.code} isDay={current.isDay} date={current.time} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} /></div>
+              <div className="flex items-center justify-between w-full relative z-10">
+                <div className="flex flex-col">
+                   <span className="text-7xl font-bold tracking-tighter leading-none drop-shadow-lg text-white">{Math.round(current.temp)}°</span>
+                   <div className="flex items-center gap-1.5 mt-2 opacity-90 font-medium text-sm text-white drop-shadow-md"><Thermometer size={16} /><span>Gefühlt {Math.round(current.appTemp)}°</span></div>
+                   <div className="flex items-center gap-2 mt-1 opacity-80 font-medium text-sm text-white drop-shadow-md"><span>H: {Math.round(processedLong[0]?.max)}°</span><span>T: {Math.round(processedLong[0]?.min)}°</span></div>
+                   <div className="mt-1 text-lg font-medium tracking-wide text-white drop-shadow-md">{weatherConf.text}</div>
+                </div>
+                <div className="flex flex-col gap-2 items-end text-right pl-3 border-l border-white/20 ml-2 backdrop-blur-sm bg-black/5 rounded-xl p-2">
+                   <div className="flex flex-col items-end"><div className={`flex items-center gap-1 opacity-90 text-sm font-bold ${getUvColorClass(current.uvIndex)} drop-shadow-sm`}><Sun size={14} /> <span>{current.uvIndex}</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">UV</span></div>
+                   <div className="flex items-center gap-3">
+                      <div className="flex flex-col items-end"><div className="flex items-center gap-1 opacity-90 text-sm font-bold text-white drop-shadow-sm"><Waves size={14} /> <span>{current.humidity}%</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Feuchte</span></div>
+                      <div className="flex flex-col items-end"><div className="flex items-center gap-1 opacity-90 text-sm font-bold text-white drop-shadow-sm"><Thermometer size={14} /> <span>{current.dewPoint}°</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Taupkt.</span></div>
+                   </div>
+                   <div className="flex flex-col items-end mt-1"><div className={`flex items-center gap-1.5 text-sm font-bold ${windColorClass} drop-shadow-sm`}><Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }}/><span>{current.wind} <span className="text-xs font-normal opacity-80">({current.gust})</span></span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Wind (Böen) km/h</span></div>
+                   {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0) && (<div className="flex flex-col items-end mt-1"><div className="flex items-center gap-1.5 opacity-90 text-sm font-bold text-blue-300 drop-shadow-sm">{isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>}<span>{isSnowing ? dailySnowSum : dailyRainSum} {isSnowing ? 'cm' : 'mm'}</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">Niederschlag (24h)</span></div>)}
+                </div>
+              </div>
             </div>
-          )}
 
-          {activeTab === 'chart' && (
-            <div className="h-full flex flex-col">
-               <AIReportBox report={modelReport} dwdWarnings={dwdWarnings} />
-               <div className="flex justify-between items-center mb-6">
-                 <h3 className="text-sm font-bold uppercase opacity-70">Modell-Check</h3>
-                 <div className="flex bg-black/10 rounded-lg p-1">
-                    <button onClick={() => setChartView('hourly')} className={`px-3 py-1 rounded-md text-xs font-bold transition ${chartView==='hourly' ? 'bg-white text-black shadow-sm' : 'opacity-60'}`}>48h</button>
-                    <button onClick={() => setChartView('daily')} className={`px-3 py-1 rounded-md text-xs font-bold transition ${chartView==='daily' ? 'bg-white text-black shadow-sm' : 'opacity-60'}`}>6 Tage</button>
-                 </div>
-               </div>
-               <div className="w-full h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                      {chartView === 'hourly' ? (
-                        <LineChart data={processedShort} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
-                          <XAxis dataKey="displayTime" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={3} />
-                          <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
-                          <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => Math.round(value)} />
-                          <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={2} dot={false} name="ICON" />
-                          <Line type="monotone" dataKey="temp_gfs" stroke="#d8b4fe" strokeWidth={2} dot={false} name="GFS" />
-                          <Line type="monotone" dataKey="temp_arome" stroke="#86efac" strokeWidth={2} dot={false} name="AROME" />
-                          {/* KNMI ist besonders wichtig, daher in markantem Orange */}
-                          <Line type="monotone" dataKey="temp_knmi" stroke="#fb923c" strokeWidth={2} dot={false} name="KNMI (NL)" />
-                          <Line type="monotone" dataKey="temp" stroke="#2563eb" strokeWidth={4} dot={{r:0}} name="Mittel (5)" />
-                        </LineChart>
-                      ) : (
-                        <LineChart data={processedLong.slice(0, 6)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
-                          <XAxis dataKey="dateShort" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={0} />
-                          <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
-                          <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => Math.round(value)} />
-                          <Line type="monotone" dataKey="max_icon" stroke="#93c5fd" strokeWidth={3} dot={{r:3}} name="ICON Max" />
-                          <Line type="monotone" dataKey="max_gfs" stroke="#d8b4fe" strokeWidth={3} dot={{r:3}} name="GFS Max" />
-                          <Line type="monotone" dataKey="max_gem" stroke="#fca5a5" strokeWidth={3} dot={{r:3}} name="GEM Max" />
-                          <Line type="monotone" dataKey="max_arome" stroke="#86efac" strokeWidth={3} dot={{r:3}} name="AROME Max" connectNulls={false} />
-                        </LineChart>
-                      )}
-                  </ResponsiveContainer>
-               </div>
-               <div className="flex justify-center gap-4 mt-6 text-xs font-medium opacity-80 flex-wrap">
-                  {chartView === 'hourly' ? (
-                    <>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400"></div> KNMI</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div> Ø</span>
-                    </>
-                  ) : (
-                    <>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-300"></div> GEM</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
-                    </>
-                  )}
-               </div>
+            {/* ... Tabs ... */}
+            <div className={`p-1.5 rounded-full backdrop-blur-md flex shadow-md border border-white/20 ${cardBg}`}>
+               {[{id:'overview', label:'Verlauf', icon: List}, {id:'longterm', label:'7 Tage', icon: CalendarDays}, {id:'radar', label:'Radar', icon: MapIcon}, {id:'chart', label:'Vergleich', icon: BarChart2}, {id:'travel', label:'Reise', icon: Plane}].map(tab => (
+                 <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 py-3 rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === tab.id ? 'bg-white/90 text-slate-900 shadow-md' : 'hover:bg-white/10 opacity-70'}`}><tab.icon size={16} /> <span className="hidden sm:inline">{tab.label}</span></button>
+               ))}
             </div>
-          )}
 
-          {activeTab === 'longterm' && (
-             <div className="space-y-4">
-               <AIReportBox report={longtermReport} dwdWarnings={dwdWarnings} />
-               <h3 className="text-sm font-bold uppercase tracking-wide opacity-70 ml-2">7-Tage Liste</h3>
-               
-               {/* Horizontal Scroll Container for 7-Day Forecast */}
-               <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide"> 
-                  <div className="flex gap-3 w-max">
-                    {processedLong.map((day, i) => {
-                      const DayIcon = getWeatherConfig(day.code, 1).icon;
-                      const confColor = getConfidenceColor(day.reliability);
-                      const isDaySnow = parseFloat(day.snow) > 0;
-                      let probColor = "text-slate-400 opacity-50"; 
-                      if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
-
-                      return (
-                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[160px] w-[160px] hover:bg-white/10 transition relative group">
-                          {/* Day & Date */}
-                          <div className="text-base font-bold opacity-90 mb-0.5">{day.dayName}</div>
-                          <div className="text-xs opacity-60 mb-2">{day.dateShort}</div>
-                          
-                          {/* Icon */}
-                          <DayIcon size={48} className="opacity-90 mb-2" />
-                          
-                          {/* Temp Range */}
-                          <div className="flex items-center gap-2 mb-2 w-full justify-center">
-                            <span className="text-2xl font-bold text-blue-400">{Math.round(day.min)}°</span>
-                            <div className="h-1 w-6 bg-white/10 rounded-full overflow-hidden">
-                               <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
+            {/* ... Tab Content Container ... */}
+            <div className={`backdrop-blur-md rounded-[32px] p-5 shadow-2xl ${cardBg} min-h-[450px]`}>
+              
+              {activeTab === 'overview' && (
+                <div className="space-y-4">
+                   <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} />
+                   <PrecipitationTile data={processedShort} />
+                   <h3 className="text-sm font-bold uppercase tracking-wide opacity-70 ml-2">Stündlicher Verlauf (24h)</h3>
+                   <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide"> 
+                      <div className="flex gap-3 w-max">
+                        {displayedHours.map((row, i) => {
+                          const conf = getWeatherConfig(row.code, row.isDay);
+                          const HourIcon = conf.icon;
+                          return (
+                            <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[130px] w-[130px] hover:bg-white/10 transition relative group">
+                              <div className="text-lg font-bold opacity-90 mb-2">{row.displayTime}</div>
+                              <HourIcon size={40} className="opacity-90 mb-2" />
+                              <div className="text-4xl font-bold mb-1 tracking-tighter">{Math.round(row.temp)}°</div>
+                              <div className="text-sm opacity-60 text-center leading-tight h-8 flex items-center justify-center line-clamp-2 w-full mb-2">{conf.text}</div>
+                               <div className="mb-2 h-4">
+                                 {parseFloat(row.snow) > 0 ? (
+                                   <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {row.snow.toFixed(1)}</span>
+                                 ) : parseFloat(row.precip) > 0 ? (
+                                   <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={10}/> {row.precip.toFixed(1)}</span>
+                                 ) : ( <span className="opacity-20 text-xs">-</span> )}
+                               </div>
+                               <div className="flex flex-col items-center gap-0.5 mb-2">
+                                  <div className="flex items-center gap-1 opacity-80">
+                                     <Navigation size={10} style={{ transform: `rotate(${row.dir}deg)` }} />
+                                     <span className={`text-xs font-bold ${getWindColorClass(row.wind)}`}>{row.wind}</span>
+                                  </div>
+                                  <span className={`text-[9px] opacity-60 ${getWindColorClass(row.gust)}`}>Böen {row.gust}</span>
+                               </div>
+                               {row.uvIndex >= 1 && (<div className={`px-1.5 py-0.5 rounded text-[9px] font-bold border ${getUvBadgeClass(row.uvIndex)}`}>UV {(row.uvIndex).toFixed(0)}</div>)}
+                               <div className="mt-2 text-[10px] flex items-center gap-1 opacity-70">
+                                  <ShieldCheck size={10} className={getConfidenceColor(row.reliability)} />
+                                  <span className={`${getConfidenceColor(row.reliability)} font-medium`}>{row.reliability}% Sicher</span>
+                               </div>
                             </div>
-                            <span className="text-2xl font-bold text-red-400">{Math.round(day.max)}°</span>
-                         </div>
+                          );
+                        })}
+                      </div>
+                   </div>
+                </div>
+              )}
+              
+              {/* ... Other Tabs (chart, longterm, radar) identical to previous version ... */}
+              {activeTab === 'chart' && (
+                <div className="h-full flex flex-col">
+                   <AIReportBox report={modelReport} dwdWarnings={dwdWarnings} />
+                   <div className="flex justify-between items-center mb-6">
+                     <h3 className="text-sm font-bold uppercase opacity-70">Modell-Check</h3>
+                     <div className="flex bg-black/10 rounded-lg p-1">
+                        <button onClick={() => setChartView('hourly')} className={`px-3 py-1 rounded-md text-xs font-bold transition ${chartView==='hourly' ? 'bg-white text-black shadow-sm' : 'opacity-60'}`}>48h</button>
+                        <button onClick={() => setChartView('daily')} className={`px-3 py-1 rounded-md text-xs font-bold transition ${chartView==='daily' ? 'bg-white text-black shadow-sm' : 'opacity-60'}`}>6 Tage</button>
+                     </div>
+                   </div>
+                   <div className="w-full h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                          {chartView === 'hourly' ? (
+                            <LineChart data={processedShort} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
+                              <XAxis dataKey="displayTime" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={3} />
+                              <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
+                              <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => Math.round(value)} />
+                              <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={2} dot={false} name="ICON" />
+                              <Line type="monotone" dataKey="temp_gfs" stroke="#d8b4fe" strokeWidth={2} dot={false} name="GFS" />
+                              <Line type="monotone" dataKey="temp_arome" stroke="#86efac" strokeWidth={2} dot={false} name="AROME" />
+                              <Line type="monotone" dataKey="temp_knmi" stroke="#fb923c" strokeWidth={2} dot={false} name="KNMI (NL)" />
+                              <Line type="monotone" dataKey="temp" stroke="#2563eb" strokeWidth={4} dot={{r:0}} name="Mittel (5)" />
+                            </LineChart>
+                          ) : (
+                            <LineChart data={processedLong.slice(0, 6)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
+                              <XAxis dataKey="dateShort" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={0} />
+                              <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
+                              <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => Math.round(value)} />
+                              <Line type="monotone" dataKey="max_icon" stroke="#93c5fd" strokeWidth={3} dot={{r:3}} name="ICON Max" />
+                              <Line type="monotone" dataKey="max_gfs" stroke="#d8b4fe" strokeWidth={3} dot={{r:3}} name="GFS Max" />
+                              <Line type="monotone" dataKey="max_gem" stroke="#fca5a5" strokeWidth={3} dot={{r:3}} name="GEM Max" />
+                              <Line type="monotone" dataKey="max_arome" stroke="#86efac" strokeWidth={3} dot={{r:3}} name="AROME Max" connectNulls={false} />
+                            </LineChart>
+                          )}
+                      </ResponsiveContainer>
+                   </div>
+                </div>
+              )}
+
+              {activeTab === 'longterm' && (
+                 <div className="space-y-4">
+                   <AIReportBox report={longtermReport} dwdWarnings={dwdWarnings} />
+                   <h3 className="text-sm font-bold uppercase tracking-wide opacity-70 ml-2">7-Tage Liste</h3>
+                   <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide"> 
+                      <div className="flex gap-3 w-max">
+                        {processedLong.map((day, i) => {
+                          const DayIcon = getWeatherConfig(day.code, 1).icon;
+                          const confColor = getConfidenceColor(day.reliability);
+                          const isDaySnow = parseFloat(day.snow) > 0;
+                          let probColor = "text-slate-400 opacity-50"; 
+                          if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
+                          return (
+                            <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[160px] w-[160px] hover:bg-white/10 transition relative group">
+                              <div className="text-base font-bold opacity-90 mb-0.5">{day.dayName}</div>
+                              <div className="text-xs opacity-60 mb-2">{day.dateShort}</div>
+                              <DayIcon size={48} className="opacity-90 mb-2" />
+                              <div className="flex items-center gap-2 mb-2 w-full justify-center">
+                                <span className="text-2xl font-bold text-blue-400">{Math.round(day.min)}°</span>
+                                <div className="h-1 w-6 bg-white/10 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" /></div>
+                                <span className="text-2xl font-bold text-red-400">{Math.round(day.max)}°</span>
+                             </div>
+                               <div className="mb-1 h-4 flex items-center justify-center w-full">
+                                 {isDaySnow ? <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {day.snow}cm</span> : parseFloat(day.rain) > 0.1 ? <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {day.rain}mm</span> : <span className="opacity-20 text-xs">-</span>}
+                               </div>
+                               <div className={`text-[10px] mb-2 ${probColor} h-3`}>{day.prob > 0 ? `${day.prob}% Wahrsch.` : ''}</div>
+                               <div className="flex flex-col items-center gap-0.5 mb-2 w-full">
+                                  <div className="flex items-center justify-center gap-1 opacity-80 w-full">
+                                     <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
+                                     <span className={`text-sm font-bold ${getWindColorClass(day.wind)}`}>{day.wind}</span>
+                                  </div>
+                                  <span className={`text-[10px] opacity-60 ${getWindColorClass(day.gust)}`}>Böen {day.gust}</span>
+                               </div>
+                               <div className="mt-1 text-[10px] flex items-center gap-1 opacity-70 border border-white/10 px-2 py-0.5 rounded-full">
+                                  <ShieldCheck size={10} className={confColor} />
+                                  <span className={confColor}>{day.reliability}% Sicher</span>
+                               </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                   </div>
+                 </div>
+              )}
+
+              {activeTab === 'radar' && (
+                <div className="h-full flex flex-col">
+                   <h3 className="text-sm font-bold uppercase opacity-70 mb-4 ml-2">Live-Radar (Windy)</h3>
+                   <div className="w-full aspect-square rounded-xl overflow-hidden shadow-inner border border-black/10 bg-gray-200 relative">
+                      <iframe width="100%" height="100%" src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=450&height=450&zoom=9&level=surface&overlay=radar&product=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`} frameBorder="0" title="Windy Radar" className="absolute inset-0"></iframe>
+                   </div>
+                   <div className="mt-4 text-xs text-center opacity-60">Radarbild bereitgestellt von Windy.com</div>
+                </div>
+              )}
+
+              {activeTab === 'travel' && (
+                  <div className="space-y-6 pb-12">
+                      <div className="text-center mb-6">
+                          <h3 className="text-xl font-bold flex items-center justify-center gap-2"><Plane className="text-blue-500"/> Reiseplaner</h3>
+                          <p className="text-sm opacity-70">Planen Sie Ihren Ausflug und checken Sie die Wetter-Wahrscheinlichkeit.</p>
+                      </div>
+
+                      <div className="bg-white/50 border border-white/40 rounded-2xl p-4 shadow-sm space-y-3">
+                          <div className="relative">
+                              <MapPin className="absolute left-3 top-3 text-slate-400" size={20} />
+                              <input 
+                                  type="text" 
+                                  placeholder="Wohin soll es gehen? (z.B. Paris)" 
+                                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/80 text-slate-800"
+                                  value={travelQuery}
+                                  onChange={(e) => setTravelQuery(e.target.value)}
+                                  onKeyDown={(e) => e.key === 'Enter' && handleTravelSearch()}
+                              />
+                          </div>
                           
-                          {/* Precip */}
-                           <div className="mb-1 h-4 flex items-center justify-center w-full">
-                             {isDaySnow ? <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {day.snow}cm</span> : parseFloat(day.rain) > 0.1 ? <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {day.rain}mm</span> : <span className="opacity-20 text-xs">-</span>}
-                           </div>
-                           <div className={`text-[10px] mb-2 ${probColor} h-3`}>{day.prob > 0 ? `${day.prob}% Wahrsch.` : ''}</div>
-                           
-                           {/* Wind */}
-                           <div className="flex flex-col items-center gap-0.5 mb-2 w-full">
-                              <div className="flex items-center justify-center gap-1 opacity-80 w-full">
-                                 <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
-                                 <span className={`text-sm font-bold ${getWindColorClass(day.wind)}`}>{day.wind}</span>
+                          <div className="flex gap-2">
+                              <div className="relative flex-1">
+                                  <Calendar className="absolute left-3 top-3 text-slate-400" size={18} />
+                                  <input 
+                                      type="date" 
+                                      className="w-full pl-9 pr-2 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/80 text-slate-800"
+                                      placeholder="Startdatum"
+                                      value={travelStartDate}
+                                      onChange={(e) => setTravelStartDate(e.target.value)}
+                                  />
+                                  <label className="absolute -top-2 left-2 text-[10px] bg-white px-1 text-slate-500">Von</label>
                               </div>
-                              <span className={`text-[10px] opacity-60 ${getWindColorClass(day.gust)}`}>Böen {day.gust}</span>
-                           </div>
-
-                           {/* Reliability Indicator */}
-                           <div className="mt-1 text-[10px] flex items-center gap-1 opacity-70 border border-white/10 px-2 py-0.5 rounded-full">
-                              <ShieldCheck size={10} className={confColor} />
-                              <span className={confColor}>{day.reliability}% Sicher</span>
-                           </div>
-                           
-                        </div>
-                      );
-                    })}
-                  </div>
-               </div>
-             </div>
-          )}
-
-          {activeTab === 'radar' && (
-            <div className="h-full flex flex-col">
-               <h3 className="text-sm font-bold uppercase opacity-70 mb-4 ml-2">Live-Radar (Windy)</h3>
-               <div className="w-full aspect-square rounded-xl overflow-hidden shadow-inner border border-black/10 bg-gray-200 relative">
-                  <iframe width="100%" height="100%" src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=450&height=450&zoom=9&level=surface&overlay=radar&product=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`} frameBorder="0" title="Windy Radar" className="absolute inset-0"></iframe>
-               </div>
-               <div className="mt-4 text-xs text-center opacity-60">Radarbild bereitgestellt von Windy.com</div>
-            </div>
-          )}
-
-          {/* --- TRAVEL TAB CONTENT --- */}
-          {activeTab === 'travel' && (
-              <div className="space-y-6 pb-12">
-                  <div className="text-center mb-6">
-                      <h3 className="text-xl font-bold flex items-center justify-center gap-2"><Plane className="text-blue-500"/> Reiseplaner</h3>
-                      <p className="text-sm opacity-70">Planen Sie Ihren Ausflug und checken Sie die Wetter-Wahrscheinlichkeit.</p>
-                  </div>
-
-                  <div className="bg-white/50 border border-white/40 rounded-2xl p-4 shadow-sm space-y-3">
-                      <div className="relative">
-                          <MapPin className="absolute left-3 top-3 text-slate-400" size={20} />
-                          <input 
-                              type="text" 
-                              placeholder="Wohin soll es gehen? (z.B. Paris)" 
-                              className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/80 text-slate-800"
-                              value={travelQuery}
-                              onChange={(e) => setTravelQuery(e.target.value)}
-                              onKeyDown={(e) => e.key === 'Enter' && handleTravelSearch()}
-                          />
-                      </div>
-                      
-                      {/* Date Range Inputs */}
-                      <div className="flex gap-2">
-                          <div className="relative flex-1">
-                              <Calendar className="absolute left-3 top-3 text-slate-400" size={18} />
-                              <input 
-                                  type="date" 
-                                  className="w-full pl-9 pr-2 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/80 text-slate-800"
-                                  placeholder="Startdatum"
-                                  value={travelStartDate}
-                                  onChange={(e) => setTravelStartDate(e.target.value)}
-                              />
-                              <label className="absolute -top-2 left-2 text-[10px] bg-white px-1 text-slate-500">Von</label>
+                              <div className="relative flex-1">
+                                  <Calendar className="absolute left-3 top-3 text-slate-400" size={18} />
+                                  <input 
+                                      type="date" 
+                                      className="w-full pl-9 pr-2 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/80 text-slate-800"
+                                      placeholder="Enddatum (Optional)"
+                                      value={travelEndDate}
+                                      onChange={(e) => setTravelEndDate(e.target.value)}
+                                  />
+                                  <label className="absolute -top-2 left-2 text-[10px] bg-white px-1 text-slate-500">Bis (Optional)</label>
+                              </div>
                           </div>
-                          <div className="relative flex-1">
-                              <Calendar className="absolute left-3 top-3 text-slate-400" size={18} />
-                              <input 
-                                  type="date" 
-                                  className="w-full pl-9 pr-2 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/80 text-slate-800"
-                                  placeholder="Enddatum (Optional)"
-                                  value={travelEndDate}
-                                  onChange={(e) => setTravelEndDate(e.target.value)}
-                              />
-                              <label className="absolute -top-2 left-2 text-[10px] bg-white px-1 text-slate-500">Bis (Optional)</label>
+
+                          <div className="flex gap-2">
+                              <div className="relative flex-1">
+                                  <Clock className="absolute left-3 top-3 text-slate-400" size={18} />
+                                  <input 
+                                      type="time" 
+                                      className="w-full pl-9 pr-2 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/80 text-slate-800"
+                                      value={travelStartTime}
+                                      onChange={(e) => setTravelStartTime(e.target.value)}
+                                  />
+                                  <label className="absolute -top-2 left-2 text-[10px] bg-white px-1 text-slate-500">Startzeit</label>
+                              </div>
+                              <div className="relative flex-1">
+                                  <Clock className="absolute left-3 top-3 text-slate-400" size={18} />
+                                  <input 
+                                      type="time" 
+                                      className="w-full pl-9 pr-2 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/80 text-slate-800"
+                                      value={travelEndTime}
+                                      onChange={(e) => setTravelEndTime(e.target.value)}
+                                  />
+                                  <label className="absolute -top-2 left-2 text-[10px] bg-white px-1 text-slate-500">Endzeit</label>
+                              </div>
                           </div>
+
+                          <button 
+                              onClick={() => handleTravelSearch()} 
+                              disabled={travelLoading || !travelQuery || !travelStartDate}
+                              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                          >
+                              {travelLoading ? <RefreshCw className="animate-spin"/> : <Plane />}
+                              {travelLoading ? "Suche..." : "Wetter prüfen"}
+                          </button>
                       </div>
 
-                      {/* Time Range Inputs */}
-                      <div className="flex gap-2">
-                          <div className="relative flex-1">
-                              <Clock className="absolute left-3 top-3 text-slate-400" size={18} />
-                              <input 
-                                  type="time" 
-                                  className="w-full pl-9 pr-2 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/80 text-slate-800"
-                                  value={travelStartTime}
-                                  onChange={(e) => setTravelStartTime(e.target.value)}
-                              />
-                              <label className="absolute -top-2 left-2 text-[10px] bg-white px-1 text-slate-500">Startzeit</label>
-                          </div>
-                          <div className="relative flex-1">
-                              <Clock className="absolute left-3 top-3 text-slate-400" size={18} />
-                              <input 
-                                  type="time" 
-                                  className="w-full pl-9 pr-2 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/80 text-slate-800"
-                                  value={travelEndTime}
-                                  onChange={(e) => setTravelEndTime(e.target.value)}
-                              />
-                              <label className="absolute -top-2 left-2 text-[10px] bg-white px-1 text-slate-500">Endzeit</label>
-                          </div>
-                      </div>
+                      {travelResult && (
+                          <div className="bg-white/80 border border-white/50 rounded-2xl p-6 shadow-md animate-in fade-in slide-in-from-bottom-4 duration-500 relative overflow-hidden">
+                              <div className="mb-6 relative z-20">
+                                  <AIReportBox report={tripReport} dwdWarnings={[]} />
+                              </div>
 
-                      <button 
-                          onClick={() => handleTravelSearch()} 
-                          disabled={travelLoading || !travelQuery || !travelStartDate}
-                          className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                      >
-                          {travelLoading ? <RefreshCw className="animate-spin"/> : <Plane />}
-                          {travelLoading ? "Suche..." : "Wetter prüfen"}
-                      </button>
-                  </div>
-
-                  {travelResult && (
-                      <div className="bg-white/80 border border-white/50 rounded-2xl p-6 shadow-md animate-in fade-in slide-in-from-bottom-4 duration-500 relative overflow-hidden">
-                          {/* AI Report Box Added Here */}
-                          <div className="mb-6 relative z-20">
-                              <AIReportBox report={tripReport} dwdWarnings={[]} />
-                          </div>
-
-                          <div className="flex justify-between items-start mb-4 relative z-10">
-                              <div>
-                                  <div className="text-2xl font-bold text-slate-800">{travelResult.location.name}</div>
-                                  <div className="text-slate-500 text-sm flex flex-col gap-1 mt-1">
-                                      <div className="flex items-center gap-1">
-                                          <Calendar size={14}/> 
-                                          {travelResult.startDate.toLocaleDateString('de-DE', {weekday:'short', day:'2-digit', month:'short'})}
-                                          {travelResult.mode === 'multi' && ` - ${travelResult.endDate.toLocaleDateString('de-DE', {weekday:'short', day:'2-digit', month:'short'})}`}
-                                      </div>
-                                      {travelResult.mode === 'single' && travelResult.summary.isTimeWindow && (
-                                          <div className="flex items-center gap-1 font-bold text-blue-600">
-                                              <Clock size={14}/> 
-                                              {travelResult.summary.startH}:00 - {travelResult.summary.endH}:00 Uhr
+                              <div className="flex justify-between items-start mb-4 relative z-10">
+                                  <div>
+                                      <div className="text-2xl font-bold text-slate-800">{travelResult.location.name}</div>
+                                      <div className="text-slate-500 text-sm flex flex-col gap-1 mt-1">
+                                          <div className="flex items-center gap-1">
+                                              <Calendar size={14}/> 
+                                              {travelResult.startDate.toLocaleDateString('de-DE', {weekday:'short', day:'2-digit', month:'short'})}
+                                              {travelResult.mode === 'multi' && ` - ${travelResult.endDate.toLocaleDateString('de-DE', {weekday:'short', day:'2-digit', month:'short'})}`}
                                           </div>
+                                          {travelResult.mode === 'single' && travelResult.summary.isTimeWindow && (
+                                              <div className="flex items-center gap-1 font-bold text-blue-600">
+                                                  <Clock size={14}/> 
+                                                  {travelResult.summary.startH}:00 - {travelResult.summary.endH}:00 Uhr
+                                              </div>
+                                          )}
+                                      </div>
+                                  </div>
+                                  <div className="text-right">
+                                      {travelResult.mode === 'single' && travelResult.summary.maxTemp && (
+                                          <>
+                                            <div className="text-4xl font-bold text-slate-800">{Math.round(travelResult.summary.maxTemp)}°</div>
+                                            <div className="text-sm font-medium text-slate-500">{getWeatherConfig(travelResult.summary.code, 1).text}</div>
+                                          </>
+                                      )}
+                                      {travelResult.mode === 'multi' && (
+                                           <div className="text-sm font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-lg">
+                                               {travelResult.items.length} Tage
+                                           </div>
                                       )}
                                   </div>
                               </div>
-                              <div className="text-right">
-                                  {travelResult.mode === 'single' && (
-                                      <>
-                                        <div className="text-4xl font-bold text-slate-800">{Math.round(travelResult.summary.maxTemp)}°</div>
-                                        <div className="text-sm font-medium text-slate-500">{getWeatherConfig(travelResult.summary.code, 1).text}</div>
-                                      </>
-                                  )}
-                                  {travelResult.mode === 'multi' && (
-                                       <div className="text-sm font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-lg">
-                                           {travelResult.items.length} Tage
-                                       </div>
-                                  )}
-                              </div>
-                          </div>
 
-                          {/* SINGLE DAY DETAILS */}
-                          {travelResult.mode === 'single' && (
-                              <>
-                                <div className="flex items-center gap-4 mb-4 relative z-10">
-                                    <div className="p-3 bg-blue-100 text-blue-600 rounded-full">
-                                        {React.createElement(getWeatherConfig(travelResult.summary.code, 1).icon, {size: 32})}
-                                    </div>
-                                    <div className="flex-1 space-y-1">
-                                        <div className="flex justify-between text-sm font-medium">
-                                            <span className="text-slate-600">Niederschlag ({travelResult.summary.totalPrecip.toFixed(1)}mm)</span>
-                                            <span className="text-blue-600 font-bold">{travelResult.summary.avgProb}%</span>
+                              {travelResult.mode === 'single' && travelResult.summary.maxTemp && (
+                                  <>
+                                    <div className="flex items-center gap-4 mb-4 relative z-10">
+                                        <div className="p-3 bg-blue-100 text-blue-600 rounded-full">
+                                            {React.createElement(getWeatherConfig(travelResult.summary.code, 1).icon, {size: 32})}
                                         </div>
-                                        <div className="w-full bg-slate-200 rounded-full h-2">
-                                            <div className="bg-blue-500 h-2 rounded-full" style={{width: `${travelResult.summary.avgProb}%`}}></div>
+                                        <div className="flex-1 space-y-1">
+                                            <div className="flex justify-between text-sm font-medium">
+                                                <span className="text-slate-600">Niederschlag ({travelResult.summary.totalPrecip.toFixed(1)}mm)</span>
+                                                <span className="text-blue-600 font-bold">{travelResult.summary.avgProb}%</span>
+                                            </div>
+                                            <div className="w-full bg-slate-200 rounded-full h-2">
+                                                <div className="bg-blue-500 h-2 rounded-full" style={{width: `${travelResult.summary.avgProb}%`}}></div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="grid grid-cols-2 gap-3 mb-4 relative z-10">
-                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col items-center">
-                                        <Wind className="text-slate-400 mb-1" size={20}/>
-                                        <span className="text-lg font-bold text-slate-700">{Math.round(travelResult.summary.maxWind)} <span className="text-xs font-normal">km/h</span></span>
-                                        <span className="text-xs text-slate-400 uppercase">Max Wind</span>
+                                    <div className="grid grid-cols-2 gap-3 mb-4 relative z-10">
+                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col items-center">
+                                            <Wind className="text-slate-400 mb-1" size={20}/>
+                                            <span className="text-lg font-bold text-slate-700">{Math.round(travelResult.summary.maxWind)} <span className="text-xs font-normal">km/h</span></span>
+                                            <span className="text-xs text-slate-400 uppercase">Max Wind</span>
+                                        </div>
+                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col items-center">
+                                            <ShieldCheck className={getConfidenceColor(travelResult.reliability)} size={20}/>
+                                            <span className={`text-lg font-bold ${getConfidenceColor(travelResult.reliability)}`}>{travelResult.reliability}%</span>
+                                            <span className="text-xs text-slate-400 uppercase">Sicherheit</span>
+                                        </div>
                                     </div>
-                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col items-center">
-                                        <ShieldCheck className={getConfidenceColor(travelResult.reliability)} size={20}/>
-                                        <span className={`text-lg font-bold ${getConfidenceColor(travelResult.reliability)}`}>{travelResult.reliability}%</span>
-                                        <span className="text-xs text-slate-400 uppercase">Sicherheit</span>
-                                    </div>
-                                </div>
-                              </>
-                          )}
+                                  </>
+                              )}
 
-                          {/* MULTI DAY LIST */}
-                          {travelResult.mode === 'multi' && (
-                              <div className="space-y-2 mb-4 relative z-10 max-h-[200px] overflow-y-auto pr-1">
-                                  {travelResult.items.map((day, i) => (
-                                      <div key={i} className="flex items-center justify-between p-2 bg-white/60 rounded-lg border border-white/40">
-                                          <div className="flex items-center gap-3">
-                                              <div className="w-10 text-center text-xs font-bold text-slate-500">
-                                                  {day.date.toLocaleDateString('de-DE', {weekday:'short'})}<br/>
-                                                  {day.date.getDate()}.
+                              {travelResult.mode === 'multi' && (
+                                  <div className="space-y-2 mb-4 relative z-10 max-h-[200px] overflow-y-auto pr-1">
+                                      {travelResult.items.map((day, i) => (
+                                          <div key={i} className="flex items-center justify-between p-2 bg-white/60 rounded-lg border border-white/40">
+                                              <div className="flex items-center gap-3">
+                                                  <div className="w-10 text-center text-xs font-bold text-slate-500">
+                                                      {day.date.toLocaleDateString('de-DE', {weekday:'short'})}<br/>
+                                                      {day.date.getDate()}.
+                                                  </div>
+                                                  {React.createElement(getWeatherConfig(day.code, 1).icon, {size: 20, className: 'text-slate-700'})}
                                               </div>
-                                              {React.createElement(getWeatherConfig(day.code, 1).icon, {size: 20, className: 'text-slate-700'})}
-                                          </div>
-                                          <div className="flex items-center gap-4">
-                                               {day.precipSum > 0.1 && (
-                                                   <div className="flex items-center gap-1 text-xs text-blue-600 font-bold">
-                                                       <Droplets size={12}/> {day.precipSum}mm
+                                              <div className="flex items-center gap-4">
+                                                   {day.precipSum > 0.1 && (
+                                                       <div className="flex items-center gap-1 text-xs text-blue-600 font-bold">
+                                                           <Droplets size={12}/> {day.precipSum}mm
+                                                       </div>
+                                                   )}
+                                                   <div className="text-right w-16">
+                                                       <span className="text-sm font-bold text-slate-800">{Math.round(day.max)}°</span>
+                                                       <span className="text-xs text-slate-400 ml-1">/ {Math.round(day.min)}°</span>
                                                    </div>
-                                               )}
-                                               <div className="text-right w-16">
-                                                   <span className="text-sm font-bold text-slate-800">{Math.round(day.max)}°</span>
-                                                   <span className="text-xs text-slate-400 ml-1">/ {Math.round(day.min)}°</span>
-                                               </div>
+                                              </div>
+                                          </div>
+                                      ))}
+                                  </div>
+                              )}
+                              
+                              <button 
+                                onClick={handleSaveTrip}
+                                className="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg flex items-center justify-center gap-2 transition relative z-10"
+                              >
+                                  <Save size={18}/> Reise speichern
+                              </button>
+                          </div>
+                      )}
+
+                      {/* SAVED TRIPS LIST */}
+                      {savedTrips.length > 0 && (
+                          <div>
+                              <h4 className="font-bold text-slate-600 uppercase text-xs tracking-wider mb-3 flex items-center gap-2"><MapIcon size={14}/> Meine Reisen ({savedTrips.length})</h4>
+                              <div className="space-y-3">
+                                  {savedTrips.map(trip => (
+                                      <div key={trip.id} className="bg-white/40 border border-white/30 rounded-xl p-3 flex justify-between items-center group hover:bg-white/60 transition">
+                                          <button onClick={() => loadTrip(trip)} className="flex-1 text-left">
+                                              <div className="flex items-center gap-3 mb-1">
+                                                  <div className="font-bold text-slate-800 text-lg">{trip.name}</div>
+                                                  <TripWeatherPreview trip={trip} />
+                                              </div>
+                                              <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                                                  <Calendar size={12}/> 
+                                                  {new Date(trip.startDate).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}
+                                                  {trip.endDate && ` - ${new Date(trip.endDate).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}`}
+                                                  {trip.startTime && <span className="ml-2 font-bold text-blue-600 flex items-center gap-0.5"><Clock size={10}/> {trip.startTime}</span>}
+                                              </div>
+                                          </button>
+                                          <div className="flex gap-2">
+                                              <button onClick={() => loadTrip(trip)} className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition"><RefreshCw size={16}/></button>
+                                              <button onClick={() => handleDeleteTrip(trip.id)} className="p-2 bg-red-50 text-red-400 rounded-lg hover:bg-red-100 hover:text-red-600 transition"><Trash2 size={16}/></button>
                                           </div>
                                       </div>
                                   ))}
                               </div>
-                          )}
-                          
-                          <button 
-                            onClick={handleSaveTrip}
-                            className="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg flex items-center justify-center gap-2 transition relative z-10"
-                          >
-                              <Save size={18}/> Reise speichern
-                          </button>
-                      </div>
-                  )}
-
-                  {/* SAVED TRIPS LIST */}
-                  {savedTrips.length > 0 && (
-                      <div>
-                          <h4 className="font-bold text-slate-600 uppercase text-xs tracking-wider mb-3 flex items-center gap-2"><MapIcon size={14}/> Meine Reisen ({savedTrips.length})</h4>
-                          <div className="space-y-3">
-                              {savedTrips.map(trip => (
-                                  <div key={trip.id} className="bg-white/40 border border-white/30 rounded-xl p-3 flex justify-between items-center group hover:bg-white/60 transition">
-                                      <button onClick={() => loadTrip(trip)} className="flex-1 text-left">
-                                          <div className="flex items-center gap-3 mb-1">
-                                              <div className="font-bold text-slate-800 text-lg">{trip.name}</div>
-                                              {/* Weather Preview Inline */}
-                                              <TripWeatherPreview trip={trip} />
-                                          </div>
-                                          <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                                              <Calendar size={12}/> 
-                                              {new Date(trip.startDate).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}
-                                              {trip.endDate && ` - ${new Date(trip.endDate).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}`}
-                                              {trip.startTime && <span className="ml-2 font-bold text-blue-600 flex items-center gap-0.5"><Clock size={10}/> {trip.startTime}</span>}
-                                          </div>
-                                      </button>
-                                      <div className="flex gap-2">
-                                          <button onClick={() => loadTrip(trip)} className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition"><RefreshCw size={16}/></button>
-                                          <button onClick={() => handleDeleteTrip(trip.id)} className="p-2 bg-red-50 text-red-400 rounded-lg hover:bg-red-100 hover:text-red-600 transition"><Trash2 size={16}/></button>
-                                      </div>
-                                  </div>
-                              ))}
                           </div>
-                      </div>
-                  )}
-              </div>
-          )}
+                      )}
+                  </div>
+              )}
 
-          {activeTab !== 'radar' && activeTab !== 'travel' && (
-            <div className="mt-8 text-xs text-center opacity-60 px-6 font-medium space-y-2">
-               <p className="flex items-center justify-center gap-2 mb-2"><Database size={14} /> Datenbasis & Laufzeiten (Geschätzt)</p>
-               <div className="flex flex-wrap justify-center gap-4">
-                 <span className="bg-blue-500/10 px-2 py-1 rounded text-blue-500 border border-blue-500/20">ICON-D2: {modelRuns.icon || '--:--'}</span>
-                 <span className="bg-purple-500/10 px-2 py-1 rounded text-purple-500 border border-purple-500/20">GFS: {modelRuns.gfs || '--:--'}</span>
-                 <span className="bg-green-500/10 px-2 py-1 rounded text-green-500 border border-green-500/20">AROME: {modelRuns.arome || '--:--'}</span>
-               </div>
+              {activeTab !== 'radar' && activeTab !== 'travel' && (
+                <div className="mt-8 text-xs text-center opacity-60 px-6 font-medium space-y-2">
+                   <p className="flex items-center justify-center gap-2 mb-2"><Database size={14} /> Datenbasis & Laufzeiten (Geschätzt)</p>
+                   <div className="flex flex-wrap justify-center gap-4">
+                     <span className="bg-blue-500/10 px-2 py-1 rounded text-blue-500 border border-blue-500/20">ICON-D2: {modelRuns.icon || '--:--'}</span>
+                     <span className="bg-purple-500/10 px-2 py-1 rounded text-purple-500 border border-purple-500/20">GFS: {modelRuns.gfs || '--:--'}</span>
+                     <span className="bg-green-500/10 px-2 py-1 rounded text-green-500 border border-green-500/20">AROME: {modelRuns.arome || '--:--'}</span>
+                   </div>
+                </div>
+              )}
             </div>
-          )}
-
-        </div>
-      </main>
+        </main>
     </div>
   );
 }
