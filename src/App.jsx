@@ -1,6 +1,10 @@
+{
+type: uploaded file
+fileName: barbecube25/wetter-app/Wetter-App-5af71bcda8db30a5952de6a1af77327092cdd5f9/src/App.jsx
+fullContent:
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar } from 'lucide-react';
 
 // --- 1. KONSTANTEN & CONFIG ---
 
@@ -1320,6 +1324,13 @@ export default function WeatherApp() {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [viewMode, setViewMode] = useState(null);
 
+  // --- Travel Planner State ---
+  const [travelQuery, setTravelQuery] = useState("");
+  const [travelDate, setTravelDate] = useState("");
+  const [travelTime, setTravelTime] = useState("");
+  const [travelResult, setTravelResult] = useState(null);
+  const [travelLoading, setTravelLoading] = useState(false);
+
   // Initial Location Logic
   useEffect(() => {
     const initLocation = async () => {
@@ -1438,7 +1449,7 @@ export default function WeatherApp() {
       // HINZUFÜGEN von KNMI (Niederlande, super für NRW) und GEM (Kanada, globaler Check)
       // WICHTIG: precipitation_probability in hourly hinzugefügt
       const modelsShort = "icon_d2,gfs_seamless,arome_seamless,knmi_harmonie_arome_europe,gem_seamless";
-      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability&models=${modelsShort}&timezone=Europe%2FBerlin&forecast_days=2`;
+      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,temperature_2m_icon_d2,temperature_2m_gfs_seamless,temperature_2m_arome_seamless,temperature_2m_knmi_harmonie_arome_europe,temperature_2m_gem_seamless&models=${modelsShort}&timezone=Europe%2FBerlin&forecast_days=2`;
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
       const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max,sunrise,sunset&models=${modelsLong}&timezone=Europe%2FBerlin&forecast_days=8`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
@@ -1463,6 +1474,92 @@ export default function WeatherApp() {
   };
 
   useEffect(() => { fetchData(); }, [currentLoc]);
+
+  // --- TRAVEL SEARCH LOGIC ---
+  const handleTravelSearch = async () => {
+    if (!travelQuery) return;
+    setTravelLoading(true);
+    setTravelResult(null);
+    try {
+        // 1. Geocoding
+        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(travelQuery)}&count=1&language=de&format=json`);
+        const geoData = await geoRes.json();
+        
+        if (!geoData.results || geoData.results.length === 0) {
+            alert("Ort nicht gefunden.");
+            setTravelLoading(false);
+            return;
+        }
+        
+        const loc = geoData.results[0];
+        
+        // 2. Weather Fetch (Seamless for best results) - 14 Days to cover future
+        const lat = loc.latitude;
+        const lon = loc.longitude;
+        // Fetch comparing data to calculate reliability
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,windspeed_10m,precipitation,temperature_2m_icon_seamless,temperature_2m_gfs_seamless&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&models=icon_seamless,gfs_seamless&timezone=auto&forecast_days=14`;
+        
+        const wRes = await fetch(url);
+        const wData = await wRes.json();
+        
+        // 3. Process Data for Selected Time/Date
+        let selectedTime = new Date();
+        if (travelDate) {
+            selectedTime = new Date(travelDate);
+            if (travelTime) {
+                const [h, m] = travelTime.split(':');
+                selectedTime.setHours(h, m);
+            } else {
+                selectedTime.setHours(12, 0); // Default Mittag
+            }
+        }
+
+        // Find closest hourly index
+        const times = wData.hourly.time.map(t => new Date(t).getTime());
+        const target = selectedTime.getTime();
+        
+        // Find index with minimal difference
+        let closestIdx = 0;
+        let minDiff = Math.abs(target - times[0]);
+        for(let i=1; i<times.length; i++) {
+            const diff = Math.abs(target - times[i]);
+            if(diff < minDiff) {
+                minDiff = diff;
+                closestIdx = i;
+            }
+        }
+        
+        // Calculate Reliability
+        const tIcon = wData.hourly.temperature_2m_icon_seamless[closestIdx];
+        const tGfs = wData.hourly.temperature_2m_gfs_seamless[closestIdx];
+        let reliability = 0;
+        if (tIcon !== null && tGfs !== null) {
+            reliability = Math.max(0, 100 - (Math.abs(tIcon - tGfs) * 10)); // Simple spread formula
+            // Degrade by time into future
+            const daysInFuture = (target - new Date().getTime()) / (1000 * 60 * 60 * 24);
+            if (daysInFuture > 3) reliability -= (daysInFuture - 3) * 5;
+            if (reliability < 0) reliability = 0;
+        }
+
+        setTravelResult({
+            location: loc,
+            time: new Date(wData.hourly.time[closestIdx]),
+            temp: wData.hourly.temperature_2m[closestIdx],
+            code: wData.hourly.weathercode[closestIdx],
+            precipProb: wData.hourly.precipitation_probability[closestIdx],
+            wind: wData.hourly.windspeed_10m[closestIdx],
+            reliability: Math.round(reliability),
+            isDay: (new Date(wData.hourly.time[closestIdx]).getHours() > 6 && new Date(wData.hourly.time[closestIdx]).getHours() < 22) ? 1 : 0
+        });
+
+    } catch (e) {
+        console.error(e);
+        alert("Fehler bei der Reise-Suche");
+    } finally {
+        setTravelLoading(false);
+    }
+  };
+
 
   // --- PROCESSING LOGIC --- 
   const processedShort = useMemo(() => {
@@ -1727,7 +1824,7 @@ export default function WeatherApp() {
         </div>
 
         <div className={`p-1.5 rounded-full backdrop-blur-md flex shadow-md border border-white/20 ${cardBg}`}>
-           {[{id:'overview', label:'Verlauf', icon: List}, {id:'longterm', label:'7 Tage', icon: CalendarDays}, {id:'radar', label:'Radar', icon: MapIcon}, {id:'chart', label:'Vergleich', icon: BarChart2}].map(tab => (
+           {[{id:'overview', label:'Verlauf', icon: List}, {id:'longterm', label:'7 Tage', icon: CalendarDays}, {id:'radar', label:'Radar', icon: MapIcon}, {id:'chart', label:'Vergleich', icon: BarChart2}, {id:'travel', label:'Reise', icon: Plane}].map(tab => (
              <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 py-3 rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === tab.id ? 'bg-white/90 text-slate-900 shadow-md' : 'hover:bg-white/10 opacity-70'}`}><tab.icon size={16} /> <span className="hidden sm:inline">{tab.label}</span></button>
            ))}
         </div>
@@ -1935,7 +2032,109 @@ export default function WeatherApp() {
             </div>
           )}
 
-          {activeTab !== 'radar' && (
+          {/* --- TRAVEL TAB CONTENT --- */}
+          {activeTab === 'travel' && (
+              <div className="space-y-6">
+                  <div className="text-center mb-6">
+                      <h3 className="text-xl font-bold text-slate-800 flex items-center justify-center gap-2"><Plane className="text-blue-500"/> Reiseplaner</h3>
+                      <p className="text-sm text-slate-500">Planen Sie Ihren Ausflug und checken Sie die Wetter-Wahrscheinlichkeit.</p>
+                  </div>
+
+                  <div className="bg-white/50 border border-white/40 rounded-2xl p-4 shadow-sm space-y-3">
+                      <div className="relative">
+                          <MapPin className="absolute left-3 top-3 text-slate-400" size={20} />
+                          <input 
+                              type="text" 
+                              placeholder="Wohin soll es gehen? (z.B. Paris)" 
+                              className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/80 text-slate-800"
+                              value={travelQuery}
+                              onChange={(e) => setTravelQuery(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleTravelSearch()}
+                          />
+                      </div>
+                      <div className="flex gap-3">
+                          <div className="relative flex-1">
+                              <Calendar className="absolute left-3 top-3 text-slate-400" size={20} />
+                              <input 
+                                  type="date" 
+                                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/80 text-slate-800"
+                                  value={travelDate}
+                                  onChange={(e) => setTravelDate(e.target.value)}
+                              />
+                          </div>
+                          <div className="relative flex-1">
+                              <Clock className="absolute left-3 top-3 text-slate-400" size={20} />
+                              <input 
+                                  type="time" 
+                                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/80 text-slate-800"
+                                  value={travelTime}
+                                  onChange={(e) => setTravelTime(e.target.value)}
+                              />
+                          </div>
+                      </div>
+                      <button 
+                          onClick={handleTravelSearch} 
+                          disabled={travelLoading || !travelQuery}
+                          className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                          {travelLoading ? <RefreshCw className="animate-spin"/> : <Plane />}
+                          {travelLoading ? "Suche..." : "Wetter prüfen"}
+                      </button>
+                  </div>
+
+                  {travelResult && (
+                      <div className="bg-white/60 border border-white/50 rounded-2xl p-6 shadow-md animate-in fade-in slide-in-from-bottom-4 duration-500">
+                          <div className="flex justify-between items-start mb-4">
+                              <div>
+                                  <div className="text-2xl font-bold text-slate-800">{travelResult.location.name}</div>
+                                  <div className="text-slate-500 text-sm flex items-center gap-1">
+                                      <Calendar size={12}/> {travelResult.time.toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'long'})}
+                                      {travelTime && <span className="ml-2 bg-blue-100 text-blue-700 px-1.5 rounded text-xs font-bold">{travelResult.time.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})} Uhr</span>}
+                                  </div>
+                              </div>
+                              <div className="text-right">
+                                  <div className="text-4xl font-bold text-slate-800">{Math.round(travelResult.temp)}°</div>
+                                  <div className="text-sm font-medium text-slate-500">{getWeatherConfig(travelResult.code, travelResult.isDay).text}</div>
+                              </div>
+                          </div>
+
+                          <div className="flex items-center gap-4 mb-4">
+                              <div className="p-3 bg-blue-100 text-blue-600 rounded-full">
+                                  {React.createElement(getWeatherConfig(travelResult.code, travelResult.isDay).icon, {size: 32})}
+                              </div>
+                              <div className="flex-1 space-y-1">
+                                  <div className="flex justify-between text-sm font-medium">
+                                      <span className="text-slate-600">Regenrisiko</span>
+                                      <span className="text-blue-600 font-bold">{travelResult.precipProb}%</span>
+                                  </div>
+                                  <div className="w-full bg-slate-200 rounded-full h-2">
+                                      <div className="bg-blue-500 h-2 rounded-full" style={{width: `${travelResult.precipProb}%`}}></div>
+                                  </div>
+                              </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3 mb-4">
+                              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col items-center">
+                                  <Wind className="text-slate-400 mb-1" size={20}/>
+                                  <span className="text-lg font-bold text-slate-700">{travelResult.wind} <span className="text-xs font-normal">km/h</span></span>
+                                  <span className="text-xs text-slate-400 uppercase">Wind</span>
+                              </div>
+                              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col items-center">
+                                  <ShieldCheck className={getConfidenceColor(travelResult.reliability)} size={20}/>
+                                  <span className={`text-lg font-bold ${getConfidenceColor(travelResult.reliability)}`}>{travelResult.reliability}%</span>
+                                  <span className="text-xs text-slate-400 uppercase">Sicherheit</span>
+                              </div>
+                          </div>
+                          
+                          <div className="text-xs text-slate-400 text-center italic">
+                              Basierend auf Modellvergleich (ICON & GFS). Je weiter in der Zukunft, desto unsicherer.
+                          </div>
+                      </div>
+                  )}
+              </div>
+          )}
+
+          {activeTab !== 'radar' && activeTab !== 'travel' && (
             <div className="mt-8 text-xs text-center opacity-60 px-6 font-medium space-y-2">
                <p className="flex items-center justify-center gap-2 mb-2"><Database size={14} /> Datenbasis & Laufzeiten (Geschätzt)</p>
                <div className="flex flex-wrap justify-center gap-4">
