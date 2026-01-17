@@ -32,17 +32,27 @@ const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
 
 const deg2rad = (deg) => deg * (Math.PI/180);
 
-// Hilfsfunktion: Datum strikt als lokale Zeit parsen
+// Hilfsfunktion: Datum strikt als lokale Zeit parsen (ROBUSTER)
 const parseLocalTime = (isoString) => {
   if (!isoString) return new Date();
-  if (isoString.length === 10) {
-    const [y, m, d] = isoString.split('-').map(Number);
-    return new Date(y, m - 1, d, 12, 0, 0);
+  try {
+    if (isoString.length === 10) {
+        const [y, m, d] = isoString.split('-').map(Number);
+        return new Date(y, m - 1, d, 12, 0, 0);
+    }
+    // Check if T exists for standard ISO
+    if (isoString.includes('T')) {
+        const [datePart, timePart] = isoString.split('T');
+        const [y, m, d] = datePart.split('-').map(Number);
+        const [hr, min] = timePart.split(':').map(Number);
+        return new Date(y, m - 1, d, hr, min);
+    }
+    // Fallback normal parsing
+    return new Date(isoString);
+  } catch (e) {
+    console.error("Date parse error", e);
+    return new Date();
   }
-  const [datePart, timePart] = isoString.split('T');
-  const [y, m, d] = datePart.split('-').map(Number);
-  const [hr, min] = timePart.split(':').map(Number);
-  return new Date(y, m - 1, d, hr, min);
 };
 
 const styles = `
@@ -1496,15 +1506,19 @@ export default function WeatherApp() {
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,windspeed_10m,precipitation,temperature_2m_icon_seamless,temperature_2m_gfs_seamless&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&models=icon_seamless,gfs_seamless&timezone=auto&forecast_days=14`;
         
         const wRes = await fetch(url);
+        if(!wRes.ok) throw new Error("Wetterdaten konnten nicht geladen werden.");
         const wData = await wRes.json();
         
+        // CRASH FIX: Check data validity
+        if(!wData || !wData.hourly || !wData.hourly.time) throw new Error("Keine Vorhersage verfügbar.");
+
         // 3. Process Data for Selected Time/Date
         let selectedTime = new Date();
         if (travelDate) {
             selectedTime = new Date(travelDate);
             if (travelTime) {
                 const [h, m] = travelTime.split(':');
-                selectedTime.setHours(h, m);
+                selectedTime.setHours(parseInt(h), parseInt(m)); // Safe parsing
             } else {
                 selectedTime.setHours(12, 0); // Default Mittag
             }
@@ -1525,9 +1539,9 @@ export default function WeatherApp() {
             }
         }
         
-        // Calculate Reliability
-        const tIcon = wData.hourly.temperature_2m_icon_seamless[closestIdx];
-        const tGfs = wData.hourly.temperature_2m_gfs_seamless[closestIdx];
+        // Calculate Reliability (Safe Access)
+        const tIcon = wData.hourly.temperature_2m_icon_seamless ? wData.hourly.temperature_2m_icon_seamless[closestIdx] : null;
+        const tGfs = wData.hourly.temperature_2m_gfs_seamless ? wData.hourly.temperature_2m_gfs_seamless[closestIdx] : null;
         let reliability = 0;
         if (tIcon !== null && tGfs !== null) {
             reliability = Math.max(0, 100 - (Math.abs(tIcon - tGfs) * 10)); // Simple spread formula
@@ -1550,7 +1564,7 @@ export default function WeatherApp() {
 
     } catch (e) {
         console.error(e);
-        alert("Fehler bei der Reise-Suche");
+        alert("Fehler bei der Reise-Suche: " + e.message);
     } finally {
         setTravelLoading(false);
     }
