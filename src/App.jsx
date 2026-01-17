@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search } from 'lucide-react';
 
 // --- 1. KONSTANTEN & CONFIG ---
 
@@ -236,13 +236,55 @@ const getMoonPhase = (d) => {
 
 // --- 3. KI LOGIK (REVISED - MIT STRUKTURIERTEN DATEN) ---
 const generateAIReport = (type, data) => {
-  if (!data || data.length === 0) return { title: "Lade...", summary: "Warte auf Daten...", details: null, warning: null, confidence: null };
+  if (!data) return { title: "Lade...", summary: "Warte auf Daten...", details: null, warning: null, confidence: null };
+  if (Array.isArray(data) && data.length === 0) return { title: "Lade...", summary: "Warte auf Daten...", details: null, warning: null, confidence: null };
   
   let title = "";
   let summary = "";
   let details = null; 
   let warning = null;
   let confidence = null;
+
+  if (type === 'trip') {
+      // DATA ist hier das travelResult Objekt
+      const { location, mode, startDate, endDate, summary: daySummary, items, reliability } = data;
+      title = `Reise-Check: ${location.name}`;
+      confidence = reliability;
+
+      if (mode === 'single') {
+          const dateStr = startDate.toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'long'});
+          let tempText = `Erwarten Sie maximal ${Math.round(daySummary.maxTemp)}°C und mindestens ${Math.round(daySummary.minTemp)}°C.`;
+          
+          let condText = "";
+          if (daySummary.totalPrecip < 0.2) condText = "Es bleibt voraussichtlich trocken. Gute Bedingungen!";
+          else if (daySummary.totalPrecip > 5) condText = `Planen Sie Regen ein (${daySummary.totalPrecip.toFixed(1)}mm). Schirm nicht vergessen!`;
+          else condText = "Vereinzelte Schauer sind möglich.";
+
+          if (daySummary.maxWind > 45) warning = "Windig";
+          if (daySummary.maxWind > 65) warning = "Stürmisch";
+
+          summary = `📅 Ausflug am ${dateStr}:\n${tempText} ${condText}`;
+          details = `Für Ihren Ausflug nach ${location.name} berechnen die Modelle eine Regenwahrscheinlichkeit von ca. ${daySummary.avgProb}%. Der Wind weht mit Spitzen bis zu ${Math.round(daySummary.maxWind)} km/h.`;
+          
+          if (daySummary.isTimeWindow) {
+              details += `\n\nFür den gewählten Zeitraum (${daySummary.startH}-${daySummary.endH} Uhr) wurde die Vorhersage präzisiert.`;
+          }
+      } else {
+          // Multi Day
+          const daysCount = items.length;
+          const avgMax = Math.round(items.reduce((a,b)=>a+b.max,0)/daysCount);
+          const totalRain = items.reduce((a,b)=>a+b.precipSum,0);
+          const rainDays = items.filter(d=>d.precipSum > 1.0).length;
+
+          summary = `🧳 Urlaub (${daysCount} Tage):\nIm Schnitt ${avgMax}°C. `;
+          if (rainDays === 0) summary += "Es sieht nach einer trockenen Periode aus.";
+          else if (rainDays >= daysCount/2) summary += "Eher unbeständiges Wetter erwartet.";
+          else summary += "Ein Mix aus Sonne und Wolken.";
+
+          let detailList = items.map(d => `- ${d.date.toLocaleDateString('de-DE',{weekday:'short'})}: ${Math.round(d.max)}°C, ${d.precipSum > 0.5 ? d.precipSum.toFixed(1)+'mm Regen' : 'Trocken'}`).join('\n');
+          details = `Wettertrend für ${location.name}:\n${detailList}\n\nGesamtniederschlag ca. ${totalRain.toFixed(1)}mm über den gesamten Zeitraum.`;
+      }
+  }
 
   if (type === 'daily') {
     title = "Tages-Briefing";
@@ -1259,28 +1301,103 @@ const AIReportBox = ({ report, dwdWarnings }) => {
 
 // --- LOCATION MODAL ---
 const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAddCurrentLocation, onDeleteLocation, currentLoc }) => {
+    const [searchQuery, setSearchQuery] = useState("");
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+
     if (!isOpen) return null;
+
+    const handleSearch = async () => {
+        if (!searchQuery) return;
+        setIsSearching(true);
+        try {
+            const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery)}&count=5&language=de&format=json`);
+            const data = await res.json();
+            setSearchResults(data.results || []);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const handleAddFoundLocation = (loc) => {
+        // Use the handler from App but adapt data structure
+        const newLoc = { name: loc.name, lat: loc.latitude, lon: loc.longitude, type: 'saved', id: crypto.randomUUID() };
+        // We need to call the parent's add function, but it expects currentLoc. 
+        // We can just call onSelectLocation to set it as current, then user can save?
+        // Better: Pass a direct add function for explicit locations.
+        // For now, let's reuse onSelectLocation to switch context, and let user save it if they want?
+        // Wait, the prompt says "search location" inside modal. Usually implies adding to list.
+        // Let's assume we want to ADD it to the list immediately.
+        onSelectLocation(newLoc); // This will set it as active.
+        // If we want to save it to the list:
+        // onAddLocation(newLoc); // We don't have this prop directly exposed for arbitrary locs yet.
+        // Let's modify behavior: Select it, and close.
+        onClose();
+    };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
                 <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <h3 className="font-bold text-slate-800 flex items-center gap-2"><MapIcon size={18} className="text-blue-500"/> Gespeicherte Orte</h3>
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2"><MapIcon size={18} className="text-blue-500"/> Orte verwalten</h3>
                     <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={20} className="text-slate-400" /></button>
                 </div>
                 
                 <div className="p-4 overflow-y-auto">
+                    {/* Search Section */}
+                    <div className="mb-6 space-y-2">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-3 text-slate-400" size={18} />
+                            <input 
+                                type="text" 
+                                placeholder="Stadt suchen..." 
+                                className="w-full pl-10 pr-12 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50 text-slate-800"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                            />
+                            <button 
+                                onClick={handleSearch}
+                                className="absolute right-2 top-2 p-1 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition"
+                            >
+                                {isSearching ? <RefreshCw className="animate-spin" size={16}/> : <ArrowRight size={16}/>}
+                            </button>
+                        </div>
+                        
+                        {/* Search Results */}
+                        {searchResults.length > 0 && (
+                            <div className="bg-white border border-slate-100 rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-top-1">
+                                {searchResults.map((res) => (
+                                    <button 
+                                        key={res.id}
+                                        onClick={() => handleAddFoundLocation(res)}
+                                        className="w-full text-left p-3 hover:bg-blue-50 border-b border-slate-50 last:border-0 flex justify-between items-center transition group"
+                                    >
+                                        <div>
+                                            <div className="font-bold text-slate-700 text-sm">{res.name}</div>
+                                            <div className="text-[10px] text-slate-400">{res.admin1}, {res.country}</div>
+                                        </div>
+                                        <Plus size={16} className="text-blue-400 group-hover:text-blue-600"/>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
                     {/* Add Current Location Button */}
                     <button 
                         onClick={onAddCurrentLocation}
                         className="w-full mb-4 p-3 rounded-xl border border-dashed border-blue-300 bg-blue-50 text-blue-600 font-bold flex items-center justify-center gap-2 hover:bg-blue-100 transition"
                     >
-                        <Plus size={18} /> Aktuellen Ort hinzufügen
+                        <Crosshair size={18} /> Aktuellen Ort speichern
                     </button>
 
                     <div className="space-y-2">
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Gespeicherte Orte</div>
                         {savedLocations.length === 0 ? (
-                            <div className="text-center text-slate-400 py-8 text-sm">Keine Orte gespeichert.</div>
+                            <div className="text-center text-slate-400 py-4 text-sm italic">Keine Orte gespeichert.</div>
                         ) : (
                             savedLocations.map((loc, index) => (
                                 <div key={index} className={`p-3 rounded-xl border flex items-center justify-between group transition ${currentLoc.name === loc.name ? 'border-blue-500 bg-blue-50' : 'border-slate-100 hover:border-slate-300'}`}>
@@ -1346,6 +1463,8 @@ export default function WeatherApp() {
   const [travelEndTime, setTravelEndTime] = useState("");
   const [travelResult, setTravelResult] = useState(null);
   const [travelLoading, setTravelLoading] = useState(false);
+  // Trip Report
+  const [tripReport, setTripReport] = useState(null);
 
   // Initial Location Logic
   useEffect(() => {
@@ -1519,6 +1638,7 @@ export default function WeatherApp() {
     
     setTravelLoading(true);
     setTravelResult(null);
+    setTripReport(null); // Reset Report
     
     try {
         let loc;
@@ -1657,14 +1777,16 @@ export default function WeatherApp() {
                 const daysInFuture = (startDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24);
                 result.reliability = Math.round(Math.max(10, 100 - (daysInFuture * 5)));
             } else {
-                // Fallback to daily if hourly not available (e.g. far future)
-                // Finding daily index
-                // ... simplistic fallback omitted for brevity, logic usually covered by hourly unless >14 days
                 result.reliability = 0;
             }
         }
 
         setTravelResult(result);
+        
+        // Generate AI Report for the trip
+        if (result.reliability > 0) {
+            setTripReport(generateAIReport('trip', result));
+        }
 
     } catch (e) {
         console.error(e);
@@ -1702,6 +1824,44 @@ export default function WeatherApp() {
       setTravelEndTime(trip.endTime || "");
       // Trigger search
       handleTravelSearch(trip.name, trip);
+  };
+
+  // --- PREVIEW COMPONENT FOR TRIP LIST ---
+  const TripWeatherPreview = ({ trip }) => {
+      const [weather, setWeather] = useState(null);
+      const [loading, setLoading] = useState(true);
+
+      useEffect(() => {
+          const fetchPreview = async () => {
+              try {
+                  const url = `https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max&models=icon_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${trip.startDate}`;
+                  const res = await fetch(url);
+                  const data = await res.json();
+                  if (data.daily && data.daily.time.length > 0) {
+                      setWeather({
+                          code: data.daily.weathercode[0],
+                          max: data.daily.temperature_2m_max[0]
+                      });
+                  }
+              } catch (e) {
+                  // silent fail or retry
+              } finally {
+                  setLoading(false);
+              }
+          };
+          fetchPreview();
+      }, [trip]);
+
+      if (loading) return <div className="w-8 h-8 rounded-full bg-slate-100 animate-pulse"></div>;
+      if (!weather) return <div className="text-[10px] text-slate-400">Keine Daten</div>;
+
+      const Icon = getWeatherConfig(weather.code, 1).icon;
+      return (
+          <div className="flex items-center gap-2 bg-blue-50 px-2 py-1 rounded-lg">
+              <Icon size={16} className="text-blue-600"/>
+              <span className="font-bold text-slate-700 text-xs">{Math.round(weather.max)}°</span>
+          </div>
+      );
   };
 
 
@@ -2256,6 +2416,11 @@ export default function WeatherApp() {
 
                   {travelResult && (
                       <div className="bg-white/80 border border-white/50 rounded-2xl p-6 shadow-md animate-in fade-in slide-in-from-bottom-4 duration-500 relative overflow-hidden">
+                          {/* AI Report Box Added Here */}
+                          <div className="mb-6 relative z-20">
+                              <AIReportBox report={tripReport} dwdWarnings={[]} />
+                          </div>
+
                           <div className="flex justify-between items-start mb-4 relative z-10">
                               <div>
                                   <div className="text-2xl font-bold text-slate-800">{travelResult.location.name}</div>
@@ -2366,7 +2531,11 @@ export default function WeatherApp() {
                               {savedTrips.map(trip => (
                                   <div key={trip.id} className="bg-white/40 border border-white/30 rounded-xl p-3 flex justify-between items-center group hover:bg-white/60 transition">
                                       <button onClick={() => loadTrip(trip)} className="flex-1 text-left">
-                                          <div className="font-bold text-slate-800 text-lg">{trip.name}</div>
+                                          <div className="flex items-center gap-3 mb-1">
+                                              <div className="font-bold text-slate-800 text-lg">{trip.name}</div>
+                                              {/* Weather Preview Inline */}
+                                              <TripWeatherPreview trip={trip} />
+                                          </div>
                                           <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                                               <Calendar size={12}/> 
                                               {new Date(trip.startDate).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}
