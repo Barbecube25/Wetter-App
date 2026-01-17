@@ -1458,7 +1458,8 @@ export default function WeatherApp() {
       const modelsShort = "icon_seamless,gfs_seamless,gem_seamless";
       
       // FIX: timezone=auto sorgt dafür, dass die Zeiten am Zielort korrekt sind
-      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,temperature_2m_icon_seamless,temperature_2m_gfs_seamless,temperature_2m_gem_seamless&models=${modelsShort}&timezone=auto&forecast_days=2`;
+      // FIX 2: Entferne die modellspezifischen Keys aus dem "hourly" Parameter, da "models" Parameter dies implizit erledigt
+      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability&models=${modelsShort}&timezone=auto&forecast_days=2`;
       
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
       const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max,sunrise,sunset&models=${modelsLong}&timezone=auto&forecast_days=8`;
@@ -1518,7 +1519,8 @@ export default function WeatherApp() {
         const lat = loc.latitude;
         const lon = loc.longitude;
         // Fetch comparing data to calculate reliability
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,windspeed_10m,precipitation,temperature_2m_icon_seamless,temperature_2m_gfs_seamless&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&models=icon_seamless,gfs_seamless&timezone=auto&forecast_days=14`;
+        // FIX: Entferne spezifische Keys aus 'hourly', da 'models' diese automatisch liefert
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,windspeed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&models=icon_seamless,gfs_seamless&timezone=auto&forecast_days=14`;
         
         const wRes = await fetch(url);
         if(!wRes.ok) throw new Error("Wetterdaten konnten nicht geladen werden.");
@@ -1569,10 +1571,10 @@ export default function WeatherApp() {
         setTravelResult({
             location: loc,
             time: new Date(wData.hourly.time[closestIdx]),
-            temp: wData.hourly.temperature_2m[closestIdx],
-            code: wData.hourly.weathercode[closestIdx],
-            precipProb: wData.hourly.precipitation_probability[closestIdx],
-            wind: wData.hourly.windspeed_10m[closestIdx],
+            temp: wData.hourly.temperature_2m[closestIdx] ?? tIcon ?? 0, // Fallback if main temp is missing in multi-model
+            code: wData.hourly.weathercode[closestIdx] ?? wData.hourly.weathercode_icon_seamless[closestIdx] ?? 0,
+            precipProb: wData.hourly.precipitation_probability[closestIdx] ?? 0,
+            wind: wData.hourly.windspeed_10m[closestIdx] ?? 0,
             reliability: Math.round(reliability),
             isDay: (new Date(wData.hourly.time[closestIdx]).getHours() > 6 && new Date(wData.hourly.time[closestIdx]).getHours() < 22) ? 1 : 0
         });
