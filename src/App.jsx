@@ -540,7 +540,27 @@ const ModelInfoBox = () => {
 };
 
 const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed }) => {
-  const isNight = isDay === 0;
+  // Move helper to top of component to use it for initial variables
+  const getDecimalHour = (isoString) => {
+      if (!isoString) return null;
+      const t = parseLocalTime(isoString);
+      return t.getHours() + t.getMinutes() / 60;
+  };
+    
+  const d = date ? new Date(date) : new Date();
+  const currentHour = d.getHours() + d.getMinutes() / 60;
+  
+  const sunriseHour = getDecimalHour(sunrise) ?? 6.5; 
+  const sunsetHour = getDecimalHour(sunset) ?? 20.5;
+
+  // WICHTIG: Überschreibe isNight, falls echte Uhrzeit (date) übergeben wurde
+  // Damit synchronisieren wir Tag/Nacht exakt mit Sonnenaufgang/untergang,
+  // unabhängig vom stündlichen API-Flag "is_day".
+  let calculatedIsDay = isDay;
+  if (date && sunrise && sunset) {
+      calculatedIsDay = (currentHour >= sunriseHour && currentHour <= sunsetHour) ? 1 : 0;
+  }
+  const isNight = calculatedIsDay === 0;
   
   // --- WETTERZUSTÄNDE ---
   const isClear = code === 0 || code === 1;
@@ -563,17 +583,6 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
   const isWindy = windSpeed >= 30;
   const isStormyWind = windSpeed >= 60;
 
-  const d = date ? new Date(date) : new Date();
-  const currentHour = d.getHours() + d.getMinutes() / 60;
-  
-  const getDecimalHour = (isoString) => {
-      if (!isoString) return null;
-      const t = parseLocalTime(isoString);
-      return t.getHours() + t.getMinutes() / 60;
-  };
-  
-  const sunriseHour = getDecimalHour(sunrise) ?? 6.5; 
-  const sunsetHour = getDecimalHour(sunset) ?? 20.5;
   
   let celestialX = -50;
   let celestialY = 200; 
@@ -1526,6 +1535,17 @@ export default function WeatherApp() {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [viewMode, setViewMode] = useState(null);
 
+  // WICHTIG: Echtzeit-State für die Animation (NEU)
+  const [now, setNow] = useState(new Date());
+
+  // Timer: Aktualisiere 'now' jede Minute, damit die Sonne wandert (NEU)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 60000); // 60000ms = 1 Minute
+    return () => clearInterval(timer);
+  }, []);
+
   // --- Travel Planner State ---
   const [savedTrips, setSavedTrips] = useState(() => getSavedTrips());
   const [travelQuery, setTravelQuery] = useState("");
@@ -2147,7 +2167,8 @@ export default function WeatherApp() {
             <a href="/" className="bg-black/20 p-2 rounded-full text-white backdrop-blur-md block"><ArrowLeft size={24}/></a>
         </div>
         <div className="h-full w-full">
-            <WeatherLandscape code={current.code} isDay={current.isDay} date={current.time} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} />
+            {/* WICHTIG: hier date={now} übergeben! */}
+            <WeatherLandscape code={current.code} isDay={current.isDay} date={now} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} />
         </div>
         <div className="absolute bottom-8 left-0 right-0 text-center text-white drop-shadow-md pointer-events-none">
             <div className="text-6xl font-bold">{Math.round(current.temp)}°</div>
@@ -2245,7 +2266,8 @@ export default function WeatherApp() {
 
       <main className="max-w-4xl mx-auto p-4 z-10 relative space-y-6">
         <div className={`rounded-3xl p-6 ${cardBg} shadow-lg relative overflow-hidden min-h-[240px] flex items-center`}>
-          <div className="absolute inset-0 z-0 pointer-events-none"><WeatherLandscape code={current.code} isDay={current.isDay} date={current.time} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} /></div>
+          {/* WICHTIG: date={now} auch hier übergeben */}
+          <div className="absolute inset-0 z-0 pointer-events-none"><WeatherLandscape code={current.code} isDay={current.isDay} date={now} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} /></div>
           <div className="flex items-center justify-between w-full relative z-10">
             <div className="flex flex-col">
                <span className="text-7xl font-bold tracking-tighter leading-none drop-shadow-lg text-white">{Math.round(current.temp)}°</span>
