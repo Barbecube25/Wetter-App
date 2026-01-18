@@ -42,7 +42,6 @@ const deg2rad = (deg) => deg * (Math.PI/180);
 // Hilfsfunktion: Datum strikt als lokale Zeit parsen (ROBUSTER)
 const parseLocalTime = (isoString) => {
   if (!isoString) return new Date();
-  if (isoString instanceof Date) return new Date(isoString); // FIX: Date Objekte direkt durchlassen
   try {
     if (isoString.length === 10) {
         const [y, m, d] = isoString.split('-').map(Number);
@@ -235,17 +234,17 @@ const getMoonPhase = (d) => {
   return Math.round((currentSec / phaseSeconds) * 8) % 8;
 };
 
-// --- 3. KI LOGIK ---
+// --- 3. KI LOGIK (REVISED - MIT STRUKTURIERTEN DATEN) ---
 const generateAIReport = (type, data) => {
   if (!data) return { title: "Lade...", summary: "Warte auf Daten...", details: null, warning: null, confidence: null };
   if (Array.isArray(data) && data.length === 0) return { title: "Lade...", summary: "Warte auf Daten...", details: null, warning: null, confidence: null };
-  
+
   let title = "";
   let summary = "";
   let details = null; 
   let warning = null;
   let confidence = null;
-  let structuredDetails = null; 
+  let structuredDetails = null; // New field for list view
 
   if (type === 'trip') {
       const { location, mode, startDate, endDate, summary: daySummary, items, reliability } = data;
@@ -259,7 +258,7 @@ const generateAIReport = (type, data) => {
       } else if (mode === 'single' && daySummary) {
           const dateStr = startDate.toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'long'});
           let tempText = `Erwarten Sie maximal ${Math.round(daySummary.maxTemp)}°C und mindestens ${Math.round(daySummary.minTemp)}°C.`;
-          
+
           let condText = "";
           const precip = daySummary.totalPrecip || 0;
           if (precip < 0.2) condText = "Es bleibt voraussichtlich trocken. Gute Bedingungen!";
@@ -271,24 +270,25 @@ const generateAIReport = (type, data) => {
 
           summary = `📅 Ausflug am ${dateStr}:\n${tempText} ${condText}`;
           details = `Für Ihren Ausflug nach ${location.name} berechnen die Modelle eine Regenwahrscheinlichkeit von ca. ${daySummary.avgProb || 0}%. Der Wind weht mit Spitzen bis zu ${Math.round(daySummary.maxWind)} km/h.`;
-          
+
           if (daySummary.isTimeWindow) {
               details += `\n\nFür den gewählten Zeitraum (${daySummary.startH}-${daySummary.endH} Uhr) wurde die Vorhersage präzisiert.`;
           }
       } else {
           const daysCount = items.length;
+          // Calculate true trip duration
           const tripDuration = Math.round((new Date(endDate).setHours(0,0,0,0) - new Date(startDate).setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)) + 1;
-          
+
           const startStr = startDate.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
           const endStr = endDate.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
-          
+
           const avgMax = Math.round(items.reduce((a,b)=>a+b.max,0)/daysCount);
           const totalRain = items.reduce((a,b)=>a+b.precipSum,0);
           const rainDays = items.filter(d=>d.precipSum > 1.0).length;
 
           let availText = daysCount === tripDuration ? "" : `(Wetter für ${daysCount} von ${tripDuration} Tagen verfügbar)`;
           summary = `🧳 Urlaub (${startStr} - ${endStr}):\n${availText}\nIm Schnitt ${avgMax}°C. `;
-          
+
           if (rainDays === 0) summary += "Es sieht nach einer trockenen Periode aus.";
           else if (rainDays >= daysCount/2) summary += "Eher unbeständiges Wetter erwartet.";
           else summary += "Ein Mix aus Sonne und Wolken.";
@@ -302,11 +302,11 @@ const generateAIReport = (type, data) => {
     title = "Tages-Briefing";
     const now = new Date();
     const currentHour = now.getHours();
-    
+
     const current = data[0];
     let intro = `Aktuell (${current.displayTime} Uhr): ${Math.round(current.temp)}°C`;
     if (Math.abs(current.appTemp - current.temp) > 2) intro += `, gefühlt ${Math.round(current.appTemp)}°C.`;
-    
+
     let parts = [intro];
     const todayData = data.filter(d => d.time.getDate() === now.getDate() && d.time.getHours() > currentHour);
     const tomorrowDate = new Date(now);
@@ -324,7 +324,7 @@ const generateAIReport = (type, data) => {
         const maxToday = Math.max(...todayData.map(d => d.temp));
         const rainSumToday = todayData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
         const maxWind = Math.max(...todayData.map(d => d.gust));
-        
+
         if (currentHour < 11) {
             todayText += `Die Temperaturen klettern bis auf ${Math.round(maxToday)}°C. `;
             if (rainSumToday < 0.2) todayText += "Ein weitgehend trockener Tag erwartet Sie. ";
@@ -355,10 +355,10 @@ const generateAIReport = (type, data) => {
         const tMin = Math.min(...tomorrowDayData.map(d => d.temp)); 
         const tRain = tomorrowDayData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
         const tGust = Math.max(...tomorrowDayData.map(d => d.gust));
-        
+
         let tomorrowText = `🌅 Ausblick auf Morgen (${tomorrowDate.toLocaleDateString('de-DE', {weekday:'long'})}):\n`;
         tomorrowText += `Erwarten Sie Temperaturen zwischen ${Math.round(tMin)}°C am Morgen und bis zu ${Math.round(tMax)}°C am Nachmittag. `;
-        
+
         if (tRain > 2.0) tomorrowText += `Ein regnerischer Tag (${tRain.toFixed(1)}mm), vergessen Sie den Schirm nicht.`;
         else if (tRain > 0.1) tomorrowText += "Vereinzelt sind kurze Schauer möglich, meist bleibt es aber trocken.";
         else tomorrowText += "Es wird ein schöner, sonniger Tag.";
@@ -372,9 +372,9 @@ const generateAIReport = (type, data) => {
   }
 
   if (type === 'longterm') {
-    title = "14-Tage-Trend"; 
-    const analysisData = data.slice(1); 
-    
+    title = "14-Tage-Trend"; // Updated title
+    const analysisData = data.slice(1); // Start tomorrow
+
     // Split Data
     const thisWeek = [];
     const nextWeek = [];
@@ -396,12 +396,13 @@ const generateAIReport = (type, data) => {
         const twRain = thisWeek.reduce((a,b)=>a+parseFloat(b.rain),0);
         const twRainDays = thisWeek.filter(d=>parseFloat(d.rain)>1.0).length;
         const twSunDays = thisWeek.filter(d=>d.code<=2).length;
-        
+
         let twText = `📅 Restliche Woche (bis Sonntag):\n`;
+        // Handle edge case if "tomorrow" is Sunday or Monday already
         if (thisWeek.length === 1 && thisWeek[0].date.getDay() === 0) twText = `📅 Morgen (Sonntag):\n`;
 
         twText += `Temperaturen zwischen ${Math.round(twMin)}°C und ${Math.round(twMax)}°C. `;
-        
+
         if (twRain > 2) {
              twText += `Es wird eher unbeständig mit ca. ${twRain.toFixed(1)}mm Niederschlag`;
              if (twRainDays > 0) twText += ` an ${twRainDays} Tagen.`;
@@ -420,23 +421,35 @@ const generateAIReport = (type, data) => {
         const nwMinLow = Math.min(...nextWeek.map(d=>d.min));
         const nwRain = nextWeek.reduce((a,b)=>a+parseFloat(b.rain),0);
         const nwRel = Math.round(nextWeek.reduce((a,b)=>a+b.reliability,0) / nextWeek.length);
-        
+
         let nwText = `🔮 Ausblick nächste Woche (ab Montag, ${nextWeek[0].date.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}.):\n`;
         nwText += `Trend: ${Math.round(nwMinLow)}°C bis ${Math.round(nwMax)}°C. `;
-        
+
         if (nwRain > 5) nwText += "Die Signale deuten auf wechselhaftes Wetter hin.";
         else nwText += "Tendenziell eher hochdruckbestimmt (trocken).";
-        
+
         nwText += `\n(Prognosesicherheit: ${nwRel}%)`;
-        
+
         parts.push(nwText);
         if (thisWeek.length > 0) overallConfidence = (overallConfidence + nwRel) / 2;
         else overallConfidence = nwRel;
     }
-    
+
     summary = parts.join("\n\n");
     confidence = Math.round(overallConfidence);
+
+    // Detailed list for expandable section
+    let detailParts = [];
+    const formatDay = (d) => `${d.dayName} (${d.dateShort}): ${Math.round(d.max)}°/${Math.round(d.min)}°, ${d.rain}mm Regen`;
     
+    if(thisWeek.length > 0) {
+        if (thisWeek.length === 1 && thisWeek[0].date.getDay() === 0) {
+             detailParts.push("--- Morgen (Sonntag) ---");
+        } else {
+             detailParts.push("--- Restliche Woche ---");
+        }
+        thisWeek.forEach(d => detailParts.push(formatDay(d)));
+    // STRUCTURED DETAILS for List View
     structuredDetails = [];
     const formatItem = (d) => ({
         day: d.dayName,
@@ -454,12 +467,19 @@ const generateAIReport = (type, data) => {
             items: thisWeek.map(formatItem) 
         });
     }
+    
+    if(nextWeek.length > 0) {
+        if(thisWeek.length > 0) detailParts.push(""); // Spacer
+        detailParts.push("--- Nächste Woche ---");
+        nextWeek.forEach(d => detailParts.push(formatDay(d)));
     if (nextWeek.length > 0) {
         structuredDetails.push({ title: "Nächste Woche", items: nextWeek.map(formatItem) });
     }
+    details = detailParts.join("\n");
+    // Set text details to null to force usage of structured view in UI
     details = null; 
   }
-  
+
   if (type === 'model-hourly') {
      title = "Modell-Check (48h)";
      let totalDiff = 0;
@@ -482,6 +502,7 @@ const generateAIReport = (type, data) => {
     confidence = 80;
   }
 
+  return { title, summary, details, warning, confidence };
   return { title, summary, details, structuredDetails, warning, confidence };
 };
 
@@ -502,7 +523,7 @@ const ModelInfoBox = () => {
          </div>
          {isOpen ? <ChevronUp size={24} className="opacity-50 text-slate-600"/> : <ChevronDown size={24} className="opacity-50 text-slate-600"/>}
       </button>
-      
+
       {isOpen && (
         <div className="px-4 pb-4 pt-0 text-base text-slate-700 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
             <p className="opacity-90 leading-relaxed">
@@ -539,35 +560,54 @@ const ModelInfoBox = () => {
 
 const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed }) => {
   const isNight = isDay === 0;
+
+  // --- WETTERZUSTÄNDE ---
+  const isClear = code === 0 || code === 1;
+  const isPartlyCloudy = code === 2;
+  const isOvercast = code === 3 || code === 45 || code === 48; 
+  // Nieselregen: Codes 51, 53, 55
+  const isDrizzle = [51, 53, 55].includes(code);
+  const isLightRain = [61, 80].includes(code);
+  const isHeavyRain = [63, 65, 81, 82].includes(code) || (code >= 95);
+  const isRain = isLightRain || isHeavyRain;
+  const isLightSnow = [71, 77, 85].includes(code);
+  const isHeavySnow = [73, 75, 86].includes(code);
+  const isSnow = isLightSnow || isHeavySnow;
+  const isSleet = [56, 57, 66, 67].includes(code);
+  const isStorm = [95, 96, 99].includes(code);
+  const isFog = [45, 48].includes(code);
+  const isExtremeHeat = temp >= 30;
+  const isDeepFreeze = temp <= -5;
+  const isFreezing = temp <= 0;
+  const isWindy = windSpeed >= 30;
+  const isStormyWind = windSpeed >= 60;
+
   const d = date ? new Date(date) : new Date();
   const currentHour = d.getHours() + d.getMinutes() / 60;
-  
+
   const getDecimalHour = (isoString) => {
       if (!isoString) return null;
       const t = parseLocalTime(isoString);
       return t.getHours() + t.getMinutes() / 60;
   };
-  
+
   const sunriseHour = getDecimalHour(sunrise) ?? 6.5; 
   const sunsetHour = getDecimalHour(sunset) ?? 20.5;
-  
+
   let celestialX = -50;
   let celestialY = 200; 
   let celestialType = 'none';
   let isDawn = false;
   let isDusk = false;
 
-  // VERBESSERTE LOGIK:
-  // Dawn/Dusk auch vor Sonnenaufgang/nach Sonnenuntergang berechnen (Twilight)
-  if (currentHour >= sunriseHour - 1 && currentHour < sunriseHour + 1) isDawn = true;
-  if (currentHour >= sunsetHour - 1 && currentHour < sunsetHour + 1) isDusk = true;
-
   if (currentHour >= sunriseHour && currentHour <= sunsetHour) {
      celestialType = 'sun';
      const dayLength = sunsetHour - sunriseHour;
      const dayProgress = (currentHour - sunriseHour) / dayLength; 
      celestialX = 40 + dayProgress * 280; 
-     celestialY = 30 + 0.006 * Math.pow(celestialX - 180, 2); 
+     celestialY = 30 + 0.005 * Math.pow(celestialX - 180, 2);
+     if (currentHour - sunriseHour < 1.0) isDawn = true;
+     if (sunsetHour - currentHour < 1.0) isDusk = true;
   } else {
      celestialType = 'moon';
      let nightDuration = (24 - sunsetHour) + sunriseHour;
@@ -575,16 +615,16 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
      if (timeSinceSunset < 0) timeSinceSunset += 24; 
      const nightProgress = timeSinceSunset / nightDuration;
      celestialX = 40 + nightProgress * 280;
-     celestialY = 30 + 0.006 * Math.pow(celestialX - 180, 2);
+     celestialY = 30 + 0.005 * Math.pow(celestialX - 180, 2);
   }
 
   const moonPhase = date ? getMoonPhase(date) : 0;
-  
-  const groundColor = (isSnow || isDeepFreeze) ? "#e2e8f0" : (isNight ? "#0f172a" : "#4ade80"); 
+
+  const groundColor = (isSnow || isDeepFreeze) ? "#e2e8f0" : (isNight ? "#0f172a" : "#4ade80"); // Nachts dunklerer Boden
   const mountainColor = (isSnow || isDeepFreeze) ? "#f1f5f9" : (isNight ? "#1e293b" : "#64748b"); 
   const treeTrunk = isNight ? "#4a3830" : "#78350f";
-  const treeLeaf = (isSnow || isDeepFreeze) ? "#f8fafc" : (isNight ? "#15803d" : "#16a34a"); 
-  
+  const treeLeaf = (isSnow || isDeepFreeze) ? "#f8fafc" : (isNight ? "#15803d" : "#16a34a"); // Nachts satteres Grün für Kontrast
+
   const houseWall = isNight ? "#78350f" : "#b45309"; 
   const houseRoof = (isSnow || isDeepFreeze) ? "#f1f5f9" : (isNight ? "#451a03" : "#7c2d12");
   const windowColor = isNight ? "#fbbf24" : "#94a3b8";
@@ -626,10 +666,14 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
       {isDawn && <rect x="-100" y="0" width="600" height="160" fill="url(#dawnGradient)" opacity="0.3" className="anim-glow" />}
       {isDusk && <rect x="-100" y="0" width="600" height="160" fill="url(#duskGradient)" opacity="0.3" className="anim-glow" />}
 
+      {/* SONNE UND MOND - IMMER GERENDERT, ABER HINTER WOLKEN WENN OVERCAST */}
       {celestialType === 'sun' && (
         <g transform={`translate(${celestialX}, ${celestialY})`}>
+          {/* Outer Glow */}
           <circle r="25" fill="#fbbf24" opacity="0.4" filter="blur(8px)" />
+          {/* Sun Body */}
           <circle r="14" fill="#fbbf24" className="animate-ray" />
+          {/* Rays */}
           <g className="animate-spin-slow">
             {[...Array(8)].map((_, i) => (
               <line key={i} x1="0" y1="-20" x2="0" y2="-16" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" transform={`rotate(${i * 45})`} />
@@ -640,12 +684,13 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
 
       {celestialType === 'moon' && (
         <g transform={`translate(${celestialX}, ${celestialY})`}>
+           {/* Moon Glow */}
            <circle r="20" fill="white" opacity="0.2" filter="blur(5px)" />
            <circle r="12" fill="white" opacity="0.9" />
            {moonPhase !== 4 && <circle r="12" fill="black" opacity="0.5" transform={`translate(${moonPhase < 4 ? -6 : 6}, 0)`} />}
         </g>
       )}
-      
+
       {isNight && isClear && (
          <g>
             <circle cx="50" cy="30" r="1" fill="white" className="animate-twinkle-1" style={{animationDelay: '0s'}} />
@@ -662,7 +707,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
       {(isSnow || isDeepFreeze || isSleet) && <path d="M320 70 L340 90 L300 90 Z" fill="white" />}
 
       <path d="M-50 140 Q 50 130 150 145 T 450 135 V 170 H -50 Z" fill={groundColor} />
-      
+
       {(isSleet || (isRain && isFreezing) || isDeepFreeze) && (
         <path d="M-50 142 Q 50 132 150 147 T 450 137 V 170 H -50 Z" fill="#bae6fd" opacity="0.4" />
       )}
@@ -674,6 +719,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
           </g>
       )}
 
+      {/* --- HAUS (zuerst gerendert, damit Bäume davor können) --- */}
       <g transform="translate(190, 120)">
           <rect x="25" y="-10" width="6" height="15" fill="#57534e" />
           <rect x="5" y="10" width="40" height="30" fill={houseWall} />
@@ -684,7 +730,10 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
           <rect x="30" y="22" width="10" height="18" fill="#3f2e22" />
           {isNight && <circle cx="17" cy="23" r="8" fill="#fbbf24" opacity="0.6" filter="blur(4px)" />}
       </g>
-      
+
+      {/* --- BÄUME --- */}
+
+      {/* Baum Links - Rand */}
       <g transform="translate(40, 120)">
         <g className={treeAnim}>
             <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
@@ -693,6 +742,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
         </g>
       </g>
 
+      {/* Baum Links - Neben Haus */}
       <g transform="translate(155, 120) scale(0.9)">
         <g className={treeAnim} style={{animationDelay: '0.2s'}}>
             <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
@@ -700,7 +750,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
             <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
         </g>
       </g>
-      
+
+      {/* Baumgruppe Rechts */}
       <g transform="translate(280, 135) scale(0.9)">
         <g className={treeAnim} style={{animationDelay: '0.5s'}}>
             <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
@@ -708,7 +759,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
             <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
         </g>
       </g>
-      
+
+      {/* Baum Rechts - Rand */}
       <g transform="translate(320, 134) scale(0.8)">
         <g className={treeAnim} style={{animationDelay: '0.7s'}}>
             <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
@@ -729,7 +781,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
            <path d="M40 50 Q 55 35 70 50 T 100 50 T 120 60 H 40 Z" fill={isStorm ? "#475569" : "white"} fillOpacity={isOvercast ? 0.9 : 0.7} transform="translate(0,0)" />
            <path d="M240 40 Q 255 25 270 40 T 300 40 T 320 50 H 240 Z" fill={isStorm ? "#334155" : "white"} fillOpacity={isOvercast ? 0.9 : 0.7} transform="translate(20,10)" />
            <path d="M140 30 Q 155 15 170 30 T 200 30 T 220 40 H 140 Z" fill={isStorm ? "#475569" : "white"} fillOpacity={isOvercast ? 0.9 : 0.7} transform="translate(-10,5)" />
-           
+
            {(isStorm || isHeavyRain) && <rect x="-50" y="0" width="460" height="160" fill="black" opacity="0.3" />}
         </g>
       )}
@@ -790,7 +842,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed 
             })}
          </g>
       )}
-      
+
       {isStorm && (
          <g className="anim-lightning">
             <path d="M160 30 L140 60 L155 60 L135 130" stroke="#fef08a" strokeWidth="3" fill="none" filter="url(#iceGlow)" />
@@ -807,19 +859,19 @@ const PrecipitationTile = ({ data, minutelyData }) => {
   // Analyse der nächsten 24h
   const analysis = useMemo(() => {
     if (!data || data.length === 0) return null;
-    
+
     // Wir betrachten nur die Zukunft (ab jetzt)
     const now = new Date();
     const futureData = data.filter(d => d.time > now);
-    
+
     if (futureData.length === 0) return null;
-    
+
     // Ist es gerade nass? (in der aktuellen Stunde oder nächsten Stunde)
     const current = data[0]; 
     // FIX: Use precipProb if available, or just precip amount. OR instead of AND
     // Lower threshold to 0.0 to catch any rain
     const isRainingNow = current.precip > 0.0 || current.snow > 0.0 || (current.precipProb && current.precipProb > 30);
-    
+
     let result = { 
        type: 'none', // none, rain_now, rain_later, snow_now, snow_later
        startTime: null,
@@ -835,12 +887,12 @@ const PrecipitationTile = ({ data, minutelyData }) => {
     if (minutelyData && minutelyData.precipitation) {
         const mTime = minutelyData.time;
         const mPrecip = minutelyData.precipitation;
-        
+
         // Find index for "now"
         // API times are usually ISO strings. Compare timestamps.
         const nowMs = now.getTime();
         let startIndex = -1;
-        
+
         for(let i=0; i<mTime.length; i++) {
             const t = new Date(mTime[i]).getTime();
             if (t >= nowMs) {
@@ -848,7 +900,7 @@ const PrecipitationTile = ({ data, minutelyData }) => {
                 break;
             }
         }
-        
+
         if (startIndex !== -1) {
             // Check next 2 hours (8 * 15min slots)
             for(let i=startIndex; i < Math.min(startIndex + 8, mTime.length); i++) {
@@ -863,13 +915,13 @@ const PrecipitationTile = ({ data, minutelyData }) => {
     }
 
     let foundStart = false;
-    
+
     // Loop um Start und Ende zu finden (Hourly Data)
     for (let i = 0; i < futureData.length; i++) {
        const d = futureData[i];
        // FIX: More robust check. If precip > 0.0, it counts as rain regardless of probability
        const hasPrecip = d.precip > 0.0 || d.snow > 0.0 || (d.precipProb !== undefined && d.precipProb > 50);
-       
+
        if (hasPrecip) {
            if (!foundStart) {
                foundStart = true;
@@ -888,7 +940,7 @@ const PrecipitationTile = ({ data, minutelyData }) => {
            }
        }
     }
-    
+
     if (!foundStart && isRainingNow) {
         // Es regnet jetzt, hört aber in <1h auf
         const hourlyAmount = current.precip || current.snow;
@@ -901,14 +953,14 @@ const PrecipitationTile = ({ data, minutelyData }) => {
         // Determine type based on startTime closeness
         const startDiff = result.startTime - now;
         const isNow = startDiff <= 0; // Or very close
-        
+
         if (isNow) {
             result.type = result.isSnow ? 'snow_now' : 'rain_now';
         } else {
             result.type = result.isSnow ? 'snow_later' : 'rain_later';
         }
     }
-    
+
     return result;
   }, [data, minutelyData]);
 
@@ -917,7 +969,7 @@ const PrecipitationTile = ({ data, minutelyData }) => {
   const { type, startTime, duration, amount, isSnow, maxIntensity, minutelyStart } = analysis;
   const isRain = type.includes('rain');
   const isNow = type.includes('now');
-  
+
   // Zeit-Logik
   const now = new Date();
   const diffMs = startTime ? startTime - now : 0;
@@ -929,7 +981,7 @@ const PrecipitationTile = ({ data, minutelyData }) => {
   // Datum Check
   const isTomorrow = startTime && startTime.getDate() !== now.getDate();
   const dayPrefix = isTomorrow ? "Morgen" : "";
-  
+
   // Custom headline logic
   let headline = "Nächster Niederschlag";
   let timeDisplay = "--:--";
@@ -1004,7 +1056,7 @@ const PrecipitationTile = ({ data, minutelyData }) => {
                             {timeDisplay}
                         </span>
                         {!isNow && !isSoon && !minutelyStart && <span className="text-sm font-bold text-slate-500 uppercase">Uhr</span>}
-                        
+
                         {/* Ping Animation if Raining Now or very soon */}
                         {(isNow || (minutelyStart && (minutelyStart - now) < 300000)) && (
                             <span className="flex h-4 w-4 relative">
@@ -1090,7 +1142,7 @@ const FeedbackModal = ({ onClose, currentTemp }) => {
                     <h3 className="font-bold text-slate-800 flex items-center gap-2"><MessageSquarePlus size={18} className="text-blue-500"/> Wetter melden</h3>
                     <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={20} className="text-slate-400" /></button>
                 </div>
-                
+
                 <div className="p-6 overflow-y-auto">
                     {/* Temperatur Slider */}
                     <div className="mb-8">
@@ -1180,10 +1232,11 @@ const DwdAlertItem = ({ alert }) => {
 const AIReportBox = ({ report, dwdWarnings }) => {
   const [expanded, setExpanded] = useState(false);
   if (!report) return null;
+  const { title, summary, details, warning: localWarning, confidence } = report;
   const { title, summary, details, warning: localWarning, confidence, structuredDetails } = report;
-  
+
   const hasDwd = dwdWarnings && dwdWarnings.length > 0;
-  
+
   let maxSeverityLevel = 0; 
   if (hasDwd) {
       dwdWarnings.forEach(w => {
@@ -1195,10 +1248,10 @@ const AIReportBox = ({ report, dwdWarnings }) => {
           if (lvl > maxSeverityLevel) maxSeverityLevel = lvl;
       });
   }
-  
+
   let bannerClass = "bg-blue-100 text-blue-900 border-blue-300"; 
   let icon = <Info size={20} />;
-  
+
   if (maxSeverityLevel === 1) { bannerClass = "bg-yellow-100 text-yellow-900 border-yellow-300"; icon = <AlertTriangle size={20} />; }
   else if (maxSeverityLevel === 2) { bannerClass = "bg-orange-100 text-orange-900 border-orange-300"; icon = <AlertTriangle size={20} />; }
   else if (maxSeverityLevel >= 3) { bannerClass = "bg-red-100 text-red-900 border-red-300 animate-pulse-red"; icon = <Siren size={20} />; }
@@ -1206,7 +1259,7 @@ const AIReportBox = ({ report, dwdWarnings }) => {
   return (
     <>
       <div className="mb-4 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 rounded-xl border border-indigo-100 shadow-sm relative overflow-hidden transition-all duration-500">
-        
+
         {/* HEADER BEREICH */}
         <div className="p-4 relative z-10">
             {/* DWD Warnings */}
@@ -1241,7 +1294,7 @@ const AIReportBox = ({ report, dwdWarnings }) => {
                 </div>
               </div>
             )}
-            
+
             {/* Main Report Title & Summary */}
             <div className="flex justify-between items-start mb-2">
                 <div className="text-xs font-extrabold uppercase tracking-wider text-indigo-900/60 mb-1 flex items-center gap-1">
@@ -1254,11 +1307,12 @@ const AIReportBox = ({ report, dwdWarnings }) => {
                     </div>
                 )}
             </div>
-            
+
             {/* Hinzugefügt: whitespace-pre-line für korrekte Zeilenumbrüche im Daily Report */}
             <p className="text-lg text-slate-800 leading-relaxed font-semibold relative z-10 whitespace-pre-line">{summary}</p>
-            
+
             {/* Toggle Button */}
+            {details && (
             {(details || structuredDetails) && (
                 <button 
                     onClick={() => setExpanded(!expanded)} 
@@ -1270,9 +1324,13 @@ const AIReportBox = ({ report, dwdWarnings }) => {
         </div>
 
         {/* EXPANDABLE DETAILS */}
+        {expanded && details && (
         {expanded && (
             <div className="px-4 pb-4 pt-0 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="h-px w-full bg-indigo-200/50 mb-3"></div>
+                <div className="text-base text-slate-700 leading-relaxed space-y-2 whitespace-pre-line">
+                    {details}
+                </div>
                 
                 {/* Fallback Text Details */}
                 {details && (
@@ -1361,8 +1419,18 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
     };
 
     const handleAddFoundLocation = (loc) => {
+        // Use the handler from App but adapt data structure
         const newLoc = { name: loc.name, lat: loc.latitude, lon: loc.longitude, type: 'saved', id: crypto.randomUUID() };
-        onSelectLocation(newLoc); 
+        // We need to call the parent's add function, but it expects currentLoc. 
+        // We can just call onSelectLocation to set it as current, then user can save?
+        // Better: Pass a direct add function for explicit locations.
+        // For now, let's reuse onSelectLocation to switch context, and let user save it if they want?
+        // Wait, the prompt says "search location" inside modal. Usually implies adding to list.
+        // Let's assume we want to ADD it to the list immediately.
+        onSelectLocation(newLoc); // This will set it as active.
+        // If we want to save it to the list:
+        // onAddLocation(newLoc); // We don't have this prop directly exposed for arbitrary locs yet.
+        // Let's modify behavior: Select it, and close.
         onClose();
     };
 
@@ -1373,7 +1441,7 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
                     <h3 className="font-bold text-slate-800 flex items-center gap-2"><MapIcon size={18} className="text-blue-500"/> Orte verwalten</h3>
                     <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={20} className="text-slate-400" /></button>
                 </div>
-                
+
                 <div className="p-4 overflow-y-auto">
                     {/* Search Section */}
                     <div className="mb-6 space-y-2">
@@ -1394,7 +1462,7 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
                                 {isSearching ? <RefreshCw className="animate-spin" size={16}/> : <ArrowRight size={16}/>}
                             </button>
                         </div>
-                        
+
                         {/* Search Results */}
                         {searchResults.length > 0 && (
                             <div className="bg-white border border-slate-100 rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-top-1">
@@ -1442,7 +1510,7 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
                                             <div className="text-[10px] text-slate-400">Lat: {loc.lat.toFixed(2)}, Lon: {loc.lon.toFixed(2)}</div>
                                         </div>
                                     </button>
-                                    
+
                                     <button 
                                         onClick={() => onDeleteLocation(index)}
                                         className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition"
@@ -1466,7 +1534,7 @@ export default function WeatherApp() {
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState(() => getSavedLocations());
   const [homeLoc, setHomeLoc] = useState(() => getSavedHomeLocation());
-  const [currentLoc, setCurrentLoc] = useState(homeLoc); 
+  const [currentLoc, setCurrentLoc] = useState(homeLoc); // Initial Home or Default
   const [shortTermData, setShortTermData] = useState(null);
   const [longTermData, setLongTermData] = useState(null);
   const [dwdWarnings, setDwdWarnings] = useState([]);
@@ -1482,9 +1550,6 @@ export default function WeatherApp() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [viewMode, setViewMode] = useState(null);
-  
-  // NEW: Clock for smooth animation
-  const [clock, setClock] = useState(new Date());
 
   // --- Travel Planner State ---
   const [savedTrips, setSavedTrips] = useState(() => getSavedTrips());
@@ -1495,16 +1560,19 @@ export default function WeatherApp() {
   const [travelEndTime, setTravelEndTime] = useState("");
   const [travelResult, setTravelResult] = useState(null);
   const [travelLoading, setTravelLoading] = useState(false);
+  // Trip Report
   const [tripReport, setTripReport] = useState(null);
 
   // Initial Location Logic
   useEffect(() => {
     const initLocation = async () => {
+        // Check URL parameters for widget mode
         const urlParams = new URLSearchParams(window.location.search);
         const view = urlParams.get('view');
         if (view) setViewMode(view);
 
         if (!navigator.geolocation) {
+             // No GPS support, fallback to home
              setCurrentLoc(homeLoc);
              return;
         }
@@ -1513,10 +1581,13 @@ export default function WeatherApp() {
             async (pos) => {
                 const lat = pos.coords.latitude;
                 const lon = pos.coords.longitude;
+
+                // Check distance to Home
                 const dist = getDistanceFromLatLonInKm(lat, lon, homeLoc.lat, homeLoc.lon);
-                if (dist < 2.0) { 
+                if (dist < 2.0) { // If closer than 2km to home
                     setCurrentLoc(homeLoc);
                 } else {
+                    // Fetch City Name
                     try {
                         const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
                         const data = await res.json();
@@ -1529,18 +1600,12 @@ export default function WeatherApp() {
             },
             (err) => {
                 console.warn("GPS Access denied or failed", err);
-                setCurrentLoc(homeLoc); 
+                setCurrentLoc(homeLoc); // Fallback to Home
             }
         );
     };
 
     initLocation();
-  }, []);
-  
-  // Timer for clock
-  useEffect(() => {
-      const timer = setInterval(() => setClock(new Date()), 60000); // Update every minute
-      return () => clearInterval(timer);
   }, []);
 
   // Update localStorage when locations change
@@ -1562,6 +1627,7 @@ export default function WeatherApp() {
   // NEU: iOS Erkennung
   useEffect(() => {
     const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    // Zeige Hinweis nur, wenn noch nicht installiert (standalone check)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     if (isIos && !isStandalone) {
       setShowIosInstall(true);
@@ -1572,6 +1638,7 @@ export default function WeatherApp() {
     const handler = (e) => { 
         e.preventDefault(); 
         setDeferredPrompt(e); 
+        console.log("Install prompt captured");
     };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -1585,6 +1652,7 @@ export default function WeatherApp() {
   };
 
   const handleAddLocation = () => {
+      // Avoid duplicates based on name/coords
       const exists = locations.some(l => l.name === currentLoc.name);
       if (!exists) {
           setLocations([...locations, { ...currentLoc, type: 'saved', id: crypto.randomUUID() }]);
@@ -1599,7 +1667,7 @@ export default function WeatherApp() {
   };
 
   const handleSetHome = () => setCurrentLoc(homeLoc);
-  
+
   const handleSetCurrent = () => {
     setLoading(true);
     if (!navigator.geolocation) { setError("Kein GPS"); setLoading(false); return; }
@@ -1608,21 +1676,29 @@ export default function WeatherApp() {
       (err) => { setError("GPS verweigert"); setLoading(false); }
     );
   };
-  
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     setDwdWarnings([]);
     try {
       const { lat, lon } = currentLoc;
+
+      // FIX: Verwendung globaler Modelle für weltweite Stabilität (Reise-Modus)
+      // Regionale Modelle wie AROME/KNMI führen zu Fehlern außerhalb von EU
       const modelsShort = "icon_seamless,gfs_seamless,gem_seamless";
+
+      // FIX: timezone=auto sorgt dafür, dass die Zeiten am Zielort korrekt sind
+      // FIX 2: Entferne die modellspezifischen Keys aus dem "hourly" Parameter, da "models" Parameter dies implizit erledigt
       const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2`;
+
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
+      // INCREASED forecast_days to 14 for the new weekly report
       const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max,sunrise,sunset&models=${modelsLong}&timezone=auto&forecast_days=14`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
 
       const [resShort, resLong, resDwd] = await Promise.all([fetch(urlShort), fetch(urlLong), fetch(urlDwd).catch(() => ({ ok: false }))]);
-      
+
       if (!resShort.ok) {
           const errText = await resShort.text();
           throw new Error(`Fehler (Short): ${errText}`);
@@ -1631,11 +1707,11 @@ export default function WeatherApp() {
           const errText = await resLong.text();
           throw new Error(`Fehler (Long): ${errText}`);
       }
-      
+
       setShortTermData(await resShort.json());
       const longData = await resLong.json();
       setLongTermData(longData);
-      
+
       if (resDwd.ok) {
          const dwdJson = await resDwd.json();
          setDwdWarnings(dwdJson.alerts || []);
@@ -1657,18 +1733,20 @@ export default function WeatherApp() {
   const handleTravelSearch = async (overrideQuery = null, overrideData = null) => {
     const q = overrideQuery || travelQuery;
     if (!q && !overrideData) return;
-    
+
     setTravelLoading(true);
     setTravelResult(null);
-    setTripReport(null); 
-    
+    setTripReport(null); // Reset Report
+
     try {
         let loc;
+        // 1. Geocoding (if needed)
         if (overrideData) {
             loc = overrideData;
         } else {
             const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=de&format=json`);
             const geoData = await geoRes.json();
+
             if (!geoData.results || geoData.results.length === 0) {
                 alert("Ort nicht gefunden.");
                 setTravelLoading(false);
@@ -1676,43 +1754,53 @@ export default function WeatherApp() {
             }
             loc = geoData.results[0];
         }
-        
+
+        // 2. Weather Fetch (Seamless for best results) - 14 Days to cover future
         const lat = loc.latitude || loc.lat;
         const lon = loc.longitude || loc.lon;
+        // Fetch comparing data to calculate reliability
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,windspeed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,precipitation_sum,windgusts_10m_max&models=icon_seamless,gfs_seamless&timezone=auto&forecast_days=16`;
-        
+
         const wRes = await fetch(url);
         if(!wRes.ok) throw new Error("Wetterdaten konnten nicht geladen werden.");
         const wData = await wRes.json();
-        
+
         if(!wData || !wData.hourly || !wData.hourly.time) throw new Error("Keine Vorhersage verfügbar.");
 
+        // 3. Process Data
+        // CRITICAL FIX: Ensure dates are handled as simple ISO strings for comparison to avoid timezone issues
         const startDateStr = overrideData ? overrideData.startDate : travelStartDate;
         const endDateStr = (overrideData ? overrideData.endDate : travelEndDate) || startDateStr;
-        
+
         if (!startDateStr) {
              alert("Bitte Startdatum wählen.");
              setTravelLoading(false);
              return;
         }
 
-        const startDate = new Date(startDateStr); 
+        const startDate = new Date(startDateStr); // Keep Date object for display formatting
         const endDate = new Date(endDateStr);
+
+        // Determine Mode: Single Day or Multi Day
         const isMultiDay = startDateStr !== endDateStr;
-        
+
         let result = {
             location: loc,
             mode: isMultiDay ? 'multi' : 'single',
             startDate,
             endDate,
-            items: [], 
-            summary: {}, 
+            items: [], // for multi day
+            summary: {}, // for single day
             reliability: 0
         };
 
+        // HELPER: Safely get value from potentially model-suffixed response
         const getSafeValue = (sourceObj, index, baseKey) => {
             if (!sourceObj) return null;
+            // 1. Try base key directly (e.g. temperature_2m)
             if (sourceObj[baseKey] && sourceObj[baseKey][index] !== undefined) return sourceObj[baseKey][index];
+
+            // 2. Try common model suffixes
             const models = ['icon_seamless', 'gfs_seamless', 'gem_seamless', 'arome_seamless'];
             for (const m of models) {
                 const key = `${baseKey}_${m}`;
@@ -1721,9 +1809,11 @@ export default function WeatherApp() {
             return null;
         };
 
+        // Check if date is > 16 days in future
         const now = new Date();
         const diffDays = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
         if (diffDays > 16) {
+             // Zu weit in der Zukunft
              setTravelResult({...result, reliability: 0});
              setTripReport({
                  title: "Vorhersage nicht möglich",
@@ -1737,24 +1827,35 @@ export default function WeatherApp() {
         }
 
         if (isMultiDay) {
+            // MULTI DAY LOGIC
             const daily = wData.daily;
             const dailyItems = [];
             let totalRel = 0;
             let count = 0;
 
             for(let i=0; i<daily.time.length; i++) {
-                const dayDateStr = daily.time[i]; 
+                const dayDateStr = daily.time[i]; // "YYYY-MM-DD"
+
+                // Compare strings directly: "2023-10-01" >= "2023-10-01"
                 if (dayDateStr >= startDateStr && dayDateStr <= endDateStr) {
+
                     const maxT = getSafeValue(daily, i, 'temperature_2m_max') ?? 0;
                     const minT = getSafeValue(daily, i, 'temperature_2m_min') ?? 0;
                     const code = getSafeValue(daily, i, 'weathercode') ?? 0;
                     const prob = getSafeValue(daily, i, 'precipitation_probability_max') ?? 0;
                     const sum = getSafeValue(daily, i, 'precipitation_sum') ?? 0;
                     const gust = getSafeValue(daily, i, 'windgusts_10m_max') ?? 0;
+
                     dailyItems.push({
                         date: new Date(dayDateStr),
-                        max: maxT, min: minT, code: code, precipProb: prob, precipSum: sum, wind: gust
+                        max: maxT,
+                        min: minT,
+                        code: code,
+                        precipProb: prob,
+                        precipSum: sum,
+                        wind: gust
                     });
+
                     const d = new Date(dayDateStr).getTime();
                     const daysInFuture = (d - new Date().getTime()) / (1000 * 60 * 60 * 24);
                     const rel = Math.max(10, 100 - (daysInFuture * 5));
@@ -1764,28 +1865,46 @@ export default function WeatherApp() {
             }
             result.items = dailyItems;
             result.reliability = count > 0 ? Math.round(totalRel / count) : 50;
+
         } else {
+            // SINGLE DAY LOGIC
             const startTimeStr = overrideData ? overrideData.startTime : travelStartTime;
             const endTimeStr = overrideData ? overrideData.endTime : travelEndTime;
+
             const useTimeWindow = startTimeStr || endTimeStr;
-            let startH = 0; let endH = 23;
+            let startH = 0; 
+            let endH = 23;
+
             if (useTimeWindow) {
                 if (startTimeStr) startH = parseInt(startTimeStr.split(':')[0]);
                 if (endTimeStr) endH = parseInt(endTimeStr.split(':')[0]);
             }
+
+            // Filter hourly data for that day and time window
             const hourly = wData.hourly;
-            let temps = []; let precips = []; let winds = []; let codes = []; let probs = [];
+            let temps = [];
+            let precips = [];
+            let winds = [];
+            let codes = [];
+            let probs = [];
+
+            // Use the date string for matching
             const targetDateStr = startDateStr; 
+
             for(let i=0; i<hourly.time.length; i++) {
+                // hourly.time is usually ISO string "YYYY-MM-DDTHH:mm"
                 const tStr = hourly.time[i];
                 if (tStr.startsWith(targetDateStr)) {
+                    // Extract hour from ISO string "2023-10-27T14:00" -> 14
                     const h = parseInt(tStr.split('T')[1].split(':')[0]);
+
                     if (h >= startH && h <= endH) {
                         const temp = getSafeValue(hourly, i, 'temperature_2m');
                         const precip = getSafeValue(hourly, i, 'precipitation');
                         const wind = getSafeValue(hourly, i, 'windspeed_10m');
                         const code = getSafeValue(hourly, i, 'weathercode');
                         const prob = getSafeValue(hourly, i, 'precipitation_probability');
+
                         if (temp !== null) temps.push(temp);
                         if (precip !== null) precips.push(precip);
                         if (wind !== null) winds.push(wind);
@@ -1794,6 +1913,7 @@ export default function WeatherApp() {
                     }
                 }
             }
+
             if (temps.length > 0) {
                 result.summary = {
                     avgTemp: temps.reduce((a,b)=>a+b,0)/temps.length,
@@ -1802,19 +1922,28 @@ export default function WeatherApp() {
                     totalPrecip: precips.reduce((a,b)=>a+b,0),
                     maxWind: Math.max(...winds),
                     avgProb: Math.round(probs.reduce((a,b)=>a+b,0)/probs.length),
-                    code: codes[Math.floor(codes.length/2)], isTimeWindow: !!useTimeWindow, startH, endH
+                    code: codes[Math.floor(codes.length/2)], // approximate
+                    isTimeWindow: !!useTimeWindow,
+                    startH, endH
                 };
+
+                // Reliability
                 const daysInFuture = (startDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24);
                 result.reliability = Math.round(Math.max(10, 100 - (daysInFuture * 5)));
             } else {
                 result.reliability = 0; 
+                // Initialize empty summary to prevent crash
                 result.summary = { maxTemp: 0, minTemp: 0, totalPrecip: 0, avgProb: 0, maxWind: 0, code: 0 };
             }
         }
+
         setTravelResult(result);
+
+        // Generate AI Report for the trip if valid
         if (result.reliability > 0 || result.items.length > 0) {
             setTripReport(generateAIReport('trip', result));
         } else {
+             // Fallback report
              setTripReport({
                  title: "Keine Daten",
                  summary: "Für diesen Zeitraum sind keine Wetterdaten verfügbar.",
@@ -1823,6 +1952,7 @@ export default function WeatherApp() {
                  confidence: 0
              });
         }
+
     } catch (e) {
         console.error(e);
         alert("Fehler bei der Reise-Suche: " + e.message);
@@ -1857,9 +1987,11 @@ export default function WeatherApp() {
       setTravelEndDate(trip.endDate || "");
       setTravelStartTime(trip.startTime || "");
       setTravelEndTime(trip.endTime || "");
+      // Trigger search
       handleTravelSearch(trip.name, trip);
   };
 
+  // --- PREVIEW COMPONENT FOR TRIP LIST ---
   const TripWeatherPreview = ({ trip }) => {
       const [weather, setWeather] = useState(null);
       const [loading, setLoading] = useState(true);
@@ -1877,6 +2009,7 @@ export default function WeatherApp() {
                       });
                   }
               } catch (e) {
+                  // silent fail or retry
               } finally {
                   setLoading(false);
               }
@@ -1896,6 +2029,8 @@ export default function WeatherApp() {
       );
   };
 
+
+  // --- PROCESSING LOGIC --- 
   const processedShort = useMemo(() => {
     if (!shortTermData?.hourly) return [];
     const h = shortTermData.hourly;
@@ -1904,20 +2039,31 @@ export default function WeatherApp() {
     const isDayArray = h.is_day_icon_d2 || h.is_day || h.is_day_gfs_seamless;
 
     for (let i = 0; i < h.time.length; i++) {
+      // WICHTIG: parseLocalTime verwenden
       const t = parseLocalTime(h.time[i]);
-      const nextT = i < h.time.length - 1 ? parseLocalTime(h.time[i+1]) : null;
-      if (t < now && nextT && nextT > now) {} else if (t < now) { continue; }
 
+      const nextT = i < h.time.length - 1 ? parseLocalTime(h.time[i+1]) : null;
+      if (t < now && nextT && nextT > now) {
+         // Das ist das aktuelle Intervall, behalten
+      } else if (t < now) {
+         continue; 
+      }
+
+      // FIX: Verwendung der globalen Seamless-Keys
       const getVal = (key) => h[key]?.[i] ?? h[`${key}_icon_seamless`]?.[i] ?? h[`${key}_gfs_seamless`]?.[i] ?? 0;
-      
+
+      // Neue Modelle auslesen (wenn vorhanden)
       const temp_icon = h.temperature_2m_icon_seamless?.[i] ?? null;
       const temp_gfs = h.temperature_2m_gfs_seamless?.[i] ?? null;
+      // Optional: Weitere Modelle, falls vorhanden, aber Fokus auf Global
       const temp_arome = h.temperature_2m_arome_seamless?.[i] ?? null; 
       const temp_gem = h.temperature_2m_gem_seamless?.[i] ?? null;
-      
+
+      // Mittelwert jetzt aus verfügbaren Modellen
       const t_vals = [temp_icon, temp_gfs, temp_gem].filter(v => v !== null && v !== undefined);
       const temp = t_vals.length > 0 ? t_vals.reduce((a,b)=>a+b,0) / t_vals.length : 0;
-      
+
+      // Auch bei Regen/Schnee/Wind alle Modelle einbeziehen
       const getAvg = (key) => {
          const v1 = h[`${key}_icon_seamless`]?.[i];
          const v2 = h[`${key}_gfs_seamless`]?.[i];
@@ -1934,6 +2080,7 @@ export default function WeatherApp() {
          return vals.length > 0 ? Math.max(...vals) : 0;
       };
 
+      // Zuverlässigkeit
       const t_spread = t_vals.length > 1 ? Math.max(...t_vals) - Math.min(...t_vals) : 0;
       const reliability = Math.round(Math.max(0, 100 - (t_spread * 15)));
 
@@ -1943,10 +2090,11 @@ export default function WeatherApp() {
         temp: temp,
         temp_icon, temp_gfs, temp_arome, temp_gem,
         precip: getAvg('precipitation'),
+        // FIX: Add precipProb field
         precipProb: getVal('precipitation_probability'),
         snow: getMax('snowfall'),
         wind: Math.round(getAvg('windspeed_10m')),
-        gust: Math.round(getMax('windgusts_10m')),
+        gust: Math.round(getMax('windgusts_10m')), // Böen immer Max Warnung
         dir: h.winddirection_10m_icon_seamless?.[i] || 0,
         code: h.weathercode_icon_seamless?.[i] || h.weathercode?.[i] || 0,
         isDay: isDayArray?.[i] ?? (t.getHours() >= 6 && t.getHours() <= 21 ? 1 : 0),
@@ -1964,12 +2112,16 @@ export default function WeatherApp() {
     if (!longTermData?.daily) return [];
     const d = longTermData.daily;
     return d.time.map((t, i) => {
+      // WICHTIG: parseLocalTime verwenden
       const date = parseLocalTime(t);
       const maxIcon = d.temperature_2m_max_icon_seamless?.[i] ?? 0;
       const maxGfs = d.temperature_2m_max_gfs_seamless?.[i] ?? 0;
       const maxArome = d.temperature_2m_max_arome_seamless?.[i] ?? null;
       const maxGem = d.temperature_2m_max_gem_seamless?.[i] ?? null;
+
+      // Mittelwert robuster
       const maxVals = [maxIcon, maxGfs, maxGem].filter(v => v !== null && v !== undefined);
+
       return {
         date,
         dayName: new Intl.DateTimeFormat('de-DE', { weekday: 'short' }).format(date),
@@ -1978,6 +2130,7 @@ export default function WeatherApp() {
         max: maxVals.length > 0 ? maxVals.reduce((a,b)=>a+b,0)/maxVals.length : maxIcon,
         min: ((d.temperature_2m_min_icon_seamless?.[i]??0) + (d.temperature_2m_min_gfs_seamless?.[i]??0)) / 2,
         max_icon: maxIcon, max_gfs: maxGfs, max_arome: maxArome, max_gem: maxGem,
+        // Auch hier GEM mit einbeziehen
         rain: Math.max(d.precipitation_sum_icon_seamless?.[i]||0, d.precipitation_sum_gfs_seamless?.[i]||0, d.precipitation_sum_gem_seamless?.[i]||0).toFixed(1),
         snow: Math.max(d.snowfall_sum_icon_seamless?.[i]||0, d.snowfall_sum_gfs_seamless?.[i]||0, d.snowfall_sum_gem_seamless?.[i]||0).toFixed(1),
         wind: Math.round(Math.max(d.windspeed_10m_max_icon_seamless?.[i]||0, d.windspeed_10m_max_gfs_seamless?.[i]||0, d.windspeed_10m_max_gem_seamless?.[i]||0)),
@@ -1989,7 +2142,8 @@ export default function WeatherApp() {
       };
     });
   }, [longTermData]);
-  
+
+  // LIVE oder DEMO Daten?
   const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: "0.0", precip: "0.0", wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0 };
   const current = liveCurrent;
 
@@ -2009,10 +2163,67 @@ export default function WeatherApp() {
 
   const displayedHours = processedShort.slice(0, 24);
 
+  // --- WIDGET VIEWS ---
+  if (viewMode === 'animation') {
+    if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-900 text-white">Lade...</div>;
+    return (
+      <div className={`h-screen w-screen overflow-hidden relative bg-gradient-to-br ${bgGradient}`}>
+        <style>{styles}</style>
+        <div className="absolute top-4 left-4 z-50">
+            <a href="/" className="bg-black/20 p-2 rounded-full text-white backdrop-blur-md block"><ArrowLeft size={24}/></a>
+        </div>
+        <div className="h-full w-full">
+            <WeatherLandscape code={current.code} isDay={current.isDay} date={current.time} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} />
+        </div>
+        <div className="absolute bottom-8 left-0 right-0 text-center text-white drop-shadow-md pointer-events-none">
+            <div className="text-6xl font-bold">{Math.round(current.temp)}°</div>
+            <div className="text-xl opacity-90">{weatherConf.text}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (viewMode === 'report') {
+     if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-50">Lade...</div>;
+     return (
+        <div className="min-h-screen bg-slate-100 p-4">
+            <div className="mb-4">
+                <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
+            </div>
+            <h2 className="text-2xl font-bold mb-4 text-slate-800">Tages-Bericht</h2>
+            <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} />
+            <div className="mt-8">
+                 <h2 className="text-2xl font-bold mb-4 text-slate-800">14-Tage-Trend</h2>
+                 <h2 className="text-2xl font-bold mb-4 text-slate-800">7-Tage-Trend</h2>
+                 <AIReportBox report={longtermReport} dwdWarnings={[]} />
+            </div>
+        </div>
+     );
+  }
+
+  if (viewMode === 'precip') {
+    if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-50">Lade...</div>;
+    return (
+       <div className="min-h-screen bg-slate-100 p-4 flex flex-col justify-center">
+           <div className="absolute top-4 left-4">
+               <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
+           </div>
+           <h2 className="text-2xl font-bold mb-6 text-slate-800 text-center">Niederschlags-Radar</h2>
+           <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} />
+           <PrecipitationTile data={processedShort} />
+       </div>
+    );
+ }
+
+  // --- STANDARD APP ---
+
+  if (loading) return <div className="min-h-screen bg-slate-100 flex items-center justify-center"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center p-8 bg-red-50 text-red-900 font-bold">{error} <button onClick={() => setCurrentLoc(homeLoc)} className="ml-4 underline">Reset</button></div>;
+
   return (
     <div className={`min-h-screen transition-all duration-1000 bg-gradient-to-br ${bgGradient} font-sans pb-20 overflow-hidden relative`}>
       <style>{styles}</style>
-      
+
       {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} currentTemp={current.temp} />}
       {showLocationModal && (
           <LocationModal 
@@ -2038,7 +2249,8 @@ export default function WeatherApp() {
         </div>
         <div className="flex flex-col gap-2 items-end">
            {deferredPrompt && (<button onClick={handleInstallClick} className="p-3 rounded-full backdrop-blur-md bg-blue-600 text-white animate-pulse shadow-lg"><Download size={20} /></button>)}
-           
+
+           {/* iOS Install Tip */}
            {showIosInstall && (
              <div className="bg-white/90 backdrop-blur-md p-3 rounded-xl shadow-xl text-black max-w-[200px] text-xs relative animate-in fade-in slide-in-from-top-4 duration-500">
                 <button onClick={() => setShowIosInstall(false)} className="absolute top-1 right-1 opacity-50"><X size={14}/></button>
@@ -2049,6 +2261,7 @@ export default function WeatherApp() {
            )}
 
            <div className="flex gap-2">
+               {/* FEEDBACK BUTTON */}
                <button onClick={() => setShowFeedback(true)} className={`p-3 rounded-full backdrop-blur-md transition shadow-md ${textColor} bg-white/20 hover:bg-white/30`}>
                    <MessageSquarePlus size={20} />
                </button>
@@ -2060,7 +2273,7 @@ export default function WeatherApp() {
 
       <main className="max-w-4xl mx-auto p-4 z-10 relative space-y-6">
         <div className={`rounded-3xl p-6 ${cardBg} shadow-lg relative overflow-hidden min-h-[240px] flex items-center`}>
-          <div className="absolute inset-0 z-0 pointer-events-none"><WeatherLandscape code={current.code} isDay={current.isDay} date={clock} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} /></div>
+          <div className="absolute inset-0 z-0 pointer-events-none"><WeatherLandscape code={current.code} isDay={current.isDay} date={current.time} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} /></div>
           <div className="flex items-center justify-between w-full relative z-10">
             <div className="flex flex-col">
                <span className="text-7xl font-bold tracking-tighter leading-none drop-shadow-lg text-white">{Math.round(current.temp)}°</span>
@@ -2087,7 +2300,7 @@ export default function WeatherApp() {
         </div>
 
         <div className={`backdrop-blur-md rounded-[32px] p-5 shadow-2xl ${cardBg} min-h-[450px]`}>
-          
+
           {activeTab === 'overview' && (
             <div className="space-y-4">
                <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} />
@@ -2170,6 +2383,24 @@ export default function WeatherApp() {
                       )}
                   </ResponsiveContainer>
                </div>
+               <div className="flex justify-center gap-4 mt-6 text-xs font-medium opacity-80 flex-wrap">
+                  {chartView === 'hourly' ? (
+                    <>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400"></div> KNMI</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div> Ø</span>
+                    </>
+                  ) : (
+                    <>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-300"></div> GEM</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
+                    </>
+                  )}
+               </div>
             </div>
           )}
 
@@ -2185,20 +2416,33 @@ export default function WeatherApp() {
                       const isDaySnow = parseFloat(day.snow) > 0;
                       let probColor = "text-slate-400 opacity-50"; 
                       if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
+
                       return (
                         <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[160px] w-[160px] hover:bg-white/10 transition relative group">
+                          {/* Day & Date */}
                           <div className="text-base font-bold opacity-90 mb-0.5">{day.dayName}</div>
                           <div className="text-xs opacity-60 mb-2">{day.dateShort}</div>
+                          
+                          {/* Icon */}
                           <DayIcon size={48} className="opacity-90 mb-2" />
+                          
+                          {/* Temp Range */}
                           <div className="flex items-center gap-2 mb-2 w-full justify-center">
                             <span className="text-2xl font-bold text-blue-400">{Math.round(day.min)}°</span>
                             <div className="h-1 w-6 bg-white/10 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" /></div>
+                            <div className="h-1 w-6 bg-white/10 rounded-full overflow-hidden">
+                               <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
+                            </div>
                             <span className="text-2xl font-bold text-red-400">{Math.round(day.max)}°</span>
                          </div>
+                          
+                          {/* Precip */}
                            <div className="mb-1 h-4 flex items-center justify-center w-full">
                              {isDaySnow ? <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {day.snow}cm</span> : parseFloat(day.rain) > 0.1 ? <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {day.rain}mm</span> : <span className="opacity-20 text-xs">-</span>}
                            </div>
                            <div className={`text-[10px] mb-2 ${probColor} h-3`}>{day.prob > 0 ? `${day.prob}% Wahrsch.` : ''}</div>
+                           
+                           {/* Wind */}
                            <div className="flex flex-col items-center gap-0.5 mb-2 w-full">
                               <div className="flex items-center justify-center gap-1 opacity-80 w-full">
                                  <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
@@ -2206,10 +2450,13 @@ export default function WeatherApp() {
                               </div>
                               <span className={`text-[10px] opacity-60 ${getWindColorClass(day.gust)}`}>Böen {day.gust}</span>
                            </div>
+
+                           {/* Reliability Indicator */}
                            <div className="mt-1 text-[10px] flex items-center gap-1 opacity-70 border border-white/10 px-2 py-0.5 rounded-full">
                               <ShieldCheck size={10} className={confColor} />
                               <span className={confColor}>{day.reliability}% Sicher</span>
                            </div>
+                           
                         </div>
                       );
                     })}
@@ -2248,7 +2495,7 @@ export default function WeatherApp() {
                               onKeyDown={(e) => e.key === 'Enter' && handleTravelSearch()}
                           />
                       </div>
-                      
+
                       {/* Date Range Inputs */}
                       <div className="flex gap-2">
                           <div className="relative flex-1">
@@ -2349,6 +2596,7 @@ export default function WeatherApp() {
                           </div>
 
                           {/* SINGLE DAY DETAILS */}
+                          {travelResult.mode === 'single' && travelResult.summary.maxTemp && (
                           {travelResult.mode === 'single' && (
                               <>
                                 <div className="flex items-center gap-4 mb-4 relative z-10">
@@ -2408,7 +2656,7 @@ export default function WeatherApp() {
                                   ))}
                               </div>
                           )}
-                          
+
                           <button 
                             onClick={handleSaveTrip}
                             className="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg flex items-center justify-center gap-2 transition relative z-10"
