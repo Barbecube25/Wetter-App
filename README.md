@@ -6,11 +6,9 @@ Wir freuen uns, dass Sie unsere App WetterScout AI nutzen. Der Schutz Ihrer pers
 
 1. Verantwortlicher
 
-[Dein Name oder Firmenname]
+Michael Pannitz
 
-[Deine Adresse]
-
-[Deine E-Mail-Adresse]
+michael.pannitz@gmail.com
 
 2. Welche Daten wir erfassen
 
