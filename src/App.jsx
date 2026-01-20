@@ -379,9 +379,23 @@ const generateAIReport = (type, data) => {
     const thisWeek = [];
     const nextWeek = [];
     let foundNextMon = false;
+    let foundWeekAfter = false; // NEU: Marker für den Start der übernächsten Woche
 
     analysisData.forEach(d => {
-        if (d.date.getDay() === 1 && !foundNextMon) foundNextMon = true;
+        const isMonday = d.date.getDay() === 1;
+
+        // Wenn wir den ersten Montag finden -> Start nächste Woche
+        if (isMonday && !foundNextMon) {
+            foundNextMon = true;
+        } 
+        // Wenn wir BEREITS in der nächsten Woche sind und WIEDER einen Montag finden -> Stopp
+        else if (isMonday && foundNextMon) {
+            foundWeekAfter = true;
+        }
+
+        // Wenn wir die übernächste Woche erreicht haben, fügen wir nichts mehr hinzu
+        if (foundWeekAfter) return;
+
         if (foundNextMon) nextWeek.push(d);
         else thisWeek.push(d);
     });
