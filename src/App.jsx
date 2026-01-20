@@ -16,6 +16,10 @@ const TRANSLATIONS = {
     settings: "Einstellungen",
     language: "Sprache",
     units: "Einheit",
+    theme: "Design",
+    themeAuto: "Automatisch",
+    themeLight: "Hell",
+    themeDark: "Dunkel",
     save: "Speichern",
     cancel: "Abbrechen",
     loading: "Lade...",
@@ -127,6 +131,10 @@ const TRANSLATIONS = {
     settings: "Settings",
     language: "Language",
     units: "Units",
+    theme: "Theme",
+    themeAuto: "Auto",
+    themeLight: "Light",
+    themeDark: "Dark",
     save: "Save",
     cancel: "Cancel",
     loading: "Loading...",
@@ -257,8 +265,9 @@ const getSavedTrips = () => {
 const getSavedSettings = () => {
     try {
         const saved = localStorage.getItem('weather_settings');
-        return saved ? JSON.parse(saved) : { language: 'de', unit: 'celsius' };
-    } catch (e) { return { language: 'de', unit: 'celsius' }; }
+        // Default Settings erweitert um theme: 'auto'
+        return saved ? JSON.parse(saved) : { language: 'de', unit: 'celsius', theme: 'auto' };
+    } catch (e) { return { language: 'de', unit: 'celsius', theme: 'auto' }; }
 };
 
 const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
@@ -798,6 +807,33 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave }) => {
                              className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${localSettings.language === 'en' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
                          >
                              English
+                         </button>
+                     </div>
+                 </div>
+
+                 {/* THEME (NEU) */}
+                 <div className="mb-6">
+                     <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <Palette size={16}/> {t.theme}
+                     </label>
+                     <div className="flex gap-2 bg-slate-100 p-1 rounded-xl">
+                         <button 
+                             onClick={() => setLocalSettings({...localSettings, theme: 'auto'})}
+                             className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition ${localSettings.theme === 'auto' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                         >
+                             {t.themeAuto}
+                         </button>
+                         <button 
+                             onClick={() => setLocalSettings({...localSettings, theme: 'light'})}
+                             className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition ${localSettings.theme === 'light' ? 'bg-white shadow-sm text-amber-500' : 'text-slate-500 hover:text-slate-700'}`}
+                         >
+                             {t.themeLight}
+                         </button>
+                         <button 
+                             onClick={() => setLocalSettings({...localSettings, theme: 'dark'})}
+                             className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition ${localSettings.theme === 'dark' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                         >
+                             {t.themeDark}
                          </button>
                      </div>
                  </div>
@@ -2702,6 +2738,11 @@ export default function WeatherApp() {
   // --- NEUE LOGIK: Echter Tag/Nacht Status für das UI ---
   // Wir berechnen dies direkt in der App Komponente, damit Hintergrund & Karten einheitlich sind.
   const getIsRealNight = () => {
+      // 1. Check manuelle Einstellung
+      if (settings.theme === 'dark') return true;
+      if (settings.theme === 'light') return false;
+
+      // 2. Fallback auf Auto (Zeitbasiert)
       // Wenn keine Sonnenaufgangsdaten da sind, Fallback auf API 'isDay'
       if (!sunriseSunset.sunrise || !sunriseSunset.sunset) return current.isDay === 0;
       
@@ -3138,6 +3179,33 @@ export default function WeatherApp() {
                                 type="date" 
                                 value={travelEndDate} 
                                 onChange={(e) => setTravelEndDate(e.target.value)}
+                                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/50 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
+                              />
+                            </div>
+                         </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                         <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('startTime')} <span className="opacity-50 font-normal">(Optional)</span></label>
+                            <div className="relative">
+                              <Clock className="absolute left-3 top-3 text-slate-400" size={16}/>
+                              <input 
+                                type="time" 
+                                value={travelStartTime} 
+                                onChange={(e) => setTravelStartTime(e.target.value)}
+                                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/50 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
+                              />
+                            </div>
+                         </div>
+                         <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('endTime')} <span className="opacity-50 font-normal">(Optional)</span></label>
+                            <div className="relative">
+                              <Clock className="absolute left-3 top-3 text-slate-400" size={16}/>
+                              <input 
+                                type="time" 
+                                value={travelEndTime} 
+                                onChange={(e) => setTravelEndTime(e.target.value)}
                                 className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/50 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
                               />
                             </div>
