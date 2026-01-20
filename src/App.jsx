@@ -20,6 +20,7 @@ const TRANSLATIONS = {
     themeAuto: "Automatisch",
     themeLight: "Hell",
     themeDark: "Dunkel",
+    changeHome: "Heimatort ändern", // NEU
     save: "Speichern",
     cancel: "Abbrechen",
     loading: "Lade...",
@@ -135,6 +136,7 @@ const TRANSLATIONS = {
     themeAuto: "Auto",
     themeLight: "Light",
     themeDark: "Dark",
+    changeHome: "Change Home Location", // NEU
     save: "Save",
     cancel: "Cancel",
     loading: "Loading...",
@@ -769,7 +771,7 @@ const generateAIReport = (type, data, lang = 'de') => {
 
 // --- 4. KOMPONENTEN ---
 // --- SETTINGS MODAL (NEU) ---
-const SettingsModal = ({ isOpen, onClose, settings, onSave }) => {
+const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
     const [localSettings, setLocalSettings] = useState(settings);
 
     useEffect(() => {
@@ -788,6 +790,19 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave }) => {
                          <Settings size={24} className="text-blue-600"/> {t.settings}
                      </h2>
                      <button onClick={onClose}><X className="text-slate-400"/></button>
+                 </div>
+
+                 {/* CHANGE HOME LOCATION (NEU) */}
+                 <div className="mb-6">
+                     <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <MapIcon size={16}/> {t.homeLoc}
+                     </label>
+                     <button 
+                         onClick={() => { onClose(); onChangeHome(); }}
+                         className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition flex items-center justify-center gap-2"
+                     >
+                         <Edit2 size={16}/> {t.changeHome}
+                     </button>
                  </div>
 
                  {/* LANGUAGE */}
@@ -2858,6 +2873,31 @@ export default function WeatherApp() {
   
   if (error) return <div className="min-h-screen flex items-center justify-center p-8 bg-red-50 text-red-900 font-bold">{error} <button onClick={() => setCurrentLoc(homeLoc)} className="ml-4 underline">Reset</button></div>;
 
+  // SHOW SETUP MODAL FIRST OR ON CHANGE
+  if (showHomeSetup || !homeLoc) {
+      return (
+          <div className="min-h-screen bg-slate-900 font-sans relative">
+              {/* Cancel Button nur wenn homeLoc bereits existiert (also nicht beim allerersten Start) */}
+              {homeLoc && (
+                  <button 
+                    onClick={() => setShowHomeSetup(false)}
+                    className="absolute top-6 right-6 text-white/50 hover:text-white z-[110]"
+                  >
+                    <X size={32} />
+                  </button>
+              )}
+              <HomeSetupModal 
+                  onSave={(loc) => {
+                      setHomeLoc(loc);
+                      setCurrentLoc(loc);
+                      setShowHomeSetup(false);
+                  }}
+                  lang={lang}
+              />
+          </div>
+      );
+  }
+
   return (
     <div className={`min-h-screen transition-all duration-1000 bg-gradient-to-br ${bgGradient} font-sans pb-20 overflow-hidden relative`}>
       <style>{styles}</style>
@@ -2869,6 +2909,7 @@ export default function WeatherApp() {
              onClose={() => setShowSettingsModal(false)}
              settings={settings}
              onSave={setSettings}
+             onChangeHome={() => setShowHomeSetup(true)} // NEU: Trigger für Setup Modal
           />
       )}
       {showLocationModal && (
