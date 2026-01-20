@@ -2292,9 +2292,11 @@ export default function WeatherApp() {
   
   const handleSetCurrent = () => {
     setLoading(true);
+    setError(null); // Reset Error vor neuem Versuch
     console.log("Starte GPS-Suche..."); 
+    
     if (!navigator.geolocation) { 
-        setError("Kein GPS verfügbar"); 
+        setError("GPS wird von diesem Browser/Gerät nicht unterstützt."); 
         setLoading(false); 
         return; 
     }
@@ -2304,8 +2306,7 @@ export default function WeatherApp() {
           const lat = pos.coords.latitude;
           const lon = pos.coords.longitude;
           
-          // Debug Log
-          console.log(`GPS Position: ${lat}, ${lon}`);
+          console.log(`GPS Position erfolgreich: ${lat}, ${lon} (Genauigkeit: ${pos.coords.accuracy}m)`);
 
           // 1. Prüfen: Sind wir zu Hause? (Distanz < 2km)
           if (homeLoc) {
@@ -2327,14 +2328,13 @@ export default function WeatherApp() {
               const data = await res.json();
               if (data.results && data.results[0]) {
                   cityName = data.results[0].name;
-                  regionName = data.results[0].admin1 || ""; // z.B. Nordrhein-Westfalen
-                  countryName = data.results[0].country || ""; // z.B. Deutschland
+                  regionName = data.results[0].admin1 || ""; 
+                  countryName = data.results[0].country || ""; 
               }
           } catch (e) {
               console.warn("Reverse Geocoding failed", e);
           }
 
-          // Setze den neuen GPS-Standort mit Name UND Region
           setCurrentLoc({ 
               name: cityName, 
               lat, 
@@ -2346,10 +2346,27 @@ export default function WeatherApp() {
       },
       (err) => { 
           console.error("GPS Fehler:", err);
-          setError("Standortzugriff verweigert."); 
+          let msg = "Standort konnte nicht ermittelt werden.";
+          
+          // Detaillierte Fehleranalyse für den User
+          switch(err.code) {
+              case err.PERMISSION_DENIED:
+                  msg = "Standortzugriff verweigert. Bitte erlauben Sie den Zugriff in den Browser- oder App-Einstellungen.";
+                  break;
+              case err.POSITION_UNAVAILABLE:
+                  msg = "Standortinformationen sind zurzeit nicht verfügbar (kein GPS-Signal).";
+                  break;
+              case err.TIMEOUT:
+                  msg = "Zeitüberschreitung bei der Standortsuche. Bitte versuchen Sie es erneut.";
+                  break;
+              default:
+                  msg = `Unbekannter GPS Fehler: ${err.message}`;
+          }
+          
+          setError(msg); 
           setLoading(false); 
       },
-      { timeout: 10000, enableHighAccuracy: true }
+      { timeout: 15000, enableHighAccuracy: true } // Timeout auf 15s erhöht
     );
   };
   
