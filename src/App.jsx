@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check } from 'lucide-react';
 
 // --- 1. KONSTANTEN & CONFIG ---
 
-const DEFAULT_LOC = { name: "Jülich Daubenrath", lat: 50.938, lon: 6.388, id: 'home_default', type: 'home' };
+// ÄNDERUNG: Standard ist jetzt null (leer), damit der User es einrichten muss
+const DEFAULT_LOC = null; 
 
 const getSavedHomeLocation = () => {
   try {
@@ -1382,10 +1383,14 @@ const AIReportBox = ({ report, dwdWarnings }) => {
 };
 
 // --- LOCATION MODAL ---
-const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAddCurrentLocation, onDeleteLocation, currentLoc }) => {
+const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAddCurrentLocation, onDeleteLocation, currentLoc, onRenameLocation, onRenameHome, homeLoc }) => {
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
+    
+    // States for Editing Names
+    const [editingId, setEditingId] = useState(null);
+    const [tempName, setTempName] = useState("");
 
     if (!isOpen) return null;
 
@@ -1404,19 +1409,23 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
     };
 
     const handleAddFoundLocation = (loc) => {
-        // Use the handler from App but adapt data structure
         const newLoc = { name: loc.name, lat: loc.latitude, lon: loc.longitude, type: 'saved', id: crypto.randomUUID() };
-        // We need to call the parent's add function, but it expects currentLoc. 
-        // We can just call onSelectLocation to set it as current, then user can save?
-        // Better: Pass a direct add function for explicit locations.
-        // For now, let's reuse onSelectLocation to switch context, and let user save it if they want?
-        // Wait, the prompt says "search location" inside modal. Usually implies adding to list.
-        // Let's assume we want to ADD it to the list immediately.
-        onSelectLocation(newLoc); // This will set it as active.
-        // If we want to save it to the list:
-        // onAddLocation(newLoc); // We don't have this prop directly exposed for arbitrary locs yet.
-        // Let's modify behavior: Select it, and close.
+        onSelectLocation(newLoc); 
         onClose();
+    };
+
+    const startEditing = (loc) => {
+        setEditingId(loc.id);
+        setTempName(loc.name);
+    };
+
+    const saveName = (loc) => {
+        if (loc.id === 'home_default' || (homeLoc && loc.id === homeLoc.id)) {
+            onRenameHome(tempName);
+        } else {
+            onRenameLocation(loc.id, tempName);
+        }
+        setEditingId(null);
     };
 
     return (
@@ -1477,37 +1486,244 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
                     </button>
 
                     <div className="space-y-2">
-                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Gespeicherte Orte</div>
+                        {/* HOME LOCATION EDITABLE */}
+                        {homeLoc && (
+                            <div className={`p-3 rounded-xl border flex items-center justify-between group transition ${currentLoc.id === homeLoc.id ? 'border-amber-500 bg-amber-50' : 'border-amber-200 hover:border-amber-300'}`}>
+                                <div className="flex items-center gap-3 flex-1 overflow-hidden">
+                                     <div className="p-2 rounded-full bg-amber-100 text-amber-600 shrink-0">
+                                         <Home size={16} />
+                                     </div>
+                                     <div className="w-full">
+                                         {editingId === homeLoc.id ? (
+                                             <div className="flex gap-1 w-full">
+                                                <input 
+                                                    type="text" 
+                                                    className="w-full text-sm font-bold border-b border-amber-300 bg-transparent focus:outline-none"
+                                                    value={tempName}
+                                                    onChange={(e) => setTempName(e.target.value)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && saveName(homeLoc)}
+                                                    autoFocus
+                                                />
+                                                <button onClick={() => saveName(homeLoc)} className="text-green-600"><Check size={16}/></button>
+                                             </div>
+                                         ) : (
+                                             <button onClick={() => { onSelectLocation(homeLoc); onClose(); }} className="text-left w-full">
+                                                 <div className="font-bold text-slate-700 text-sm truncate">{homeLoc.name}</div>
+                                                 <div className="text-[10px] text-slate-400">Heimatort</div>
+                                             </button>
+                                         )}
+                                     </div>
+                                </div>
+                                <button 
+                                    onClick={() => startEditing(homeLoc)}
+                                    className="p-2 text-slate-300 hover:text-amber-500 hover:bg-amber-100 rounded-full transition"
+                                >
+                                    <Edit2 size={16} />
+                                </button>
+                            </div>
+                        )}
+
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 mt-4">Gespeicherte Orte</div>
                         {savedLocations.length === 0 ? (
-                            <div className="text-center text-slate-400 py-4 text-sm italic">Keine Orte gespeichert.</div>
+                            <div className="text-center text-slate-400 py-4 text-sm italic">Keine weiteren Orte.</div>
                         ) : (
                             savedLocations.map((loc, index) => (
-                                <div key={index} className={`p-3 rounded-xl border flex items-center justify-between group transition ${currentLoc.name === loc.name ? 'border-blue-500 bg-blue-50' : 'border-slate-100 hover:border-slate-300'}`}>
-                                    <button 
-                                        onClick={() => { onSelectLocation(loc); onClose(); }}
-                                        className="flex items-center gap-3 flex-1 text-left"
-                                    >
-                                        <div className={`p-2 rounded-full ${loc.type === 'home' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-600'}`}>
-                                            {loc.type === 'home' ? <Home size={16} /> : <MapPin size={16} />}
+                                <div key={loc.id || index} className={`p-3 rounded-xl border flex items-center justify-between group transition ${currentLoc.name === loc.name ? 'border-blue-500 bg-blue-50' : 'border-slate-100 hover:border-slate-300'}`}>
+                                    <div className="flex items-center gap-3 flex-1 overflow-hidden">
+                                        <div className="p-2 rounded-full bg-slate-100 text-slate-600 shrink-0">
+                                            <MapPin size={16} />
                                         </div>
-                                        <div>
-                                            <div className="font-bold text-slate-700 text-sm">{loc.name}</div>
-                                            <div className="text-[10px] text-slate-400">Lat: {loc.lat.toFixed(2)}, Lon: {loc.lon.toFixed(2)}</div>
+                                        <div className="w-full">
+                                             {editingId === loc.id ? (
+                                                 <div className="flex gap-1 w-full">
+                                                    <input 
+                                                        type="text" 
+                                                        className="w-full text-sm font-bold border-b border-blue-300 bg-transparent focus:outline-none"
+                                                        value={tempName}
+                                                        onChange={(e) => setTempName(e.target.value)}
+                                                        onKeyDown={(e) => e.key === 'Enter' && saveName(loc)}
+                                                        autoFocus
+                                                    />
+                                                    <button onClick={() => saveName(loc)} className="text-green-600"><Check size={16}/></button>
+                                                 </div>
+                                             ) : (
+                                                 <button onClick={() => { onSelectLocation(loc); onClose(); }} className="text-left w-full">
+                                                    <div className="font-bold text-slate-700 text-sm truncate">{loc.name}</div>
+                                                    <div className="text-[10px] text-slate-400">Lat: {loc.lat.toFixed(2)}</div>
+                                                 </button>
+                                             )}
                                         </div>
-                                    </button>
+                                    </div>
                                     
-                                    <button 
-                                        onClick={() => onDeleteLocation(index)}
-                                        className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                                    <div className="flex gap-1">
+                                        <button 
+                                            onClick={() => startEditing(loc)}
+                                            className="p-2 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-full transition"
+                                        >
+                                            <Edit2 size={16} />
+                                        </button>
+                                        <button 
+                                            onClick={() => onDeleteLocation(index)}
+                                            className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
                                 </div>
                             ))
                         )}
                     </div>
                 </div>
             </div>
+        </div>
+    );
+};
+
+// --- NEU: HOME SETUP MODAL (Für den allerersten Start) ---
+const HomeSetupModal = ({ onSave }) => {
+    const [searchQuery, setSearchQuery] = useState("");
+    const [results, setResults] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [gpsLoading, setGpsLoading] = useState(false);
+    
+    // Schritt 2: Name vergeben
+    const [selectedLoc, setSelectedLoc] = useState(null);
+    const [customName, setCustomName] = useState("");
+
+    const handleSearch = async () => {
+        if (!searchQuery) return;
+        setLoading(true);
+        try {
+            const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery)}&count=5&language=de&format=json`);
+            const data = await res.json();
+            setResults(data.results || []);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleUseGPS = () => {
+        if (!navigator.geolocation) return alert("Kein GPS verfügbar");
+        setGpsLoading(true);
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+             const lat = pos.coords.latitude;
+             const lon = pos.coords.longitude;
+             try {
+                // Name auflösen
+                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
+                const data = await res.json();
+                const city = data.results?.[0]?.name || "Mein Standort";
+                
+                const loc = { name: city, lat, lon, id: 'home_default', type: 'home' };
+                setSelectedLoc(loc);
+                setCustomName(city);
+            } catch (e) {
+                const loc = { name: "GPS Standort", lat, lon, id: 'home_default', type: 'home' };
+                setSelectedLoc(loc);
+                setCustomName("Zuhause");
+            } finally {
+                setGpsLoading(false);
+            }
+        }, () => {
+            alert("Standortzugriff verweigert.");
+            setGpsLoading(false);
+        });
+    };
+
+    const handleSelect = (res) => {
+        const loc = { name: res.name, lat: res.latitude, lon: res.longitude, id: 'home_default', type: 'home' };
+        setSelectedLoc(loc);
+        setCustomName(res.name);
+    };
+
+    const handleFinalSave = () => {
+        if (!selectedLoc) return;
+        onSave({ ...selectedLoc, name: customName });
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-500">
+             <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden p-6 text-center animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+                 {!selectedLoc ? (
+                     <>
+                        <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Home size={32} />
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-800 mb-2">Willkommen!</h2>
+                        <p className="text-slate-500 mb-6 text-sm">Um zu starten, legen Sie bitte Ihren Heimatort fest. Dieser wird beim Start der App geladen.</p>
+                        
+                        <button 
+                            onClick={handleUseGPS}
+                            disabled={gpsLoading}
+                            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 mb-4 shadow-lg shadow-blue-500/30 transition active:scale-95"
+                        >
+                            {gpsLoading ? <RefreshCw className="animate-spin"/> : <Crosshair size={20}/>}
+                            Standort verwenden
+                        </button>
+
+                        <div className="relative mb-2">
+                             <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
+                             <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400">Oder suchen</span></div>
+                        </div>
+
+                        <div className="relative mb-4">
+                            <input 
+                                type="text" 
+                                placeholder="Stadt eingeben..." 
+                                className="w-full pl-4 pr-12 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50 text-slate-800"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                            />
+                            <button onClick={handleSearch} className="absolute right-2 top-2 p-1.5 bg-slate-200 rounded-lg text-slate-600">
+                                {loading ? <RefreshCw className="animate-spin" size={16}/> : <ArrowRight size={16}/>}
+                            </button>
+                        </div>
+
+                        {results.length > 0 && (
+                            <div className="text-left border border-slate-100 rounded-xl overflow-hidden max-h-[150px] overflow-y-auto">
+                                {results.map(res => (
+                                    <button key={res.id} onClick={() => handleSelect(res)} className="w-full p-3 hover:bg-blue-50 text-left border-b border-slate-50 last:border-0 text-sm font-bold text-slate-700">
+                                        {res.name} <span className="font-normal text-slate-400">({res.country})</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                     </>
+                 ) : (
+                     <>
+                        <button onClick={() => setSelectedLoc(null)} className="absolute top-4 left-4 text-slate-400 hover:text-slate-600"><ArrowLeft size={24}/></button>
+                        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Check size={32} />
+                        </div>
+                        <h2 className="text-xl font-bold text-slate-800 mb-2">Ort gefunden!</h2>
+                        <p className="text-slate-500 mb-6 text-sm">Wie möchten Sie diesen Ort nennen?</p>
+                        
+                        <div className="bg-slate-50 p-4 rounded-xl mb-6">
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1 block text-left">Name</label>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="text" 
+                                    className="w-full bg-transparent font-bold text-xl text-slate-800 focus:outline-none border-b-2 border-blue-500 pb-1"
+                                    value={customName}
+                                    onChange={(e) => setCustomName(e.target.value)}
+                                    autoFocus
+                                />
+                                <Edit2 size={16} className="text-slate-400"/>
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={handleFinalSave}
+                            className="w-full py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/30 transition active:scale-95"
+                        >
+                            Speichern & Starten
+                        </button>
+                     </>
+                 )}
+             </div>
         </div>
     );
 };
@@ -1519,7 +1735,10 @@ export default function WeatherApp() {
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState(() => getSavedLocations());
   const [homeLoc, setHomeLoc] = useState(() => getSavedHomeLocation());
-  const [currentLoc, setCurrentLoc] = useState(homeLoc); // Initial Home or Default
+  // Startet als null, bis Home gesetzt ist
+  const [currentLoc, setCurrentLoc] = useState(homeLoc); 
+  const [showHomeSetup, setShowHomeSetup] = useState(false);
+
   const [shortTermData, setShortTermData] = useState(null);
   const [longTermData, setLongTermData] = useState(null);
   const [dwdWarnings, setDwdWarnings] = useState([]);
@@ -1559,8 +1778,15 @@ export default function WeatherApp() {
   // Trip Report
   const [tripReport, setTripReport] = useState(null);
 
-  // Initial Location Logic
+  // Initial Location Logic / Home Check
   useEffect(() => {
+    // Wenn kein Home Location existiert (erster Start), zeige Setup
+    if (!homeLoc) {
+        setShowHomeSetup(true);
+        setLoading(false);
+        return;
+    }
+
     const initLocation = async () => {
         // Check URL parameters for widget mode
         const urlParams = new URLSearchParams(window.location.search);
@@ -1568,7 +1794,6 @@ export default function WeatherApp() {
         if (view) setViewMode(view);
 
         if (!navigator.geolocation) {
-             // No GPS support, fallback to home
              setCurrentLoc(homeLoc);
              return;
         }
@@ -1602,7 +1827,7 @@ export default function WeatherApp() {
     };
 
     initLocation();
-  }, []);
+  }, [homeLoc]); // Re-run init if homeLoc changes (e.g. after setup)
 
   // Update localStorage when locations change
   useEffect(() => {
@@ -1662,6 +1887,20 @@ export default function WeatherApp() {
       setLocations(newLocs);
   };
 
+  const handleRenameLocation = (id, newName) => {
+      setLocations(locations.map(l => l.id === id ? { ...l, name: newName } : l));
+  };
+  
+  const handleRenameHome = (newName) => {
+      if (!homeLoc) return;
+      const updated = { ...homeLoc, name: newName };
+      setHomeLoc(updated);
+      // Wenn der aktuelle Ort Home ist, update auch currentLoc Titel
+      if (currentLoc && currentLoc.id === homeLoc.id) {
+          setCurrentLoc(updated);
+      }
+  };
+
   const handleSetHome = () => setCurrentLoc(homeLoc);
   
   const handleSetCurrent = () => {
@@ -1674,18 +1913,15 @@ export default function WeatherApp() {
   };
   
   const fetchData = async () => {
+    if (!currentLoc) return; // Nicht fetchen wenn kein Ort da ist
+
     setLoading(true);
     setError(null);
     setDwdWarnings([]);
     try {
       const { lat, lon } = currentLoc;
       
-      // FIX: Verwendung globaler Modelle für weltweite Stabilität (Reise-Modus)
-      // Regionale Modelle wie AROME/KNMI führen zu Fehlern außerhalb von EU
       const modelsShort = "icon_seamless,gfs_seamless,gem_seamless";
-      
-      // FIX: timezone=auto sorgt dafür, dass die Zeiten am Zielort korrekt sind
-      // FIX 2: Entferne die modellspezifischen Keys aus dem "hourly" Parameter, da "models" Parameter dies implizit erledigt
       const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2`;
       
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
@@ -2237,7 +2473,24 @@ export default function WeatherApp() {
 
   // --- STANDARD APP ---
 
-  if (loading) return <div className="min-h-screen bg-slate-100 flex items-center justify-center"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
+  // SHOW SETUP MODAL FIRST
+  if (showHomeSetup && !homeLoc) {
+      return (
+          <div className="min-h-screen bg-slate-900 font-sans">
+              <HomeSetupModal 
+                  onSave={(loc) => {
+                      setHomeLoc(loc);
+                      setCurrentLoc(loc);
+                      setShowHomeSetup(false);
+                  }}
+              />
+          </div>
+      );
+  }
+
+  // Erst laden, wenn Home gesetzt ist
+  if (loading || !currentLoc) return <div className="min-h-screen bg-slate-100 flex items-center justify-center"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
+  
   if (error) return <div className="min-h-screen flex items-center justify-center p-8 bg-red-50 text-red-900 font-bold">{error} <button onClick={() => setCurrentLoc(homeLoc)} className="ml-4 underline">Reset</button></div>;
 
   return (
@@ -2254,6 +2507,9 @@ export default function WeatherApp() {
             onAddCurrentLocation={handleAddLocation}
             onDeleteLocation={handleDeleteLocation}
             currentLoc={currentLoc}
+            onRenameLocation={handleRenameLocation} // NEW
+            onRenameHome={handleRenameHome} // NEW
+            homeLoc={homeLoc} // NEW
           />
       )}
 
