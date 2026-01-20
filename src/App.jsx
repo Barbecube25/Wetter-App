@@ -3062,7 +3062,7 @@ export default function WeatherApp() {
                                  <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
                                  <span className={`text-sm font-bold ${getWindColorClass(day.wind)}`}>{day.wind}</span>
                               </div>
-                              <span className={`text-[10px] opacity-60 ${getWindColorClass(day.gust)}`}>{t('gusts')} {day.gust}</span>
+                              <span className={`text-[9px] opacity-60 ${getWindColorClass(day.gust)}`}>{t('gusts')} {day.gust}</span>
                            </div>
 
                            {/* Reliability Indicator */}
@@ -3077,6 +3077,119 @@ export default function WeatherApp() {
                   </div>
                </div>
              </div>
+          )}
+
+          {activeTab === 'radar' && (
+            <div className="h-full flex flex-col min-h-[450px]">
+                <h3 className="text-sm font-bold uppercase opacity-70 mb-4">{t('precipRadar')}</h3>
+                <div className="flex-1 w-full rounded-2xl overflow-hidden shadow-inner bg-slate-200 relative">
+                  <iframe 
+                    width="100%" 
+                    height="100%" 
+                    src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=650&height=450&zoom=8&level=surface&overlay=rain&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1`} 
+                    frameBorder="0"
+                    className="absolute inset-0 w-full h-full"
+                    title="Windy Radar"
+                  ></iframe>
+                </div>
+                <div className="text-[10px] text-center opacity-50 mt-2">{t('radarCredit')}</div>
+            </div>
+          )}
+
+          {activeTab === 'travel' && (
+            <div className="space-y-6">
+                <div className="bg-white/50 rounded-2xl p-4 border border-white/40">
+                   <h3 className="text-sm font-bold uppercase opacity-70 mb-4 flex items-center gap-2"><Plane size={16}/> {t('travelPlanner')}</h3>
+                   
+                   <div className="space-y-3">
+                      <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('whereTo')}</label>
+                        <div className="relative">
+                            <Search className="absolute left-3 top-3 text-slate-400" size={16}/>
+                            <input 
+                              type="text" 
+                              value={travelQuery}
+                              onChange={(e) => setTravelQuery(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleTravelSearch()}
+                              className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/50 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
+                              placeholder={lang === 'en' ? "City, Island..." : "Stadt, Insel, Ort..."}
+                            />
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                         <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('startDate')}</label>
+                            <div className="relative">
+                              <Calendar className="absolute left-3 top-3 text-slate-400" size={16}/>
+                              <input 
+                                type="date" 
+                                value={travelStartDate} 
+                                onChange={(e) => setTravelStartDate(e.target.value)}
+                                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/50 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
+                              />
+                            </div>
+                         </div>
+                         <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('endDate')}</label>
+                            <div className="relative">
+                              <Calendar className="absolute left-3 top-3 text-slate-400" size={16}/>
+                              <input 
+                                type="date" 
+                                value={travelEndDate} 
+                                onChange={(e) => setTravelEndDate(e.target.value)}
+                                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/50 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
+                              />
+                            </div>
+                         </div>
+                      </div>
+
+                      <button 
+                         onClick={() => handleTravelSearch()} 
+                         disabled={travelLoading}
+                         className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition active:scale-95 flex items-center justify-center gap-2"
+                      >
+                         {travelLoading ? <RefreshCw className="animate-spin" size={18}/> : <CheckCircle2 size={18}/>}
+                         {t('checkWeather')}
+                      </button>
+                   </div>
+                </div>
+
+                {/* Result Area */}
+                {travelResult && (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                       <AIReportBox report={tripReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} />
+                       
+                       <button 
+                          onClick={handleSaveTrip}
+                          className="w-full mt-2 py-3 bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition flex items-center justify-center gap-2"
+                       >
+                          <Save size={18}/> {t('saveTrip')}
+                       </button>
+                    </div>
+                )}
+
+                {/* Saved Trips */}
+                {savedTrips.length > 0 && (
+                   <div>
+                     <h3 className="text-sm font-bold uppercase opacity-70 mb-3 ml-2 mt-6">{t('myTrips')}</h3>
+                     <div className="space-y-2">
+                        {savedTrips.map(trip => (
+                           <div key={trip.id} className="bg-white/40 border border-white/40 p-3 rounded-xl flex items-center justify-between">
+                              <button onClick={() => loadTrip(trip)} className="text-left flex-1">
+                                 <div className="font-bold text-slate-800">{trip.name}</div>
+                                 <div className="text-xs text-slate-500">{formatDateShort(new Date(trip.startDate), lang)} - {formatDateShort(new Date(trip.endDate || trip.startDate), lang)}</div>
+                              </button>
+                              <div className="flex items-center gap-3">
+                                 <TripWeatherPreview trip={trip} />
+                                 <button onClick={() => handleDeleteTrip(trip.id)} className="p-2 text-slate-400 hover:text-red-500 transition"><Trash2 size={16}/></button>
+                              </div>
+                           </div>
+                        ))}
+                     </div>
+                   </div>
+                )}
+            </div>
           )}
 
           {activeTab !== 'radar' && activeTab !== 'travel' && (
