@@ -2163,7 +2163,7 @@ export default function WeatherApp() {
     return (
       <div className={`h-screen w-screen overflow-hidden relative bg-gradient-to-br ${bgGradient}`}>
         <style>{styles}</style>
-        <div className="absolute top-4 left-4 z-50">
+        <div className="absolute top-12 left-4 z-50">
             <a href="/" className="bg-black/20 p-2 rounded-full text-white backdrop-blur-md block"><ArrowLeft size={24}/></a>
         </div>
         <div className="h-full w-full">
@@ -2181,7 +2181,7 @@ export default function WeatherApp() {
   if (viewMode === 'report') {
      if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-50">Lade...</div>;
      return (
-        <div className="min-h-screen bg-slate-100 p-4">
+        <div className="min-h-screen bg-slate-100 px-4 pb-4 pt-14">
             <div className="mb-4">
                 <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
             </div>
@@ -2199,7 +2199,7 @@ export default function WeatherApp() {
     if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-50">Lade...</div>;
     return (
        <div className="min-h-screen bg-slate-100 p-4 flex flex-col justify-center">
-           <div className="absolute top-4 left-4">
+           <div className="absolute top-12 left-4">
                <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
            </div>
            <h2 className="text-2xl font-bold mb-6 text-slate-800 text-center">Niederschlags-Radar</h2>
@@ -2230,7 +2230,7 @@ export default function WeatherApp() {
           />
       )}
 
-      <header className="pt-8 px-5 flex justify-between items-start z-10 relative">
+      <header className="pt-14 px-5 flex justify-between items-start z-10 relative">
         <div className={textColor}>
           <div className="flex gap-2 mb-2">
              <button onClick={handleSetHome} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.id === homeLoc.id ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Home size={14} /> Home</button>
