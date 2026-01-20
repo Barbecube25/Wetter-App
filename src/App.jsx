@@ -2292,10 +2292,50 @@ export default function WeatherApp() {
   
   const handleSetCurrent = () => {
     setLoading(true);
-    if (!navigator.geolocation) { setError("Kein GPS"); setLoading(false); return; }
+    if (!navigator.geolocation) { 
+        setError("Kein GPS verfügbar"); 
+        setLoading(false); 
+        return; 
+    }
+    
     navigator.geolocation.getCurrentPosition(
-      (pos) => setCurrentLoc({ name: t('myLocation'), lat: pos.coords.latitude, lon: pos.coords.longitude, type: 'gps' }),
-      (err) => { setError("GPS verweigert"); setLoading(false); }
+      async (pos) => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          
+          // 1. Prüfen: Sind wir zu Hause? (Distanz < 2km)
+          if (homeLoc) {
+              const dist = getDistanceFromLatLonInKm(lat, lon, homeLoc.lat, homeLoc.lon);
+              if (dist < 2.0) { 
+                  // Wir sind zu Hause -> Lade das Home-Profil (mit eigenem Namen)
+                  setCurrentLoc(homeLoc);
+                  // fetchData wird automatisch durch useEffect getriggert, wenn sich currentLoc ändert
+                  // Falls currentLoc schon homeLoc war, triggert es evtl. nicht, daher manuell fetch:
+                  if (currentLoc && currentLoc.id === homeLoc.id) fetchData();
+                  return;
+              }
+          }
+
+          // 2. Wir sind woanders -> Echten Ortsnamen ermitteln (Reverse Geocoding)
+          let cityName = t('myLocation');
+          try {
+              const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
+              const data = await res.json();
+              if (data.results && data.results[0]) {
+                  cityName = data.results[0].name;
+              }
+          } catch (e) {
+              console.warn("Reverse Geocoding failed", e);
+          }
+
+          // Setze den neuen GPS-Standort mit echtem Namen
+          setCurrentLoc({ name: cityName, lat, lon, type: 'gps' });
+      },
+      (err) => { 
+          setError("Standortzugriff verweigert."); 
+          setLoading(false); 
+      },
+      { timeout: 10000, enableHighAccuracy: true }
     );
   };
   
