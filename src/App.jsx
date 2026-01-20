@@ -854,7 +854,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   // unabhängig vom stündlichen API-Flag "is_day".
   let calculatedIsDay = isDay;
   if (date && sunrise && sunset) {
-      calculatedIsDay = (currentHour >= sunriseHour && currentHour <= sunsetHour) ? 1 : 0;
+      // ÄNDERUNG: < sunsetHour (statt <=), damit bei Sonnenuntergang sofort Nacht ist
+      calculatedIsDay = (currentHour >= sunriseHour && currentHour < sunsetHour) ? 1 : 0;
   }
   const isNight = calculatedIsDay === 0;
   
@@ -886,7 +887,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   let isDawn = false;
   let isDusk = false;
 
-  if (currentHour >= sunriseHour && currentHour <= sunsetHour) {
+  // ÄNDERUNG: Auch hier < sunsetHour
+  if (currentHour >= sunriseHour && currentHour < sunsetHour) {
      celestialType = 'sun';
      const dayLength = sunsetHour - sunriseHour;
      const dayProgress = (currentHour - sunriseHour) / dayLength; 
@@ -2068,6 +2070,20 @@ export default function WeatherApp() {
     return () => clearInterval(timer);
   }, []);
 
+  // --- HELPER: Berechne die ECHTE Ortszeit basierend auf dem API-Offset ---
+  // Das verhindert, dass es "hell" ist, obwohl am Ort schon die Sonne untergegangen ist,
+  // nur weil der User in einer anderen Zeitzone sitzt.
+  const locationTime = useMemo(() => {
+      if (!shortTermData?.utc_offset_seconds && shortTermData?.utc_offset_seconds !== 0) return now;
+      
+      const nowMs = now.getTime();
+      const localOffsetMs = now.getTimezoneOffset() * 60 * 1000; // Browser Offset (z.B. Berlin -120min)
+      const targetOffsetMs = shortTermData.utc_offset_seconds * 1000; // API Offset (z.B. London +3600s)
+      
+      // Wir erstellen ein Date-Objekt, das visuell die Uhrzeit am Zielort anzeigt
+      return new Date(nowMs + targetOffsetMs + localOffsetMs);
+  }, [now, shortTermData]);
+
   // Update localStorage when settings change
   useEffect(() => {
       localStorage.setItem('weather_settings', JSON.stringify(settings));
@@ -2696,12 +2712,14 @@ export default function WeatherApp() {
           return dateObj.getHours() + dateObj.getMinutes() / 60;
       };
       
-      const nowDec = getDec(now);
+      // WICHTIG: Nutze locationTime statt now!
+      const nowDec = getDec(locationTime);
       const sunrDec = getDec(sunriseSunset.sunrise);
       const sunsDec = getDec(sunriseSunset.sunset);
       
       // Tag ist, wenn aktuelle Zeit zwischen Auf- und Untergang liegt
-      const isDayTime = nowDec >= sunrDec && nowDec <= sunsDec;
+      // ÄNDERUNG: < sunsDec (statt <=), damit bei Sonnenuntergang sofort Nacht ist
+      const isDayTime = nowDec >= sunrDec && nowDec < sunsDec;
       return !isDayTime;
   };
   
@@ -2735,8 +2753,8 @@ export default function WeatherApp() {
             <a href="/" className="bg-black/20 p-2 rounded-full text-white backdrop-blur-md block"><ArrowLeft size={24}/></a>
         </div>
         <div className="h-full w-full">
-            {/* WICHTIG: hier date={now} übergeben! */}
-            <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={now} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} lang={lang} />
+            {/* WICHTIG: hier locationTime übergeben! */}
+            <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} lang={lang} />
         </div>
         <div className="absolute bottom-8 left-0 right-0 text-center text-white drop-shadow-md pointer-events-none">
             <div className="text-6xl font-bold">{formatTemp(current.temp)}°</div>
@@ -2869,8 +2887,8 @@ export default function WeatherApp() {
 
       <main className="max-w-4xl mx-auto p-4 z-10 relative space-y-6">
         <div className={`rounded-3xl p-6 ${cardBg} shadow-lg relative overflow-hidden min-h-[240px] flex items-center`}>
-          {/* WICHTIG: date={now} auch hier übergeben */}
-          <div className="absolute inset-0 z-0 pointer-events-none"><WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={now} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} lang={lang} /></div>
+          {/* WICHTIG: locationTime auch hier übergeben */}
+          <div className="absolute inset-0 z-0 pointer-events-none"><WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} lang={lang} /></div>
           <div className="flex items-center justify-between w-full relative z-10">
             <div className="flex flex-col">
                <span className="text-7xl font-bold tracking-tighter leading-none drop-shadow-lg text-white">{formatTemp(current.temp)}°</span>
@@ -3059,238 +3077,6 @@ export default function WeatherApp() {
                   </div>
                </div>
              </div>
-          )}
-
-          {activeTab === 'radar' && (
-            <div className="h-full flex flex-col">
-               <h3 className="text-sm font-bold uppercase opacity-70 mb-4 ml-2">{t('precipRadar')} (Windy)</h3>
-               <div className="w-full aspect-square rounded-xl overflow-hidden shadow-inner border border-black/10 bg-gray-200 relative">
-                  <iframe width="100%" height="100%" src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=450&height=450&zoom=9&level=surface&overlay=radar&product=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`} frameBorder="0" title="Windy Radar" className="absolute inset-0"></iframe>
-               </div>
-               <div className="mt-4 text-xs text-center opacity-60">{t('radarCredit')}</div>
-            </div>
-          )}
-
-          {/* --- TRAVEL TAB CONTENT --- */}
-          {activeTab === 'travel' && (
-              <div className="space-y-6 pb-12">
-                  <div className="text-center mb-6">
-                      <h3 className="text-xl font-bold flex items-center justify-center gap-2"><Plane className="text-blue-500"/> {t('travelPlanner')}</h3>
-                      <p className="text-sm opacity-70">{t('travelDesc')}</p>
-                  </div>
-
-                  <div className="bg-white/50 border border-white/40 rounded-2xl p-4 shadow-sm space-y-3">
-                      <div className="relative">
-                          <MapPin className="absolute left-3 top-3 text-slate-400" size={20} />
-                          <input 
-                              type="text" 
-                              placeholder={t('whereTo')}
-                              className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/80 text-slate-800"
-                              value={travelQuery}
-                              onChange={(e) => setTravelQuery(e.target.value)}
-                              onKeyDown={(e) => e.key === 'Enter' && handleTravelSearch()}
-                          />
-                      </div>
-                      
-                      {/* Date Range Inputs */}
-                      <div className="flex gap-2">
-                          <div className="relative flex-1">
-                              <Calendar className="absolute left-3 top-3 text-slate-400" size={18} />
-                              <input 
-                                  type="date" 
-                                  className="w-full pl-9 pr-2 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/80 text-slate-800"
-                                  placeholder={t('startDate')}
-                                  value={travelStartDate}
-                                  onChange={(e) => setTravelStartDate(e.target.value)}
-                              />
-                              <label className="absolute -top-2 left-2 text-[10px] bg-white px-1 text-slate-500">{t('ab')}</label>
-                          </div>
-                          <div className="relative flex-1">
-                              <Calendar className="absolute left-3 top-3 text-slate-400" size={18} />
-                              <input 
-                                  type="date" 
-                                  className="w-full pl-9 pr-2 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/80 text-slate-800"
-                                  placeholder={t('endDate')}
-                                  value={travelEndDate}
-                                  onChange={(e) => setTravelEndDate(e.target.value)}
-                              />
-                              <label className="absolute -top-2 left-2 text-[10px] bg-white px-1 text-slate-500">{t('endDate')}</label>
-                          </div>
-                      </div>
-
-                      {/* Time Range Inputs */}
-                      <div className="flex gap-2">
-                          <div className="relative flex-1">
-                              <Clock className="absolute left-3 top-3 text-slate-400" size={18} />
-                              <input 
-                                  type="time" 
-                                  className="w-full pl-9 pr-2 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/80 text-slate-800"
-                                  value={travelStartTime}
-                                  onChange={(e) => setTravelStartTime(e.target.value)}
-                              />
-                              <label className="absolute -top-2 left-2 text-[10px] bg-white px-1 text-slate-500">{t('startTime')}</label>
-                          </div>
-                          <div className="relative flex-1">
-                              <Clock className="absolute left-3 top-3 text-slate-400" size={18} />
-                              <input 
-                                  type="time" 
-                                  className="w-full pl-9 pr-2 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white/80 text-slate-800"
-                                  value={travelEndTime}
-                                  onChange={(e) => setTravelEndTime(e.target.value)}
-                              />
-                              <label className="absolute -top-2 left-2 text-[10px] bg-white px-1 text-slate-500">{t('endTime')}</label>
-                          </div>
-                      </div>
-
-                      <button 
-                          onClick={() => handleTravelSearch()} 
-                          disabled={travelLoading || !travelQuery || !travelStartDate}
-                          className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                      >
-                          {travelLoading ? <RefreshCw className="animate-spin"/> : <Plane />}
-                          {travelLoading ? t('loading') : t('checkWeather')}
-                      </button>
-                  </div>
-
-                  {travelResult && (
-                      <div className="bg-white/80 border border-white/50 rounded-2xl p-6 shadow-md animate-in fade-in slide-in-from-bottom-4 duration-500 relative overflow-hidden">
-                          {/* AI Report Box Added Here */}
-                          <div className="mb-6 relative z-20">
-                              <AIReportBox report={tripReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} />
-                          </div>
-
-                          <div className="flex justify-between items-start mb-4 relative z-10">
-                              <div>
-                                  <div className="text-2xl font-bold text-slate-800">{travelResult.location.name}</div>
-                                  <div className="text-slate-500 text-sm flex flex-col gap-1 mt-1">
-                                      <div className="flex items-center gap-1">
-                                          <Calendar size={14}/> 
-                                          {travelResult.startDate.toLocaleDateString(lang==='en'?'en-US':'de-DE', {weekday:'short', day:'2-digit', month:'short'})}
-                                          {travelResult.mode === 'multi' && ` - ${travelResult.endDate.toLocaleDateString(lang==='en'?'en-US':'de-DE', {weekday:'short', day:'2-digit', month:'short'})}`}
-                                      </div>
-                                      {travelResult.mode === 'single' && travelResult.summary.isTimeWindow && (
-                                          <div className="flex items-center gap-1 font-bold text-blue-600">
-                                              <Clock size={14}/> 
-                                              {travelResult.summary.startH}:00 - {travelResult.summary.endH}:00 {t('oclock')}
-                                          </div>
-                                      )}
-                                  </div>
-                              </div>
-                              <div className="text-right">
-                                  {travelResult.mode === 'single' && travelResult.summary.maxTemp && (
-                                      <>
-                                        <div className="text-4xl font-bold text-slate-800">{formatTemp(travelResult.summary.maxTemp)}°</div>
-                                        <div className="text-sm font-medium text-slate-500">{getWeatherConfig(travelResult.summary.code, 1, lang).text}</div>
-                                      </>
-                                  )}
-                                  {travelResult.mode === 'multi' && (
-                                       <div className="text-sm font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-lg">
-                                           {travelResult.items.length} {lang === 'en' ? 'Days' : 'Tage'}
-                                       </div>
-                                  )}
-                              </div>
-                          </div>
-
-                          {/* SINGLE DAY DETAILS */}
-                          {travelResult.mode === 'single' && (
-                              <>
-                                <div className="flex items-center gap-4 mb-4 relative z-10">
-                                    <div className="p-3 bg-blue-100 text-blue-600 rounded-full">
-                                        {React.createElement(getWeatherConfig(travelResult.summary.code, 1, lang).icon, {size: 32})}
-                                    </div>
-                                    <div className="flex-1 space-y-1">
-                                        <div className="flex justify-between text-sm font-medium">
-                                            <span className="text-slate-600">{t('precip')} ({travelResult.summary.totalPrecip.toFixed(1)}mm)</span>
-                                            <span className="text-blue-600 font-bold">{travelResult.summary.avgProb}%</span>
-                                        </div>
-                                        <div className="w-full bg-slate-200 rounded-full h-2">
-                                            <div className="bg-blue-500 h-2 rounded-full" style={{width: `${travelResult.summary.avgProb}%`}}></div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3 mb-4 relative z-10">
-                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col items-center">
-                                        <Wind className="text-slate-400 mb-1" size={20}/>
-                                        <span className="text-lg font-bold text-slate-700">{Math.round(travelResult.summary.maxWind)} <span className="text-xs font-normal">km/h</span></span>
-                                        <span className="text-xs text-slate-400 uppercase">Max {t('wind')}</span>
-                                    </div>
-                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col items-center">
-                                        <ShieldCheck className={getConfidenceColor(travelResult.reliability)} size={20}/>
-                                        <span className={`text-lg font-bold ${getConfidenceColor(travelResult.reliability)}`}>{travelResult.reliability}%</span>
-                                        <span className="text-xs text-slate-400 uppercase">{t('safe')}</span>
-                                    </div>
-                                </div>
-                              </>
-                          )}
-
-                          {/* MULTI DAY LIST */}
-                          {travelResult.mode === 'multi' && (
-                              <div className="space-y-2 mb-4 relative z-10 max-h-[200px] overflow-y-auto pr-1">
-                                  {travelResult.items.map((day, i) => (
-                                      <div key={i} className="flex items-center justify-between p-2 bg-white/60 rounded-lg border border-white/40">
-                                          <div className="flex items-center gap-3">
-                                              <div className="w-10 text-center text-xs font-bold text-slate-500">
-                                                  {day.date.toLocaleDateString(lang==='en'?'en-US':'de-DE', {weekday:'short'})}<br/>
-                                                  {day.date.getDate()}.
-                                              </div>
-                                              {React.createElement(getWeatherConfig(day.code, 1, lang).icon, {size: 20, className: 'text-slate-700'})}
-                                          </div>
-                                          <div className="flex items-center gap-4">
-                                               {day.precipSum > 0.1 && (
-                                                   <div className="flex items-center gap-1 text-xs text-blue-600 font-bold">
-                                                       <Droplets size={12}/> {day.precipSum}mm
-                                                   </div>
-                                               )}
-                                               <div className="text-right w-16">
-                                                   <span className="text-sm font-bold text-slate-800">{formatTemp(day.max)}°</span>
-                                                   <span className="text-xs text-slate-400 ml-1">/ {formatTemp(day.min)}°</span>
-                                               </div>
-                                          </div>
-                                      </div>
-                                  ))}
-                              </div>
-                          )}
-                          
-                          <button 
-                            onClick={handleSaveTrip}
-                            className="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg flex items-center justify-center gap-2 transition relative z-10"
-                          >
-                              <Save size={18}/> {t('saveTrip')}
-                          </button>
-                      </div>
-                  )}
-
-                  {/* SAVED TRIPS LIST */}
-                  {savedTrips.length > 0 && (
-                      <div>
-                          <h4 className="font-bold text-slate-600 uppercase text-xs tracking-wider mb-3 flex items-center gap-2"><MapIcon size={14}/> {t('myTrips')} ({savedTrips.length})</h4>
-                          <div className="space-y-3">
-                              {savedTrips.map(trip => (
-                                  <div key={trip.id} className="bg-white/40 border border-white/30 rounded-xl p-3 flex justify-between items-center group hover:bg-white/60 transition">
-                                      <button onClick={() => loadTrip(trip)} className="flex-1 text-left">
-                                          <div className="flex items-center gap-3 mb-1">
-                                              <div className="font-bold text-slate-800 text-lg">{trip.name}</div>
-                                              {/* Weather Preview Inline */}
-                                              <TripWeatherPreview trip={trip} />
-                                          </div>
-                                          <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                                              <Calendar size={12}/> 
-                                              {new Date(trip.startDate).toLocaleDateString(lang==='en'?'en-US':'de-DE', {day:'2-digit', month:'2-digit'})}
-                                              {trip.endDate && ` - ${new Date(trip.endDate).toLocaleDateString(lang==='en'?'en-US':'de-DE', {day:'2-digit', month:'2-digit'})}`}
-                                              {trip.startTime && <span className="ml-2 font-bold text-blue-600 flex items-center gap-0.5"><Clock size={10}/> {trip.startTime}</span>}
-                                          </div>
-                                      </button>
-                                      <div className="flex gap-2">
-                                          <button onClick={() => loadTrip(trip)} className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition"><RefreshCw size={16}/></button>
-                                          <button onClick={() => handleDeleteTrip(trip.id)} className="p-2 bg-red-50 text-red-400 rounded-lg hover:bg-red-100 hover:text-red-600 transition"><Trash2 size={16}/></button>
-                                      </div>
-                                  </div>
-                              ))}
-                          </div>
-                      </div>
-                  )}
-              </div>
           )}
 
           {activeTab !== 'radar' && activeTab !== 'travel' && (
