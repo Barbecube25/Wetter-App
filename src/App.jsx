@@ -541,10 +541,11 @@ const ModelInfoBox = () => {
 
 const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed }) => {
   // Move helper to top of component to use it for initial variables
-  const getDecimalHour = (isoString) => {
-      if (!isoString) return null;
-      const t = parseLocalTime(isoString);
-      return t.getHours() + t.getMinutes() / 60;
+  const getDecimalHour = (dateInput) => {
+    if (!dateInput) return 0;
+    // Wenn es ein ISO-String ist, parsen
+    const d = typeof dateInput === 'string' ? parseLocalTime(dateInput) : new Date(dateInput);
+    return d.getHours() + d.getMinutes() / 60;
   };
     
   const d = date ? new Date(date) : new Date();
@@ -2141,14 +2142,40 @@ export default function WeatherApp() {
   const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: "0.0", precip: "0.0", wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0 };
   const current = liveCurrent;
 
+  // --- NEUE LOGIK: Echter Tag/Nacht Status für das UI ---
+  // Wir berechnen dies direkt in der App Komponente, damit Hintergrund & Karten einheitlich sind.
+  const getIsRealNight = () => {
+      // Wenn keine Sonnenaufgangsdaten da sind, Fallback auf API 'isDay'
+      if (!sunriseSunset.sunrise || !sunriseSunset.sunset) return current.isDay === 0;
+      
+      // Hilfsfunktion zur Dezimalzeit-Berechnung (kopiert aus WeatherLandscape Logik)
+      const getDec = (d) => {
+          if (!d) return 0;
+          const dateObj = typeof d === 'string' ? parseLocalTime(d) : d;
+          return dateObj.getHours() + dateObj.getMinutes() / 60;
+      };
+      
+      const nowDec = getDec(now);
+      const sunrDec = getDec(sunriseSunset.sunrise);
+      const sunsDec = getDec(sunriseSunset.sunset);
+      
+      // Tag ist, wenn aktuelle Zeit zwischen Auf- und Untergang liegt
+      const isDayTime = nowDec >= sunrDec && nowDec <= sunsDec;
+      return !isDayTime;
+  };
+  
+  // WICHTIG: Nutze jetzt 'isRealNight' statt 'current.isDay === 0' für alle UI-Entscheidungen
+  const isRealNight = getIsRealNight();
+
   const dailyRainSum = processedLong.length > 0 ? processedLong[0].rain : "0.0";
   const dailySnowSum = processedLong.length > 0 ? processedLong[0].snow : "0.0";
   const isSnowing = parseFloat(current.snow) > 0;
-  const weatherConf = getWeatherConfig(current.code || 0, current.isDay);
-  const isNight = current.isDay === 0;
-  const bgGradient = isNight ? 'from-slate-900 to-slate-800' : 'from-blue-500 to-sky-400';
+  
+  // Konfiguration basierend auf echtem Status
+  const weatherConf = getWeatherConfig(current.code || 0, isRealNight ? 0 : 1);
+  const bgGradient = isRealNight ? 'from-slate-900 to-slate-800' : 'from-blue-500 to-sky-400';
   const textColor = 'text-white';
-  const cardBg = isNight ? 'bg-slate-800/60 border-slate-700/50 text-white' : 'bg-white/80 border-white/40 text-slate-900';
+  const cardBg = isRealNight ? 'bg-slate-800/60 border-slate-700/50 text-white' : 'bg-white/80 border-white/40 text-slate-900';
   const windColorClass = getWindColorClass(current.wind || 0);
 
   const dailyReport = useMemo(() => generateAIReport('daily', processedShort), [processedShort]);
@@ -2168,7 +2195,7 @@ export default function WeatherApp() {
         </div>
         <div className="h-full w-full">
             {/* WICHTIG: hier date={now} übergeben! */}
-            <WeatherLandscape code={current.code} isDay={current.isDay} date={now} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} />
+            <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={now} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} />
         </div>
         <div className="absolute bottom-8 left-0 right-0 text-center text-white drop-shadow-md pointer-events-none">
             <div className="text-6xl font-bold">{Math.round(current.temp)}°</div>
@@ -2267,7 +2294,7 @@ export default function WeatherApp() {
       <main className="max-w-4xl mx-auto p-4 z-10 relative space-y-6">
         <div className={`rounded-3xl p-6 ${cardBg} shadow-lg relative overflow-hidden min-h-[240px] flex items-center`}>
           {/* WICHTIG: date={now} auch hier übergeben */}
-          <div className="absolute inset-0 z-0 pointer-events-none"><WeatherLandscape code={current.code} isDay={current.isDay} date={now} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} /></div>
+          <div className="absolute inset-0 z-0 pointer-events-none"><WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={now} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} /></div>
           <div className="flex items-center justify-between w-full relative z-10">
             <div className="flex flex-col">
                <span className="text-7xl font-bold tracking-tighter leading-none drop-shadow-lg text-white">{Math.round(current.temp)}°</span>
