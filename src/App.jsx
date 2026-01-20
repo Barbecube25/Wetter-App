@@ -944,9 +944,14 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
      const dayLength = sunsetHour - sunriseHour;
      const dayProgress = (currentHour - sunriseHour) / dayLength; 
      celestialX = 40 + dayProgress * 280; 
-     celestialY = 30 + 0.005 * Math.pow(celestialX - 180, 2);
-     if (currentHour - sunriseHour < 1.0) isDawn = true;
-     if (sunsetHour - currentHour < 1.0) isDusk = true;
+     
+     // VERBESSERTE PARABEL: Tieferer Start/Endpunkt für realistische Dämmerung
+     // Scheitelpunkt bei (180, 20), Start bei (40, 170) -> Sonne kommt wirklich von "unten"
+     celestialY = 20 + 0.0076 * Math.pow(celestialX - 180, 2); 
+
+     // Dämmerungsphasen etwas verlängern (+/- 45min um Aufgang/Untergang)
+     if (currentHour - sunriseHour < 0.75) isDawn = true;
+     if (sunsetHour - currentHour < 0.75) isDusk = true;
   } else {
      celestialType = 'moon';
      let nightDuration = (24 - sunsetHour) + sunriseHour;
@@ -954,7 +959,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
      if (timeSinceSunset < 0) timeSinceSunset += 24; 
      const nightProgress = timeSinceSunset / nightDuration;
      celestialX = 40 + nightProgress * 280;
-     celestialY = 30 + 0.005 * Math.pow(celestialX - 180, 2);
+     celestialY = 20 + 0.0076 * Math.pow(celestialX - 180, 2);
   }
 
   const moonPhase = date ? getMoonPhase(date) : 0;
