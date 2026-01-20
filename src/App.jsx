@@ -2292,6 +2292,7 @@ export default function WeatherApp() {
   
   const handleSetCurrent = () => {
     setLoading(true);
+    console.log("Starte GPS-Suche..."); 
     if (!navigator.geolocation) { 
         setError("Kein GPS verfügbar"); 
         setLoading(false); 
@@ -2303,35 +2304,48 @@ export default function WeatherApp() {
           const lat = pos.coords.latitude;
           const lon = pos.coords.longitude;
           
+          // Debug Log
+          console.log(`GPS Position: ${lat}, ${lon}`);
+
           // 1. Prüfen: Sind wir zu Hause? (Distanz < 2km)
           if (homeLoc) {
               const dist = getDistanceFromLatLonInKm(lat, lon, homeLoc.lat, homeLoc.lon);
               if (dist < 2.0) { 
-                  // Wir sind zu Hause -> Lade das Home-Profil (mit eigenem Namen)
                   setCurrentLoc(homeLoc);
-                  // fetchData wird automatisch durch useEffect getriggert, wenn sich currentLoc ändert
-                  // Falls currentLoc schon homeLoc war, triggert es evtl. nicht, daher manuell fetch:
                   if (currentLoc && currentLoc.id === homeLoc.id) fetchData();
                   return;
               }
           }
 
-          // 2. Wir sind woanders -> Echten Ortsnamen ermitteln (Reverse Geocoding)
+          // 2. Wir sind woanders -> Echten Ortsnamen + Region ermitteln
           let cityName = t('myLocation');
+          let regionName = "";
+          let countryName = "";
+
           try {
               const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
               const data = await res.json();
               if (data.results && data.results[0]) {
                   cityName = data.results[0].name;
+                  regionName = data.results[0].admin1 || ""; // z.B. Nordrhein-Westfalen
+                  countryName = data.results[0].country || ""; // z.B. Deutschland
               }
           } catch (e) {
               console.warn("Reverse Geocoding failed", e);
           }
 
-          // Setze den neuen GPS-Standort mit echtem Namen
-          setCurrentLoc({ name: cityName, lat, lon, type: 'gps' });
+          // Setze den neuen GPS-Standort mit Name UND Region
+          setCurrentLoc({ 
+              name: cityName, 
+              lat, 
+              lon, 
+              type: 'gps',
+              region: regionName,
+              country: countryName
+          });
       },
       (err) => { 
+          console.error("GPS Fehler:", err);
           setError("Standortzugriff verweigert."); 
           setLoading(false); 
       },
@@ -2976,7 +2990,23 @@ export default function WeatherApp() {
              <button onClick={() => setShowLocationModal(true)} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${showLocationModal ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><MapIcon size={14} /> {t('places')}</button>
           </div>
           <h1 className="text-3xl font-light mt-2 tracking-tight">{currentLoc.name}</h1>
-          <div className="flex items-center gap-2 mt-1 opacity-80 text-xs font-medium"><Clock size={12} /><span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}</span></div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 opacity-80 text-xs font-medium">
+              <div className="flex items-center gap-1">
+                <Clock size={12} /><span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}</span>
+              </div>
+              
+              {/* NEU: Region & Land statt Koordinaten (falls vorhanden) */}
+              {(currentLoc.region || currentLoc.country) && (
+                  <div className="flex items-center gap-1">
+                      <MapPin size={12} />
+                      <span>
+                        {currentLoc.region}
+                        {currentLoc.region && currentLoc.country ? ', ' : ''}
+                        {currentLoc.country}
+                      </span>
+                  </div>
+              )}
+          </div>
         </div>
         <div className="flex flex-col gap-2 items-end">
            {deferredPrompt && (<button onClick={handleInstallClick} className="p-3 rounded-full backdrop-blur-md bg-blue-600 text-white animate-pulse shadow-lg"><Download size={20} /></button>)}
