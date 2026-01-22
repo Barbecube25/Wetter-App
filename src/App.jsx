@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset } from 'lucide-react';
 
 // --- 1. KONSTANTEN & CONFIG & ÜBERSETZUNGEN ---
 
@@ -20,7 +20,7 @@ const TRANSLATIONS = {
     themeAuto: "Automatisch",
     themeLight: "Hell",
     themeDark: "Dunkel",
-    changeHome: "Heimatort ändern", // NEU
+    changeHome: "Heimatort ändern",
     save: "Speichern",
     cancel: "Abbrechen",
     loading: "Lade...",
@@ -136,7 +136,7 @@ const TRANSLATIONS = {
     themeAuto: "Auto",
     themeLight: "Light",
     themeDark: "Dark",
-    changeHome: "Change Home Location", // NEU
+    changeHome: "Change Home Location",
     save: "Save",
     cancel: "Cancel",
     loading: "Loading...",
@@ -572,7 +572,12 @@ const generateAIReport = (type, data, lang = 'de') => {
         const isTomorrowEarly = d.time.getDate() === tomorrowDate.getDate() && h < 6;
         return isTonightLate || isTomorrowEarly;
     });
-    const tomorrowDayData = data.filter(d => d.time.getDate() === tomorrowDate.getDate() && d.time.getHours() >= 6 && d.time.getHours() <= 22);
+    
+    // ÄNDERUNG: Filter erweitert!
+    // Vorher: ... && d.time.getHours() >= 6 && d.time.getHours() <= 22
+    // Jetzt:  ... && d.time.getHours() >= 6
+    // Damit wird alles ab 6 Uhr morgens bis zum Ende des Tages (23 Uhr) berücksichtigt.
+    const tomorrowDayData = data.filter(d => d.time.getDate() === tomorrowDate.getDate() && d.time.getHours() >= 6);
 
     if (todayData.length > 0) {
         let todayText = `📅 ${t.today}: `;
@@ -700,14 +705,47 @@ const generateAIReport = (type, data, lang = 'de') => {
     if (nextWeek.length > 0) {
         const nwMax = Math.max(...nextWeek.map(d=>d.max));
         const nwMinLow = Math.min(...nextWeek.map(d=>d.min));
+        // NEU: Detailliertere Analyse
+        const nwAvgMax = Math.round(nextWeek.reduce((a,b)=>a+b.max,0)/nextWeek.length);
         const nwRain = nextWeek.reduce((a,b)=>a+parseFloat(b.rain),0);
+        const nwRainDays = nextWeek.filter(d=>parseFloat(d.rain)>1.0).length;
         const nwRel = Math.round(nextWeek.reduce((a,b)=>a+b.reliability,0) / nextWeek.length);
         
-        let nwText = `🔮 ${t.nextWeek} (${t.ab} ${t.monday}, ${nextWeek[0].date.toLocaleDateString(locale, {day:'2-digit', month:'2-digit'})}.):\n`;
-        nwText += `Trend: ${Math.round(nwMinLow)}° - ${Math.round(nwMax)}°. `;
+        // Trend-Ermittlung (Anfang vs Ende der Woche)
+        const startTemp = nextWeek[0].max;
+        const endTemp = nextWeek[nextWeek.length-1].max;
+        let trendTextDe = "die Temperaturen bleiben stabil";
+        let trendTextEn = "temperatures remain stable";
         
-        if (nwRain > 5) nwText += lang === 'en' ? "Signs point to changeable weather." : "Die Signale deuten auf wechselhaftes Wetter hin.";
-        else nwText += lang === 'en' ? "Tendency towards high pressure (dry)." : "Tendenziell eher hochdruckbestimmt (trocken).";
+        if (endTemp > startTemp + 2) {
+            trendTextDe = "zum Wochenende hin wird es wärmer";
+            trendTextEn = "getting warmer towards the weekend";
+        } else if (endTemp < startTemp - 2) {
+            trendTextDe = "im Wochenverlauf kühlt es ab";
+            trendTextEn = "cooling down throughout the week";
+        }
+
+        let nwText = `🔮 ${t.nextWeek} (${t.ab} ${t.monday}, ${nextWeek[0].date.toLocaleDateString(locale, {day:'2-digit', month:'2-digit'})}.):\n`;
+        
+        // Temperatur Text
+        nwText += lang === 'en' 
+            ? `Expect daily highs averaging ${nwAvgMax}° (${trendTextEn}). `
+            : `Im Schnitt liegen die Höchstwerte bei ${nwAvgMax}° (${trendTextDe}). `;
+        
+        // Niederschlags Text
+        if (nwRain > 10 || nwRainDays >= 4) {
+             nwText += lang === 'en' 
+                ? `Unsettled weather expected with rain on approx. ${nwRainDays} days (Total: ${nwRain.toFixed(0)}mm).`
+                : `Es deutet sich eine unbeständige Phase an: Rechnen Sie an ca. ${nwRainDays} Tagen mit Regen (Gesamt: ${nwRain.toFixed(0)}mm).`;
+        } else if (nwRain > 1) {
+             nwText += lang === 'en'
+                ? `Mix of sun and clouds, mostly dry (only ${nwRainDays} rain days).`
+                : `Ein Mix aus Sonne und Wolken, meist bleibt es trocken (nur ${nwRainDays} Regentage).`;
+        } else {
+             nwText += lang === 'en'
+                ? `High pressure influence likely: Mostly sunny and dry.`
+                : `Hochdruckeinfluss ist wahrscheinlich: Überwiegend freundlich und trocken.`;
+        }
         
         nwText += `\n(${lang === 'en' ? 'Certainty' : 'Prognosesicherheit'}: ${nwRel}%)`;
         
@@ -897,14 +935,17 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const d = date ? new Date(date) : new Date();
   const currentHour = d.getHours() + d.getMinutes() / 60;
   
-  const sunriseHour = getDecimalHour(sunrise) ?? 6.5; 
-  const sunsetHour = getDecimalHour(sunset) ?? 20.5;
+  // FIX: Nutze || statt ?? damit 0 (fehlende Daten) als false gewertet wird und der Default greift
+  const sunriseHour = getDecimalHour(sunrise) || 6.5; 
+  const sunsetHour = getDecimalHour(sunset) || 20.5;
 
   // WICHTIG: Überschreibe isNight, falls echte Uhrzeit (date) übergeben wurde
   // Damit synchronisieren wir Tag/Nacht exakt mit Sonnenaufgang/untergang,
   // unabhängig vom stündlichen API-Flag "is_day".
   let calculatedIsDay = isDay;
-  if (date && sunrise && sunset) {
+  
+  // Wir prüfen, ob sunrise/sunset valide (>0) sind, bevor wir die Berechnung überschreiben
+  if (date && sunriseHour > 0 && sunsetHour > 0) {
       // ÄNDERUNG: < sunsetHour (statt <=), damit bei Sonnenuntergang sofort Nacht ist
       calculatedIsDay = (currentHour >= sunriseHour && currentHour < sunsetHour) ? 1 : 0;
   }
@@ -938,28 +979,34 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   let isDawn = false;
   let isDusk = false;
 
-  // ÄNDERUNG: Auch hier < sunsetHour
-  if (currentHour >= sunriseHour && currentHour < sunsetHour) {
+  // ÄNDERUNG: <= sunsetHour für die exakte Minute
+  if (currentHour >= sunriseHour && currentHour <= sunsetHour) {
      celestialType = 'sun';
      const dayLength = sunsetHour - sunriseHour;
-     const dayProgress = (currentHour - sunriseHour) / dayLength; 
+     // Schutz vor Division durch Null
+     const safeDayLength = dayLength > 0 ? dayLength : 12;
+     const dayProgress = (currentHour - sunriseHour) / safeDayLength; 
+     
      celestialX = 40 + dayProgress * 280; 
      
-     // VERBESSERTE PARABEL: Tieferer Start/Endpunkt für realistische Dämmerung
-     // Scheitelpunkt bei (180, 20), Start bei (40, 170) -> Sonne kommt wirklich von "unten"
-     celestialY = 20 + 0.0076 * Math.pow(celestialX - 180, 2); 
+     // OPTIMIERTE PARABEL: 
+     // Y=145 ist ca. Horizont-Linie. 
+     // Bei 0% (Aufgang) und 100% (Untergang) muss Y < 145 sein, damit die Sonne sichtbar ist.
+     // Mit 0.0060 * (x-180)^2 + 25 landen wir bei ca. Y=142 an den Rändern. Perfekt.
+     celestialY = 25 + 0.0060 * Math.pow(celestialX - 180, 2); 
 
-     // Dämmerungsphasen etwas verlängern (+/- 45min um Aufgang/Untergang)
      if (currentHour - sunriseHour < 0.75) isDawn = true;
      if (sunsetHour - currentHour < 0.75) isDusk = true;
   } else {
      celestialType = 'moon';
      let nightDuration = (24 - sunsetHour) + sunriseHour;
+     const safeNightDuration = nightDuration > 0 ? nightDuration : 12;
      let timeSinceSunset = currentHour - sunsetHour;
      if (timeSinceSunset < 0) timeSinceSunset += 24; 
-     const nightProgress = timeSinceSunset / nightDuration;
+     
+     const nightProgress = timeSinceSunset / safeNightDuration;
      celestialX = 40 + nightProgress * 280;
-     celestialY = 20 + 0.0076 * Math.pow(celestialX - 180, 2);
+     celestialY = 25 + 0.0060 * Math.pow(celestialX - 180, 2);
   }
 
   const moonPhase = date ? getMoonPhase(date) : 0;
@@ -1754,7 +1801,8 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
         if (!searchQuery) return;
         setIsSearching(true);
         try {
-            const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery)}&count=5&language=de&format=json`);
+            // FIX: .trim() hinzugefügt, um Leerzeichen zu entfernen
+            const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery.trim())}&count=5&language=de&format=json`);
             const data = await res.json();
             setSearchResults(data.results || []);
         } catch (e) {
@@ -1952,7 +2000,8 @@ const HomeSetupModal = ({ onSave, lang='de' }) => {
         if (!searchQuery) return;
         setLoading(true);
         try {
-            const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery)}&count=5&language=de&format=json`);
+            // FIX: .trim() hinzugefügt
+            const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery.trim())}&count=5&language=de&format=json`);
             const data = await res.json();
             setResults(data.results || []);
         } catch (e) {
@@ -2156,6 +2205,12 @@ export default function WeatherApp() {
       }
       return Math.round(val);
   }, [settings.unit]);
+
+  const formatTime = (dateStr) => {
+      if (!dateStr) return "--:--";
+      const d = new Date(dateStr);
+      return d.toLocaleTimeString(lang === 'en' ? 'en-US' : 'de-DE', {hour: '2-digit', minute:'2-digit'});
+  };
 
 
   // --- Travel Planner State ---
@@ -2438,7 +2493,8 @@ export default function WeatherApp() {
         if (overrideData) {
             loc = overrideData;
         } else {
-            const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=de&format=json`);
+            // FIX: .trim() auch hier hinzugefügt
+            const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q.trim())}&count=1&language=de&format=json`);
             const geoData = await geoRes.json();
             
             if (!geoData.results || geoData.results.length === 0) {
@@ -2890,7 +2946,13 @@ export default function WeatherApp() {
         </div>
         <div className="absolute bottom-8 left-0 right-0 text-center text-white drop-shadow-md pointer-events-none">
             <div className="text-6xl font-bold">{formatTemp(current.temp)}°</div>
-            <div className="text-xl opacity-90">{weatherConf.text}</div>
+            <div className="text-xl opacity-90 mb-2">{weatherConf.text}</div>
+            
+            {/* NEU: Sonnenaufgang und Untergang */}
+            <div className="flex justify-center gap-6 text-sm font-medium opacity-80">
+                <div className="flex items-center gap-1"><Sunrise size={16}/> {formatTime(sunriseSunset.sunrise)}</div>
+                <div className="flex items-center gap-1"><Sunset size={16}/> {formatTime(sunriseSunset.sunset)}</div>
+            </div>
         </div>
       </div>
     );
