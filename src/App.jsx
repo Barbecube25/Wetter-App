@@ -78,7 +78,7 @@ const TRANSLATIONS = {
     saveTrip: "Reise speichern",
     myTrips: "Meine Reisen",
     tripSaved: "Reise gespeichert!",
-    radarCredit: "Radarbild bereitgestellt von Windy.com",
+    radarCredit: "Radarbild bereitgestellt von RainViewer.com", // ÄNDERUNG: Updated Credit
     noRain: "Trocken",
     rain: "Regen",
     snow: "Schnee",
@@ -194,7 +194,7 @@ const TRANSLATIONS = {
     saveTrip: "Save Trip",
     myTrips: "My Trips",
     tripSaved: "Trip saved!",
-    radarCredit: "Radar image provided by Windy.com",
+    radarCredit: "Radar image provided by RainViewer.com", // ÄNDERUNG: Updated Credit
     noRain: "Dry",
     rain: "Rain",
     snow: "Snow",
