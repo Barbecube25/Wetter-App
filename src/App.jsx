@@ -297,7 +297,8 @@ const parseLocalTime = (isoString) => {
         const [datePart, timePart] = isoString.split('T');
         const [y, m, d] = datePart.split('-').map(Number);
         const [hr, min] = timePart.split(':').map(Number);
-        return new Date(y, m - 1, d, hr, min);
+        // Konstruiere lokales Date Objekt (Sekunden und MS = 0)
+        return new Date(y, m - 1, d, hr, min, 0, 0);
     }
     // Fallback normal parsing
     return new Date(isoString);
@@ -929,11 +930,12 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
     if (!dateInput) return 0;
     // Wenn es ein ISO-String ist, parsen
     const d = typeof dateInput === 'string' ? parseLocalTime(dateInput) : new Date(dateInput);
-    return d.getHours() + d.getMinutes() / 60;
+    // ÄNDERUNG: Sekunden hinzufügen für smoothere Bewegung
+    return d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
   };
     
   const d = date ? new Date(date) : new Date();
-  const currentHour = d.getHours() + d.getMinutes() / 60;
+  const currentHour = d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
   
   // FIX: Nutze || statt ?? damit 0 (fehlende Daten) als false gewertet wird und der Default greift
   const sunriseHour = getDecimalHour(sunrise) || 6.5; 
@@ -991,9 +993,9 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
      
      // OPTIMIERTE PARABEL: 
      // Y=145 ist ca. Horizont-Linie. 
-     // Bei 0% (Aufgang) und 100% (Untergang) muss Y < 145 sein, damit die Sonne sichtbar ist.
-     // Mit 0.0060 * (x-180)^2 + 25 landen wir bei ca. Y=142 an den Rändern. Perfekt.
-     celestialY = 25 + 0.0060 * Math.pow(celestialX - 180, 2); 
+     // ÄNDERUNG: Faktor auf 0.0075 erhöht, damit die Sonne an den Rändern tiefer (ca. Y=170) startet/endet.
+     // Dadurch "ploppt" sie nicht am Himmel auf, sondern geht wirklich am Horizont auf/unter.
+     celestialY = 25 + 0.0075 * Math.pow(celestialX - 180, 2); 
 
      if (currentHour - sunriseHour < 0.75) isDawn = true;
      if (sunsetHour - currentHour < 0.75) isDusk = true;
@@ -1006,7 +1008,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
      
      const nightProgress = timeSinceSunset / safeNightDuration;
      celestialX = 40 + nightProgress * 280;
-     celestialY = 25 + 0.0060 * Math.pow(celestialX - 180, 2);
+     celestialY = 25 + 0.0075 * Math.pow(celestialX - 180, 2);
   }
 
   const moonPhase = date ? getMoonPhase(date) : 0;
@@ -2167,11 +2169,11 @@ export default function WeatherApp() {
   // WICHTIG: Echtzeit-State für die Animation (NEU)
   const [now, setNow] = useState(new Date());
 
-  // Timer: Aktualisiere 'now' jede Minute, damit die Sonne wandert (NEU)
+  // Timer: Aktualisiere 'now' JEDE SEKUNDE, damit die Sonne wandert (NEU)
   useEffect(() => {
     const timer = setInterval(() => {
       setNow(new Date());
-    }, 60000); // 60000ms = 1 Minute
+    }, 1000); // 1000ms = 1 Sekunde für präzise Animation
     return () => clearInterval(timer);
   }, []);
 
