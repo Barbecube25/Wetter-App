@@ -4,10 +4,8 @@ import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation
 
 // --- 1. KONSTANTEN & CONFIG & ÜBERSETZUNGEN ---
 
-// ÄNDERUNG: Standard ist jetzt null (leer), damit der User es einrichten muss
 const DEFAULT_LOC = null; 
 
-// TEXT RESSOURCEN
 const TRANSLATIONS = {
   de: {
     home: "Home",
@@ -267,7 +265,6 @@ const getSavedTrips = () => {
 const getSavedSettings = () => {
     try {
         const saved = localStorage.getItem('weather_settings');
-        // Default Settings erweitert um theme: 'auto'
         return saved ? JSON.parse(saved) : { language: 'de', unit: 'celsius', theme: 'auto' };
     } catch (e) { return { language: 'de', unit: 'celsius', theme: 'auto' }; }
 };
@@ -284,7 +281,6 @@ const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
 
 const deg2rad = (deg) => deg * (Math.PI/180);
 
-// Hilfsfunktion: Datum strikt als lokale Zeit parsen (ROBUSTER)
 const parseLocalTime = (isoString) => {
   if (!isoString) return new Date();
   try {
@@ -292,14 +288,12 @@ const parseLocalTime = (isoString) => {
         const [y, m, d] = isoString.split('-').map(Number);
         return new Date(y, m - 1, d, 12, 0, 0);
     }
-    // Check if T exists for standard ISO
     if (isoString.includes('T')) {
         const [datePart, timePart] = isoString.split('T');
         const [y, m, d] = datePart.split('-').map(Number);
         const [hr, min] = timePart.split(':').map(Number);
         return new Date(y, m - 1, d, hr, min);
     }
-    // Fallback normal parsing
     return new Date(isoString);
   } catch (e) {
     console.error("Date parse error", e);
@@ -309,6 +303,205 @@ const parseLocalTime = (isoString) => {
 
 const styles = `
   @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
+  @keyframes float-clouds { 0% { transform: translateX(0px); } 50% { transform: translateX(15px); } 100% { transform: translateX(0px); } }
+  @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  
+  @keyframes rain-drop { 
+    0% { transform: translateY(-20px) scaleY(1); opacity: 0; } 
+    20% { opacity: 0.8; } 
+    90% { opacity: 0.8; transform: translateY(140px) scaleY(1); }
+    100% { transform: translateY(150px) scaleY(0.5) scaleX(1.5); opacity: 0; }
+  }
+  
+  @keyframes snow-fall-slow { 
+    0% { transform: translateY(-20px) translateX(-5px) rotate(0deg); opacity: 0; } 
+    10% { opacity: 0.9; } 
+    50% { transform: translateY(80px) translateX(5px) rotate(180deg); }
+    100% { transform: translateY(160px) translateX(-10px) rotate(360deg); opacity: 0; } 
+  }
+  
+  @keyframes snow-fall-fast { 
+    0% { transform: translateY(-20px) translateX(0px); opacity: 0; } 
+    10% { opacity: 0.8; } 
+    100% { transform: translateY(180px) translateX(20px); opacity: 0; } 
+  }
+
+  @keyframes fog-flow { 
+    0% { transform: translateX(-5%); opacity: 0.3; } 
+    50% { opacity: 0.6; transform: translateX(5%); } 
+    100% { transform: translateX(-5%); opacity: 0.3; } 
+  }
+
+  @keyframes heat-shimmer {
+    0% { opacity: 0.3; transform: scaleY(1) skewX(0deg); }
+    50% { opacity: 0.5; transform: scaleY(1.05) skewX(2deg); }
+    100% { opacity: 0.3; transform: scaleY(1) skewX(0deg); }
+  }
+
+  @keyframes ice-sparkle {
+    0%, 100% { opacity: 0; transform: scale(0.5); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+  
+  @keyframes tree-shake-gentle { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(1deg); } }
+  @keyframes tree-shake-windy { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(4deg); } }
+  @keyframes tree-shake-storm { 0%, 100% { transform: rotate(-5deg); } 20% { transform: rotate(10deg); } 40% { transform: rotate(-8deg); } 60% { transform: rotate(5deg); } }
+
+  @keyframes ray-pulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
+  @keyframes twinkle { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
+  @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+  @keyframes lightning-flash { 0%, 92%, 100% { opacity: 0; } 93%, 95% { opacity: 1; background: white; } }
+  @keyframes sunrise-glow { 0% { opacity: 0.4; } 50% { opacity: 0.8; } 100% { opacity: 0.4; } }
+  
+  .animate-float { animation: float 6s ease-in-out infinite; }
+  .anim-clouds { animation: float-clouds 20s ease-in-out infinite; }
+  .animate-spin-slow { animation: spin-slow 12s linear infinite; }
+  
+  .animate-rain-1 { animation: rain-drop 0.8s infinite linear; animation-delay: 0.1s; }
+  .animate-rain-2 { animation: rain-drop 0.7s infinite linear; animation-delay: 0.3s; }
+  .animate-rain-3 { animation: rain-drop 0.6s infinite linear; animation-delay: 0.5s; }
+  .animate-rain-storm { animation: rain-drop 0.4s infinite linear; }
+  
+  .animate-snow-slow { animation: snow-fall-slow 6s infinite linear; }
+  .animate-snow-fast { animation: snow-fall-fast 3.5s infinite linear; }
+  
+  .anim-fog-1 { animation: fog-flow 12s ease-in-out infinite; }
+  .anim-fog-2 { animation: fog-flow 18s ease-in-out infinite reverse; }
+  
+  .animate-ray { animation: ray-pulse 3s infinite ease-in-out; }
+  .animate-twinkle-1 { animation: twinkle 3s infinite ease-in-out; animation-delay: 0.5s; }
+  .animate-twinkle-2 { animation: twinkle 4s infinite ease-in-out; animation-delay: 1.5s; }
+  .animate-twinkle-3 { animation: twinkle 5s infinite ease-in-out; animation-delay: 2.5s; }
+  .animate-pulse-red { animation: pulse-red 2s infinite ease-in-out; }
+  .anim-lightning { animation: lightning-flash 5s infinite; }
+  .anim-glow { animation: sunrise-glow 4s ease-in-out infinite; }
+  
+  .anim-tree-gentle { animation: tree-shake-gentle 4s ease-in-out infinite; transform-origin: bottom center; transform-box: fill-box; }
+  .anim-tree-windy { animation: tree-shake-windy 1s ease-in-out infinite; transform-origin: bottom center; transform-box: fill-box; }
+  .anim-tree-storm { animation: tree-shake-storm 0.8s ease-in-out infinite; transform-origin: bottom center; transform-box: fill-box; }
+  
+  .anim-heat { animation: heat-shimmer 2s infinite linear; }
+  .anim-sparkle { animation: ice-sparkle 3s infinite ease-in-out; }
+`;
+
+const formatDateShort = (date, lang = 'de') => {
+  if (!date) return "";
+  const locale = lang === 'en' ? 'en-US' : 'de-DE';
+  try { return new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit' }).format(date); } catch (e) { return ""; }
+};
+
+const getWindColorClass = (speed) => {
+  if (speed >= 60) return "text-red-600 font-extrabold";
+  if (speed >= 40) return "text-orange-500 font-bold";
+  if (speed >= 20) return "text-blue-500 font-bold";
+  return "text-slate-600 font-medium";
+};
+
+const getUvColorClass = (uv) => {
+  if (uv >= 11) return "text-purple-600";
+  if (uv >= 8) return "text-red-600";
+  if (uv >= 6) return "text-orange-500";
+  if (uv >= 3) return "text-yellow-600";
+  return "text-green-600";
+};
+
+const getUvBadgeClass = (uv) => {
+  if (uv >= 11) return "bg-purple-100 text-purple-800 border-purple-300";
+  if (uv >= 8) return "bg-red-100 text-red-800 border-red-300";
+  if (uv >= 6) return "bg-orange-100 text-orange-800 border-orange-300";
+  if (uv >= 3) return "bg-yellow-100 text-yellow-800 border-yellow-300";
+  return "bg-green-100 text-green-800 border-green-300";
+};
+
+const getConfidenceColor = (percent) => {
+  if (percent >= 80) return "text-green-600";
+  if (percent >= 50) return "text-yellow-600";
+  return "text-red-600";
+};
+
+const getDwdColorClass = (severity) => {
+  const sev = severity ? severity.toLowerCase() : 'minor';
+  if (sev === 'extreme') return "bg-purple-100 border-purple-600 text-purple-900";
+  if (sev === 'severe') return "bg-red-100 border-red-600 text-red-900";
+  if (sev === 'moderate') return "bg-orange-100 border-orange-500 text-orange-900";
+  return "bg-yellow-100 border-yellow-500 text-yellow-900";
+};
+
+const getModelRunTime = (intervalHours, processingDelayHours) => {
+  const now = new Date();
+  const currentUtcHour = now.getUTCHours();
+  let effectiveHour = currentUtcHour - processingDelayHours;
+  if (effectiveHour < 0) effectiveHour += 24;
+  const runHourUtc = Math.floor(effectiveHour / intervalHours) * intervalHours;
+  const runDate = new Date();
+  if (currentUtcHour - processingDelayHours < 0) runDate.setDate(runDate.getDate() - 1);
+  runDate.setUTCHours(runHourUtc, 0, 0, 0);
+  return runDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + " Lauf";
+};
+
+const getWeatherConfig = (code, isDay = 1, lang = 'de') => {
+  const isNight = isDay === 0;
+  const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+  
+  if (code === 0) return isNight ? { text: t.clear, icon: Moon } : { text: t.sunny, icon: Sun };
+  if (code === 1) return isNight ? { text: t.partlyCloudy, icon: Moon } : { text: t.partlyCloudy, icon: Sun };
+  if (code === 2) return { text: t.cloudy, icon: Cloud };
+  if (code === 3) return { text: t.overcast, icon: Cloud };
+  if ([45, 48].includes(code)) return { text: t.fog, icon: CloudFog };
+  if ([51, 53, 55].includes(code)) return { text: t.drizzle, icon: CloudRain };
+  if ([61, 63].includes(code)) return { text: t.rain, icon: CloudRain };
+  if ([80, 81].includes(code)) return { text: t.showers, icon: CloudRain };
+  if ([65, 82].includes(code)) return { text: t.heavyRain, icon: CloudRain };
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return { text: t.snow, icon: Snowflake };
+  if ([56, 57, 66, 67].includes(code)) return { text: t.sleet, icon: Snowflake };
+  if ([95, 96, 99].includes(code)) return { text: t.thunderstorm, icon: CloudLightning };
+  return { text: t.unknown, icon: Info };
+};
+
+const getMoonPhase = (d) => {
+  if (!d) return 0;
+  const dateObj = new Date(d);
+  const newMoon = new Date(2000, 0, 6, 18, 14).getTime();
+  const phaseSeconds = 2551443;
+  let sec = (dateObj.getTime() - newMoon) / 1000;
+  let currentSec = sec % phaseSeconds;
+  if (currentSec < 0) currentSec += phaseSeconds;
+  return Math.round((currentSec / phaseSeconds) * 8) % 8;
+};
+
+const generateAIReport = (type, data, lang = 'de') => {
+  if (!data) return { title: "Lade...", summary: "Warte auf Daten...", details: null, warning: null, confidence: null };
+  if (Array.isArray(data) && data.length === 0) return { title: "Lade...", summary: "Warte auf Daten...", details: null, warning: null, confidence: null };
+  
+  const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+  const locale = lang === 'en' ? 'en-US' : 'de-DE';
+
+  let title = "";
+  let summary = "";
+  let details = null; 
+  let warning = null;
+  let confidence = null;
+  let structuredDetails = null;
+
+  if (type === 'trip') {
+      const { location, mode, startDate, endDate, summary: daySummary, items, reliability } = data;
+      title = `${lang === 'en' ? 'Travel Check' : 'Reise-Check'}: ${location.name}`;
+      confidence = reliability;
+
+      if ((mode === 'multi' && items.length === 0) || (mode === 'single' && !daySummary)) {
+          summary = "⚠️ " + (lang === 'en' ? "No weather data available." : "Keine Wetterdaten verfügbar.");
+          details = lang === 'en' ? "The selected date might be too far in the future (max 14 days)." : "Der gewählte Zeitraum liegt möglicherweise zu weit in der Zukunft (max. 14 Tage).";
+          confidence = 0;
+      } else if (mode === 'single' && daySummary) {
+          const dateStr = startDate.toLocaleDateString(locale, {weekday:'long', day:'2-digit', month:'long'});
+          let tempText = lang === 'en' 
+             ? `Expect max ${Math.round(daySummary.maxTemp)}° and min ${Math.round(daySummary.minTemp)}°.`
+             : `Erwarten Sie maximal ${Math.round(daySummary.maxTemp)}° und mindestens ${Math.round(daySummary.minTemp)}°.`;
+          
+          let condText = "";
+          const precip = daySummary.totalPrecip || 0;
+          if (precip < 0.2) condText = lang === 'en' ? "It will likely stay dry." : "Es bleibt voraussichtlich trocken. Gute Bedingungen!";
+          else if (precip > 5) condText = lang === 'en' ? `Expect rain (${precip.toFixed(1)}mm). Bring an umbrella!` : `Planen Sie Regen ein (sform: translateY(0px); } 50% { transform: translateY(-5px); } }
   @keyframes float-clouds { 0% { transform: translateX(0px); } 50% { transform: translateX(15px); } 100% { transform: translateX(0px); } }
   @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   
