@@ -4,8 +4,10 @@ import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation
 
 // --- 1. KONSTANTEN & CONFIG & ÜBERSETZUNGEN ---
 
+// ÄNDERUNG: Standard ist jetzt null (leer), damit der User es einrichten muss
 const DEFAULT_LOC = null; 
 
+// TEXT RESSOURCEN
 const TRANSLATIONS = {
   de: {
     home: "Home",
@@ -265,6 +267,7 @@ const getSavedTrips = () => {
 const getSavedSettings = () => {
     try {
         const saved = localStorage.getItem('weather_settings');
+        // Default Settings erweitert um theme: 'auto'
         return saved ? JSON.parse(saved) : { language: 'de', unit: 'celsius', theme: 'auto' };
     } catch (e) { return { language: 'de', unit: 'celsius', theme: 'auto' }; }
 };
@@ -281,6 +284,7 @@ const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
 
 const deg2rad = (deg) => deg * (Math.PI/180);
 
+// Hilfsfunktion: Datum strikt als lokale Zeit parsen (ROBUSTER)
 const parseLocalTime = (isoString) => {
   if (!isoString) return new Date();
   try {
@@ -288,12 +292,14 @@ const parseLocalTime = (isoString) => {
         const [y, m, d] = isoString.split('-').map(Number);
         return new Date(y, m - 1, d, 12, 0, 0);
     }
+    // Check if T exists for standard ISO
     if (isoString.includes('T')) {
         const [datePart, timePart] = isoString.split('T');
         const [y, m, d] = datePart.split('-').map(Number);
         const [hr, min] = timePart.split(':').map(Number);
         return new Date(y, m - 1, d, hr, min);
     }
+    // Fallback normal parsing
     return new Date(isoString);
   } catch (e) {
     console.error("Date parse error", e);
@@ -306,11 +312,12 @@ const styles = `
   @keyframes float-clouds { 0% { transform: translateX(0px); } 50% { transform: translateX(15px); } 100% { transform: translateX(0px); } }
   @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   
+  /* --- NIEDERSCHLAG & WIND --- */
   @keyframes rain-drop { 
     0% { transform: translateY(-20px) scaleY(1); opacity: 0; } 
     20% { opacity: 0.8; } 
     90% { opacity: 0.8; transform: translateY(140px) scaleY(1); }
-    100% { transform: translateY(150px) scaleY(0.5) scaleX(1.5); opacity: 0; }
+    100% { transform: translateY(150px) scaleY(0.5) scaleX(1.5); opacity: 0; } /* Splash effect simulation */
   }
   
   @keyframes snow-fall-slow { 
@@ -326,6 +333,7 @@ const styles = `
     100% { transform: translateY(180px) translateX(20px); opacity: 0; } 
   }
 
+  /* --- NEBEL & ATMOSPHÄRE --- */
   @keyframes fog-flow { 
     0% { transform: translateX(-5%); opacity: 0.3; } 
     50% { opacity: 0.6; transform: translateX(5%); } 
@@ -343,10 +351,13 @@ const styles = `
     50% { opacity: 1; transform: scale(1.2); }
   }
   
+  /* --- BÄUME & STURM --- */
+  /* WICHTIG: transform-box: fill-box sorgt dafür, dass sich der Baum um sich selbst dreht */
   @keyframes tree-shake-gentle { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(1deg); } }
   @keyframes tree-shake-windy { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(4deg); } }
   @keyframes tree-shake-storm { 0%, 100% { transform: rotate(-5deg); } 20% { transform: rotate(10deg); } 40% { transform: rotate(-8deg); } 60% { transform: rotate(5deg); } }
 
+  /* --- SONSTIGES --- */
   @keyframes ray-pulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
   @keyframes twinkle { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
   @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
@@ -383,6 +394,8 @@ const styles = `
   .anim-heat { animation: heat-shimmer 2s infinite linear; }
   .anim-sparkle { animation: ice-sparkle 3s infinite ease-in-out; }
 `;
+
+// --- 2. HILFSFUNKTIONEN ---
 
 const formatDateShort = (date, lang = 'de') => {
   if (!date) return "";
@@ -469,6 +482,7 @@ const getMoonPhase = (d) => {
   return Math.round((currentSec / phaseSeconds) * 8) % 8;
 };
 
+// --- 3. KI LOGIK (REVISED - MIT STRUKTURIERTEN DATEN & SPRACHE) ---
 const generateAIReport = (type, data, lang = 'de') => {
   if (!data) return { title: "Lade...", summary: "Warte auf Daten...", details: null, warning: null, confidence: null };
   if (Array.isArray(data) && data.length === 0) return { title: "Lade...", summary: "Warte auf Daten...", details: null, warning: null, confidence: null };
@@ -481,7 +495,7 @@ const generateAIReport = (type, data, lang = 'de') => {
   let details = null; 
   let warning = null;
   let confidence = null;
-  let structuredDetails = null;
+  let structuredDetails = null; // New field for list view
 
   if (type === 'trip') {
       const { location, mode, startDate, endDate, summary: daySummary, items, reliability } = data;
@@ -516,6 +530,7 @@ const generateAIReport = (type, data, lang = 'de') => {
               details += lang === 'en' ? `\n\nForecast precision for time window (${daySummary.startH}-${daySummary.endH}h).` : `\n\nFür den gewählten Zeitraum (${daySummary.startH}-${daySummary.endH} Uhr) wurde die Vorhersage präzisiert.`;
           }
       } else {
+          // Multi Day Trip Text
           const daysCount = items.length;
           const tripDuration = Math.round((new Date(endDate).setHours(0,0,0,0) - new Date(startDate).setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)) + 1;
           
@@ -558,6 +573,10 @@ const generateAIReport = (type, data, lang = 'de') => {
         return isTonightLate || isTomorrowEarly;
     });
     
+    // ÄNDERUNG: Filter erweitert!
+    // Vorher: ... && d.time.getHours() >= 6 && d.time.getHours() <= 22
+    // Jetzt:  ... && d.time.getHours() >= 6
+    // Damit wird alles ab 6 Uhr morgens bis zum Ende des Tages (23 Uhr) berücksichtigt.
     const tomorrowDayData = data.filter(d => d.time.getDate() === tomorrowDate.getDate() && d.time.getHours() >= 6);
 
     if (todayData.length > 0) {
@@ -624,23 +643,27 @@ const generateAIReport = (type, data, lang = 'de') => {
 
   if (type === 'longterm') {
     title = t.trend;
-    const analysisData = data.slice(1); 
+    const analysisData = data.slice(1); // Start tomorrow
     
+    // Split Data
     const thisWeek = [];
     const nextWeek = [];
     let foundNextMon = false;
-    let foundWeekAfter = false;
+    let foundWeekAfter = false; // NEU: Marker für den Start der übernächsten Woche
 
     analysisData.forEach(d => {
         const isMonday = d.date.getDay() === 1;
 
+        // Wenn wir den ersten Montag finden -> Start nächste Woche
         if (isMonday && !foundNextMon) {
             foundNextMon = true;
         } 
+        // Wenn wir BEREITS in der nächsten Woche sind und WIEDER einen Montag finden -> Stopp
         else if (isMonday && foundNextMon) {
             foundWeekAfter = true;
         }
 
+        // Wenn wir die übernächste Woche erreicht haben, fügen wir nichts mehr hinzu
         if (foundWeekAfter) return;
 
         if (foundNextMon) nextWeek.push(d);
@@ -650,6 +673,7 @@ const generateAIReport = (type, data, lang = 'de') => {
     let parts = [];
     let overallConfidence = 0;
 
+    // --- TEIL 1: DIESE WOCHE ---
     if (thisWeek.length > 0) {
         const twMax = Math.max(...thisWeek.map(d=>d.max));
         const twMin = Math.min(...thisWeek.map(d=>d.min));
@@ -658,6 +682,7 @@ const generateAIReport = (type, data, lang = 'de') => {
         const twSunDays = thisWeek.filter(d=>d.code<=2).length;
         
         let twText = `📅 ${t.restOfWeek}:\n`;
+        // Handle edge case if "tomorrow" is Sunday or Monday already
         if (thisWeek.length === 1 && thisWeek[0].date.getDay() === 0) twText = `📅 ${t.tomorrow} (${t.sunday}):\n`;
 
         twText += lang === 'en' 
@@ -676,14 +701,17 @@ const generateAIReport = (type, data, lang = 'de') => {
         overallConfidence += thisWeek.reduce((a,b)=>a+b.reliability,0) / thisWeek.length;
     }
 
+    // --- TEIL 2: NÄCHSTE WOCHE ---
     if (nextWeek.length > 0) {
         const nwMax = Math.max(...nextWeek.map(d=>d.max));
         const nwMinLow = Math.min(...nextWeek.map(d=>d.min));
+        // NEU: Detailliertere Analyse
         const nwAvgMax = Math.round(nextWeek.reduce((a,b)=>a+b.max,0)/nextWeek.length);
         const nwRain = nextWeek.reduce((a,b)=>a+parseFloat(b.rain),0);
         const nwRainDays = nextWeek.filter(d=>parseFloat(d.rain)>1.0).length;
         const nwRel = Math.round(nextWeek.reduce((a,b)=>a+b.reliability,0) / nextWeek.length);
         
+        // Trend-Ermittlung (Anfang vs Ende der Woche)
         const startTemp = nextWeek[0].max;
         const endTemp = nextWeek[nextWeek.length-1].max;
         let trendTextDe = "die Temperaturen bleiben stabil";
@@ -699,10 +727,12 @@ const generateAIReport = (type, data, lang = 'de') => {
 
         let nwText = `🔮 ${t.nextWeek} (${t.ab} ${t.monday}, ${nextWeek[0].date.toLocaleDateString(locale, {day:'2-digit', month:'2-digit'})}.):\n`;
         
+        // Temperatur Text
         nwText += lang === 'en' 
             ? `Expect daily highs averaging ${nwAvgMax}° (${trendTextEn}). `
             : `Im Schnitt liegen die Höchstwerte bei ${nwAvgMax}° (${trendTextDe}). `;
         
+        // Niederschlags Text
         if (nwRain > 10 || nwRainDays >= 4) {
              nwText += lang === 'en' 
                 ? `Unsettled weather expected with rain on approx. ${nwRainDays} days (Total: ${nwRain.toFixed(0)}mm).`
@@ -727,6 +757,7 @@ const generateAIReport = (type, data, lang = 'de') => {
     summary = parts.join("\n\n");
     confidence = Math.round(overallConfidence);
     
+    // STRUCTURED DETAILS for List View
     structuredDetails = [];
     const formatItem = (d) => ({
         day: d.dayName,
@@ -747,6 +778,7 @@ const generateAIReport = (type, data, lang = 'de') => {
     if (nextWeek.length > 0) {
         structuredDetails.push({ title: t.nextWeek, items: nextWeek.map(formatItem) });
     }
+    // Set text details to null to force usage of structured view in UI
     details = null; 
   }
   
@@ -776,6 +808,7 @@ const generateAIReport = (type, data, lang = 'de') => {
 };
 
 // --- 4. KOMPONENTEN ---
+// --- SETTINGS MODAL (NEU) ---
 const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
     const [localSettings, setLocalSettings] = useState(settings);
 
@@ -797,6 +830,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
                      <button onClick={onClose}><X className="text-slate-400"/></button>
                  </div>
 
+                 {/* CHANGE HOME LOCATION (NEU) */}
                  <div className="mb-6">
                      <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
                         <MapIcon size={16}/> {t.homeLoc}
@@ -809,6 +843,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
                      </button>
                  </div>
 
+                 {/* LANGUAGE */}
                  <div className="mb-6">
                      <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
                         <Globe size={16}/> {t.language}
@@ -829,6 +864,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
                      </div>
                  </div>
 
+                 {/* THEME (NEU) */}
                  <div className="mb-6">
                      <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
                         <Palette size={16}/> {t.theme}
@@ -855,6 +891,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
                      </div>
                  </div>
 
+                 {/* UNITS */}
                  <div className="mb-8">
                      <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
                         <Thermometer size={16}/> {t.units}
@@ -887,49 +924,38 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
 };
 
 const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed, lang='de' }) => {
-  const getDecimalTime = (d) => {
-    if (!d) return 0;
-    const dateObj = typeof d === 'string' ? parseLocalTime(d) : new Date(d);
-    return dateObj.getHours() + dateObj.getMinutes() / 60 + dateObj.getSeconds() / 3600;
+  // Move helper to top of component to use it for initial variables
+  const getDecimalHour = (dateInput) => {
+    if (!dateInput) return 0;
+    // Wenn es ein ISO-String ist, parsen
+    const d = typeof dateInput === 'string' ? parseLocalTime(dateInput) : new Date(dateInput);
+    return d.getHours() + d.getMinutes() / 60;
   };
-
-  const currentTime = getDecimalTime(date);
-  const sunriseTime = getDecimalTime(sunrise) || 6.0;
-  const sunsetTime = getDecimalTime(sunset) || 18.0;
-
-  const calculatedIsDay = (currentTime >= sunriseTime && currentTime < sunsetTime);
-  const isNight = !calculatedIsDay;
+    
+  const d = date ? new Date(date) : new Date();
+  const currentHour = d.getHours() + d.getMinutes() / 60;
   
-  let celestialX = -50;
-  let celestialY = 200;
-  let celestialType = 'none';
+  // FIX: Nutze || statt ?? damit 0 (fehlende Daten) als false gewertet wird und der Default greift
+  const sunriseHour = getDecimalHour(sunrise) || 6.5; 
+  const sunsetHour = getDecimalHour(sunset) || 20.5;
 
-  if (!isNight) {
-    const dayLength = sunsetTime - sunriseTime;
-    const progress = (currentTime - sunriseTime) / (dayLength > 0 ? dayLength : 12);
-    celestialX = 30 + (progress * 300);
-    celestialY = 155 - (Math.sin(progress * Math.PI) * 125); 
-    celestialType = 'sun';
-  } else {
-    let nightProgress;
-    let nightDuration = (24 - sunsetTime) + sunriseTime;
-    const safeNightDuration = nightDuration > 0 ? nightDuration : 12;
-    
-    if (currentTime >= sunsetTime) {
-      nightProgress = (currentTime - sunsetTime) / safeNightDuration;
-    } else {
-      nightProgress = (24 - sunsetTime + currentTime) / safeNightDuration;
-    }
-    
-    celestialX = 30 + (nightProgress * 300);
-    celestialY = 155 - (Math.sin(nightProgress * Math.PI) * 125);
-    celestialType = 'moon';
+  // WICHTIG: Überschreibe isNight, falls echte Uhrzeit (date) übergeben wurde
+  // Damit synchronisieren wir Tag/Nacht exakt mit Sonnenaufgang/untergang,
+  // unabhängig vom stündlichen API-Flag "is_day".
+  let calculatedIsDay = isDay;
+  
+  // Wir prüfen, ob sunrise/sunset valide (>0) sind, bevor wir die Berechnung überschreiben
+  if (date && sunriseHour > 0 && sunsetHour > 0) {
+      // ÄNDERUNG: < sunsetHour (statt <=), damit bei Sonnenuntergang sofort Nacht ist
+      calculatedIsDay = (currentHour >= sunriseHour && currentHour < sunsetHour) ? 1 : 0;
   }
-
-  const moonPhase = date ? getMoonPhase(date) : 0;
+  const isNight = calculatedIsDay === 0;
+  
+  // --- WETTERZUSTÄNDE ---
   const isClear = code === 0 || code === 1;
   const isPartlyCloudy = code === 2;
   const isOvercast = code === 3 || code === 45 || code === 48; 
+  // Nieselregen: Codes 51, 53, 55
   const isDrizzle = [51, 53, 55].includes(code);
   const isLightRain = [61, 80].includes(code);
   const isHeavyRain = [63, 65, 81, 82].includes(code) || (code >= 95);
@@ -946,10 +972,50 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const isWindy = windSpeed >= 30;
   const isStormyWind = windSpeed >= 60;
 
-  const groundColor = (isSnow || isDeepFreeze) ? "#e2e8f0" : (isNight ? "#0f172a" : "#4ade80");
+  
+  let celestialX = -50;
+  let celestialY = 200; 
+  let celestialType = 'none';
+  let isDawn = false;
+  let isDusk = false;
+
+  // ÄNDERUNG: <= sunsetHour für die exakte Minute
+  if (currentHour >= sunriseHour && currentHour <= sunsetHour) {
+     celestialType = 'sun';
+     const dayLength = sunsetHour - sunriseHour;
+     // Schutz vor Division durch Null
+     const safeDayLength = dayLength > 0 ? dayLength : 12;
+     const dayProgress = (currentHour - sunriseHour) / safeDayLength; 
+     
+     celestialX = 40 + dayProgress * 280; 
+     
+     // OPTIMIERTE PARABEL: 
+     // Y=145 ist ca. Horizont-Linie. 
+     // Bei 0% (Aufgang) und 100% (Untergang) muss Y < 145 sein, damit die Sonne sichtbar ist.
+     // Mit 0.0060 * (x-180)^2 + 25 landen wir bei ca. Y=142 an den Rändern. Perfekt.
+     celestialY = 25 + 0.0060 * Math.pow(celestialX - 180, 2); 
+
+     if (currentHour - sunriseHour < 0.75) isDawn = true;
+     if (sunsetHour - currentHour < 0.75) isDusk = true;
+  } else {
+     celestialType = 'moon';
+     let nightDuration = (24 - sunsetHour) + sunriseHour;
+     const safeNightDuration = nightDuration > 0 ? nightDuration : 12;
+     let timeSinceSunset = currentHour - sunsetHour;
+     if (timeSinceSunset < 0) timeSinceSunset += 24; 
+     
+     const nightProgress = timeSinceSunset / safeNightDuration;
+     celestialX = 40 + nightProgress * 280;
+     celestialY = 25 + 0.0060 * Math.pow(celestialX - 180, 2);
+  }
+
+  const moonPhase = date ? getMoonPhase(date) : 0;
+  
+  const groundColor = (isSnow || isDeepFreeze) ? "#e2e8f0" : (isNight ? "#0f172a" : "#4ade80"); // Nachts dunklerer Boden
   const mountainColor = (isSnow || isDeepFreeze) ? "#f1f5f9" : (isNight ? "#1e293b" : "#64748b"); 
   const treeTrunk = isNight ? "#4a3830" : "#78350f";
-  const treeLeaf = (isSnow || isDeepFreeze) ? "#f8fafc" : (isNight ? "#15803d" : "#16a34a");
+  const treeLeaf = (isSnow || isDeepFreeze) ? "#f8fafc" : (isNight ? "#15803d" : "#16a34a"); // Nachts satteres Grün für Kontrast
+  
   const houseWall = isNight ? "#78350f" : "#b45309"; 
   const houseRoof = (isSnow || isDeepFreeze) ? "#f1f5f9" : (isNight ? "#451a03" : "#7c2d12");
   const windowColor = isNight ? "#fbbf24" : "#94a3b8";
@@ -988,10 +1054,17 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
         </filter>
       </defs>
 
+      {isDawn && <rect x="-100" y="0" width="600" height="160" fill="url(#dawnGradient)" opacity="0.3" className="anim-glow" />}
+      {isDusk && <rect x="-100" y="0" width="600" height="160" fill="url(#duskGradient)" opacity="0.3" className="anim-glow" />}
+
+      {/* SONNE UND MOND - IMMER GERENDERT, ABER HINTER WOLKEN WENN OVERCAST */}
       {celestialType === 'sun' && (
         <g transform={`translate(${celestialX}, ${celestialY})`}>
+          {/* Outer Glow */}
           <circle r="25" fill="#fbbf24" opacity="0.4" filter="blur(8px)" />
+          {/* Sun Body */}
           <circle r="14" fill="#fbbf24" className="animate-ray" />
+          {/* Rays */}
           <g className="animate-spin-slow">
             {[...Array(8)].map((_, i) => (
               <line key={i} x1="0" y1="-20" x2="0" y2="-16" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" transform={`rotate(${i * 45})`} />
@@ -1002,6 +1075,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
 
       {celestialType === 'moon' && (
         <g transform={`translate(${celestialX}, ${celestialY})`}>
+           {/* Moon Glow */}
            <circle r="20" fill="white" opacity="0.2" filter="blur(5px)" />
            <circle r="12" fill="white" opacity="0.9" />
            {moonPhase !== 4 && <circle r="12" fill="black" opacity="0.5" transform={`translate(${moonPhase < 4 ? -6 : 6}, 0)`} />}
@@ -1010,11 +1084,11 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       
       {isNight && isClear && (
          <g>
-            <circle cx="50" cy="30" r="1" fill="white" className="animate-twinkle-1" />
-            <circle cx="300" cy="40" r="1.5" fill="white" className="animate-twinkle-2" />
-            <circle cx="200" cy="20" r="1" fill="white" className="animate-twinkle-3" />
-            <circle cx="100" cy="50" r="1" fill="white" className="animate-twinkle-2" />
-            <circle cx="350" cy="25" r="1" fill="white" className="animate-twinkle-1" />
+            <circle cx="50" cy="30" r="1" fill="white" className="animate-twinkle-1" style={{animationDelay: '0s'}} />
+            <circle cx="300" cy="40" r="1.5" fill="white" className="animate-twinkle-2" style={{animationDelay: '1s'}} />
+            <circle cx="200" cy="20" r="1" fill="white" className="animate-twinkle-3" style={{animationDelay: '2s'}} />
+            <circle cx="100" cy="50" r="1" fill="white" className="animate-twinkle-2" style={{animationDelay: '1.5s'}} />
+            <circle cx="350" cy="25" r="1" fill="white" className="animate-twinkle-1" style={{animationDelay: '0.5s'}} />
          </g>
       )}
 
@@ -1028,11 +1102,19 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       {(isSleet || (isRain && isFreezing) || isDeepFreeze) && (
         <path d="M-50 142 Q 50 132 150 147 T 450 137 V 170 H -50 Z" fill="#bae6fd" opacity="0.4" />
       )}
+      {(isDeepFreeze || (isRain && isFreezing)) && (
+          <g>
+             <circle cx="100" cy="150" r="2" fill="white" className="anim-sparkle" />
+             <circle cx="250" cy="160" r="1.5" fill="white" className="anim-sparkle" style={{animationDelay: '1s'}} />
+             <circle cx="180" cy="155" r="2" fill="white" className="anim-sparkle" style={{animationDelay: '2s'}} />
+          </g>
+      )}
 
+      {/* --- HAUS (zuerst gerendert, damit Bäume davor können) --- */}
       <g transform="translate(190, 120)">
           <rect x="25" y="-10" width="6" height="15" fill="#57534e" />
           <rect x="5" y="10" width="40" height="30" fill={houseWall} />
-          <path d="M-2 10 L25 -15 L52 10 Z" fill={houseRoof} />
+          <path d="M-2 10 L25 -15 L52 10 Z" fill={houseRoof} filter={isSnow ? "brightness(1.1)" : "none"} />
           <rect x="12" y="18" width="10" height="10" fill={windowColor} stroke={windowStroke} strokeWidth="1"/>
           <line x1="17" y1="18" x2="17" y2="28" stroke={windowStroke} strokeWidth="1" />
           <line x1="12" y1="23" x2="22" y2="23" stroke={windowStroke} strokeWidth="1" />
@@ -1040,6 +1122,9 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
           {isNight && <circle cx="17" cy="23" r="8" fill="#fbbf24" opacity="0.6" filter="blur(4px)" />}
       </g>
 
+      {/* --- BÄUME --- */}
+      
+      {/* Baum Links - Rand */}
       <g transform="translate(40, 120)">
         <g className={treeAnim}>
             <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
@@ -1048,16 +1133,27 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
         </g>
       </g>
 
+      {/* Baum Links - Neben Haus */}
       <g transform="translate(155, 120) scale(0.9)">
-        <g className={treeAnim}>
+        <g className={treeAnim} style={{animationDelay: '0.2s'}}>
             <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
             <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
             <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
         </g>
       </g>
       
+      {/* Baumgruppe Rechts */}
       <g transform="translate(280, 135) scale(0.9)">
-        <g className={treeAnim}>
+        <g className={treeAnim} style={{animationDelay: '0.5s'}}>
+            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+            <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+            <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+        </g>
+      </g>
+      
+      {/* Baum Rechts - Rand */}
+      <g transform="translate(320, 134) scale(0.8)">
+        <g className={treeAnim} style={{animationDelay: '0.7s'}}>
             <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
             <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
             <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
@@ -1073,9 +1169,11 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
 
       {(isOvercast || isRain || isSnow || isStorm || isSleet || isDrizzle) && (
         <g className="anim-clouds">
-           <path d="M40 50 Q 55 35 70 50 T 100 50 T 120 60 H 40 Z" fill={isStorm ? "#475569" : "white"} fillOpacity={isOvercast ? 0.9 : 0.7} />
+           <path d="M40 50 Q 55 35 70 50 T 100 50 T 120 60 H 40 Z" fill={isStorm ? "#475569" : "white"} fillOpacity={isOvercast ? 0.9 : 0.7} transform="translate(0,0)" />
            <path d="M240 40 Q 255 25 270 40 T 300 40 T 320 50 H 240 Z" fill={isStorm ? "#334155" : "white"} fillOpacity={isOvercast ? 0.9 : 0.7} transform="translate(20,10)" />
            <path d="M140 30 Q 155 15 170 30 T 200 30 T 220 40 H 140 Z" fill={isStorm ? "#475569" : "white"} fillOpacity={isOvercast ? 0.9 : 0.7} transform="translate(-10,5)" />
+           
+           {(isStorm || isHeavyRain) && <rect x="-50" y="0" width="460" height="160" fill="black" opacity="0.3" />}
         </g>
       )}
 
@@ -1086,11 +1184,18 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
          </g>
       )}
 
+      {isExtremeHeat && (
+          <g className="anim-heat">
+             <rect x="-50" y="80" width="500" height="80" fill="orange" opacity="0.1" style={{mixBlendMode: 'overlay'}} />
+          </g>
+      )}
+
       {isDrizzle && (
          <g fill="#93c5fd" opacity="0.4" transform={rainRotation}>
             {[...Array(40)].map((_, i) => (
                <rect key={i} x={Math.random() * 400 - 20} y="40" width="0.8" height="6" 
-                     className={`animate-rain-${i%3 === 0 ? '1' : i%3 === 1 ? '2' : '3'}`} />
+                     className={`animate-rain-${i%3 === 0 ? '1' : i%3 === 1 ? '2' : '3'}`} 
+                     style={{animationDelay: `${Math.random()}s`}} />
             ))}
          </g>
       )}
@@ -1099,17 +1204,33 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
          <g fill={isSleet ? "#cbd5e1" : "#93c5fd"} opacity={0.8} transform={rainRotation}>
             {[...Array(isHeavyRain ? 60 : 30)].map((_, i) => (
                <rect key={i} x={Math.random() * 400 - 20} y="40" width={isHeavyRain ? 2 : 1.5} height={isHeavyRain ? 15 : 12} 
-                     className={isHeavyRain ? "animate-rain-storm" : `animate-rain-${i%3 === 0 ? '1' : i%3 === 1 ? '2' : '3'}`} />
+                     className={isHeavyRain ? "animate-rain-storm" : `animate-rain-${i%3 === 0 ? '1' : i%3 === 1 ? '2' : '3'}`} 
+                     style={{animationDelay: `${Math.random()}s`}} />
             ))}
          </g>
       )}
 
       {(isSnow || isSleet) && (
          <g fill="white" opacity="0.9" transform={rainRotation}>
-            {[...Array(isHeavySnow ? 80 : 40)].map((_, i) => (
-               <circle key={i} cx={Math.random() * 400 - 20} cy="-10" r={Math.random() * 2 + 1} 
-                       className={isHeavySnow || isStormyWind ? "animate-snow-fast" : "animate-snow-slow"} />
-            ))}
+            {[...Array(isHeavySnow ? 80 : 40)].map((_, i) => {
+               const startX = Math.random() * 400 - 20;
+               const delay = Math.random() * 5;
+               const size = Math.random() * 2 + 1;
+               const isSlow = i % 2 === 0;
+               return (
+                  <circle 
+                    key={i} 
+                    cx={startX} 
+                    cy="-10" 
+                    r={size} 
+                    className={isHeavySnow || isStormyWind ? "animate-snow-fast" : "animate-snow-slow"} 
+                    style={{
+                        animationDelay: `${delay}s`, 
+                        opacity: Math.random() * 0.5 + 0.5
+                    }} 
+                  />
+               );
+            })}
          </g>
       )}
       
@@ -1124,22 +1245,26 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   );
 };
 
+// --- NEU: PRECIPITATION TILE (Wann, Wie lang, Wie viel) ---
 const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
 
+  // Analyse der nächsten 24h
   const analysis = useMemo(() => {
     if (!data || data.length === 0) return null;
     
+    // Wir betrachten nur die Zukunft (ab jetzt)
     const now = new Date();
     const futureData = data.filter(d => d.time > now);
     
     if (futureData.length === 0) return null;
     
+    // Ist es gerade nass? (in der aktuellen Stunde oder nächsten Stunde)
     const current = data[0]; 
     const isRainingNow = current.precip > 0.0 || current.snow > 0.0 || (current.precipProb && current.precipProb > 30);
     
     let result = { 
-       type: 'none',
+       type: 'none', // none, rain_now, rain_later, snow_now, snow_later
        startTime: null,
        endTime: null,
        amount: 0,
@@ -1149,56 +1274,137 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
        minutelyStart: null
     };
 
+    // 1. Check Minutely Data for precise start time (Next 2 hours)
     if (minutelyData && minutelyData.precipitation) {
         const mTime = minutelyData.time;
         const mPrecip = minutelyData.precipitation;
+        
+        // Find index for "now"
         const nowMs = now.getTime();
         let startIndex = -1;
+        
         for(let i=0; i<mTime.length; i++) {
             const t = new Date(mTime[i]).getTime();
-            if (t >= nowMs) { startIndex = i; break; }
+            if (t >= nowMs) {
+                startIndex = i;
+                break;
+            }
         }
+        
         if (startIndex !== -1) {
+            // Check next 2 hours (8 * 15min slots)
             for(let i=startIndex; i < Math.min(startIndex + 8, mTime.length); i++) {
-                if (mPrecip[i] > 0.0) { result.minutelyStart = new Date(mTime[i]); break; }
+                if (mPrecip[i] > 0.0) {
+                     result.minutelyStart = new Date(mTime[i]);
+                     break; 
+                }
             }
         }
     }
 
     let foundStart = false;
+    
+    // Loop um Start und Ende zu finden (Hourly Data)
     for (let i = 0; i < futureData.length; i++) {
        const d = futureData[i];
        const hasPrecip = d.precip > 0.0 || d.snow > 0.0 || (d.precipProb !== undefined && d.precipProb > 50);
+       
        if (hasPrecip) {
-           if (!foundStart) { foundStart = true; result.startTime = result.minutelyStart || d.time; result.isSnow = d.snow > 0.0; }
+           if (!foundStart) {
+               foundStart = true;
+               result.startTime = result.minutelyStart || d.time; // Use minutely if available
+               result.isSnow = d.snow > 0.0; // Typerkennung beim Start
+           }
            const hourlyAmount = d.precip > 0 ? d.precip : d.snow;
            result.amount += hourlyAmount; 
            result.maxIntensity = Math.max(result.maxIntensity, hourlyAmount);
            result.duration++;
-       } else if (foundStart) { result.endTime = d.time; break; }
+       } else {
+           if (foundStart) {
+               // Regen hat aufgehört
+               result.endTime = d.time; 
+               break; 
+           }
+       }
     }
     
     if (!foundStart && isRainingNow) {
+        // Es regnet jetzt, hört aber in <1h auf
         const hourlyAmount = current.precip || current.snow;
         result.type = current.snow > 0 ? 'snow_now' : 'rain_now';
-        result.duration = 1; result.amount = hourlyAmount; result.maxIntensity = hourlyAmount; result.startTime = current.time;
+        result.duration = 1; 
+        result.amount = hourlyAmount;
+        result.maxIntensity = hourlyAmount;
+        result.startTime = current.time;
     } else if (foundStart) {
+        // Determine type based on startTime closeness
         const startDiff = result.startTime - now;
-        result.type = startDiff <= 0 ? (result.isSnow ? 'snow_now' : 'rain_now') : (result.isSnow ? 'snow_later' : 'rain_later');
+        const isNow = startDiff <= 0; // Or very close
+        
+        if (isNow) {
+            result.type = result.isSnow ? 'snow_now' : 'rain_now';
+        } else {
+            result.type = result.isSnow ? 'snow_later' : 'rain_later';
+        }
     }
+    
     return result;
   }, [data, minutelyData]);
 
   if (!analysis) return null;
 
   const { type, startTime, duration, amount, isSnow, maxIntensity, minutelyStart } = analysis;
+  const isRain = type.includes('rain');
+  const isNow = type.includes('now');
+  
+  // Zeit-Logik
+  const now = new Date();
+  const diffMs = startTime ? startTime - now : 0;
+  // "Später" definiert als > 90 min (wenn kein Minutely Data da ist)
+  const isLaterThan2h = !isNow && startTime && (diffMs > 90 * 60 * 1000);
+  // "Gleich" definiert als < 60min
+  const isSoon = !isNow && startTime && (diffMs > 0 && diffMs < 60 * 60 * 1000);
+
+  // Datum Check
+  const isTomorrow = startTime && startTime.getDate() !== now.getDate();
+  const dayPrefix = isTomorrow ? (t.tomorrow + " ") : "";
+  
+  // Custom headline logic
+  let headline = t.nextRain;
+  let timeDisplay = "--:--";
+  const locale = lang === 'en' ? 'en-US' : 'de-DE';
+
+  if (type === 'none') {
+      headline = lang === 'en' ? "Currently no rain expected" : "Aktuell kein Regen zu erwarten";
+  } else if (isNow) {
+      headline = t.rainNow;
+      timeDisplay = t.now;
+  } else if (minutelyStart) {
+      // Precise start time
+      const diffMins = Math.round((minutelyStart - now) / 60000);
+      if (diffMins <= 0) {
+           headline = lang === 'en' ? "Rain starting now" : "Regen beginnt jetzt";
+           timeDisplay = t.now;
+      } else {
+           headline = lang === 'en' ? `Rain in ${diffMins} min` : `Regen in ${diffMins} min`;
+           timeDisplay = minutelyStart.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'});
+      }
+  } else if (isSoon) {
+      headline = t.rainSoon;
+      timeDisplay = startTime ? startTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'}) : "Gleich";
+  } else {
+      headline = t.nextRain;
+      timeDisplay = startTime ? (isTomorrow ? (dayPrefix + " ") : "") + startTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'}) : '--:--';
+  }
+
+  // If type is 'none', we just show the "No rain" box
   if (type === 'none') {
       return (
         <div className="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between shadow-sm mb-4">
             <div className="flex items-center gap-3">
                 <div className="p-3 bg-emerald-100 rounded-full text-emerald-600"><Sun size={28} /></div>
                 <div>
-                    <div className="font-bold text-slate-700 text-lg">{lang === 'en' ? "Currently no rain expected" : "Aktuell kein Regen zu erwarten"}</div>
+                    <div className="font-bold text-slate-700 text-lg">{headline}</div>
                     <div className="text-base text-slate-500 font-medium">{t.noRainExp}</div>
                 </div>
             </div>
@@ -1206,31 +1412,13 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
       );
   }
 
-  const now = new Date();
-  const diffMs = startTime ? startTime - now : 0;
-  const isNow = type.includes('now');
-  const isSoon = !isNow && startTime && (diffMs > 0 && diffMs < 60 * 60 * 1000);
-  const isLaterThan2h = !isNow && startTime && (diffMs > 90 * 60 * 1000);
-  const isTomorrow = startTime && startTime.getDate() !== now.getDate();
-  const dayPrefix = isTomorrow ? (t.tomorrow + " ") : "";
-  const locale = lang === 'en' ? 'en-US' : 'de-DE';
-
-  let headline = t.nextRain;
-  let timeDisplay = "--:--";
-
-  if (isNow) { headline = t.rainNow; timeDisplay = t.now; }
-  else if (minutelyStart) {
-      const diffMins = Math.round((minutelyStart - now) / 60000);
-      if (diffMins <= 0) { headline = lang === 'en' ? "Rain starting now" : "Regen beginnt jetzt"; timeDisplay = t.now; }
-      else { headline = lang === 'en' ? `Rain in ${diffMins} min` : `Regen in ${diffMins} min`; timeDisplay = minutelyStart.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'}); }
-  } else if (isSoon) { headline = t.rainSoon; timeDisplay = startTime ? startTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'}) : "Gleich"; }
-  else { timeDisplay = startTime ? (isTomorrow ? dayPrefix : "") + startTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'}) : '--:--'; }
-
   const Icon = isSnow ? Snowflake : CloudRain;
   const colorClass = isSnow ? "text-cyan-600 bg-cyan-100 border-cyan-200" : "text-blue-600 bg-blue-100 border-blue-200";
   const bgClass = isSnow ? "bg-cyan-50/80" : "bg-blue-50/80";
 
+  // Intensitäts-Logik
   const getIntensityInfo = (rate) => {
+      // Basic translation mapping for intensity
       if (rate < 0.5) return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: isSnow ? 'bg-cyan-300' : 'bg-blue-300' };
       if (rate < 1.0) return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: isSnow ? 'bg-cyan-400' : 'bg-blue-400' };
       if (rate < 4.0) return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: isSnow ? 'bg-cyan-500' : 'bg-blue-600' };
@@ -1247,11 +1435,18 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
                     <Icon size={32} strokeWidth={2.5} />
                 </div>
                 <div>
-                    <div className="font-bold text-slate-700 text-lg uppercase tracking-wide opacity-80 mb-0.5">{headline}</div>
+                    <div className="font-bold text-slate-700 text-lg uppercase tracking-wide opacity-80 mb-0.5">
+                        {headline}
+                    </div>
                     <div className="flex items-center gap-2">
+                        {/* Time Display Logic */}
                         {!isNow && isLaterThan2h && !minutelyStart && <span className="text-base font-bold text-slate-600">{t.ab}</span>}
-                        <span className="text-4xl font-black text-slate-800 tracking-tight leading-none">{timeDisplay}</span>
+                        <span className="text-4xl font-black text-slate-800 tracking-tight leading-none">
+                            {timeDisplay}
+                        </span>
                         {!isNow && !isSoon && !minutelyStart && <span className="text-sm font-bold text-slate-500 uppercase">{t.oclock}</span>}
+                        
+                        {/* Ping Animation if Raining Now or very soon */}
                         {(isNow || (minutelyStart && (minutelyStart - now) < 300000)) && (
                             <span className="flex h-4 w-4 relative">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
@@ -1259,57 +1454,77 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
                             </span>
                         )}
                     </div>
-                    <div className="text-sm font-bold uppercase text-slate-500 tracking-wide mt-1">{isSnow ? t.snow : t.rain} • {intensity.label}</div>
+                    <div className="text-sm font-bold uppercase text-slate-500 tracking-wide mt-1">
+                        {isSnow ? t.snow : t.rain} • {intensity.label}
+                    </div>
                 </div>
             </div>
+
             <div className="text-right">
                 <div className="text-xl font-bold text-slate-700 leading-tight">{amount.toFixed(1)}<span className="text-sm text-slate-500 font-normal ml-0.5">mm</span></div>
                 <div className="text-lg font-medium text-slate-500 leading-tight">{duration} <span className="text-sm">Std</span></div>
             </div>
         </div>
+
         <div className="mt-4 h-3 w-full bg-white/40 rounded-full overflow-hidden relative">
-            <div className={`h-full ${intensity.color} rounded-full transition-all duration-1000 ease-out`} style={{ width: `${intensity.percent}%` }}></div>
+            <div 
+                className={`h-full ${intensity.color} rounded-full transition-all duration-1000 ease-out`} 
+                style={{ width: `${intensity.percent}%` }}
+            ></div>
         </div>
     </div>
   );
 };
 
+// --- NEU: FEEDBACK MODAL (ERWEITERT) ---
 const FeedbackModal = ({ onClose, currentTemp, lang='de' }) => {
     const [sent, setSent] = useState(false);
-    const [tempAdjustment, setTempAdjustment] = useState(0);
+    const [tempAdjustment, setTempAdjustment] = useState(0); // Offset in Grad
     const [selectedCondition, setSelectedCondition] = useState(null);
+
     const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
 
     const conditions = [
         { id: 'sun', label: t.sunny, icon: Sun, color: 'text-amber-500 bg-amber-50 border-amber-200' },
         { id: 'cloudy', label: t.cloudy, icon: Cloud, color: 'text-slate-500 bg-slate-50 border-slate-200' },
-        { id: 'overcast', label: t.overcast, icon: Cloud, color: 'text-slate-700 bg-slate-100 border-slate-300' },
+        { id: 'overcast', label: t.overcast, icon: Cloud, color: 'text-slate-700 bg-slate-100 border-slate-300' }, // Neu
         { id: 'fog', label: t.fog, icon: CloudFog, color: 'text-slate-400 bg-slate-50/50 border-slate-200' },
-        { id: 'drizzle', label: t.drizzle, icon: CloudRain, color: 'text-cyan-500 bg-cyan-50 border-cyan-200' },
+        { id: 'drizzle', label: t.drizzle, icon: CloudDrizzle, color: 'text-cyan-500 bg-cyan-50 border-cyan-200' },
         { id: 'rain', label: t.rain, icon: CloudRain, color: 'text-blue-500 bg-blue-50 border-blue-200' },
-        { id: 'storm', label: t.thunderstorm, icon: CloudLightning, color: 'text-purple-600 bg-purple-50 border-purple-200' },
-        { id: 'snow', label: t.snow, icon: Snowflake, color: 'text-sky-300 bg-sky-50 border-sky-100' },
-        { id: 'hail', label: 'Hagel', icon: CloudRain, color: 'text-teal-600 bg-teal-50 border-teal-200' },
-        { id: 'wind', label: 'Wind', icon: Wind, color: 'text-slate-600 bg-slate-100 border-slate-300' },
+        { id: 'storm', label: t.thunderstorm, icon: CloudLightning, color: 'text-purple-600 bg-purple-50 border-purple-200' }, // Neu
+        { id: 'snow', label: t.snow, icon: CloudSnow, color: 'text-sky-300 bg-sky-50 border-sky-100' }, // Neu
+        { id: 'hail', label: 'Hagel', icon: CloudHail, color: 'text-teal-600 bg-teal-50 border-teal-200' }, // Neu
+        { id: 'wind', label: 'Wind', icon: Wind, color: 'text-slate-600 bg-slate-100 border-slate-300' }, // Neu
     ];
 
     const handleSend = () => {
-        if (!selectedCondition && tempAdjustment === 0) return;
+        if (!selectedCondition && tempAdjustment === 0) return; // Nichts zu senden
+
         setSent(true);
-        setTimeout(() => { onClose(); setSent(false); }, 2000);
+        // Hier würde normalerweise der API-Call zum Backend stehen mit:
+        // condition: selectedCondition
+        // tempCorrection: tempAdjustment
+        setTimeout(() => {
+            onClose();
+            setSent(false);
+        }, 2000);
     };
 
     if (sent) {
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
                 <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
-                    <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-600"><CheckCircle2 size={32} /></div>
+                    <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-600">
+                        <CheckCircle2 size={32} />
+                    </div>
                     <h3 className="text-xl font-black text-slate-800 mb-2">{t.feedbackThanks}</h3>
                     <p className="text-slate-500">{t.feedbackDesc}</p>
                 </div>
             </div>
         );
     }
+
+    const displayTemp = Math.round(currentTemp + tempAdjustment);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -1318,26 +1533,54 @@ const FeedbackModal = ({ onClose, currentTemp, lang='de' }) => {
                     <h3 className="font-bold text-slate-800 flex items-center gap-2"><MessageSquarePlus size={18} className="text-blue-500"/> {t.feedbackTitle}</h3>
                     <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={20} className="text-slate-400" /></button>
                 </div>
+                
                 <div className="p-6 overflow-y-auto">
+                    {/* Temperatur Slider */}
                     <div className="mb-8">
                         <div className="flex justify-between items-end mb-4">
                             <label className="text-sm font-bold text-slate-500 uppercase tracking-wide">Temperatur</label>
-                            <div className="text-3xl font-black text-slate-800">{Math.round(currentTemp + tempAdjustment)}°</div>
+                            <div className="text-3xl font-black text-slate-800">{displayTemp}°</div>
                         </div>
-                        <input type="range" min="-10" max="10" step="1" value={tempAdjustment} onChange={(e) => setTempAdjustment(parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                        <input 
+                            type="range" 
+                            min="-10" 
+                            max="10" 
+                            step="1" 
+                            value={tempAdjustment} 
+                            onChange={(e) => setTempAdjustment(parseInt(e.target.value))}
+                            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                        />
+                        <div className="flex justify-between text-xs text-slate-400 mt-2 font-medium">
+                            <span>-10°</span>
+                            <span>OK</span>
+                            <span>+10°</span>
+                        </div>
                     </div>
+
+                    {/* Wetter Grid */}
                     <div className="mb-6">
                         <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 block">{t.weatherReport}</label>
                         <div className="grid grid-cols-3 gap-2">
                             {conditions.map((c) => (
-                                <button key={c.id} onClick={() => setSelectedCondition(c.id)} className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200 ${selectedCondition === c.id ? `ring-2 ring-offset-1 ring-blue-500 ${c.color}` : 'border-slate-100 hover:bg-slate-50'}`}>
+                                <button 
+                                    key={c.id}
+                                    onClick={() => setSelectedCondition(c.id)}
+                                    className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200 ${selectedCondition === c.id ? `ring-2 ring-offset-1 ring-blue-500 ${c.color}` : 'border-slate-100 hover:bg-slate-50'}`}
+                                >
                                     <c.icon size={24} className={selectedCondition === c.id ? '' : 'text-slate-400'} />
                                     <span className={`text-xs font-medium mt-2 ${selectedCondition === c.id ? '' : 'text-slate-600'}`}>{c.label}</span>
                                 </button>
                             ))}
                         </div>
                     </div>
-                    <button onClick={handleSend} disabled={!selectedCondition && tempAdjustment === 0} className="w-full py-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition disabled:opacity-50 shadow-lg shadow-blue-500/20">{t.feedbackSend}</button>
+
+                    <button 
+                        onClick={handleSend} 
+                        disabled={!selectedCondition && tempAdjustment === 0}
+                        className="w-full py-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20"
+                    >
+                        {t.feedbackSend}
+                    </button>
                 </div>
             </div>
         </div>
@@ -1382,6 +1625,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc }) => {
   const [expanded, setExpanded] = useState(false);
   if (!report) return null;
   const { title, summary, details, warning: localWarning, confidence, structuredDetails } = report;
+  
   const hasDwd = dwdWarnings && dwdWarnings.length > 0;
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
   
@@ -1389,20 +1633,28 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc }) => {
   if (hasDwd) {
       dwdWarnings.forEach(w => {
           const s = w.severity.toLowerCase();
-          let lvl = 1; if (s === 'moderate') lvl = 2; if (s === 'severe') lvl = 3; if (s === 'extreme') lvl = 4;
+          let lvl = 1;
+          if (s === 'moderate') lvl = 2;
+          if (s === 'severe') lvl = 3;
+          if (s === 'extreme') lvl = 4;
           if (lvl > maxSeverityLevel) maxSeverityLevel = lvl;
       });
   }
   
   let bannerClass = "bg-blue-100 text-blue-900 border-blue-300"; 
   let icon = <Info size={20} />;
+  
   if (maxSeverityLevel === 1) { bannerClass = "bg-yellow-100 text-yellow-900 border-yellow-300"; icon = <AlertTriangle size={20} />; }
   else if (maxSeverityLevel === 2) { bannerClass = "bg-orange-100 text-orange-900 border-orange-300"; icon = <AlertTriangle size={20} />; }
   else if (maxSeverityLevel >= 3) { bannerClass = "bg-red-100 text-red-900 border-red-300 animate-pulse-red"; icon = <Siren size={20} />; }
 
   return (
-    <div className="mb-4 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 rounded-xl border border-indigo-100 shadow-sm relative overflow-hidden transition-all duration-500">
+    <>
+      <div className="mb-4 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 rounded-xl border border-indigo-100 shadow-sm relative overflow-hidden transition-all duration-500">
+        
+        {/* HEADER BEREICH */}
         <div className="p-4 relative z-10">
+            {/* DWD Warnings */}
             {hasDwd && (
               <div className="mb-3">
                 <button onClick={() => setExpanded(!expanded)} className={`w-full p-3 rounded-lg border-l-4 shadow-sm flex items-center justify-between gap-3 text-left transition hover:brightness-95 ${bannerClass}`}>
@@ -1418,10 +1670,13 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc }) => {
                 {expanded && (
                    <div className="mt-3 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
                       {dwdWarnings.map((alert, i) => <DwdAlertItem key={i} alert={alert} lang={lang} />)}
+                      <div className="text-[10px] text-center opacity-50 pt-1">Quelle: DWD via Brightsky</div>
                    </div>
                 )}
               </div>
             )}
+
+            {/* Custom Warning */}
             {!hasDwd && localWarning && (
               <div className="mb-3 p-3 bg-red-100 border-l-4 border-red-500 text-red-900 rounded-r shadow-sm flex items-start gap-3 animate-pulse-red relative z-10">
                 <AlertTriangle className="shrink-0 text-red-600 mt-0.5" size={20} />
@@ -1431,17 +1686,48 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc }) => {
                 </div>
               </div>
             )}
+            
+            {/* Main Report Title & Summary */}
             <div className="flex justify-between items-start mb-2">
-                <div className="text-xs font-extrabold uppercase tracking-wider text-indigo-900/60 mb-1 flex items-center gap-1"><Sparkles size={12} className="text-indigo-500"/> {title || t.weatherReport}</div>
-                {confidence !== null && (<div className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${confidence > 70 ? 'bg-green-100 text-green-700 border-green-200' : confidence > 40 ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 'bg-red-100 text-red-700 border-red-200'}`}>{confidence}% {t.safe}</div>)}
+                <div className="text-xs font-extrabold uppercase tracking-wider text-indigo-900/60 mb-1 flex items-center gap-1">
+                    <Sparkles size={12} className="text-indigo-500"/> 
+                    {title || t.weatherReport}
+                </div>
+                {confidence !== null && (
+                    <div className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${confidence > 70 ? 'bg-green-100 text-green-700 border-green-200' : confidence > 40 ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
+                        {confidence}% {t.safe}
+                    </div>
+                )}
             </div>
+            
+            {/* Hinzugefügt: whitespace-pre-line für korrekte Zeilenumbrüche im Daily Report */}
+            {/* NOTE: We might need to run temp conversion on summary string but that's complex with regex. For now summary remains as generated (mostly C) unless we rebuild AI report completely with units. */}
             <p className="text-lg text-slate-800 leading-relaxed font-semibold relative z-10 whitespace-pre-line">{summary}</p>
-            {(details || structuredDetails) && (<button onClick={() => setExpanded(!expanded)} className="mt-3 text-sm font-bold text-indigo-600 flex items-center gap-1 hover:text-indigo-800 transition-colors">{expanded ? t.showLess : t.showDetails} {expanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}</button>)}
+            
+            {/* Toggle Button */}
+            {(details || structuredDetails) && (
+                <button 
+                    onClick={() => setExpanded(!expanded)} 
+                    className="mt-3 text-sm font-bold text-indigo-600 flex items-center gap-1 hover:text-indigo-800 transition-colors"
+                >
+                    {expanded ? t.showLess : t.showDetails} {expanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
+                </button>
+            )}
         </div>
+
+        {/* EXPANDABLE DETAILS */}
         {expanded && (
             <div className="px-4 pb-4 pt-0 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="h-px w-full bg-indigo-200/50 mb-3"></div>
-                {details && <div className="text-base text-slate-700 leading-relaxed space-y-2 whitespace-pre-line mb-4">{details}</div>}
+                
+                {/* Fallback Text Details */}
+                {details && (
+                    <div className="text-base text-slate-700 leading-relaxed space-y-2 whitespace-pre-line mb-4">
+                        {details}
+                    </div>
+                )}
+
+                {/* Structured Details (List View) */}
                 {structuredDetails && (
                    <div className="space-y-6 mt-2">
                        {structuredDetails.map((group, idx) => (
@@ -1452,14 +1738,36 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc }) => {
                                        const Icon = getWeatherConfig(item.code, 1, lang).icon;
                                        return (
                                            <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-white/60 hover:bg-white/80 transition border border-white/40 shadow-sm text-sm">
+                                               {/* Date & Icon */}
                                                <div className="flex items-center gap-3 min-w-[100px]">
-                                                   <div className="w-10 text-center"><div className="font-bold text-slate-700">{item.day}</div><div className="text-[10px] font-medium text-slate-400">{item.date}</div></div>
-                                                   <div className="p-1.5 bg-indigo-50 rounded-lg text-indigo-600"><Icon size={20}/></div>
+                                                   <div className="w-10 text-center">
+                                                       <div className="font-bold text-slate-700">{item.day}</div>
+                                                       <div className="text-[10px] font-medium text-slate-400">{item.date}</div>
+                                                   </div>
+                                                   <div className="p-1.5 bg-indigo-50 rounded-lg text-indigo-600">
+                                                        <Icon size={20}/>
+                                                   </div>
                                                </div>
-                                               <div className="flex items-center gap-1 flex-1 justify-center"><span className="font-bold text-slate-800 text-base">{tempFunc(item.max)}°</span><span className="text-slate-400 text-xs font-medium">/ {tempFunc(item.min)}°</span></div>
+                                               
+                                               {/* Temp */}
+                                               <div className="flex items-center gap-1 flex-1 justify-center">
+                                                    <span className="font-bold text-slate-800 text-base">{tempFunc(item.max)}°</span>
+                                                    <span className="text-slate-400 text-xs font-medium">/ {tempFunc(item.min)}°</span>
+                                               </div>
+
+                                               {/* Rain/Wind */}
                                                <div className="text-right min-w-[80px] flex flex-col items-end gap-0.5">
-                                                   {item.rain > 0.1 ? <div className="flex items-center justify-end gap-1 text-blue-600 font-bold text-xs bg-blue-50 px-1.5 py-0.5 rounded-md w-max"><Droplets size={10}/> {item.rain.toFixed(1)}mm</div> : <span className="text-[10px] text-slate-400 font-medium px-1.5 py-0.5">{t.noRain}</span>}
-                                                   {item.wind > 20 && <div className={`flex items-center justify-end gap-1 text-[10px] font-bold ${getWindColorClass(item.wind)}`}><Wind size={10}/> {item.wind} km/h</div>}
+                                                   {item.rain > 0.1 ? (
+                                                       <div className="flex items-center justify-end gap-1 text-blue-600 font-bold text-xs bg-blue-50 px-1.5 py-0.5 rounded-md w-max">
+                                                           <Droplets size={10}/> {item.rain.toFixed(1)}mm
+                                                       </div>
+                                                   ) : <span className="text-[10px] text-slate-400 font-medium px-1.5 py-0.5">{t.noRain}</span>}
+                                                   
+                                                   {item.wind > 20 && (
+                                                       <div className={`flex items-center justify-end gap-1 text-[10px] font-bold ${getWindColorClass(item.wind)}`}>
+                                                           <Wind size={10}/> {item.wind} km/h
+                                                       </div>
+                                                   )}
                                                </div>
                                            </div>
                                        );
@@ -1471,14 +1779,18 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc }) => {
                )}
             </div>
         )}
-    </div>
+      </div>
+    </>
   );
 };
 
+// --- LOCATION MODAL ---
 const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAddCurrentLocation, onDeleteLocation, currentLoc, onRenameLocation, onRenameHome, homeLoc, lang='de' }) => {
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
+    
+    // States for Editing Names
     const [editingId, setEditingId] = useState(null);
     const [tempName, setTempName] = useState("");
     const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
@@ -1489,20 +1801,34 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
         if (!searchQuery) return;
         setIsSearching(true);
         try {
+            // FIX: .trim() hinzugefügt, um Leerzeichen zu entfernen
             const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery.trim())}&count=5&language=de&format=json`);
             const data = await res.json();
             setSearchResults(data.results || []);
-        } catch (e) { console.error(e); } finally { setIsSearching(false); }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsSearching(false);
+        }
     };
 
     const handleAddFoundLocation = (loc) => {
-        onSelectLocation({ name: loc.name, lat: loc.latitude, lon: loc.longitude, type: 'saved', id: crypto.randomUUID() }); 
+        const newLoc = { name: loc.name, lat: loc.latitude, lon: loc.longitude, type: 'saved', id: crypto.randomUUID() };
+        onSelectLocation(newLoc); 
         onClose();
     };
 
+    const startEditing = (loc) => {
+        setEditingId(loc.id);
+        setTempName(loc.name);
+    };
+
     const saveName = (loc) => {
-        if (loc.id === 'home_default' || (homeLoc && loc.id === homeLoc.id)) onRenameHome(tempName);
-        else onRenameLocation(loc.id, tempName);
+        if (loc.id === 'home_default' || (homeLoc && loc.id === homeLoc.id)) {
+            onRenameHome(tempName);
+        } else {
+            onRenameLocation(loc.id, tempName);
+        }
         setEditingId(null);
     };
 
@@ -1513,56 +1839,143 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
                     <h3 className="font-bold text-slate-800 flex items-center gap-2"><MapIcon size={18} className="text-blue-500"/> {t.managePlaces}</h3>
                     <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={20} className="text-slate-400" /></button>
                 </div>
+                
                 <div className="p-4 overflow-y-auto">
+                    {/* Search Section */}
                     <div className="mb-6 space-y-2">
                         <div className="relative">
                             <Search className="absolute left-3 top-3 text-slate-400" size={18} />
-                            <input type="text" placeholder={t.searchPlace} className="w-full pl-10 pr-12 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 bg-slate-50 text-slate-800" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} />
-                            <button onClick={handleSearch} className="absolute right-2 top-2 p-1 bg-blue-100 text-blue-600 rounded-lg">{isSearching ? <RefreshCw className="animate-spin" size={16}/> : <ArrowRight size={16}/>}</button>
+                            <input 
+                                type="text" 
+                                placeholder={t.searchPlace}
+                                className="w-full pl-10 pr-12 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50 text-slate-800"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                            />
+                            <button 
+                                onClick={handleSearch}
+                                className="absolute right-2 top-2 p-1 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition"
+                            >
+                                {isSearching ? <RefreshCw className="animate-spin" size={16}/> : <ArrowRight size={16}/>}
+                            </button>
                         </div>
+                        
+                        {/* Search Results */}
                         {searchResults.length > 0 && (
-                            <div className="bg-white border border-slate-100 rounded-xl shadow-sm overflow-hidden">
+                            <div className="bg-white border border-slate-100 rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-top-1">
                                 {searchResults.map((res) => (
-                                    <button key={res.id} onClick={() => handleAddFoundLocation(res)} className="w-full text-left p-3 hover:bg-blue-50 border-b border-slate-50 last:border-0 flex justify-between items-center group">
-                                        <div><div className="font-bold text-slate-700 text-sm">{res.name}</div><div className="text-[10px] text-slate-400">{res.admin1}, {res.country}</div></div>
+                                    <button 
+                                        key={res.id}
+                                        onClick={() => handleAddFoundLocation(res)}
+                                        className="w-full text-left p-3 hover:bg-blue-50 border-b border-slate-50 last:border-0 flex justify-between items-center transition group"
+                                    >
+                                        <div>
+                                            <div className="font-bold text-slate-700 text-sm">{res.name}</div>
+                                            <div className="text-[10px] text-slate-400">{res.admin1}, {res.country}</div>
+                                        </div>
                                         <Plus size={16} className="text-blue-400 group-hover:text-blue-600"/>
                                     </button>
                                 ))}
                             </div>
                         )}
                     </div>
-                    <button onClick={onAddCurrentLocation} className="w-full mb-4 p-3 rounded-xl border border-dashed border-blue-300 bg-blue-50 text-blue-600 font-bold flex items-center justify-center gap-2 hover:bg-blue-100 transition"><Crosshair size={18} /> {t.addCurrent}</button>
+
+                    {/* Add Current Location Button */}
+                    <button 
+                        onClick={onAddCurrentLocation}
+                        className="w-full mb-4 p-3 rounded-xl border border-dashed border-blue-300 bg-blue-50 text-blue-600 font-bold flex items-center justify-center gap-2 hover:bg-blue-100 transition"
+                    >
+                        <Crosshair size={18} /> {t.addCurrent}
+                    </button>
+
                     <div className="space-y-2">
+                        {/* HOME LOCATION EDITABLE */}
                         {homeLoc && (
-                            <div className={`p-3 rounded-xl border flex items-center justify-between transition ${currentLoc.id === homeLoc.id ? 'border-amber-500 bg-amber-50' : 'border-amber-200'}`}>
+                            <div className={`p-3 rounded-xl border flex items-center justify-between group transition ${currentLoc.id === homeLoc.id ? 'border-amber-500 bg-amber-50' : 'border-amber-200 hover:border-amber-300'}`}>
                                 <div className="flex items-center gap-3 flex-1 overflow-hidden">
-                                     <div className="p-2 rounded-full bg-amber-100 text-amber-600 shrink-0"><Home size={16} /></div>
+                                     <div className="p-2 rounded-full bg-amber-100 text-amber-600 shrink-0">
+                                         <Home size={16} />
+                                     </div>
                                      <div className="w-full">
                                          {editingId === homeLoc.id ? (
-                                             <div className="flex gap-1 w-full"><input type="text" className="w-full text-sm font-bold border-b border-amber-300 bg-transparent" value={tempName} onChange={(e) => setTempName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveName(homeLoc)} autoFocus /><button onClick={() => saveName(homeLoc)} className="text-green-600"><Check size={16}/></button></div>
-                                         ) : (<button onClick={() => { onSelectLocation(homeLoc); onClose(); }} className="text-left w-full"><div className="font-bold text-slate-700 text-sm truncate">{homeLoc.name}</div><div className="text-[10px] text-slate-400">{t.homeLoc}</div></button>)}
+                                             <div className="flex gap-1 w-full">
+                                                <input 
+                                                    type="text" 
+                                                    className="w-full text-sm font-bold border-b border-amber-300 bg-transparent focus:outline-none"
+                                                    value={tempName}
+                                                    onChange={(e) => setTempName(e.target.value)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && saveName(homeLoc)}
+                                                    autoFocus
+                                                />
+                                                <button onClick={() => saveName(homeLoc)} className="text-green-600"><Check size={16}/></button>
+                                             </div>
+                                         ) : (
+                                             <button onClick={() => { onSelectLocation(homeLoc); onClose(); }} className="text-left w-full">
+                                                 <div className="font-bold text-slate-700 text-sm truncate">{homeLoc.name}</div>
+                                                 <div className="text-[10px] text-slate-400">{t.homeLoc}</div>
+                                             </button>
+                                         )}
                                      </div>
                                 </div>
-                                <button onClick={() => { setEditingId(homeLoc.id); setTempName(homeLoc.name); }} className="p-2 text-slate-300 hover:text-amber-500"><Edit2 size={16} /></button>
+                                <button 
+                                    onClick={() => startEditing(homeLoc)}
+                                    className="p-2 text-slate-300 hover:text-amber-500 hover:bg-amber-100 rounded-full transition"
+                                >
+                                    <Edit2 size={16} />
+                                </button>
                             </div>
                         )}
+
                         <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 mt-4">{t.savedPlaces}</div>
-                        {savedLocations.length === 0 ? <div className="text-center text-slate-400 py-4 text-sm italic">{t.noPlaces}</div> : savedLocations.map((loc, index) => (
-                            <div key={loc.id || index} className={`p-3 rounded-xl border flex items-center justify-between transition ${currentLoc.name === loc.name ? 'border-blue-500 bg-blue-50' : 'border-slate-100'}`}>
-                                <div className="flex items-center gap-3 flex-1 overflow-hidden">
-                                    <div className="p-2 rounded-full bg-slate-100 text-slate-600 shrink-0"><MapPin size={16} /></div>
-                                    <div className="w-full">
-                                         {editingId === loc.id ? (
-                                             <div className="flex gap-1 w-full"><input type="text" className="w-full text-sm font-bold border-b border-blue-300 bg-transparent" value={tempName} onChange={(e) => setTempName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveName(loc)} autoFocus /><button onClick={() => saveName(loc)} className="text-green-600"><Check size={16}/></button></div>
-                                         ) : (<button onClick={() => { onSelectLocation(loc); onClose(); }} className="text-left w-full"><div className="font-bold text-slate-700 text-sm truncate">{loc.name}</div><div className="text-[10px] text-slate-400">Lat: {loc.lat.toFixed(2)}</div></button>)}
+                        {savedLocations.length === 0 ? (
+                            <div className="text-center text-slate-400 py-4 text-sm italic">{t.noPlaces}</div>
+                        ) : (
+                            savedLocations.map((loc, index) => (
+                                <div key={loc.id || index} className={`p-3 rounded-xl border flex items-center justify-between group transition ${currentLoc.name === loc.name ? 'border-blue-500 bg-blue-50' : 'border-slate-100 hover:border-slate-300'}`}>
+                                    <div className="flex items-center gap-3 flex-1 overflow-hidden">
+                                        <div className="p-2 rounded-full bg-slate-100 text-slate-600 shrink-0">
+                                            <MapPin size={16} />
+                                        </div>
+                                        <div className="w-full">
+                                             {editingId === loc.id ? (
+                                                 <div className="flex gap-1 w-full">
+                                                    <input 
+                                                        type="text" 
+                                                        className="w-full text-sm font-bold border-b border-blue-300 bg-transparent focus:outline-none"
+                                                        value={tempName}
+                                                        onChange={(e) => setTempName(e.target.value)}
+                                                        onKeyDown={(e) => e.key === 'Enter' && saveName(loc)}
+                                                        autoFocus
+                                                    />
+                                                    <button onClick={() => saveName(loc)} className="text-green-600"><Check size={16}/></button>
+                                                 </div>
+                                             ) : (
+                                                 <button onClick={() => { onSelectLocation(loc); onClose(); }} className="text-left w-full">
+                                                    <div className="font-bold text-slate-700 text-sm truncate">{loc.name}</div>
+                                                    <div className="text-[10px] text-slate-400">Lat: {loc.lat.toFixed(2)}</div>
+                                                 </button>
+                                             )}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex gap-1">
+                                        <button 
+                                            onClick={() => startEditing(loc)}
+                                            className="p-2 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-full transition"
+                                        >
+                                            <Edit2 size={16} />
+                                        </button>
+                                        <button 
+                                            onClick={() => onDeleteLocation(index)}
+                                            className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
                                     </div>
                                 </div>
-                                <div className="flex gap-1">
-                                    <button onClick={() => { setEditingId(loc.id); setTempName(loc.name); }} className="p-2 text-slate-300 hover:text-blue-500"><Edit2 size={16} /></button>
-                                    <button onClick={() => onDeleteLocation(index)} className="p-2 text-slate-300 hover:text-red-500"><Trash2 size={16} /></button>
-                                </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
@@ -1570,66 +1983,151 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
     );
 };
 
+// --- NEU: HOME SETUP MODAL (Für den allerersten Start) ---
 const HomeSetupModal = ({ onSave, lang='de' }) => {
     const [searchQuery, setSearchQuery] = useState("");
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
     const [gpsLoading, setGpsLoading] = useState(false);
+    
+    // Schritt 2: Name vergeben
     const [selectedLoc, setSelectedLoc] = useState(null);
     const [customName, setCustomName] = useState("");
+    
     const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
 
     const handleSearch = async () => {
         if (!searchQuery) return;
         setLoading(true);
         try {
+            // FIX: .trim() hinzugefügt
             const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery.trim())}&count=5&language=de&format=json`);
             const data = await res.json();
             setResults(data.results || []);
-        } catch (e) { console.error(e); } finally { setLoading(false); }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleUseGPS = () => {
         if (!navigator.geolocation) return alert("Kein GPS verfügbar");
         setGpsLoading(true);
         navigator.geolocation.getCurrentPosition(async (pos) => {
-             const lat = pos.coords.latitude; const lon = pos.coords.longitude;
+             const lat = pos.coords.latitude;
+             const lon = pos.coords.longitude;
              try {
+                // Name auflösen
                 const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
-                const data = await res.json(); const city = data.results?.[0]?.name || t.myLocation;
-                setSelectedLoc({ name: city, lat, lon, id: 'home_default', type: 'home' }); setCustomName(city);
-            } catch (e) { setSelectedLoc({ name: "GPS Standort", lat, lon, id: 'home_default', type: 'home' }); setCustomName("Zuhause"); } finally { setGpsLoading(false); }
-        }, () => { alert("Standortzugriff verweigert."); setGpsLoading(false); });
+                const data = await res.json();
+                const city = data.results?.[0]?.name || t.myLocation;
+                
+                const loc = { name: city, lat, lon, id: 'home_default', type: 'home' };
+                setSelectedLoc(loc);
+                setCustomName(city);
+            } catch (e) {
+                const loc = { name: "GPS Standort", lat, lon, id: 'home_default', type: 'home' };
+                setSelectedLoc(loc);
+                setCustomName("Zuhause");
+            } finally {
+                setGpsLoading(false);
+            }
+        }, () => {
+            alert("Standortzugriff verweigert.");
+            setGpsLoading(false);
+        });
+    };
+
+    const handleSelect = (res) => {
+        const loc = { name: res.name, lat: res.latitude, lon: res.longitude, id: 'home_default', type: 'home' };
+        setSelectedLoc(loc);
+        setCustomName(res.name);
+    };
+
+    const handleFinalSave = () => {
+        if (!selectedLoc) return;
+        onSave({ ...selectedLoc, name: customName });
     };
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-500">
-             <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden p-6 text-center animate-in zoom-in-95 duration-500">
+             <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden p-6 text-center animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
                  {!selectedLoc ? (
                      <>
-                        <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4"><Home size={32} /></div>
+                        <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Home size={32} />
+                        </div>
                         <h2 className="text-2xl font-black text-slate-800 mb-2">{t.welcome}</h2>
                         <p className="text-slate-500 mb-6 text-sm">{t.welcomeDesc}</p>
-                        <button onClick={handleUseGPS} disabled={gpsLoading} className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 mb-4 shadow-lg active:scale-95">{gpsLoading ? <RefreshCw className="animate-spin"/> : <Crosshair size={20}/>}{t.useGps}</button>
-                        <div className="relative mb-2"><div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div><div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400">{t.orSearch}</span></div></div>
-                        <div className="relative mb-4"><input type="text" placeholder={t.searchPlace} className="w-full pl-4 pr-12 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} /><button onClick={handleSearch} className="absolute right-2 top-2 p-1.5 bg-slate-200 rounded-lg">{loading ? <RefreshCw className="animate-spin" size={16}/> : <ArrowRight size={16}/>}</button></div>
+                        
+                        <button 
+                            onClick={handleUseGPS}
+                            disabled={gpsLoading}
+                            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 mb-4 shadow-lg shadow-blue-500/30 transition active:scale-95"
+                        >
+                            {gpsLoading ? <RefreshCw className="animate-spin"/> : <Crosshair size={20}/>}
+                            {t.useGps}
+                        </button>
+
+                        <div className="relative mb-2">
+                             <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
+                             <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400">{t.orSearch}</span></div>
+                        </div>
+
+                        <div className="relative mb-4">
+                            <input 
+                                type="text" 
+                                placeholder={t.searchPlace}
+                                className="w-full pl-4 pr-12 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50 text-slate-800"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                            />
+                            <button onClick={handleSearch} className="absolute right-2 top-2 p-1.5 bg-slate-200 rounded-lg text-slate-600">
+                                {loading ? <RefreshCw className="animate-spin" size={16}/> : <ArrowRight size={16}/>}
+                            </button>
+                        </div>
+
                         {results.length > 0 && (
                             <div className="text-left border border-slate-100 rounded-xl overflow-hidden max-h-[150px] overflow-y-auto">
-                                {results.map(res => (<button key={res.id} onClick={() => { setSelectedLoc({ name: res.name, lat: res.latitude, lon: res.longitude, id: 'home_default', type: 'home' }); setCustomName(res.name); }} className="w-full p-3 hover:bg-blue-50 text-left border-b border-slate-50 last:border-0 text-sm font-bold text-slate-700">{res.name} <span className="font-normal text-slate-400">({res.country})</span></button>))}
+                                {results.map(res => (
+                                    <button key={res.id} onClick={() => handleSelect(res)} className="w-full p-3 hover:bg-blue-50 text-left border-b border-slate-50 last:border-0 text-sm font-bold text-slate-700">
+                                        {res.name} <span className="font-normal text-slate-400">({res.country})</span>
+                                    </button>
+                                ))}
                             </div>
                         )}
                      </>
                  ) : (
                      <>
                         <button onClick={() => setSelectedLoc(null)} className="absolute top-4 left-4 text-slate-400 hover:text-slate-600"><ArrowLeft size={24}/></button>
-                        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4"><Check size={32} /></div>
+                        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Check size={32} />
+                        </div>
                         <h2 className="text-xl font-bold text-slate-800 mb-2">{t.locFound}</h2>
                         <p className="text-slate-500 mb-6 text-sm">{t.nameLoc}</p>
+                        
                         <div className="bg-slate-50 p-4 rounded-xl mb-6">
                             <label className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1 block text-left">Name</label>
-                            <div className="flex items-center gap-2"><input type="text" className="w-full bg-transparent font-bold text-xl text-slate-800 focus:outline-none border-b-2 border-blue-500 pb-1" value={customName} onChange={(e) => setCustomName(e.target.value)} autoFocus /><Edit2 size={16} className="text-slate-400"/></div>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="text" 
+                                    className="w-full bg-transparent font-bold text-xl text-slate-800 focus:outline-none border-b-2 border-blue-500 pb-1"
+                                    value={customName}
+                                    onChange={(e) => setCustomName(e.target.value)}
+                                    autoFocus
+                                />
+                                <Edit2 size={16} className="text-slate-400"/>
+                            </div>
                         </div>
-                        <button onClick={() => onSave({ ...selectedLoc, name: customName })} className="w-full py-4 bg-green-500 text-white font-bold rounded-xl shadow-lg active:scale-95">{t.saveStart}</button>
+
+                        <button 
+                            onClick={handleFinalSave}
+                            className="w-full py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/30 transition active:scale-95"
+                        >
+                            {t.saveStart}
+                        </button>
                      </>
                  )}
              </div>
@@ -1637,13 +2135,17 @@ const HomeSetupModal = ({ onSave, lang='de' }) => {
     );
 };
 
+
+// --- 4. MAIN APP COMPONENT ---
+
 export default function WeatherApp() {
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState(() => getSavedLocations());
   const [homeLoc, setHomeLoc] = useState(() => getSavedHomeLocation());
+  // Startet als null, bis Home gesetzt ist
   const [currentLoc, setCurrentLoc] = useState(homeLoc); 
   const [showHomeSetup, setShowHomeSetup] = useState(false);
-  const [settings, setSettings] = useState(() => getSavedSettings());
+  const [settings, setSettings] = useState(() => getSavedSettings()); // NEU
 
   const [shortTermData, setShortTermData] = useState(null);
   const [longTermData, setLongTermData] = useState(null);
@@ -1653,38 +2155,65 @@ export default function WeatherApp() {
   const [chartView, setChartView] = useState('hourly');
   const [lastUpdated, setLastUpdated] = useState(null);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showAllHours, setShowAllHours] = useState(false); 
   const [sunriseSunset, setSunriseSunset] = useState({ sunrise: null, sunset: null });
   const [modelRuns, setModelRuns] = useState({ icon: '', gfs: '', arome: '' });
   const [showIosInstall, setShowIosInstall] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false); // NEU
   const [viewMode, setViewMode] = useState(null);
+
+  // WICHTIG: Echtzeit-State für die Animation (NEU)
   const [now, setNow] = useState(new Date());
 
-  useEffect(() => { const timer = setInterval(() => { setNow(new Date()); }, 1000); return () => clearInterval(timer); }, []);
+  // Timer: Aktualisiere 'now' jede Minute, damit die Sonne wandert (NEU)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 60000); // 60000ms = 1 Minute
+    return () => clearInterval(timer);
+  }, []);
 
+  // --- HELPER: Berechne die ECHTE Ortszeit basierend auf dem API-Offset ---
+  // Das verhindert, dass es "hell" ist, obwohl am Ort schon die Sonne untergegangen ist,
+  // nur weil der User in einer anderen Zeitzone sitzt.
   const locationTime = useMemo(() => {
       if (!shortTermData?.utc_offset_seconds && shortTermData?.utc_offset_seconds !== 0) return now;
-      const nowMs = now.getTime(); const localOffsetMs = now.getTimezoneOffset() * 60 * 1000; const targetOffsetMs = shortTermData.utc_offset_seconds * 1000;
+      
+      const nowMs = now.getTime();
+      const localOffsetMs = now.getTimezoneOffset() * 60 * 1000; // Browser Offset (z.B. Berlin -120min)
+      const targetOffsetMs = shortTermData.utc_offset_seconds * 1000; // API Offset (z.B. London +3600s)
+      
+      // Wir erstellen ein Date-Objekt, das visuell die Uhrzeit am Zielort anzeigt
       return new Date(nowMs + targetOffsetMs + localOffsetMs);
   }, [now, shortTermData]);
 
-  useEffect(() => { localStorage.setItem('weather_settings', JSON.stringify(settings)); }, [settings]);
+  // Update localStorage when settings change
+  useEffect(() => {
+      localStorage.setItem('weather_settings', JSON.stringify(settings));
+  }, [settings]);
+
+  // --- Helpers for Display ---
   const t = (key) => TRANSLATIONS[settings.language]?.[key] || TRANSLATIONS['de'][key] || key;
   const lang = settings.language;
   
   const formatTemp = useCallback((val) => {
       if (val === null || val === undefined) return "--";
-      if (settings.unit === 'fahrenheit') return Math.round(val * 9/5 + 32);
+      if (settings.unit === 'fahrenheit') {
+          return Math.round(val * 9/5 + 32);
+      }
       return Math.round(val);
   }, [settings.unit]);
 
   const formatTime = (dateStr) => {
       if (!dateStr) return "--:--";
-      const d = new Date(dateStr); return d.toLocaleTimeString(lang === 'en' ? 'en-US' : 'de-DE', {hour: '2-digit', minute:'2-digit'});
+      const d = new Date(dateStr);
+      return d.toLocaleTimeString(lang === 'en' ? 'en-US' : 'de-DE', {hour: '2-digit', minute:'2-digit'});
   };
 
+
+  // --- Travel Planner State ---
   const [savedTrips, setSavedTrips] = useState(() => getSavedTrips());
   const [travelQuery, setTravelQuery] = useState("");
   const [travelStartDate, setTravelStartDate] = useState("");
@@ -1693,359 +2222,1250 @@ export default function WeatherApp() {
   const [travelEndTime, setTravelEndTime] = useState("");
   const [travelResult, setTravelResult] = useState(null);
   const [travelLoading, setTravelLoading] = useState(false);
+  // Trip Report
   const [tripReport, setTripReport] = useState(null);
 
+  // Initial Location Logic / Home Check
   useEffect(() => {
-    if (!homeLoc) { setShowHomeSetup(true); setLoading(false); return; }
+    // Wenn kein Home Location existiert (erster Start), zeige Setup
+    if (!homeLoc) {
+        setShowHomeSetup(true);
+        setLoading(false);
+        return;
+    }
+
     const initLocation = async () => {
-        const urlParams = new URLSearchParams(window.location.search); const view = urlParams.get('view'); if (view) setViewMode(view);
-        if (!navigator.geolocation) { setCurrentLoc(homeLoc); return; }
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-                const lat = pos.coords.latitude; const lon = pos.coords.longitude;
-                if (getDistanceFromLatLonInKm(lat, lon, homeLoc.lat, homeLoc.lon) < 2.0) setCurrentLoc(homeLoc);
-                else {
-                    try { const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`); const data = await res.json(); setCurrentLoc({ name: data.results?.[0]?.name || t('myLocation'), lat, lon, type: 'gps' }); }
-                    catch (e) { setCurrentLoc({ name: t('myLocation'), lat, lon, type: 'gps' }); }
+        // Check URL parameters for widget mode
+        const urlParams = new URLSearchParams(window.location.search);
+        const view = urlParams.get('view');
+        if (view) setViewMode(view);
+
+        if (!navigator.geolocation) {
+             setCurrentLoc(homeLoc);
+             return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                
+                // Check distance to Home
+                const dist = getDistanceFromLatLonInKm(lat, lon, homeLoc.lat, homeLoc.lon);
+                if (dist < 2.0) { // If closer than 2km to home
+                    setCurrentLoc(homeLoc);
+                } else {
+                    // Fetch City Name
+                    try {
+                        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
+                        const data = await res.json();
+                        const city = data.results?.[0]?.name || t('myLocation');
+                        setCurrentLoc({ name: city, lat, lon, type: 'gps' });
+                    } catch (e) {
+                        setCurrentLoc({ name: t('myLocation'), lat, lon, type: 'gps' });
+                    }
                 }
-            }, () => { setCurrentLoc(homeLoc); });
+            },
+            (err) => {
+                console.warn("GPS Access denied or failed", err);
+                setCurrentLoc(homeLoc); // Fallback to Home
+            }
+        );
     };
+
     initLocation();
+  }, [homeLoc]); // Re-run init if homeLoc changes (e.g. after setup)
+
+  // Update localStorage when locations change
+  useEffect(() => {
+      localStorage.setItem('weather_locations', JSON.stringify(locations));
+  }, [locations]);
+
+  // Update localStorage when home changes
+  useEffect(() => {
+    localStorage.setItem('weather_home_loc', JSON.stringify(homeLoc));
   }, [homeLoc]);
 
-  useEffect(() => { localStorage.setItem('weather_locations', JSON.stringify(locations)); }, [locations]);
-  useEffect(() => { localStorage.setItem('weather_home_loc', JSON.stringify(homeLoc)); }, [homeLoc]);
-  useEffect(() => { localStorage.setItem('weather_trips', JSON.stringify(savedTrips)); }, [savedTrips]);
+  // Update localStorage when trips change
+  useEffect(() => {
+    localStorage.setItem('weather_trips', JSON.stringify(savedTrips));
+  }, [savedTrips]);
 
+
+  // NEU: iOS Erkennung
   useEffect(() => {
     const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    if (isIos && !window.matchMedia('(display-mode: standalone)').matches) setShowIosInstall(true);
+    // Zeige Hinweis nur, wenn noch nicht installiert (standalone check)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    if (isIos && !isStandalone) {
+      setShowIosInstall(true);
+    }
   }, []);
 
   useEffect(() => {
-    const handler = (e) => { e.preventDefault(); setDeferredPrompt(e); };
-    window.addEventListener('beforeinstallprompt', handler); return () => window.removeEventListener('beforeinstallprompt', handler);
+    const handler = (e) => { 
+        e.preventDefault(); 
+        setDeferredPrompt(e); 
+        console.log("Install prompt captured");
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') setDeferredPrompt(null);
+  };
+
+  const handleAddLocation = () => {
+      // Avoid duplicates based on name/coords
+      const exists = locations.some(l => l.name === currentLoc.name);
+      if (!exists) {
+          setLocations([...locations, { ...currentLoc, type: 'saved', id: crypto.randomUUID() }]);
+      }
+      setShowLocationModal(false);
+  };
+
+  const handleDeleteLocation = (index) => {
+      const newLocs = [...locations];
+      newLocs.splice(index, 1);
+      setLocations(newLocs);
+  };
+
+  const handleRenameLocation = (id, newName) => {
+      setLocations(locations.map(l => l.id === id ? { ...l, name: newName } : l));
+  };
+  
+  const handleRenameHome = (newName) => {
+      if (!homeLoc) return;
+      const updated = { ...homeLoc, name: newName };
+      setHomeLoc(updated);
+      // Wenn der aktuelle Ort Home ist, update auch currentLoc Titel
+      if (currentLoc && currentLoc.id === homeLoc.id) {
+          setCurrentLoc(updated);
+      }
+  };
+
+  const handleSetHome = () => setCurrentLoc(homeLoc);
+  
   const handleSetCurrent = () => {
-    setLoading(true); setError(null);
-    if (!navigator.geolocation) { setError("GPS nicht unterstützt"); setLoading(false); return; }
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-          const lat = pos.coords.latitude; const lon = pos.coords.longitude;
-          if (homeLoc && getDistanceFromLatLonInKm(lat, lon, homeLoc.lat, homeLoc.lon) < 2.0) { setCurrentLoc(homeLoc); return; }
-          let cityName = t('myLocation'), regionName = "", countryName = "";
+    setLoading(true);
+    setError(null); // Reset Error vor neuem Versuch
+    console.log("Starte GPS-Suche..."); 
+    
+    if (!navigator.geolocation) { 
+        setError("GPS wird von diesem Browser/Gerät nicht unterstützt."); 
+        setLoading(false); 
+        return; 
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          
+          console.log(`GPS Position erfolgreich: ${lat}, ${lon} (Genauigkeit: ${pos.coords.accuracy}m)`);
+
+          // 1. Prüfen: Sind wir zu Hause? (Distanz < 2km)
+          if (homeLoc) {
+              const dist = getDistanceFromLatLonInKm(lat, lon, homeLoc.lat, homeLoc.lon);
+              if (dist < 2.0) { 
+                  setCurrentLoc(homeLoc);
+                  if (currentLoc && currentLoc.id === homeLoc.id) fetchData();
+                  return;
+              }
+          }
+
+          // 2. Wir sind woanders -> Echten Ortsnamen + Region ermitteln
+          let cityName = t('myLocation');
+          let regionName = "";
+          let countryName = "";
+
           try {
               const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
-              const data = await res.json(); if (data.results?.[0]) { cityName = data.results[0].name; regionName = data.results[0].admin1 || ""; countryName = data.results[0].country || ""; }
-          } catch (e) { console.warn(e); }
-          setCurrentLoc({ name: cityName, lat, lon, type: 'gps', region: regionName, country: countryName });
-      }, (err) => { setError("Standortfehler: " + err.message); setLoading(false); }, { timeout: 15000, enableHighAccuracy: true });
+              const data = await res.json();
+              if (data.results && data.results[0]) {
+                  cityName = data.results[0].name;
+                  regionName = data.results[0].admin1 || ""; 
+                  countryName = data.results[0].country || ""; 
+              }
+          } catch (e) {
+              console.warn("Reverse Geocoding failed", e);
+          }
+
+          setCurrentLoc({ 
+              name: cityName, 
+              lat, 
+              lon, 
+              type: 'gps',
+              region: regionName,
+              country: countryName
+          });
+      },
+      (err) => { 
+          console.error("GPS Fehler:", err);
+          let msg = "Standort konnte nicht ermittelt werden.";
+          
+          // Detaillierte Fehleranalyse für den User
+          switch(err.code) {
+              case err.PERMISSION_DENIED:
+                  msg = "Standortzugriff verweigert. Bitte erlauben Sie den Zugriff in den Browser- oder App-Einstellungen.";
+                  break;
+              case err.POSITION_UNAVAILABLE:
+                  msg = "Standortinformationen sind zurzeit nicht verfügbar (kein GPS-Signal).";
+                  break;
+              case err.TIMEOUT:
+                  msg = "Zeitüberschreitung bei der Standortsuche. Bitte versuchen Sie es erneut.";
+                  break;
+              default:
+                  msg = `Unbekannter GPS Fehler: ${err.message}`;
+          }
+          
+          setError(msg); 
+          setLoading(false); 
+      },
+      { timeout: 15000, enableHighAccuracy: true } // Timeout auf 15s erhöht
+    );
   };
   
   const fetchData = async () => {
-    if (!currentLoc) return; setLoading(true); setError(null); setDwdWarnings([]);
+    if (!currentLoc) return; // Nicht fetchen wenn kein Ort da ist
+
+    setLoading(true);
+    setError(null);
+    setDwdWarnings([]);
     try {
       const { lat, lon } = currentLoc;
-      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability&models=icon_seamless,gfs_seamless,gem_seamless&minutely_15=precipitation&timezone=auto&forecast_days=2`;
-      const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max,sunrise,sunset&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&forecast_days=14`;
+      
+      const modelsShort = "icon_seamless,gfs_seamless,gem_seamless";
+      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2`;
+      
+      const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
+      const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max,sunrise,sunset&models=${modelsLong}&timezone=auto&forecast_days=14`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
+
       const [resShort, resLong, resDwd] = await Promise.all([fetch(urlShort), fetch(urlLong), fetch(urlDwd).catch(() => ({ ok: false }))]);
-      if (!resShort.ok || !resLong.ok) throw new Error("API Fehler");
-      setShortTermData(await resShort.json()); const longData = await resLong.json(); setLongTermData(longData);
-      if (resDwd.ok) { const dwdJson = await resDwd.json(); setDwdWarnings(dwdJson.alerts || []); }
-      setLastUpdated(new Date()); setModelRuns({ icon: getModelRunTime(3, 2.5), gfs: getModelRunTime(6, 4), arome: getModelRunTime(3, 2) });
+      
+      if (!resShort.ok) {
+          const errText = await resShort.text();
+          throw new Error(`Fehler (Short): ${errText}`);
+      }
+      if (!resLong.ok) {
+          const errText = await resLong.text();
+          throw new Error(`Fehler (Long): ${errText}`);
+      }
+      
+      setShortTermData(await resShort.json());
+      const longData = await resLong.json();
+      setLongTermData(longData);
+      
+      if (resDwd.ok) {
+         const dwdJson = await resDwd.json();
+         setDwdWarnings(dwdJson.alerts || []);
+      }
+
+      setLastUpdated(new Date());
+      setModelRuns({ icon: getModelRunTime(3, 2.5), gfs: getModelRunTime(6, 4), arome: getModelRunTime(3, 2) });
       if (longData.daily?.sunrise?.[0]) setSunriseSunset({ sunrise: longData.daily.sunrise[0], sunset: longData.daily.sunset[0] });
-    } catch (err) { setError(err.message); } finally { setLoading(false); }
+
+    } catch (err) { 
+        console.error("API Error:", err);
+        setError(err.message); 
+    } finally { setLoading(false); }
   };
 
   useEffect(() => { fetchData(); }, [currentLoc]);
 
+  // --- TRAVEL SEARCH LOGIC ---
   const handleTravelSearch = async (overrideQuery = null, overrideData = null) => {
-    const q = overrideQuery || travelQuery; if (!q && !overrideData) return;
-    setTravelLoading(true); setTravelResult(null); setTripReport(null);
+    const q = overrideQuery || travelQuery;
+    if (!q && !overrideData) return;
+    
+    setTravelLoading(true);
+    setTravelResult(null);
+    setTripReport(null); // Reset Report
+    
     try {
-        let loc; if (overrideData) loc = overrideData;
-        else {
+        let loc;
+        // 1. Geocoding (if needed)
+        if (overrideData) {
+            loc = overrideData;
+        } else {
+            // FIX: .trim() auch hier hinzugefügt
             const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q.trim())}&count=1&language=de&format=json`);
-            const geoData = await geoRes.json(); if (!geoData.results?.[0]) { alert("Ort nicht gefunden."); setTravelLoading(false); return; }
+            const geoData = await geoRes.json();
+            
+            if (!geoData.results || geoData.results.length === 0) {
+                alert("Ort nicht gefunden.");
+                setTravelLoading(false);
+                return;
+            }
             loc = geoData.results[0];
         }
-        const lat = loc.latitude || loc.lat, lon = loc.longitude || loc.lon;
-        const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,windspeed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,precipitation_sum,windgusts_10m_max&models=icon_seamless,gfs_seamless&timezone=auto&forecast_days=16`);
+        
+        // 2. Weather Fetch (Seamless for best results) - 14 Days to cover future
+        const lat = loc.latitude || loc.lat;
+        const lon = loc.longitude || loc.lon;
+        // Fetch comparing data to calculate reliability
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,windspeed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,precipitation_sum,windgusts_10m_max&models=icon_seamless,gfs_seamless&timezone=auto&forecast_days=16`;
+        
+        const wRes = await fetch(url);
+        if(!wRes.ok) throw new Error("Wetterdaten konnten nicht geladen werden.");
         const wData = await wRes.json();
-        const startDateStr = overrideData ? overrideData.startDate : travelStartDate, endDateStr = (overrideData ? overrideData.endDate : travelEndDate) || startDateStr;
-        if (!startDateStr) { alert(t('startDate') + " ?"); setTravelLoading(false); return; }
-        const startDate = new Date(startDateStr), endDate = new Date(endDateStr), isMultiDay = startDateStr !== endDateStr;
-        let result = { location: loc, mode: isMultiDay ? 'multi' : 'single', startDate, endDate, items: [], summary: {}, reliability: 0 };
-        const getSafeValue = (sourceObj, index, baseKey) => sourceObj[baseKey]?.[index] ?? sourceObj[`${baseKey}_icon_seamless`]?.[index] ?? sourceObj[`${baseKey}_gfs_seamless`]?.[index] ?? null;
+        
+        if(!wData || !wData.hourly || !wData.hourly.time) throw new Error("Keine Vorhersage verfügbar.");
+
+        // 3. Process Data
+        // CRITICAL FIX: Ensure dates are handled as simple ISO strings for comparison to avoid timezone issues
+        const startDateStr = overrideData ? overrideData.startDate : travelStartDate;
+        const endDateStr = (overrideData ? overrideData.endDate : travelEndDate) || startDateStr;
+        
+        if (!startDateStr) {
+             alert(t('startDate') + " ?");
+             setTravelLoading(false);
+             return;
+        }
+
+        const startDate = new Date(startDateStr); // Keep Date object for display formatting
+        const endDate = new Date(endDateStr);
+        
+        // Determine Mode: Single Day or Multi Day
+        const isMultiDay = startDateStr !== endDateStr;
+        
+        let result = {
+            location: loc,
+            mode: isMultiDay ? 'multi' : 'single',
+            startDate,
+            endDate,
+            items: [], // for multi day
+            summary: {}, // for single day
+            reliability: 0
+        };
+
+        // HELPER: Safely get value from potentially model-suffixed response
+        const getSafeValue = (sourceObj, index, baseKey) => {
+            if (!sourceObj) return null;
+            // 1. Try base key directly (e.g. temperature_2m)
+            if (sourceObj[baseKey] && sourceObj[baseKey][index] !== undefined) return sourceObj[baseKey][index];
+            
+            // 2. Try common model suffixes
+            const models = ['icon_seamless', 'gfs_seamless', 'gem_seamless', 'arome_seamless'];
+            for (const m of models) {
+                const key = `${baseKey}_${m}`;
+                if (sourceObj[key] && sourceObj[key][index] !== undefined) return sourceObj[key][index];
+            }
+            return null;
+        };
+
+        // Check if date is > 16 days in future
+        const now = new Date();
+        const diffDays = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
+        if (diffDays > 16) {
+             // Zu weit in der Zukunft
+             setTravelResult({...result, reliability: 0});
+             setTripReport(generateAIReport('trip', {...result, reliability: 0}, lang));
+             setTravelLoading(false);
+             return;
+        }
 
         if (isMultiDay) {
-            const daily = wData.daily; let totalRel = 0, count = 0;
+            // MULTI DAY LOGIC
+            const daily = wData.daily;
+            const dailyItems = [];
+            let totalRel = 0;
+            let count = 0;
+
             for(let i=0; i<daily.time.length; i++) {
-                if (daily.time[i] >= startDateStr && daily.time[i] <= endDateStr) {
-                    result.items.push({ date: new Date(daily.time[i]), max: getSafeValue(daily, i, 'temperature_2m_max') || 0, min: getSafeValue(daily, i, 'temperature_2m_min') || 0, code: getSafeValue(daily, i, 'weathercode') || 0, precipProb: getSafeValue(daily, i, 'precipitation_probability_max') || 0, precipSum: getSafeValue(daily, i, 'precipitation_sum') || 0, wind: getSafeValue(daily, i, 'windgusts_10m_max') || 0 });
-                    totalRel += Math.max(10, 100 - ((new Date(daily.time[i]).getTime() - new Date().getTime()) / 86400000 * 5)); count++;
+                const dayDateStr = daily.time[i]; // "YYYY-MM-DD"
+                
+                // Compare strings directly: "2023-10-01" >= "2023-10-01"
+                if (dayDateStr >= startDateStr && dayDateStr <= endDateStr) {
+                    
+                    const maxT = getSafeValue(daily, i, 'temperature_2m_max') ?? 0;
+                    const minT = getSafeValue(daily, i, 'temperature_2m_min') ?? 0;
+                    const code = getSafeValue(daily, i, 'weathercode') ?? 0;
+                    const prob = getSafeValue(daily, i, 'precipitation_probability_max') ?? 0;
+                    const sum = getSafeValue(daily, i, 'precipitation_sum') ?? 0;
+                    const gust = getSafeValue(daily, i, 'windgusts_10m_max') ?? 0;
+
+                    dailyItems.push({
+                        date: new Date(dayDateStr),
+                        max: maxT,
+                        min: minT,
+                        code: code,
+                        precipProb: prob,
+                        precipSum: sum,
+                        wind: gust
+                    });
+                    
+                    const d = new Date(dayDateStr).getTime();
+                    const daysInFuture = (d - new Date().getTime()) / (1000 * 60 * 60 * 24);
+                    const rel = Math.max(10, 100 - (daysInFuture * 5));
+                    totalRel += rel;
+                    count++;
                 }
             }
+            result.items = dailyItems;
             result.reliability = count > 0 ? Math.round(totalRel / count) : 50;
+
         } else {
-            const startH = travelStartTime ? parseInt(travelStartTime.split(':')[0]) : 0, endH = travelEndTime ? parseInt(travelEndTime.split(':')[0]) : 23;
-            const hourly = wData.hourly; let temps = [], precips = [], winds = [], codes = [], probs = [];
+            // SINGLE DAY LOGIC
+            const startTimeStr = overrideData ? overrideData.startTime : travelStartTime;
+            const endTimeStr = overrideData ? overrideData.endTime : travelEndTime;
+            
+            const useTimeWindow = startTimeStr || endTimeStr;
+            let startH = 0; 
+            let endH = 23;
+
+            if (useTimeWindow) {
+                if (startTimeStr) startH = parseInt(startTimeStr.split(':')[0]);
+                if (endTimeStr) endH = parseInt(endTimeStr.split(':')[0]);
+            }
+
+            // Filter hourly data for that day and time window
+            const hourly = wData.hourly;
+            let temps = [];
+            let precips = [];
+            let winds = [];
+            let codes = [];
+            let probs = [];
+            
+            // Use the date string for matching
+            const targetDateStr = startDateStr; 
+
             for(let i=0; i<hourly.time.length; i++) {
-                if (hourly.time[i].startsWith(startDateStr)) {
-                    const h = parseInt(hourly.time[i].split('T')[1].split(':')[0]);
-                    if (h >= startH && h <= endH) { temps.push(getSafeValue(hourly, i, 'temperature_2m')); precips.push(getSafeValue(hourly, i, 'precipitation')); winds.push(getSafeValue(hourly, i, 'windspeed_10m')); codes.push(getSafeValue(hourly, i, 'weathercode')); probs.push(getSafeValue(hourly, i, 'precipitation_probability')); }
+                // hourly.time is usually ISO string "YYYY-MM-DDTHH:mm"
+                const tStr = hourly.time[i];
+                if (tStr.startsWith(targetDateStr)) {
+                    // Extract hour from ISO string "2023-10-27T14:00" -> 14
+                    const h = parseInt(tStr.split('T')[1].split(':')[0]);
+                    
+                    if (h >= startH && h <= endH) {
+                        const temp = getSafeValue(hourly, i, 'temperature_2m');
+                        const precip = getSafeValue(hourly, i, 'precipitation');
+                        const wind = getSafeValue(hourly, i, 'windspeed_10m');
+                        const code = getSafeValue(hourly, i, 'weathercode');
+                        const prob = getSafeValue(hourly, i, 'precipitation_probability');
+
+                        if (temp !== null) temps.push(temp);
+                        if (precip !== null) precips.push(precip);
+                        if (wind !== null) winds.push(wind);
+                        if (code !== null) codes.push(code);
+                        if (prob !== null) probs.push(prob);
+                    }
                 }
             }
+
             if (temps.length > 0) {
-                result.summary = { avgTemp: temps.reduce((a,b)=>a+b,0)/temps.length, maxTemp: Math.max(...temps), minTemp: Math.min(...temps), totalPrecip: precips.reduce((a,b)=>a+b,0), maxWind: Math.max(...winds), avgProb: Math.round(probs.reduce((a,b)=>a+b,0)/probs.length), code: codes[Math.floor(codes.length/2)], isTimeWindow: travelStartTime || travelEndTime, startH, endH };
-                result.reliability = Math.round(Math.max(10, 100 - ((startDate.getTime() - new Date().getTime()) / 86400000 * 5)));
+                result.summary = {
+                    avgTemp: temps.reduce((a,b)=>a+b,0)/temps.length,
+                    maxTemp: Math.max(...temps),
+                    minTemp: Math.min(...temps),
+                    totalPrecip: precips.reduce((a,b)=>a+b,0),
+                    maxWind: Math.max(...winds),
+                    avgProb: Math.round(probs.reduce((a,b)=>a+b,0)/probs.length),
+                    code: codes[Math.floor(codes.length/2)], // approximate
+                    isTimeWindow: !!useTimeWindow,
+                    startH, endH
+                };
+                
+                // Reliability
+                const daysInFuture = (startDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24);
+                result.reliability = Math.round(Math.max(10, 100 - (daysInFuture * 5)));
+            } else {
+                result.reliability = 0; 
+                // Initialize empty summary to prevent crash
+                result.summary = { maxTemp: 0, minTemp: 0, totalPrecip: 0, avgProb: 0, maxWind: 0, code: 0 };
             }
         }
-        setTravelResult(result); setTripReport(generateAIReport('trip', result, lang));
-    } catch (e) { alert("Error: " + e.message); } finally { setTravelLoading(false); }
+
+        setTravelResult(result);
+        
+        // Generate AI Report for the trip if valid - NOW WITH LANG SUPPORT
+        setTripReport(generateAIReport('trip', result, lang));
+
+    } catch (e) {
+        console.error(e);
+        alert("Error: " + e.message);
+    } finally {
+        setTravelLoading(false);
+    }
   };
 
+  const handleSaveTrip = () => {
+      if (!travelResult) return;
+      const newTrip = {
+          id: crypto.randomUUID(),
+          name: travelResult.location.name || travelQuery,
+          lat: travelResult.location.latitude || travelResult.location.lat,
+          lon: travelResult.location.longitude || travelResult.location.lon,
+          startDate: travelStartDate,
+          endDate: travelEndDate,
+          startTime: travelStartTime,
+          endTime: travelEndTime
+      };
+      setSavedTrips([...savedTrips, newTrip]);
+      alert(t('tripSaved'));
+  };
+
+  const handleDeleteTrip = (id) => {
+      setSavedTrips(savedTrips.filter(t => t.id !== id));
+  };
+
+  const loadTrip = (trip) => {
+      setTravelQuery(trip.name);
+      setTravelStartDate(trip.startDate);
+      setTravelEndDate(trip.endDate || "");
+      setTravelStartTime(trip.startTime || "");
+      setTravelEndTime(trip.endTime || "");
+      // Trigger search
+      handleTravelSearch(trip.name, trip);
+  };
+
+  // --- PREVIEW COMPONENT FOR TRIP LIST ---
   const TripWeatherPreview = ({ trip }) => {
-      const [weather, setWeather] = useState(null), [previewLoading, setPreviewLoading] = useState(true);
+      const [weather, setWeather] = useState(null);
+      const [loading, setLoading] = useState(true);
+
       useEffect(() => {
-          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max&models=icon_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${trip.startDate}`)
-              .then(res => res.json()).then(data => { if (data.daily?.time.length > 0) setWeather({ code: data.daily.weathercode[0], max: data.daily.temperature_2m_max[0] }); })
-              .finally(() => setPreviewLoading(false));
+          const fetchPreview = async () => {
+              try {
+                  const url = `https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max&models=icon_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${trip.startDate}`;
+                  const res = await fetch(url);
+                  const data = await res.json();
+                  if (data.daily && data.daily.time.length > 0) {
+                      setWeather({
+                          code: data.daily.weathercode[0],
+                          max: data.daily.temperature_2m_max[0]
+                      });
+                  }
+              } catch (e) {
+                  // silent fail or retry
+              } finally {
+                  setLoading(false);
+              }
+          };
+          fetchPreview();
       }, [trip]);
-      if (previewLoading) return <div className="w-8 h-8 rounded-full bg-slate-100 animate-pulse"></div>;
+
+      if (loading) return <div className="w-8 h-8 rounded-full bg-slate-100 animate-pulse"></div>;
       if (!weather) return <div className="text-[10px] text-slate-400">--</div>;
+
       const Icon = getWeatherConfig(weather.code, 1, lang).icon;
-      return <div className="flex items-center gap-2 bg-blue-50 px-2 py-1 rounded-lg"><Icon size={16} className="text-blue-600"/><span className="font-bold text-slate-700 text-xs">{formatTemp(weather.max)}°</span></div>;
+      return (
+          <div className="flex items-center gap-2 bg-blue-50 px-2 py-1 rounded-lg">
+              <Icon size={16} className="text-blue-600"/>
+              <span className="font-bold text-slate-700 text-xs">{formatTemp(weather.max)}°</span>
+          </div>
+      );
   };
 
+
+  // --- PROCESSING LOGIC --- 
   const processedShort = useMemo(() => {
     if (!shortTermData?.hourly) return [];
-    const h = shortTermData.hourly, res = [];
+    const h = shortTermData.hourly;
+    const now = new Date();
+    const res = [];
+    const isDayArray = h.is_day_icon_d2 || h.is_day || h.is_day_gfs_seamless;
+
     for (let i = 0; i < h.time.length; i++) {
+      // WICHTIG: parseLocalTime verwenden
       const t = parseLocalTime(h.time[i]);
-      if (t < now && (i < h.time.length - 1 ? parseLocalTime(h.time[i+1]) : new Date()) > now) {} 
-      else if (t < now) continue;
-      const t_vals = [h.temperature_2m_icon_seamless?.[i], h.temperature_2m_gfs_seamless?.[i], h.temperature_2m_gem_seamless?.[i]].filter(v => v !== null);
-      const getAvg = (key) => { const vals = [h[`${key}_icon_seamless`]?.[i], h[`${key}_gfs_seamless`]?.[i], h[`${key}_gem_seamless`]?.[i]].filter(v => v !== null); return vals.length > 0 ? vals.reduce((a,b)=>a+b,0)/vals.length : 0; };
+      
+      const nextT = i < h.time.length - 1 ? parseLocalTime(h.time[i+1]) : null;
+      if (t < now && nextT && nextT > now) {
+         // Das ist das aktuelle Intervall, behalten
+      } else if (t < now) {
+         continue; 
+      }
+
+      // FIX: Verwendung der globalen Seamless-Keys
+      const getVal = (key) => h[key]?.[i] ?? h[`${key}_icon_seamless`]?.[i] ?? h[`${key}_gfs_seamless`]?.[i] ?? 0;
+      
+      // Neue Modelle auslesen (wenn vorhanden)
+      const temp_icon = h.temperature_2m_icon_seamless?.[i] ?? null;
+      const temp_gfs = h.temperature_2m_gfs_seamless?.[i] ?? null;
+      // Optional: Weitere Modelle, falls vorhanden, aber Fokus auf Global
+      const temp_arome = h.temperature_2m_arome_seamless?.[i] ?? null; 
+      const temp_gem = h.temperature_2m_gem_seamless?.[i] ?? null;
+      
+      // Mittelwert jetzt aus verfügbaren Modellen
+      const t_vals = [temp_icon, temp_gfs, temp_gem].filter(v => v !== null && v !== undefined);
+      const temp = t_vals.length > 0 ? t_vals.reduce((a,b)=>a+b,0) / t_vals.length : 0;
+      
+      // Auch bei Regen/Schnee/Wind alle Modelle einbeziehen
+      const getAvg = (key) => {
+         const v1 = h[`${key}_icon_seamless`]?.[i];
+         const v2 = h[`${key}_gfs_seamless`]?.[i];
+         const v3 = h[`${key}_gem_seamless`]?.[i];
+         const vals = [v1, v2, v3].filter(v => v !== undefined && v !== null);
+         return vals.length > 0 ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+      };
+
+      const getMax = (key) => {
+         const v1 = h[`${key}_icon_seamless`]?.[i];
+         const v2 = h[`${key}_gfs_seamless`]?.[i];
+         const v3 = h[`${key}_gem_seamless`]?.[i];
+         const vals = [v1, v2, v3].filter(v => v !== undefined && v !== null);
+         return vals.length > 0 ? Math.max(...vals) : 0;
+      };
+
+      // Zuverlässigkeit
+      const t_spread = t_vals.length > 1 ? Math.max(...t_vals) - Math.min(...t_vals) : 0;
+      const reliability = Math.round(Math.max(0, 100 - (t_spread * 15)));
+
       res.push({
-        time: t, displayTime: t.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}),
-        temp: t_vals.length > 0 ? t_vals.reduce((a,b)=>a+b,0)/t_vals.length : 0,
-        temp_icon: h.temperature_2m_icon_seamless?.[i], temp_gfs: h.temperature_2m_gfs_seamless?.[i], temp_gem: h.temperature_2m_gem_seamless?.[i],
-        precip: getAvg('precipitation'), precipProb: h.precipitation_probability?.[i] || h.precipitation_probability_icon_seamless?.[i] || 0,
-        snow: Math.max(h.snowfall_icon_seamless?.[i]||0, h.snowfall_gfs_seamless?.[i]||0),
-        wind: Math.round(getAvg('windspeed_10m')), gust: Math.round(Math.max(h.windgusts_10m_icon_seamless?.[i]||0, h.windgusts_10m_gfs_seamless?.[i]||0)),
-        dir: h.winddirection_10m_icon_seamless?.[i] || 0, code: h.weathercode_icon_seamless?.[i] || h.weathercode?.[i] || 0,
-        isDay: h.is_day?.[i] || 0, appTemp: h.apparent_temperature?.[i] || 0, humidity: h.relative_humidity_2m?.[i] || 0,
-        dewPoint: h.dewpoint_2m?.[i] || 0, uvIndex: h.uv_index?.[i] || 0,
-        reliability: Math.round(Math.max(0, 100 - (t_vals.length > 1 ? (Math.max(...t_vals) - Math.min(...t_vals)) * 15 : 0)))
+        time: t,
+        displayTime: t.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}),
+        temp: temp,
+        temp_icon, temp_gfs, temp_arome, temp_gem,
+        precip: getAvg('precipitation'),
+        // FIX: Add precipProb field
+        precipProb: getVal('precipitation_probability'),
+        snow: getMax('snowfall'),
+        wind: Math.round(getAvg('windspeed_10m')),
+        gust: Math.round(getMax('windgusts_10m')), // Böen immer Max Warnung
+        dir: h.winddirection_10m_icon_seamless?.[i] || 0,
+        code: h.weathercode_icon_seamless?.[i] || h.weathercode?.[i] || 0,
+        isDay: isDayArray?.[i] ?? (t.getHours() >= 6 && t.getHours() <= 21 ? 1 : 0),
+        appTemp: getVal('apparent_temperature'),
+        humidity: getVal('relative_humidity_2m'),
+        dewPoint: getVal('dewpoint_2m'),
+        uvIndex: getVal('uv_index'),
+        reliability: reliability
       });
     }
     return res.slice(0, 48);
-  }, [shortTermData, now]);
+  }, [shortTermData]);
 
   const processedLong = useMemo(() => {
     if (!longTermData?.daily) return [];
     const d = longTermData.daily;
-    return d.time.map((t_str, i) => {
-      const date = parseLocalTime(t_str), maxVals = [d.temperature_2m_max_icon_seamless?.[i], d.temperature_2m_max_gfs_seamless?.[i], d.temperature_2m_max_gem_seamless?.[i]].filter(v => v !== null);
+    const locale = lang === 'en' ? 'en-US' : 'de-DE';
+
+    return d.time.map((t, i) => {
+      // WICHTIG: parseLocalTime verwenden
+      const date = parseLocalTime(t);
+      const maxIcon = d.temperature_2m_max_icon_seamless?.[i] ?? 0;
+      const maxGfs = d.temperature_2m_max_gfs_seamless?.[i] ?? 0;
+      const maxArome = d.temperature_2m_max_arome_seamless?.[i] ?? null;
+      const maxGem = d.temperature_2m_max_gem_seamless?.[i] ?? null;
+      
+      // Mittelwert robuster
+      const maxVals = [maxIcon, maxGfs, maxGem].filter(v => v !== null && v !== undefined);
+      
       return {
-        date, dayName: new Intl.DateTimeFormat(lang === 'en' ? 'en-US' : 'de-DE', { weekday: 'short' }).format(date),
-        dateShort: formatDateShort(date, lang), max: maxVals.length > 0 ? maxVals.reduce((a,b)=>a+b,0)/maxVals.length : 0,
-        min: ((d.temperature_2m_min_icon_seamless?.[i]||0) + (d.temperature_2m_min_gfs_seamless?.[i]||0)) / 2,
-        max_icon: d.temperature_2m_max_icon_seamless?.[i] || 0, max_gfs: d.temperature_2m_max_gfs_seamless?.[i] || 0,
-        rain: Math.max(d.precipitation_sum_icon_seamless?.[i]||0, d.precipitation_sum_gfs_seamless?.[i]||0).toFixed(1),
-        snow: Math.max(d.snowfall_sum_icon_seamless?.[i]||0, d.snowfall_sum_gfs_seamless?.[i]||0).toFixed(1),
-        wind: Math.round(getAvg(['windspeed_10m_max_icon_seamless', 'windspeed_10m_max_gfs_seamless'], d, i)),
-        gust: Math.round(getAvg(['windgusts_10m_max_icon_seamless', 'windgusts_10m_max_gfs_seamless'], d, i)),
-        dir: d.winddirection_10m_dominant_icon_seamless?.[i] || 0, code: d.weathercode_icon_seamless?.[i] || 0,
-        reliability: Math.round(Math.max(10, 100 - (Math.abs((d.temperature_2m_max_icon_seamless?.[i]||0) - (d.temperature_2m_max_gfs_seamless?.[i]||0)) * 15) - (i * 2))),
+        date,
+        dayName: new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(date),
+        dayNameFull: new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date),
+        dateShort: formatDateShort(date, lang),
+        max: maxVals.length > 0 ? maxVals.reduce((a,b)=>a+b,0)/maxVals.length : maxIcon,
+        min: ((d.temperature_2m_min_icon_seamless?.[i]??0) + (d.temperature_2m_min_gfs_seamless?.[i]??0)) / 2,
+        max_icon: maxIcon, max_gfs: maxGfs, max_arome: maxArome, max_gem: maxGem,
+        // Auch hier GEM mit einbeziehen
+        rain: Math.max(d.precipitation_sum_icon_seamless?.[i]||0, d.precipitation_sum_gfs_seamless?.[i]||0, d.precipitation_sum_gem_seamless?.[i]||0).toFixed(1),
+        snow: Math.max(d.snowfall_sum_icon_seamless?.[i]||0, d.snowfall_sum_gfs_seamless?.[i]||0, d.snowfall_sum_gem_seamless?.[i]||0).toFixed(1),
+        wind: Math.round(Math.max(d.windspeed_10m_max_icon_seamless?.[i]||0, d.windspeed_10m_max_gfs_seamless?.[i]||0, d.windspeed_10m_max_gem_seamless?.[i]||0)),
+        gust: Math.round(Math.max(d.windgusts_10m_max_icon_seamless?.[i]||0, d.windgusts_10m_max_gfs_seamless?.[i]||0, d.windgusts_10m_max_gem_seamless?.[i]||0)),
+        dir: d.winddirection_10m_dominant_icon_seamless?.[i] || 0,
+        code: d.weathercode_icon_seamless?.[i] || 0,
+        reliability: Math.round(Math.max(10, 100 - (Math.abs(maxIcon - maxGfs) * 15) - (i * 2))),
         prob: Math.round(((d.precipitation_probability_max_icon_seamless?.[i]||0) + (d.precipitation_probability_max_gfs_seamless?.[i]||0))/2)
       };
     });
-    function getAvg(keys, obj, idx) { const vals = keys.map(k => obj[k]?.[idx]).filter(v => v !== undefined); return vals.length > 0 ? vals.reduce((a,b)=>a+b,0)/vals.length : 0; }
-  }, [longTermData, lang]);
-
-  const current = processedShort[0] || { temp: 0, code: 0, isDay: 1, wind: 0, dir: 0, uvIndex: 0, humidity: 0, dewPoint: 0, appTemp: 0 };
+  }, [longTermData, lang]); // Add lang to deps to refresh names
   
+  // LIVE oder DEMO Daten?
+  const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: "0.0", precip: "0.0", wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0 };
+  const current = liveCurrent;
+
+  // --- NEUE LOGIK: Echter Tag/Nacht Status für das UI ---
+  // Wir berechnen dies direkt in der App Komponente, damit Hintergrund & Karten einheitlich sind.
   const getIsRealNight = () => {
-      if (settings.theme === 'dark') return true; if (settings.theme === 'light') return false;
+      // 1. Check manuelle Einstellung
+      if (settings.theme === 'dark') return true;
+      if (settings.theme === 'light') return false;
+
+      // 2. Fallback auf Auto (Zeitbasiert)
+      // Wenn keine Sonnenaufgangsdaten da sind, Fallback auf API 'isDay'
       if (!sunriseSunset.sunrise || !sunriseSunset.sunset) return current.isDay === 0;
-      const getDec = (d) => { const obj = typeof d === 'string' ? parseLocalTime(d) : d; return obj.getHours() + obj.getMinutes() / 60 + obj.getSeconds() / 3600; };
-      const nowDec = getDec(locationTime), sunrDec = getDec(sunriseSunset.sunrise), sunsDec = getDec(sunriseSunset.sunset);
-      return (nowDec < sunrDec || nowDec >= sunsDec);
+      
+      // Hilfsfunktion zur Dezimalzeit-Berechnung (kopiert aus WeatherLandscape Logik)
+      const getDec = (d) => {
+          if (!d) return 0;
+          const dateObj = typeof d === 'string' ? parseLocalTime(d) : d;
+          return dateObj.getHours() + dateObj.getMinutes() / 60;
+      };
+      
+      // WICHTIG: Nutze locationTime statt now!
+      const nowDec = getDec(locationTime);
+      const sunrDec = getDec(sunriseSunset.sunrise);
+      const sunsDec = getDec(sunriseSunset.sunset);
+      
+      // Tag ist, wenn aktuelle Zeit zwischen Auf- und Untergang liegt
+      // ÄNDERUNG: < sunsDec (statt <=), damit bei Sonnenuntergang sofort Nacht ist
+      const isDayTime = nowDec >= sunrDec && nowDec < sunsDec;
+      return !isDayTime;
   };
   
+  // WICHTIG: Nutze jetzt 'isRealNight' statt 'current.isDay === 0' für alle UI-Entscheidungen
   const isRealNight = getIsRealNight();
-  const weatherConf = getWeatherConfig(current.code, isRealNight ? 0 : 1, lang);
 
-  if (showHomeSetup && !homeLoc) return <div className="min-h-screen bg-slate-900"><HomeSetupModal onSave={(loc) => { setHomeLoc(loc); setCurrentLoc(loc); setShowHomeSetup(false); }} lang={lang} /></div>;
-  if (loading || !currentLoc) return <div className="min-h-screen bg-slate-100 flex items-center justify-center"><RefreshCw className="animate-spin text-blue-500" size={48} /></div>;
+  const dailyRainSum = processedLong.length > 0 ? processedLong[0].rain : "0.0";
+  const dailySnowSum = processedLong.length > 0 ? processedLong[0].snow : "0.0";
+  const isSnowing = parseFloat(current.snow) > 0;
+  
+  // Konfiguration basierend auf echtem Status
+  const weatherConf = getWeatherConfig(current.code || 0, isRealNight ? 0 : 1, lang);
+  const bgGradient = isRealNight ? 'from-slate-900 to-slate-800' : 'from-blue-500 to-sky-400';
+  const textColor = 'text-white';
+  const cardBg = isRealNight ? 'bg-slate-800/60 border-slate-700/50 text-white' : 'bg-white/80 border-white/40 text-slate-900';
+  const windColorClass = getWindColorClass(current.wind || 0);
+
+  const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang), [processedShort, lang]);
+  const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
+  const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang), [processedLong, lang]);
+
+  const displayedHours = processedShort.slice(0, 24);
+
+  // --- WIDGET VIEWS ---
+  if (viewMode === 'animation') {
+    if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-900 text-white">{t('loading')}</div>;
+    return (
+      <div className={`h-screen w-screen overflow-hidden relative bg-gradient-to-br ${bgGradient}`}>
+        <style>{styles}</style>
+        <div className="absolute top-12 left-4 z-50">
+            <a href="/" className="bg-black/20 p-2 rounded-full text-white backdrop-blur-md block"><ArrowLeft size={24}/></a>
+        </div>
+        <div className="h-full w-full">
+            {/* WICHTIG: hier locationTime übergeben! */}
+            <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} lang={lang} />
+        </div>
+        <div className="absolute bottom-8 left-0 right-0 text-center text-white drop-shadow-md pointer-events-none">
+            <div className="text-6xl font-bold">{formatTemp(current.temp)}°</div>
+            <div className="text-xl opacity-90 mb-2">{weatherConf.text}</div>
+            
+            {/* NEU: Sonnenaufgang und Untergang */}
+            <div className="flex justify-center gap-6 text-sm font-medium opacity-80">
+                <div className="flex items-center gap-1"><Sunrise size={16}/> {formatTime(sunriseSunset.sunrise)}</div>
+                <div className="flex items-center gap-1"><Sunset size={16}/> {formatTime(sunriseSunset.sunset)}</div>
+            </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (viewMode === 'report') {
+     if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-50">{t('loading')}</div>;
+     return (
+        <div className="min-h-screen bg-slate-100 px-4 pb-4 pt-14">
+            <div className="mb-4">
+                <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
+            </div>
+            <h2 className="text-2xl font-bold mb-4 text-slate-800">{t('dailyReport')}</h2>
+            <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} />
+            <div className="mt-8">
+                 <h2 className="text-2xl font-bold mb-4 text-slate-800">{t('trend')}</h2>
+                 <AIReportBox report={longtermReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} />
+            </div>
+        </div>
+     );
+  }
+
+  if (viewMode === 'precip') {
+    if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-50">{t('loading')}</div>;
+    return (
+       <div className="min-h-screen bg-slate-100 p-4 flex flex-col justify-center">
+           <div className="absolute top-12 left-4">
+               <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
+           </div>
+           <h2 className="text-2xl font-bold mb-6 text-slate-800 text-center">{t('precipRadar')}</h2>
+           <PrecipitationTile data={processedShort} lang={lang} />
+       </div>
+    );
+ }
+
+  // --- STANDARD APP ---
+
+  // SHOW SETUP MODAL FIRST
+  if (showHomeSetup && !homeLoc) {
+      return (
+          <div className="min-h-screen bg-slate-900 font-sans">
+              <HomeSetupModal 
+                  onSave={(loc) => {
+                      setHomeLoc(loc);
+                      setCurrentLoc(loc);
+                      setShowHomeSetup(false);
+                  }}
+                  lang={lang}
+              />
+          </div>
+      );
+  }
+
+  // Erst laden, wenn Home gesetzt ist
+  if (loading || !currentLoc) return <div className="min-h-screen bg-slate-100 flex items-center justify-center"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
+  
   if (error) return <div className="min-h-screen flex items-center justify-center p-8 bg-red-50 text-red-900 font-bold">{error} <button onClick={() => setCurrentLoc(homeLoc)} className="ml-4 underline">Reset</button></div>;
 
+  // SHOW SETUP MODAL FIRST OR ON CHANGE
+  if (showHomeSetup || !homeLoc) {
+      return (
+          <div className="min-h-screen bg-slate-900 font-sans relative">
+              {/* Cancel Button nur wenn homeLoc bereits existiert (also nicht beim allerersten Start) */}
+              {homeLoc && (
+                  <button 
+                    onClick={() => setShowHomeSetup(false)}
+                    className="absolute top-6 right-6 text-white/50 hover:text-white z-[110]"
+                  >
+                    <X size={32} />
+                  </button>
+              )}
+              <HomeSetupModal 
+                  onSave={(loc) => {
+                      setHomeLoc(loc);
+                      setCurrentLoc(loc);
+                      setShowHomeSetup(false);
+                  }}
+                  lang={lang}
+              />
+          </div>
+      );
+  }
+
   return (
-    <div className={`min-h-screen transition-all duration-1000 bg-gradient-to-br ${isRealNight ? 'from-slate-900 to-slate-800' : 'from-blue-500 to-sky-400'} font-sans pb-20 overflow-hidden relative`}>
+    <div className={`min-h-screen transition-all duration-1000 bg-gradient-to-br ${bgGradient} font-sans pb-20 overflow-hidden relative`}>
       <style>{styles}</style>
+      
       {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} currentTemp={current.temp} lang={lang} />}
-      {showSettingsModal && <SettingsModal isOpen={showSettingsModal} onClose={() => setShowSettingsModal(false)} settings={settings} onSave={setSettings} onChangeHome={() => setShowHomeSetup(true)} />}
-      {showLocationModal && <LocationModal isOpen={showLocationModal} onClose={() => setShowLocationModal(false)} savedLocations={locations} onSelectLocation={(loc) => { setCurrentLoc(loc); setShowLocationModal(false); }} onAddCurrentLocation={() => { if (!locations.some(l => l.name === currentLoc.name)) setLocations([...locations, { ...currentLoc, id: crypto.randomUUID(), type: 'saved' }]); setShowLocationModal(false); }} onDeleteLocation={(i) => { const n = [...locations]; n.splice(i, 1); setLocations(n); }} currentLoc={currentLoc} onRenameLocation={(id, n) => setLocations(locations.map(l => l.id === id ? { ...l, name: n } : l))} onRenameHome={(n) => { const h = { ...homeLoc, name: n }; setHomeLoc(h); if (currentLoc.id === homeLoc.id) setCurrentLoc(h); }} homeLoc={homeLoc} lang={lang} />}
+      {showSettingsModal && (
+          <SettingsModal 
+             isOpen={showSettingsModal}
+             onClose={() => setShowSettingsModal(false)}
+             settings={settings}
+             onSave={setSettings}
+             onChangeHome={() => setShowHomeSetup(true)} // NEU: Trigger für Setup Modal
+          />
+      )}
+      {showLocationModal && (
+          <LocationModal 
+            isOpen={showLocationModal} 
+            onClose={() => setShowLocationModal(false)}
+            savedLocations={locations}
+            onSelectLocation={(loc) => { setCurrentLoc(loc); setShowLocationModal(false); }}
+            onAddCurrentLocation={handleAddLocation}
+            onDeleteLocation={handleDeleteLocation}
+            currentLoc={currentLoc}
+            onRenameLocation={handleRenameLocation}
+            onRenameHome={handleRenameHome}
+            homeLoc={homeLoc}
+            lang={lang}
+          />
+      )}
 
       <header className="pt-14 px-5 flex justify-between items-start z-10 relative">
-        <div className="text-white">
+        <div className={textColor}>
           <div className="flex gap-2 mb-2">
-             <button onClick={() => setCurrentLoc(homeLoc)} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase ${currentLoc.id === homeLoc.id ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Home size={14} /> {t('home')}</button>
-             <button onClick={handleSetCurrent} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase ${currentLoc.type === 'gps' ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Crosshair size={14} /> {t('gps')}</button>
-             <button onClick={() => setShowLocationModal(true)} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase ${showLocationModal ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><MapIcon size={14} /> {t('places')}</button>
+             <button onClick={handleSetHome} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.id === homeLoc.id ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Home size={14} /> {t('home')}</button>
+             <button onClick={handleSetCurrent} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.type === 'gps' ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Crosshair size={14} /> {t('gps')}</button>
+             <button onClick={() => setShowLocationModal(true)} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${showLocationModal ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><MapIcon size={14} /> {t('places')}</button>
           </div>
           <h1 className="text-3xl font-light mt-2 tracking-tight">{currentLoc.name}</h1>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 opacity-80 text-xs font-medium">
-              <div className="flex items-center gap-1"><Clock size={12} /><span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}</span></div>
-              {(currentLoc.region || currentLoc.country) && (<div className="flex items-center gap-1"><MapPin size={12} /><span>{currentLoc.region}{currentLoc.region && currentLoc.country ? ', ' : ''}{currentLoc.country}</span></div>)}
+              <div className="flex items-center gap-1">
+                <Clock size={12} /><span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}</span>
+              </div>
+              
+              {/* NEU: Region & Land statt Koordinaten (falls vorhanden) */}
+              {(currentLoc.region || currentLoc.country) && (
+                  <div className="flex items-center gap-1">
+                      <MapPin size={12} />
+                      <span>
+                        {currentLoc.region}
+                        {currentLoc.region && currentLoc.country ? ', ' : ''}
+                        {currentLoc.country}
+                      </span>
+                  </div>
+              )}
           </div>
         </div>
         <div className="flex flex-col gap-2 items-end">
-           {deferredPrompt && (<button onClick={async () => { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; if (outcome === 'accepted') setDeferredPrompt(null); }} className="p-3 rounded-full bg-blue-600 text-white animate-pulse"><Download size={20} /></button>)}
+           {deferredPrompt && (<button onClick={handleInstallClick} className="p-3 rounded-full backdrop-blur-md bg-blue-600 text-white animate-pulse shadow-lg"><Download size={20} /></button>)}
+           
+           {/* iOS Install Tip */}
+           {showIosInstall && (
+             <div className="bg-white/90 backdrop-blur-md p-3 rounded-xl shadow-xl text-black max-w-[200px] text-xs relative animate-in fade-in slide-in-from-top-4 duration-500">
+                <button onClick={() => setShowIosInstall(false)} className="absolute top-1 right-1 opacity-50"><X size={14}/></button>
+                <div className="font-bold mb-1 flex items-center gap-1"><Share size={12} /> {t('installTitle')}</div>
+                <p>{t('installDesc')}</p>
+                <div className="w-3 h-3 bg-white/90 absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-45"></div>
+             </div>
+           )}
+
            <div className="flex gap-2">
-               <button onClick={() => setShowSettingsModal(true)} className="p-3 rounded-full bg-white/20 text-white"><Settings size={20} /></button>
-               <button onClick={() => setShowFeedback(true)} className="p-3 rounded-full bg-white/20 text-white"><MessageSquarePlus size={20} /></button>
-               <button onClick={fetchData} className="p-3 rounded-full bg-white/20 text-white"><RefreshCw size={20} /></button>
+               {/* SETTINGS BUTTON */}
+               <button onClick={() => setShowSettingsModal(true)} className={`p-3 rounded-full backdrop-blur-md transition shadow-md ${textColor} bg-white/20 hover:bg-white/30`}>
+                   <Settings size={20} />
+               </button>
+
+               {/* FEEDBACK BUTTON */}
+               <button onClick={() => setShowFeedback(true)} className={`p-3 rounded-full backdrop-blur-md transition shadow-md ${textColor} bg-white/20 hover:bg-white/30`}>
+                   <MessageSquarePlus size={20} />
+               </button>
+
+               <button onClick={fetchData} className={`p-3 rounded-full backdrop-blur-md bg-white/20 transition shadow-md ${textColor}`}><RefreshCw size={20} /></button>
            </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto p-4 z-10 relative space-y-6">
-        <div className={`rounded-3xl p-6 ${isRealNight ? 'bg-slate-800/60' : 'bg-white/80'} shadow-lg relative overflow-hidden min-h-[240px] flex items-center`}>
+        <div className={`rounded-3xl p-6 ${cardBg} shadow-lg relative overflow-hidden min-h-[240px] flex items-center`}>
+          {/* WICHTIG: locationTime auch hier übergeben */}
           <div className="absolute inset-0 z-0 pointer-events-none"><WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} lang={lang} /></div>
           <div className="flex items-center justify-between w-full relative z-10">
-            <div className="flex flex-col text-white">
-               <span className="text-7xl font-bold tracking-tighter leading-none drop-shadow-lg">{formatTemp(current.temp)}°</span>
-               <div className="flex items-center gap-1.5 mt-2 opacity-90 text-sm"><Thermometer size={16} /><span>{t('feelsLike')} {formatTemp(current.appTemp)}°</span></div>
-               <div className="mt-1 text-lg font-medium">{weatherConf.text}</div>
+            <div className="flex flex-col">
+               <span className="text-7xl font-bold tracking-tighter leading-none drop-shadow-lg text-white">{formatTemp(current.temp)}°</span>
+               <div className="flex items-center gap-1.5 mt-2 opacity-90 font-medium text-sm text-white drop-shadow-md"><Thermometer size={16} /><span>{t('feelsLike')} {formatTemp(current.appTemp)}°</span></div>
+               <div className="flex items-center gap-2 mt-1 opacity-80 font-medium text-sm text-white drop-shadow-md"><span>H: {formatTemp(processedLong[0]?.max)}°</span><span>T: {formatTemp(processedLong[0]?.min)}°</span></div>
+               <div className="mt-1 text-lg font-medium tracking-wide text-white drop-shadow-md">{weatherConf.text}</div>
             </div>
-            <div className="flex flex-col gap-2 items-end text-white text-right backdrop-blur-sm bg-black/5 rounded-xl p-2">
-               <div className="flex flex-col items-end"><div className={`flex items-center gap-1 text-sm font-bold ${getUvColorClass(current.uvIndex)}`}><Sun size={14} /> <span>{current.uvIndex}</span></div><span className="text-[9px] opacity-80 uppercase">{t('uv')}</span></div>
+            <div className="flex flex-col gap-2 items-end text-right pl-3 border-l border-white/20 ml-2 backdrop-blur-sm bg-black/5 rounded-xl p-2">
+               <div className="flex flex-col items-end"><div className={`flex items-center gap-1 opacity-90 text-sm font-bold ${getUvColorClass(current.uvIndex)} drop-shadow-sm`}><Sun size={14} /> <span>{current.uvIndex}</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">{t('uv')}</span></div>
                <div className="flex items-center gap-3">
-                  <div className="flex flex-col items-end"><div className="flex items-center gap-1 text-sm font-bold"><Waves size={14} /> <span>{current.humidity}%</span></div><span className="text-[9px] opacity-80 uppercase">{t('humidity')}</span></div>
-                  <div className="flex flex-col items-end"><div className="flex items-center gap-1 text-sm font-bold"><Thermometer size={14} /> <span>{formatTemp(current.dewPoint)}°</span></div><span className="text-[9px] opacity-80 uppercase">{t('dewPoint')}</span></div>
+                  <div className="flex flex-col items-end"><div className="flex items-center gap-1 opacity-90 text-sm font-bold text-white drop-shadow-sm"><Waves size={14} /> <span>{current.humidity}%</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">{t('humidity')}</span></div>
+                  <div className="flex flex-col items-end"><div className="flex items-center gap-1 opacity-90 text-sm font-bold text-white drop-shadow-sm"><Thermometer size={14} /> <span>{formatTemp(current.dewPoint)}°</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">{t('dewPoint')}</span></div>
                </div>
-               <div className="flex flex-col items-end mt-1"><div className={`flex items-center gap-1.5 text-sm font-bold ${getWindColorClass(current.wind)}`}><Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }}/><span>{current.wind}</span></div><span className="text-[9px] opacity-80 uppercase font-bold">{t('wind')} km/h</span></div>
+               <div className="flex flex-col items-end mt-1"><div className={`flex items-center gap-1.5 text-sm font-bold ${windColorClass} drop-shadow-sm`}><Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }}/><span>{current.wind} <span className="text-xs font-normal opacity-80">({current.gust})</span></span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">{t('wind')} ({t('gusts')}) km/h</span></div>
+               {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0) && (<div className="flex flex-col items-end mt-1"><div className="flex items-center gap-1.5 opacity-90 text-sm font-bold text-blue-300 drop-shadow-sm">{isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>}<span>{isSnowing ? dailySnowSum : dailyRainSum} {isSnowing ? 'cm' : 'mm'}</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">{t('precip')} (24h)</span></div>)}
             </div>
           </div>
         </div>
 
-        <div className={`p-1.5 rounded-full backdrop-blur-md flex shadow-md border border-white/20 ${isRealNight ? 'bg-slate-800/60' : 'bg-white/80'}`}>
+        <div className={`p-1.5 rounded-full backdrop-blur-md flex shadow-md border border-white/20 ${cardBg}`}>
            {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
-             <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 py-3 rounded-full text-sm font-bold transition flex items-center justify-center gap-2 ${activeTab === tab.id ? 'bg-white/90 text-slate-900' : 'opacity-70 text-white'}`}><tab.icon size={16} /> <span className="hidden sm:inline">{tab.label}</span></button>
+             <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 py-3 rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === tab.id ? 'bg-white/90 text-slate-900 shadow-md' : 'hover:bg-white/10 opacity-70'}`}><tab.icon size={16} /> <span className="hidden sm:inline">{tab.label}</span></button>
            ))}
         </div>
 
-        <div className={`backdrop-blur-md rounded-[32px] p-5 shadow-2xl ${isRealNight ? 'bg-slate-800/60 text-white' : 'bg-white/80 text-slate-900'} min-h-[450px]`}>
+        <div className={`backdrop-blur-md rounded-[32px] p-5 shadow-2xl ${cardBg} min-h-[450px]`}>
+          
           {activeTab === 'overview' && (
             <div className="space-y-4">
-               <AIReportBox report={useMemo(() => generateAIReport('daily', processedShort, lang), [processedShort, lang])} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} />
+               <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} />
                <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} lang={lang} />
-               <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide"><div className="flex gap-3 w-max">
-                    {processedShort.slice(0, 24).map((row, i) => {
-                      const conf = getWeatherConfig(row.code, row.isDay, lang); const Icon = conf.icon;
+               <h3 className="text-sm font-bold uppercase tracking-wide opacity-70 ml-2">Stündlicher Verlauf (24h)</h3>
+               <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide"> 
+                  <div className="flex gap-3 w-max">
+                    {displayedHours.map((row, i) => {
+                      const conf = getWeatherConfig(row.code, row.isDay, lang);
+                      const HourIcon = conf.icon;
                       return (
-                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[130px] w-[130px]">
+                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[130px] w-[130px] hover:bg-white/10 transition relative group">
                           <div className="text-lg font-bold opacity-90 mb-2">{row.displayTime}</div>
-                          <Icon size={40} className="opacity-90 mb-2" />
+                          <HourIcon size={40} className="opacity-90 mb-2" />
                           <div className="text-4xl font-bold mb-1 tracking-tighter">{formatTemp(row.temp)}°</div>
-                          <div className="text-sm opacity-60 text-center leading-tight h-8 flex items-center">{conf.text}</div>
-                           <div className="mb-2 h-4">{row.precip > 0 ? <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={10}/> {row.precip.toFixed(1)}</span> : <span className="opacity-20 text-xs">-</span>}</div>
-                           <div className="mt-2 text-[10px] flex items-center gap-1 opacity-70"><ShieldCheck size={10} className={getConfidenceColor(row.reliability)} /><span>{row.reliability}% {t('safe')}</span></div>
+                          <div className="text-sm opacity-60 text-center leading-tight h-8 flex items-center justify-center line-clamp-2 w-full mb-2">{conf.text}</div>
+                           <div className="mb-2 h-4">
+                             {parseFloat(row.snow) > 0 ? (
+                               <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {row.snow.toFixed(1)}</span>
+                             ) : parseFloat(row.precip) > 0 ? (
+                               <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={10}/> {row.precip.toFixed(1)}</span>
+                             ) : ( <span className="opacity-20 text-xs">-</span> )}
+                           </div>
+                           <div className="flex flex-col items-center gap-0.5 mb-2">
+                              <div className="flex items-center gap-1 opacity-80">
+                                 <Navigation size={10} style={{ transform: `rotate(${row.dir}deg)` }} />
+                                 <span className={`text-xs font-bold ${getWindColorClass(row.wind)}`}>{row.wind}</span>
+                              </div>
+                              <span className={`text-[9px] opacity-60 ${getWindColorClass(row.gust)}`}>{t('gusts')} {row.gust}</span>
+                           </div>
+                           {row.uvIndex >= 1 && (<div className={`px-1.5 py-0.5 rounded text-[9px] font-bold border ${getUvBadgeClass(row.uvIndex)}`}>UV {(row.uvIndex).toFixed(0)}</div>)}
+                           <div className="mt-2 text-[10px] flex items-center gap-1 opacity-70">
+                              <ShieldCheck size={10} className={getConfidenceColor(row.reliability)} />
+                              <span className={`${getConfidenceColor(row.reliability)} font-medium`}>{row.reliability}% {t('safe')}</span>
+                           </div>
                         </div>
                       );
                     })}
-                  </div></div>
+                  </div>
+               </div>
             </div>
           )}
+
           {activeTab === 'chart' && (
             <div className="h-full flex flex-col">
-               <AIReportBox report={useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang])} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} />
-               <div className="flex justify-between items-center mb-6"><h3 className="text-sm font-bold uppercase opacity-70">{t('modelCheck')}</h3><div className="flex bg-black/10 rounded-lg p-1">
-                    <button onClick={() => setChartView('hourly')} className={`px-3 py-1 rounded-md text-xs font-bold ${chartView==='hourly' ? 'bg-white text-black' : 'opacity-60'}`}>48h</button>
-                    <button onClick={() => setChartView('daily')} className={`px-3 py-1 rounded-md text-xs font-bold ${chartView==='daily' ? 'bg-white text-black' : 'opacity-60'}`}>6 Tage</button>
-                 </div></div>
-               <div className="w-full h-[300px]"><ResponsiveContainer width="100%" height="100%">{chartView === 'hourly' ? (
+               <AIReportBox report={modelReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} />
+               <div className="flex justify-between items-center mb-6">
+                 <h3 className="text-sm font-bold uppercase opacity-70">{t('modelCheck')}</h3>
+                 <div className="flex bg-black/10 rounded-lg p-1">
+                    <button onClick={() => setChartView('hourly')} className={`px-3 py-1 rounded-md text-xs font-bold transition ${chartView==='hourly' ? 'bg-white text-black shadow-sm' : 'opacity-60'}`}>48h</button>
+                    <button onClick={() => setChartView('daily')} className={`px-3 py-1 rounded-md text-xs font-bold transition ${chartView==='daily' ? 'bg-white text-black shadow-sm' : 'opacity-60'}`}>6 Tage</button>
+                 </div>
+               </div>
+               <div className="w-full h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                      {chartView === 'hourly' ? (
                         <LineChart data={processedShort} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-                          <XAxis dataKey="displayTime" tick={{fontSize:12, fill:'currentColor'}} axisLine={false} interval={3} />
-                          <YAxis unit="°" tick={{fontSize:12, fill:'currentColor'}} axisLine={false} />
-                          <Tooltip contentStyle={{borderRadius:'12px', border:'none'}} formatter={(v) => formatTemp(v)} />
-                          <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={2} dot={false} />
-                          <Line type="monotone" dataKey="temp_gfs" stroke="#d8b4fe" strokeWidth={2} dot={false} />
-                          <Line type="monotone" dataKey="temp" stroke="#2563eb" strokeWidth={4} dot={false} />
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
+                          <XAxis dataKey="displayTime" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={3} />
+                          <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
+                          <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => formatTemp(value)} />
+                          <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={2} dot={false} name="ICON" />
+                          <Line type="monotone" dataKey="temp_gfs" stroke="#d8b4fe" strokeWidth={2} dot={false} name="GFS" />
+                          <Line type="monotone" dataKey="temp_arome" stroke="#86efac" strokeWidth={2} dot={false} name="AROME" />
+                          {/* KNMI ist besonders wichtig, daher in markantem Orange */}
+                          <Line type="monotone" dataKey="temp_knmi" stroke="#fb923c" strokeWidth={2} dot={false} name="KNMI (NL)" />
+                          <Line type="monotone" dataKey="temp" stroke="#2563eb" strokeWidth={4} dot={{r:0}} name="Mittel (5)" />
                         </LineChart>
                       ) : (
                         <LineChart data={processedLong.slice(0, 6)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-                          <XAxis dataKey="dateShort" tick={{fontSize:12, fill:'currentColor'}} axisLine={false} interval={0} />
-                          <YAxis unit="°" tick={{fontSize:12, fill:'currentColor'}} axisLine={false} />
-                          <Tooltip contentStyle={{borderRadius:'12px', border:'none'}} formatter={(v) => formatTemp(v)} />
-                          <Line type="monotone" dataKey="max_icon" stroke="#93c5fd" strokeWidth={3} />
-                          <Line type="monotone" dataKey="max_gfs" stroke="#d8b4fe" strokeWidth={3} />
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
+                          <XAxis dataKey="dateShort" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={0} />
+                          <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
+                          <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => formatTemp(value)} />
+                          <Line type="monotone" dataKey="max_icon" stroke="#93c5fd" strokeWidth={3} dot={{r:3}} name="ICON Max" />
+                          <Line type="monotone" dataKey="max_gfs" stroke="#d8b4fe" strokeWidth={3} dot={{r:3}} name="GFS Max" />
+                          <Line type="monotone" dataKey="max_gem" stroke="#fca5a5" strokeWidth={3} dot={{r:3}} name="GEM Max" />
+                          <Line type="monotone" dataKey="max_arome" stroke="#86efac" strokeWidth={3} dot={{r:3}} name="AROME Max" connectNulls={false} />
                         </LineChart>
-                      )}</ResponsiveContainer></div>
+                      )}
+                  </ResponsiveContainer>
+               </div>
+               <div className="flex justify-center gap-4 mt-6 text-xs font-medium opacity-80 flex-wrap">
+                  {chartView === 'hourly' ? (
+                    <>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400"></div> KNMI</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div> Ø</span>
+                    </>
+                  ) : (
+                    <>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-300"></div> GEM</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
+                    </>
+                  )}
+               </div>
             </div>
           )}
+
           {activeTab === 'longterm' && (
              <div className="space-y-4">
-               <AIReportBox report={useMemo(() => generateAIReport('longterm', processedLong, lang), [processedLong, lang])} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} />
-               <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide"><div className="flex gap-3 w-max">
+               <AIReportBox report={longtermReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} />
+               <h3 className="text-sm font-bold uppercase tracking-wide opacity-70 ml-2">{t('longtermList')}</h3>
+               <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide"> 
+                  <div className="flex gap-3 w-max">
                     {processedLong.map((day, i) => {
-                      const Icon = getWeatherConfig(day.code, 1, lang).icon;
+                      const DayIcon = getWeatherConfig(day.code, 1, lang).icon;
+                      const confColor = getConfidenceColor(day.reliability);
+                      const isDaySnow = parseFloat(day.snow) > 0;
+                      let probColor = "text-slate-400 opacity-50"; 
+                      if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
+
                       return (
-                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[160px] w-[160px]">
-                          <div className="text-base font-bold mb-0.5">{day.dayName}</div>
+                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[160px] w-[160px] hover:bg-white/10 transition relative group">
+                          {/* Day & Date */}
+                          <div className="text-base font-bold opacity-90 mb-0.5">{day.dayName}</div>
                           <div className="text-xs opacity-60 mb-2">{day.dateShort}</div>
-                          <Icon size={48} className="mb-2" />
-                          <div className="flex items-center gap-2 mb-2"><span className="text-2xl font-bold text-blue-400">{formatTemp(day.min)}°</span><span className="text-2xl font-bold text-red-400">{formatTemp(day.max)}°</span></div>
-                           <div className="mb-1 h-4">{parseFloat(day.rain) > 0.1 ? <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {day.rain}mm</span> : <span className="opacity-20 text-xs">-</span>}</div>
-                           <div className="mt-1 text-[10px] flex items-center gap-1 opacity-70 border border-white/10 px-2 py-0.5 rounded-full"><ShieldCheck size={10} className={getConfidenceColor(day.reliability)} /><span className={getConfidenceColor(day.reliability)}>{day.reliability}% {t('safe')}</span></div>
+                          
+                          {/* Icon */}
+                          <DayIcon size={48} className="opacity-90 mb-2" />
+                          
+                          {/* Temp Range */}
+                          <div className="flex items-center gap-2 mb-2 w-full justify-center">
+                            <span className="text-2xl font-bold text-blue-400">{formatTemp(day.min)}°</span>
+                            <div className="h-1 w-6 bg-white/10 rounded-full overflow-hidden">
+                               <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
+                            </div>
+                            <span className="text-2xl font-bold text-red-400">{formatTemp(day.max)}°</span>
+                         </div>
+                          
+                          {/* Precip */}
+                           <div className="mb-1 h-4 flex items-center justify-center w-full">
+                             {isDaySnow ? <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {day.snow}cm</span> : parseFloat(day.rain) > 0.1 ? <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {day.rain}mm</span> : <span className="opacity-20 text-xs">-</span>}
+                           </div>
+                           <div className={`text-[10px] mb-2 ${probColor} h-3`}>{day.prob > 0 ? `${day.prob}% ${t('probability')}` : ''}</div>
+                           
+                           {/* Wind */}
+                           <div className="flex flex-col items-center gap-0.5 mb-2 w-full">
+                              <div className="flex items-center justify-center gap-1 opacity-80 w-full">
+                                 <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
+                                 <span className={`text-sm font-bold ${getWindColorClass(day.wind)}`}>{day.wind}</span>
+                              </div>
+                              <span className={`text-[9px] opacity-60 ${getWindColorClass(day.gust)}`}>{t('gusts')} {day.gust}</span>
+                           </div>
+
+                           {/* Reliability Indicator */}
+                           <div className="mt-1 text-[10px] flex items-center gap-1 opacity-70 border border-white/10 px-2 py-0.5 rounded-full">
+                              <ShieldCheck size={10} className={confColor} />
+                              <span className={confColor}>{day.reliability}% {t('safe')}</span>
+                           </div>
+                           
                         </div>
                       );
                     })}
-                  </div></div>
+                  </div>
+               </div>
              </div>
           )}
+
           {activeTab === 'radar' && (
             <div className="h-full flex flex-col min-h-[450px]">
-                <div className="flex-1 w-full rounded-2xl overflow-hidden shadow-inner bg-slate-200 relative"><iframe width="100%" height="100%" src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&zoom=8&overlay=rain&product=ecmwf&type=map&location=coordinates&metricWind=default&metricTemp=default`} frameBorder="0" className="absolute inset-0 w-full h-full" title="Windy Radar"></iframe></div>
+                <h3 className="text-sm font-bold uppercase opacity-70 mb-4">{t('precipRadar')}</h3>
+                <div className="flex-1 w-full rounded-2xl overflow-hidden shadow-inner bg-slate-200 relative">
+                  <iframe 
+                    width="100%" 
+                    height="100%" 
+                    src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=650&height=450&zoom=8&level=surface&overlay=rain&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1`} 
+                    frameBorder="0"
+                    className="absolute inset-0 w-full h-full"
+                    title="Windy Radar"
+                  ></iframe>
+                </div>
                 <div className="text-[10px] text-center opacity-50 mt-2">{t('radarCredit')}</div>
             </div>
           )}
+
           {activeTab === 'travel' && (
             <div className="space-y-6">
                 <div className="bg-white/50 rounded-2xl p-4 border border-white/40">
                    <h3 className="text-sm font-bold uppercase opacity-70 mb-4 flex items-center gap-2"><Plane size={16}/> {t('travelPlanner')}</h3>
+                   
                    <div className="space-y-3">
-                      <div><label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('whereTo')}</label><div className="relative"><Search className="absolute left-3 top-3 text-slate-400" size={16}/><input type="text" value={travelQuery} onChange={(e) => setTravelQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleTravelSearch()} className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/50 bg-white/70 text-slate-700" placeholder={lang === 'en' ? "City..." : "Ort..."} /></div></div>
-                      <div className="grid grid-cols-2 gap-3">
-                         <div><label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('startDate')}</label><input type="date" value={travelStartDate} onChange={(e) => setTravelStartDate(e.target.value)} className="w-full p-2.5 rounded-xl border border-white/50 bg-white/70" /></div>
-                         <div><label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('endDate')}</label><input type="date" value={travelEndDate} onChange={(e) => setTravelEndDate(e.target.value)} className="w-full p-2.5 rounded-xl border border-white/50 bg-white/70" /></div>
+                      <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('whereTo')}</label>
+                        <div className="relative">
+                            <Search className="absolute left-3 top-3 text-slate-400" size={16}/>
+                            <input 
+                              type="text" 
+                              value={travelQuery}
+                              onChange={(e) => setTravelQuery(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleTravelSearch()}
+                              className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/50 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
+                              placeholder={lang === 'en' ? "City, Island..." : "Stadt, Insel, Ort..."}
+                            />
+                        </div>
                       </div>
-                      <button onClick={() => handleTravelSearch()} disabled={travelLoading} className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl active:scale-95 flex items-center justify-center gap-2">{travelLoading ? <RefreshCw className="animate-spin" size={18}/> : <CheckCircle2 size={18}/>}{t('checkWeather')}</button>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                         <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('startDate')}</label>
+                            <div className="relative">
+                              <Calendar className="absolute left-3 top-3 text-slate-400" size={16}/>
+                              <input 
+                                type="date" 
+                                value={travelStartDate} 
+                                onChange={(e) => setTravelStartDate(e.target.value)}
+                                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/50 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
+                              />
+                            </div>
+                         </div>
+                         <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('endDate')}</label>
+                            <div className="relative">
+                              <Calendar className="absolute left-3 top-3 text-slate-400" size={16}/>
+                              <input 
+                                type="date" 
+                                value={travelEndDate} 
+                                onChange={(e) => setTravelEndDate(e.target.value)}
+                                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/50 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
+                              />
+                            </div>
+                         </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                         <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('startTime')} <span className="opacity-50 font-normal">(Optional)</span></label>
+                            <div className="relative">
+                              <Clock className="absolute left-3 top-3 text-slate-400" size={16}/>
+                              <input 
+                                type="time" 
+                                value={travelStartTime} 
+                                onChange={(e) => setTravelStartTime(e.target.value)}
+                                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/50 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
+                              />
+                            </div>
+                         </div>
+                         <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('endTime')} <span className="opacity-50 font-normal">(Optional)</span></label>
+                            <div className="relative">
+                              <Clock className="absolute left-3 top-3 text-slate-400" size={16}/>
+                              <input 
+                                type="time" 
+                                value={travelEndTime} 
+                                onChange={(e) => setTravelEndTime(e.target.value)}
+                                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/50 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
+                              />
+                            </div>
+                         </div>
+                      </div>
+
+                      <button 
+                         onClick={() => handleTravelSearch()} 
+                         disabled={travelLoading}
+                         className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition active:scale-95 flex items-center justify-center gap-2"
+                      >
+                         {travelLoading ? <RefreshCw className="animate-spin" size={18}/> : <CheckCircle2 size={18}/>}
+                         {t('checkWeather')}
+                      </button>
                    </div>
                 </div>
+
+                {/* Result Area */}
                 {travelResult && (
-                    <div className="animate-in fade-in duration-500">
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                        <AIReportBox report={tripReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} />
-                       <button onClick={() => { setSavedTrips([...savedTrips, { id: crypto.randomUUID(), name: travelResult.location.name, lat: travelResult.location.latitude || travelResult.location.lat, lon: travelResult.location.longitude || travelResult.location.lon, startDate: travelStartDate, endDate: travelEndDate, startTime: travelStartTime, endTime: travelEndTime }]); alert(t('tripSaved')); }} className="w-full mt-2 py-3 bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-2"><Save size={18}/> {t('saveTrip')}</button>
+                       
+                       <button 
+                          onClick={handleSaveTrip}
+                          className="w-full mt-2 py-3 bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition flex items-center justify-center gap-2"
+                       >
+                          <Save size={18}/> {t('saveTrip')}
+                       </button>
                     </div>
                 )}
+
+                {/* Saved Trips */}
                 {savedTrips.length > 0 && (
-                   <div><h3 className="text-sm font-bold uppercase opacity-70 mb-3 ml-2 mt-6">{t('myTrips')}</h3><div className="space-y-2">
+                   <div>
+                     <h3 className="text-sm font-bold uppercase opacity-70 mb-3 ml-2 mt-6">{t('myTrips')}</h3>
+                     <div className="space-y-2">
                         {savedTrips.map(trip => (
                            <div key={trip.id} className="bg-white/40 border border-white/40 p-3 rounded-xl flex items-center justify-between">
-                              <button onClick={() => { setTravelQuery(trip.name); setTravelStartDate(trip.startDate); setTravelEndDate(trip.endDate || ""); handleTravelSearch(trip.name, trip); }} className="text-left flex-1"><div className="font-bold text-slate-800">{trip.name}</div><div className="text-xs text-slate-500">{formatDateShort(new Date(trip.startDate), lang)}</div></button>
-                              <div className="flex items-center gap-3"><TripWeatherPreview trip={trip} /><button onClick={() => setSavedTrips(savedTrips.filter(t => t.id !== trip.id))} className="p-2 text-slate-400 hover:text-red-500"><Trash2 size={16}/></button></div>
+                              <button onClick={() => loadTrip(trip)} className="text-left flex-1">
+                                 <div className="font-bold text-slate-800">{trip.name}</div>
+                                 <div className="text-xs text-slate-500">{formatDateShort(new Date(trip.startDate), lang)} - {formatDateShort(new Date(trip.endDate || trip.startDate), lang)}</div>
+                              </button>
+                              <div className="flex items-center gap-3">
+                                 <TripWeatherPreview trip={trip} />
+                                 <button onClick={() => handleDeleteTrip(trip.id)} className="p-2 text-slate-400 hover:text-red-500 transition"><Trash2 size={16}/></button>
+                              </div>
                            </div>
                         ))}
-                     </div></div>
+                     </div>
+                   </div>
                 )}
             </div>
           )}
+
+          {activeTab !== 'radar' && activeTab !== 'travel' && (
+            <div className="mt-8 text-xs text-center opacity-60 px-6 font-medium space-y-2">
+               <p className="flex items-center justify-center gap-2 mb-2"><Database size={14} /> {t('source')}</p>
+               <div className="flex flex-wrap justify-center gap-4">
+                 <span className="bg-blue-500/10 px-2 py-1 rounded text-blue-500 border border-blue-500/20">ICON-D2: {modelRuns.icon || '--:--'}</span>
+                 <span className="bg-purple-500/10 px-2 py-1 rounded text-purple-500 border border-purple-500/20">GFS: {modelRuns.gfs || '--:--'}</span>
+                 <span className="bg-green-500/10 px-2 py-1 rounded text-green-500 border border-green-500/20">AROME: {modelRuns.arome || '--:--'}</span>
+               </div>
+            </div>
+          )}
+
         </div>
       </main>
     </div>
