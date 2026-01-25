@@ -453,6 +453,9 @@ const getModelRunTime = (intervalHours, processingDelayHours) => {
   return runDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + " Lauf";
 };
 
+// Weather codes for snow and sleet precipitation types
+const SNOW_WEATHER_CODES = [71, 73, 75, 77, 85, 86, 56, 57, 66, 67];
+
 const getWeatherConfig = (code, isDay = 1, lang = 'de') => {
   const isNight = isDay === 0;
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
@@ -1316,7 +1319,7 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
                foundStart = true;
                result.startTime = result.minutelyStart || d.time; // Use minutely if available
                // Check weather code to verify actual snow event (codes: 71,73,75,77,85,86 for snow, 56,57,66,67 for sleet)
-               const isSnowCode = d.code && ([71, 73, 75, 77, 85, 86, 56, 57, 66, 67].includes(d.code));
+               const isSnowCode = d.code && SNOW_WEATHER_CODES.includes(d.code);
                result.isSnow = d.snow > 0.0 && isSnowCode;
            }
            const hourlyAmount = d.precip > 0 ? d.precip : d.snow;
@@ -1336,7 +1339,7 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
         // Es regnet jetzt, hört aber in <1h auf
         const hourlyAmount = current.precip || current.snow;
         // Check weather code to verify actual snow event
-        const isSnowCode = current.code && ([71, 73, 75, 77, 85, 86, 56, 57, 66, 67].includes(current.code));
+        const isSnowCode = current.code && SNOW_WEATHER_CODES.includes(current.code);
         result.type = (current.snow > 0 && isSnowCode) ? 'snow_now' : 'rain_now';
         result.duration = 1; 
         result.amount = hourlyAmount;
