@@ -1315,7 +1315,9 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
            if (!foundStart) {
                foundStart = true;
                result.startTime = result.minutelyStart || d.time; // Use minutely if available
-               result.isSnow = d.snow > 0.0; // Typerkennung beim Start
+               // Check weather code to verify actual snow event (codes: 71,73,75,77,85,86 for snow, 56,57,66,67 for sleet)
+               const isSnowCode = d.code && ([71, 73, 75, 77, 85, 86, 56, 57, 66, 67].includes(d.code));
+               result.isSnow = d.snow > 0.0 && isSnowCode;
            }
            const hourlyAmount = d.precip > 0 ? d.precip : d.snow;
            result.amount += hourlyAmount; 
@@ -1333,7 +1335,9 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
     if (!foundStart && isRainingNow) {
         // Es regnet jetzt, hört aber in <1h auf
         const hourlyAmount = current.precip || current.snow;
-        result.type = current.snow > 0 ? 'snow_now' : 'rain_now';
+        // Check weather code to verify actual snow event
+        const isSnowCode = current.code && ([71, 73, 75, 77, 85, 86, 56, 57, 66, 67].includes(current.code));
+        result.type = (current.snow > 0 && isSnowCode) ? 'snow_now' : 'rain_now';
         result.duration = 1; 
         result.amount = hourlyAmount;
         result.maxIntensity = hourlyAmount;
