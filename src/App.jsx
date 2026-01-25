@@ -3084,7 +3084,10 @@ export default function WeatherApp() {
              <button onClick={handleSetCurrent} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.type === 'gps' ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Crosshair size={14} /> {t('gps')}</button>
              <button onClick={() => setShowLocationModal(true)} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${showLocationModal ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><MapIcon size={14} /> {t('places')}</button>
           </div>
-          <h1 className="text-3xl font-light mt-2 tracking-tight">{currentLoc.name}</h1>
+          <h1 className="text-3xl font-light mt-2 tracking-tight">
+            {currentLoc.name}
+            {currentLoc.type === 'gps' && <span className="text-sm ml-2 opacity-70">📍</span>}
+          </h1>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 opacity-80 text-xs font-medium">
               <div className="flex items-center gap-1">
                 <Clock size={12} /><span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}</span>
@@ -3333,7 +3336,7 @@ export default function WeatherApp() {
                   <iframe 
                     width="100%" 
                     height="100%" 
-                    src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=650&height=450&zoom=8&level=surface&overlay=rain&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1`} 
+                    src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=650&height=450&zoom=8&level=surface&overlay=radar&product=ecmwf&menu=&message=true&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1`} 
                     frameBorder="0"
                     className="absolute inset-0 w-full h-full"
                     title="Windy Radar"
