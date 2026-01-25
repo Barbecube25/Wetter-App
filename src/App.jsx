@@ -453,6 +453,11 @@ const getModelRunTime = (intervalHours, processingDelayHours) => {
   return runDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + " Lauf";
 };
 
+// Weather codes for snow and sleet precipitation types
+// Snow codes: 71 (light), 73 (moderate), 75 (heavy), 77 (snow grains), 85 (light showers), 86 (heavy showers)
+// Sleet codes: 56 (light freezing drizzle), 57 (dense freezing drizzle), 66 (light freezing rain), 67 (heavy freezing rain)
+const SNOW_WEATHER_CODES = [71, 73, 75, 77, 85, 86, 56, 57, 66, 67];
+
 const getWeatherConfig = (code, isDay = 1, lang = 'de') => {
   const isNight = isDay === 0;
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
@@ -981,8 +986,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   let isDawn = false;
   let isDusk = false;
 
-  // ÄNDERUNG: <= sunsetHour für die exakte Minute
-  if (currentHour >= sunriseHour && currentHour <= sunsetHour) {
+  // ÄNDERUNG: < sunsetHour (nicht <=), damit bei Sonnenuntergang die Sonne sofort verschwindet
+  if (currentHour >= sunriseHour && currentHour < sunsetHour) {
      celestialType = 'sun';
      const dayLength = sunsetHour - sunriseHour;
      // Schutz vor Division durch Null
@@ -1315,7 +1320,9 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
            if (!foundStart) {
                foundStart = true;
                result.startTime = result.minutelyStart || d.time; // Use minutely if available
-               result.isSnow = d.snow > 0.0; // Typerkennung beim Start
+               // Check weather code to verify actual snow event (codes: 71,73,75,77,85,86 for snow, 56,57,66,67 for sleet)
+               const isSnowCode = d.code && SNOW_WEATHER_CODES.includes(d.code);
+               result.isSnow = d.snow > 0.0 && isSnowCode;
            }
            const hourlyAmount = d.precip > 0 ? d.precip : d.snow;
            result.amount += hourlyAmount; 
@@ -1333,7 +1340,9 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
     if (!foundStart && isRainingNow) {
         // Es regnet jetzt, hört aber in <1h auf
         const hourlyAmount = current.precip || current.snow;
-        result.type = current.snow > 0 ? 'snow_now' : 'rain_now';
+        // Check weather code to verify actual snow event
+        const isSnowCode = current.code && SNOW_WEATHER_CODES.includes(current.code);
+        result.type = (current.snow > 0 && isSnowCode) ? 'snow_now' : 'rain_now';
         result.duration = 1; 
         result.amount = hourlyAmount;
         result.maxIntensity = hourlyAmount;
@@ -3075,7 +3084,10 @@ export default function WeatherApp() {
              <button onClick={handleSetCurrent} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.type === 'gps' ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Crosshair size={14} /> {t('gps')}</button>
              <button onClick={() => setShowLocationModal(true)} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${showLocationModal ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><MapIcon size={14} /> {t('places')}</button>
           </div>
-          <h1 className="text-3xl font-light mt-2 tracking-tight">{currentLoc.name}</h1>
+          <h1 className="text-3xl font-light mt-2 tracking-tight">
+            {currentLoc.name}
+            {currentLoc.type === 'gps' && <span className="text-sm ml-2 opacity-70">📍</span>}
+          </h1>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 opacity-80 text-xs font-medium">
               <div className="flex items-center gap-1">
                 <Clock size={12} /><span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}</span>
@@ -3199,7 +3211,7 @@ export default function WeatherApp() {
 
           {activeTab === 'chart' && (
             <div className="h-full flex flex-col">
-               <AIReportBox report={modelReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} />
+               {/* AIReportBox removed per user request - detailed details not needed in compare view */}
                <div className="flex justify-between items-center mb-6">
                  <h3 className="text-sm font-bold uppercase opacity-70">{t('modelCheck')}</h3>
                  <div className="flex bg-black/10 rounded-lg p-1">
@@ -3212,7 +3224,7 @@ export default function WeatherApp() {
                       {chartView === 'hourly' ? (
                         <LineChart data={processedShort} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
-                          <XAxis dataKey="displayTime" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={3} />
+                          <XAxis dataKey="displayTime" tick={{fontSize:11, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={4} angle={0} />
                           <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
                           <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => formatTemp(value)} />
                           <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={2} dot={false} name="ICON" />
@@ -3324,7 +3336,7 @@ export default function WeatherApp() {
                   <iframe 
                     width="100%" 
                     height="100%" 
-                    src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=650&height=450&zoom=8&level=surface&overlay=rain&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1`} 
+                    src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=650&height=450&zoom=8&level=surface&overlay=radar&product=ecmwf&menu=&message=true&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1`} 
                     frameBorder="0"
                     className="absolute inset-0 w-full h-full"
                     title="Windy Radar"
