@@ -3211,7 +3211,7 @@ export default function WeatherApp() {
 
           {activeTab === 'chart' && (
             <div className="h-full flex flex-col">
-               <AIReportBox report={modelReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} />
+               {/* AIReportBox removed per user request - detailed details not needed in compare view */}
                <div className="flex justify-between items-center mb-6">
                  <h3 className="text-sm font-bold uppercase opacity-70">{t('modelCheck')}</h3>
                  <div className="flex bg-black/10 rounded-lg p-1">
@@ -3224,7 +3224,7 @@ export default function WeatherApp() {
                       {chartView === 'hourly' ? (
                         <LineChart data={processedShort} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
-                          <XAxis dataKey="displayTime" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={3} />
+                          <XAxis dataKey="displayTime" tick={{fontSize:11, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={4} angle={0} />
                           <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
                           <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => formatTemp(value)} />
                           <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={2} dot={false} name="ICON" />
