@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset } from 'lucide-react';
 
 // --- 1. KONSTANTEN & CONFIG & ÜBERSETZUNGEN ---
@@ -53,6 +56,7 @@ const TRANSLATIONS = {
     savedPlaces: "Gespeicherte Orte",
     addCurrent: "Aktuellen Ort speichern",
     myLocation: "Mein Standort",
+    currentLocation: "Aktueller Standort",
     homeLoc: "Heimatort",
     noPlaces: "Keine weiteren Orte.",
     welcome: "Willkommen!",
@@ -78,7 +82,7 @@ const TRANSLATIONS = {
     saveTrip: "Reise speichern",
     myTrips: "Meine Reisen",
     tripSaved: "Reise gespeichert!",
-    radarCredit: "Radarbild bereitgestellt von RainViewer.com", // ÄNDERUNG: Updated Credit
+    radarCredit: "Radarbild bereitgestellt von Windy.com", // ÄNDERUNG: Updated Credit
     noRain: "Trocken",
     rain: "Regen",
     snow: "Schnee",
@@ -169,6 +173,7 @@ const TRANSLATIONS = {
     savedPlaces: "Saved Places",
     addCurrent: "Save Current Location",
     myLocation: "My Location",
+    currentLocation: "Current Location",
     homeLoc: "Home Location",
     noPlaces: "No other places.",
     welcome: "Welcome!",
@@ -194,7 +199,7 @@ const TRANSLATIONS = {
     saveTrip: "Save Trip",
     myTrips: "My Trips",
     tripSaved: "Trip saved!",
-    radarCredit: "Radar image provided by RainViewer.com", // ÄNDERUNG: Updated Credit
+    radarCredit: "Radar image provided by Windy.com", // ÄNDERUNG: Updated Credit
     noRain: "Dry",
     rain: "Rain",
     snow: "Snow",
@@ -791,7 +796,7 @@ const generateAIReport = (type, data, lang = 'de') => {
      if (avgDiff < 1.0) { summary = lang === 'en' ? "✅ High agreement: Models match almost perfectly." : "✅ Hohe Einigkeit: Die Modelle rechnen fast identisch."; confidence = 95; }
      else if (avgDiff < 2.5) { summary = lang === 'en' ? "⚠️ Slight uncertainties in detail." : "⚠️ Leichte Unsicherheiten im Detail."; confidence = 70; }
      else { summary = lang === 'en' ? "❌ Large discrepancy: Models disagree." : "❌ Große Diskrepanz: Modelle rechnen verschieden."; confidence = 40; warning = lang === 'en' ? "UNCERTAIN" : "UNSICHER"; }
-     details = lang === 'en' ? "Comparison of ICON (DE), GFS (US), and AROME (FR) shows forecast certainty." : "Der Vergleich von ICON (DE), GFS (US) und AROME (FR) zeigt, wie sicher die Vorhersage ist. Bei großer Abweichung (❌) ist das Wetter schwer vorherzusagen.";
+     details = null;
   }
 
   if (type === 'model-daily') {
@@ -801,7 +806,7 @@ const generateAIReport = (type, data, lang = 'de') => {
     if (Math.abs(diff) < 5) summary = lang === 'en' ? "Longterm models are mostly synchronized." : "Die Langzeitmodelle sind weitgehend synchron.";
     else if (diff > 0) summary = lang === 'en' ? "GFS (US) predicts warmer than ICON (EU)." : "GFS (US) rechnet wärmer als ICON (EU).";
     else summary = lang === 'en' ? "ICON (EU) sees the week warmer than GFS." : "ICON (EU) sieht die Woche wärmer als GFS.";
-    details = lang === 'en' ? "Comparison of max daily temps between US GFS and German ICON model." : "Vergleich der maximalen Tagestemperaturen zwischen dem amerikanischen GFS und dem deutschen ICON Modell über die nächsten 6 Tage.";
+    details = null;
     confidence = 80;
   }
 
@@ -838,7 +843,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
                      </label>
                      <button 
                          onClick={() => { onClose(); onChangeHome(); }}
-                         className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition flex items-center justify-center gap-2"
+                         className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition duration-m3-medium ease-m3-standard flex items-center justify-center gap-2"
                      >
                          <Edit2 size={16}/> {t.changeHome}
                      </button>
@@ -849,16 +854,16 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
                      <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
                         <Globe size={16}/> {t.language}
                      </label>
-                     <div className="flex gap-2 bg-slate-100 p-1 rounded-xl">
+                     <div className="flex gap-2 bg-slate-100 p-1 rounded-2xl">
                          <button 
                              onClick={() => setLocalSettings({...localSettings, language: 'de'})}
-                             className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${localSettings.language === 'de' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`flex-1 py-2 rounded-lg text-sm font-bold transition duration-m3-short ease-m3-standard ${localSettings.language === 'de' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
                          >
                              Deutsch
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, language: 'en'})}
-                             className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${localSettings.language === 'en' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`flex-1 py-2 rounded-lg text-sm font-bold transition duration-m3-short ease-m3-standard ${localSettings.language === 'en' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
                          >
                              English
                          </button>
@@ -870,22 +875,22 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
                      <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
                         <Palette size={16}/> {t.theme}
                      </label>
-                     <div className="flex gap-2 bg-slate-100 p-1 rounded-xl">
+                     <div className="flex gap-2 bg-slate-100 p-1 rounded-2xl">
                          <button 
                              onClick={() => setLocalSettings({...localSettings, theme: 'auto'})}
-                             className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition ${localSettings.theme === 'auto' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition duration-m3-short ease-m3-standard ${localSettings.theme === 'auto' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
                          >
                              {t.themeAuto}
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, theme: 'light'})}
-                             className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition ${localSettings.theme === 'light' ? 'bg-white shadow-sm text-amber-500' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition duration-m3-short ease-m3-standard ${localSettings.theme === 'light' ? 'bg-white shadow-sm text-amber-500' : 'text-slate-500 hover:text-slate-700'}`}
                          >
                              {t.themeLight}
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, theme: 'dark'})}
-                             className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition ${localSettings.theme === 'dark' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition duration-m3-short ease-m3-standard ${localSettings.theme === 'dark' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
                          >
                              {t.themeDark}
                          </button>
@@ -897,16 +902,16 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
                      <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
                         <Thermometer size={16}/> {t.units}
                      </label>
-                     <div className="flex gap-2 bg-slate-100 p-1 rounded-xl">
+                     <div className="flex gap-2 bg-slate-100 p-1 rounded-2xl">
                          <button 
                              onClick={() => setLocalSettings({...localSettings, unit: 'celsius'})}
-                             className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${localSettings.unit === 'celsius' ? 'bg-white shadow-sm text-red-500' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`flex-1 py-2 rounded-lg text-sm font-bold transition duration-m3-short ease-m3-standard ${localSettings.unit === 'celsius' ? 'bg-white shadow-sm text-red-500' : 'text-slate-500 hover:text-slate-700'}`}
                          >
                              °C (Celsius)
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, unit: 'fahrenheit'})}
-                             className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${localSettings.unit === 'fahrenheit' ? 'bg-white shadow-sm text-red-500' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`flex-1 py-2 rounded-lg text-sm font-bold transition duration-m3-short ease-m3-standard ${localSettings.unit === 'fahrenheit' ? 'bg-white shadow-sm text-red-500' : 'text-slate-500 hover:text-slate-700'}`}
                          >
                              °F (Fahrenheit)
                          </button>
@@ -915,7 +920,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
 
                  <button 
                     onClick={() => { onSave(localSettings); onClose(); }}
-                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition active:scale-95"
+                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-medium shadow-level2 shadow-blue-500/30 transition duration-m3-short ease-m3-standard active:scale-95"
                  >
                      {t.save}
                  </button>
@@ -1263,7 +1268,7 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
     
     // Ist es gerade nass? (in der aktuellen Stunde oder nächsten Stunde)
     const current = data[0]; 
-    const isRainingNow = current.precip > 0.0 || current.snow > 0.0 || (current.precipProb && current.precipProb > 30);
+    const isRainingNow = (current.precip > 0.0 || current.snow > 0.0) && current.code >= 50 || (current.precipProb && current.precipProb > 30);
     
     let result = { 
        type: 'none', // none, rain_now, rain_later, snow_now, snow_later
@@ -1309,13 +1314,13 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
     // Loop um Start und Ende zu finden (Hourly Data)
     for (let i = 0; i < futureData.length; i++) {
        const d = futureData[i];
-       const hasPrecip = d.precip > 0.0 || d.snow > 0.0 || (d.precipProb !== undefined && d.precipProb > 50);
+       const hasPrecip = (d.precip > 0.0 || d.snow > 0.0) && d.code >= 50 || (d.precipProb !== undefined && d.precipProb > 50);
        
        if (hasPrecip) {
            if (!foundStart) {
                foundStart = true;
                result.startTime = result.minutelyStart || d.time; // Use minutely if available
-               result.isSnow = d.snow > 0.0; // Typerkennung beim Start
+               result.isSnow = d.snow > 0.0 && d.temp < 2; // Typerkennung beim Start
            }
            const hourlyAmount = d.precip > 0 ? d.precip : d.snow;
            result.amount += hourlyAmount; 
@@ -1333,7 +1338,7 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
     if (!foundStart && isRainingNow) {
         // Es regnet jetzt, hört aber in <1h auf
         const hourlyAmount = current.precip || current.snow;
-        result.type = current.snow > 0 ? 'snow_now' : 'rain_now';
+        result.type = (current.snow > 0 && current.temp < 2) ? 'snow_now' : 'rain_now';
         result.duration = 1; 
         result.amount = hourlyAmount;
         result.maxIntensity = hourlyAmount;
@@ -1402,7 +1407,7 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
   // If type is 'none', we just show the "No rain" box
   if (type === 'none') {
       return (
-        <div className="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between shadow-sm mb-4">
+        <div className="bg-emerald-50/80 border border-emerald-100 rounded-3xl p-4 flex items-center justify-between shadow-level2 mb-4">
             <div className="flex items-center gap-3">
                 <div className="p-3 bg-emerald-100 rounded-full text-emerald-600"><Sun size={28} /></div>
                 <div>
@@ -1430,7 +1435,7 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
   const intensity = getIntensityInfo(maxIntensity);
 
   return (
-    <div className={`${bgClass} border ${isSnow ? 'border-cyan-100' : 'border-blue-100'} rounded-2xl p-4 shadow-sm mb-4 relative overflow-hidden`}>
+    <div className={`${bgClass} border ${isSnow ? 'border-cyan-100' : 'border-blue-100'} rounded-3xl p-4 shadow-level2 mb-4 relative overflow-hidden`}>
         <div className="flex justify-between items-center z-10 relative">
             <div className="flex items-center gap-4">
                 <div className={`p-3 rounded-lg ${colorClass} bg-opacity-30`}>
@@ -1470,7 +1475,7 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
 
         <div className="mt-4 h-3 w-full bg-white/40 rounded-full overflow-hidden relative">
             <div 
-                className={`h-full ${intensity.color} rounded-full transition-all duration-1000 ease-out`} 
+                className={`h-full ${intensity.color} rounded-full transition-all duration-m3-medium ease-m3-standard`} 
                 style={{ width: `${intensity.percent}%` }}
             ></div>
         </div>
@@ -1533,7 +1538,7 @@ const FeedbackModal = ({ onClose, currentTemp, lang='de' }) => {
             <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
                 <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <h3 className="font-bold text-slate-800 flex items-center gap-2"><MessageSquarePlus size={18} className="text-blue-500"/> {t.feedbackTitle}</h3>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={20} className="text-slate-400" /></button>
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition duration-m3-short ease-m3-standard"><X size={20} className="text-slate-400" /></button>
                 </div>
                 
                 <div className="p-6 overflow-y-auto">
@@ -1541,7 +1546,7 @@ const FeedbackModal = ({ onClose, currentTemp, lang='de' }) => {
                     <div className="mb-8">
                         <div className="flex justify-between items-end mb-4">
                             <label className="text-sm font-bold text-slate-500 uppercase tracking-wide">Temperatur</label>
-                            <div className="text-3xl font-black text-slate-800">{displayTemp}°</div>
+                            <div className="text-display-large font-black text-slate-800">{displayTemp}°</div>
                         </div>
                         <input 
                             type="range" 
@@ -1567,7 +1572,7 @@ const FeedbackModal = ({ onClose, currentTemp, lang='de' }) => {
                                 <button 
                                     key={c.id}
                                     onClick={() => setSelectedCondition(c.id)}
-                                    className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200 ${selectedCondition === c.id ? `ring-2 ring-offset-1 ring-blue-500 ${c.color}` : 'border-slate-100 hover:bg-slate-50'}`}
+                                    className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-m3-short ease-m3-standard ${selectedCondition === c.id ? `ring-2 ring-offset-1 ring-blue-500 ${c.color}` : 'border-slate-100 hover:bg-slate-50'}`}
                                 >
                                     <c.icon size={24} className={selectedCondition === c.id ? '' : 'text-slate-400'} />
                                     <span className={`text-xs font-medium mt-2 ${selectedCondition === c.id ? '' : 'text-slate-600'}`}>{c.label}</span>
@@ -1579,7 +1584,7 @@ const FeedbackModal = ({ onClose, currentTemp, lang='de' }) => {
                     <button 
                         onClick={handleSend} 
                         disabled={!selectedCondition && tempAdjustment === 0}
-                        className="w-full py-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/20"
+                        className="w-full py-4 rounded-medium font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition duration-m3-short ease-m3-standard disabled:opacity-50 disabled:cursor-not-allowed shadow-level2 shadow-blue-500/20"
                     >
                         {t.feedbackSend}
                     </button>
@@ -1595,7 +1600,7 @@ const DwdAlertItem = ({ alert, lang='de' }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
 
   return (
-    <div className={`rounded-xl border-l-4 shadow-sm relative overflow-hidden transition-all duration-300 ${colorClass} mb-3`}>
+    <div className={`rounded-xl border-l-4 shadow-sm relative overflow-hidden transition-all duration-m3-medium ease-m3-standard ${colorClass} mb-3`}>
       <div className="p-4 flex items-start gap-3 relative z-10 cursor-pointer" onClick={() => setExpanded(!expanded)}>
         <Siren className="shrink-0 animate-pulse-red mt-1" size={24} />
         <div className="flex-1">
@@ -1652,14 +1657,14 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc }) => {
 
   return (
     <>
-      <div className="mb-4 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 rounded-xl border border-indigo-100 shadow-sm relative overflow-hidden transition-all duration-500">
+      <div className="mb-4 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 rounded-xl border border-indigo-100 shadow-sm relative overflow-hidden transition-all duration-m3-medium ease-m3-standard">
         
         {/* HEADER BEREICH */}
         <div className="p-4 relative z-10">
             {/* DWD Warnings */}
             {hasDwd && (
               <div className="mb-3">
-                <button onClick={() => setExpanded(!expanded)} className={`w-full p-3 rounded-lg border-l-4 shadow-sm flex items-center justify-between gap-3 text-left transition hover:brightness-95 ${bannerClass}`}>
+                <button onClick={() => setExpanded(!expanded)} className={`w-full p-3 rounded-lg border-l-4 shadow-sm flex items-center justify-between gap-3 text-left transition duration-m3-short ease-m3-standard hover:brightness-95 ${bannerClass}`}>
                   <div className="flex items-center gap-3">
                      <div className="shrink-0">{icon}</div>
                      <div>
@@ -1710,7 +1715,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc }) => {
             {(details || structuredDetails) && (
                 <button 
                     onClick={() => setExpanded(!expanded)} 
-                    className="mt-3 text-sm font-bold text-indigo-600 flex items-center gap-1 hover:text-indigo-800 transition-colors"
+                    className="mt-3 text-sm font-bold text-indigo-600 flex items-center gap-1 hover:text-indigo-800 transition-colors duration-m3-short ease-m3-standard"
                 >
                     {expanded ? t.showLess : t.showDetails} {expanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
                 </button>
@@ -1739,7 +1744,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc }) => {
                                    {group.items.map((item, i) => {
                                        const Icon = getWeatherConfig(item.code, 1, lang).icon;
                                        return (
-                                           <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-white/60 hover:bg-white/80 transition border border-white/40 shadow-sm text-sm">
+                                           <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-white/60 hover:bg-white/80 transition duration-m3-short ease-m3-standard border border-white/40 shadow-sm text-sm">
                                                {/* Date & Icon */}
                                                <div className="flex items-center gap-3 min-w-[100px]">
                                                    <div className="w-10 text-center">
@@ -1839,7 +1844,7 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
             <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
                 <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <h3 className="font-bold text-slate-800 flex items-center gap-2"><MapIcon size={18} className="text-blue-500"/> {t.managePlaces}</h3>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={20} className="text-slate-400" /></button>
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition duration-m3-short ease-m3-standard"><X size={20} className="text-slate-400" /></button>
                 </div>
                 
                 <div className="p-4 overflow-y-auto">
@@ -1857,7 +1862,7 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
                             />
                             <button 
                                 onClick={handleSearch}
-                                className="absolute right-2 top-2 p-1 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition"
+                                className="absolute right-2 top-2 p-1 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition duration-m3-short ease-m3-standard"
                             >
                                 {isSearching ? <RefreshCw className="animate-spin" size={16}/> : <ArrowRight size={16}/>}
                             </button>
@@ -1870,7 +1875,7 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
                                     <button 
                                         key={res.id}
                                         onClick={() => handleAddFoundLocation(res)}
-                                        className="w-full text-left p-3 hover:bg-blue-50 border-b border-slate-50 last:border-0 flex justify-between items-center transition group"
+                                        className="w-full text-left p-3 hover:bg-blue-50 border-b border-slate-50 last:border-0 flex justify-between items-center transition duration-m3-short ease-m3-standard group"
                                     >
                                         <div>
                                             <div className="font-bold text-slate-700 text-sm">{res.name}</div>
@@ -2156,6 +2161,7 @@ export default function WeatherApp() {
   const [activeTab, setActiveTab] = useState('overview');
   const [chartView, setChartView] = useState('hourly');
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [radarTimestamp, setRadarTimestamp] = useState(null);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showAllHours, setShowAllHours] = useState(false); 
   const [sunriseSunset, setSunriseSunset] = useState({ sunrise: null, sunset: null });
@@ -2165,6 +2171,7 @@ export default function WeatherApp() {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false); // NEU
   const [viewMode, setViewMode] = useState(null);
+  const [activeMainTab, setActiveMainTab] = useState('home');
 
   // WICHTIG: Echtzeit-State für die Animation (NEU)
   const [now, setNow] = useState(new Date());
@@ -2191,10 +2198,18 @@ export default function WeatherApp() {
       return new Date(nowMs + targetOffsetMs + localOffsetMs);
   }, [now, shortTermData]);
 
-  // Update localStorage when settings change
+  // Set active main tab based on current location
   useEffect(() => {
-      localStorage.setItem('weather_settings', JSON.stringify(settings));
-  }, [settings]);
+    if (currentLoc) {
+      if (currentLoc.id === homeLoc?.id) {
+        setActiveMainTab('home');
+      } else if (currentLoc.type === 'gps') {
+        setActiveMainTab('gps');
+      } else {
+        setActiveMainTab('places');
+      }
+    }
+  }, [currentLoc, homeLoc]);
 
   // --- Helpers for Display ---
   const t = (key) => TRANSLATIONS[settings.language]?.[key] || TRANSLATIONS['de'][key] || key;
@@ -2264,7 +2279,7 @@ export default function WeatherApp() {
                         const city = data.results?.[0]?.name || t('myLocation');
                         setCurrentLoc({ name: city, lat, lon, type: 'gps' });
                     } catch (e) {
-                        setCurrentLoc({ name: t('myLocation'), lat, lon, type: 'gps' });
+                        setCurrentLoc({ name: t('currentrrentLocation'), lat, lon, type: 'gps' });
                     }
                 }
             },
@@ -2479,6 +2494,32 @@ export default function WeatherApp() {
   };
 
   useEffect(() => { fetchData(); }, [currentLoc]);
+
+  // Fetch latest radar timestamp from Bright Sky
+  useEffect(() => {
+    const fetchRadarTimestamp = async () => {
+      try {
+        const res = await fetch('https://api.brightsky.dev/radar/sources');
+        const data = await res.json();
+        if (data.sources && data.sources.length > 0) {
+          setRadarTimestamp(data.sources[data.sources.length - 1]); // Latest
+        }
+      } catch (err) {
+        console.error('Failed to fetch radar timestamp:', err);
+      }
+    };
+    fetchRadarTimestamp();
+  }, []);
+
+  // Fix Leaflet default marker icon
+  useEffect(() => {
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    });
+  }, []);
 
   // --- TRAVEL SEARCH LOGIC ---
   const handleTravelSearch = async (overrideQuery = null, overrideData = null) => {
@@ -3071,11 +3112,11 @@ export default function WeatherApp() {
       <header className="pt-14 px-5 flex justify-between items-start z-10 relative">
         <div className={textColor}>
           <div className="flex gap-2 mb-2">
-             <button onClick={handleSetHome} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.id === homeLoc.id ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Home size={14} /> {t('home')}</button>
-             <button onClick={handleSetCurrent} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.type === 'gps' ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Crosshair size={14} /> {t('gps')}</button>
-             <button onClick={() => setShowLocationModal(true)} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${showLocationModal ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><MapIcon size={14} /> {t('places')}</button>
+             <button onClick={handleSetHome} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${activeMainTab === 'home' ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Home size={14} /> {t('home')}</button>
+             <button onClick={handleSetCurrent} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${activeMainTab === 'gps' ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Crosshair size={14} /> {t('gps')}</button>
+             <button onClick={() => setShowLocationModal(true)} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${activeMainTab === 'places' ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><MapIcon size={14} /> {t('places')}</button>
           </div>
-          <h1 className="text-3xl font-light mt-2 tracking-tight">{currentLoc.name}</h1>
+          <h1 className="text-headline-large font-light mt-2 tracking-tight">{currentLoc.name}</h1>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 opacity-80 text-xs font-medium">
               <div className="flex items-center gap-1">
                 <Clock size={12} /><span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}</span>
@@ -3165,15 +3206,15 @@ export default function WeatherApp() {
                       const conf = getWeatherConfig(row.code, row.isDay, lang);
                       const HourIcon = conf.icon;
                       return (
-                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[130px] w-[130px] hover:bg-white/10 transition relative group">
+                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-3xl p-3 min-w-[130px] w-[130px] hover:bg-white/10 transition relative group">
                           <div className="text-lg font-bold opacity-90 mb-2">{row.displayTime}</div>
                           <HourIcon size={40} className="opacity-90 mb-2" />
                           <div className="text-4xl font-bold mb-1 tracking-tighter">{formatTemp(row.temp)}°</div>
                           <div className="text-sm opacity-60 text-center leading-tight h-8 flex items-center justify-center line-clamp-2 w-full mb-2">{conf.text}</div>
                            <div className="mb-2 h-4">
-                             {parseFloat(row.snow) > 0 ? (
+                             {parseFloat(row.snow) > 0 && row.temp < 2 && row.code >= 50 ? (
                                <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {row.snow.toFixed(1)}</span>
-                             ) : parseFloat(row.precip) > 0 ? (
+                             ) : parseFloat(row.precip) > 0 && row.code >= 50 ? (
                                <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={10}/> {row.precip.toFixed(1)}</span>
                              ) : ( <span className="opacity-20 text-xs">-</span> )}
                            </div>
@@ -3271,7 +3312,7 @@ export default function WeatherApp() {
                       if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
 
                       return (
-                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[160px] w-[160px] hover:bg-white/10 transition relative group">
+                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-3xl p-3 min-w-[160px] w-[160px] hover:bg-white/10 transition relative group">
                           {/* Day & Date */}
                           <div className="text-base font-bold opacity-90 mb-0.5">{day.dayName}</div>
                           <div className="text-xs opacity-60 mb-2">{day.dateShort}</div>
@@ -3320,11 +3361,11 @@ export default function WeatherApp() {
           {activeTab === 'radar' && (
             <div className="h-full flex flex-col min-h-[450px]">
                 <h3 className="text-sm font-bold uppercase opacity-70 mb-4">{t('precipRadar')}</h3>
-                <div className="flex-1 w-full rounded-2xl overflow-hidden shadow-inner bg-slate-200 relative">
+                <div className="flex-1 w-full rounded-3xl overflow-hidden shadow-inner bg-slate-200 relative">
                   <iframe 
                     width="100%" 
                     height="100%" 
-                    src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=650&height=450&zoom=8&level=surface&overlay=rain&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1`} 
+                    src={`https://embed.windy.com/embed2.html?lat=${currentLoc.lat}&lon=${currentLoc.lon}&detailLat=${currentLoc.lat}&detailLon=${currentLoc.lon}&width=650&height=450&zoom=8&level=surface&overlay=rain&product=ecmwf&menu=&message=&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1`} 
                     frameBorder="0"
                     className="absolute inset-0 w-full h-full"
                     title="Windy Radar"
@@ -3336,7 +3377,7 @@ export default function WeatherApp() {
 
           {activeTab === 'travel' && (
             <div className="space-y-6">
-                <div className="bg-white/50 rounded-2xl p-4 border border-white/40">
+                <div className="bg-white/50 rounded-3xl p-4 border border-white/40">
                    <h3 className="text-sm font-bold uppercase opacity-70 mb-4 flex items-center gap-2"><Plane size={16}/> {t('travelPlanner')}</h3>
                    
                    <div className="space-y-3">

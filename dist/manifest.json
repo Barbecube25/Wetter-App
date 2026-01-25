@@ -1,0 +1,46 @@
+{
+  "short_name": "Wetter",
+  "name": "Wetter Daubenrath",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1163/1163661.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1163/1163661.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#eff1f5",
+  "background_color": "#eff1f5",
+  "orientation": "portrait",
+  "shortcuts": [
+    {
+      "name": "Wetter Animation",
+      "short_name": "Live Wetter",
+      "description": "Zeigt die aktuelle Wetterlandschaft",
+      "url": "/?view=animation",
+      "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/1163/1163661.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "KI Bericht",
+      "short_name": "Bericht",
+      "description": "Aktueller KI Wetterbericht",
+      "url": "/?view=report",
+      "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/1163/1163661.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Niederschlag",
+      "short_name": "Regen",
+      "description": "Nächster Regen oder Schnee",
+      "url": "/?view=precip",
+      "icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/1163/1163661.png", "sizes": "192x192" }]
+    }
+  ]
+}
