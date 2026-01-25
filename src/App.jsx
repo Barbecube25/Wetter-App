@@ -454,6 +454,8 @@ const getModelRunTime = (intervalHours, processingDelayHours) => {
 };
 
 // Weather codes for snow and sleet precipitation types
+// Snow codes: 71 (light), 73 (moderate), 75 (heavy), 77 (snow grains), 85 (light showers), 86 (heavy showers)
+// Sleet codes: 56 (light freezing drizzle), 57 (dense freezing drizzle), 66 (light freezing rain), 67 (heavy freezing rain)
 const SNOW_WEATHER_CODES = [71, 73, 75, 77, 85, 86, 56, 57, 66, 67];
 
 const getWeatherConfig = (code, isDay = 1, lang = 'de') => {
