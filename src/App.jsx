@@ -986,8 +986,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   let isDawn = false;
   let isDusk = false;
 
-  // ÄNDERUNG: <= sunsetHour für die exakte Minute
-  if (currentHour >= sunriseHour && currentHour <= sunsetHour) {
+  // ÄNDERUNG: < sunsetHour (nicht <=), damit bei Sonnenuntergang die Sonne sofort verschwindet
+  if (currentHour >= sunriseHour && currentHour < sunsetHour) {
      celestialType = 'sun';
      const dayLength = sunsetHour - sunriseHour;
      // Schutz vor Division durch Null
