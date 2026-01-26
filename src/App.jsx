@@ -3994,7 +3994,7 @@ export default function WeatherApp() {
   // Initial Location Logic / Home Check
   useEffect(() => {
     // Show tutorial first if not completed
-    if (showTutorial && !getTutorialCompleted()) {
+    if (showTutorial) {
         setLoading(false);
         return;
     }
@@ -4764,7 +4764,7 @@ export default function WeatherApp() {
   // --- STANDARD APP ---
 
   // SHOW TUTORIAL FIRST (only on very first launch)
-  if (showTutorial && !getTutorialCompleted()) {
+  if (showTutorial) {
       return (
           <div className="min-h-screen bg-slate-900 font-sans">
               <TutorialModal 
@@ -4792,28 +4792,7 @@ export default function WeatherApp() {
       );
   }
 
-  // SHOW SETUP MODAL AFTER TUTORIAL OR WHEN NO HOME
-  if (showHomeSetup && !homeLoc) {
-      return (
-          <div className="min-h-screen bg-slate-900 font-sans">
-              <HomeSetupModal 
-                  onSave={(loc) => {
-                      setHomeLoc(loc);
-                      setCurrentLoc(loc);
-                      setShowHomeSetup(false);
-                  }}
-                  lang={lang}
-              />
-          </div>
-      );
-  }
-
-  // Erst laden, wenn Home gesetzt ist
-  if (loading || !currentLoc) return <div className="min-h-screen bg-slate-100 flex items-center justify-center"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
-  
-  if (error) return <div className="min-h-screen flex items-center justify-center p-8 bg-red-50 text-red-900 font-bold">{error} <button onClick={() => setCurrentLoc(homeLoc)} className="ml-4 underline">Reset</button></div>;
-
-  // SHOW SETUP MODAL FIRST OR ON CHANGE
+  // SHOW SETUP MODAL AFTER TUTORIAL OR WHEN NO HOME (with optional cancel button)
   if (showHomeSetup || !homeLoc) {
       return (
           <div className="min-h-screen bg-slate-900 font-sans relative">
@@ -4837,6 +4816,11 @@ export default function WeatherApp() {
           </div>
       );
   }
+
+  // Erst laden, wenn Home gesetzt ist
+  if (loading || !currentLoc) return <div className="min-h-screen bg-slate-100 flex items-center justify-center"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
+  
+  if (error) return <div className="min-h-screen flex items-center justify-center p-8 bg-red-50 text-red-900 font-bold">{error} <button onClick={() => setCurrentLoc(homeLoc)} className="ml-4 underline">Reset</button></div>;
 
   return (
     <div className={`min-h-screen transition-all duration-1000 bg-gradient-to-br ${bgGradient} font-sans pb-20 overflow-hidden relative`}>
