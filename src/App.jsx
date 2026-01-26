@@ -1321,8 +1321,9 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
                foundStart = true;
                result.startTime = result.minutelyStart || d.time; // Use minutely if available
                // Check weather code to verify actual snow event (codes: 71,73,75,77,85,86 for snow, 56,57,66,67 for sleet)
+               // Snow should be treated like rain - only show if weather code explicitly indicates snow, not based on temperature
                const isSnowCode = d.code && SNOW_WEATHER_CODES.includes(d.code);
-               result.isSnow = d.snow > 0.0 && isSnowCode;
+               result.isSnow = isSnowCode;
            }
            const hourlyAmount = d.precip > 0 ? d.precip : d.snow;
            result.amount += hourlyAmount; 
@@ -1341,8 +1342,9 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
         // Es regnet jetzt, hört aber in <1h auf
         const hourlyAmount = current.precip || current.snow;
         // Check weather code to verify actual snow event
+        // Snow should be treated like rain - only show if weather code explicitly indicates snow, not based on temperature
         const isSnowCode = current.code && SNOW_WEATHER_CODES.includes(current.code);
-        result.type = (current.snow > 0 && isSnowCode) ? 'snow_now' : 'rain_now';
+        result.type = isSnowCode ? 'snow_now' : 'rain_now';
         result.duration = 1; 
         result.amount = hourlyAmount;
         result.maxIntensity = hourlyAmount;
@@ -2927,7 +2929,8 @@ export default function WeatherApp() {
 
   const dailyRainSum = processedLong.length > 0 ? processedLong[0].rain : "0.0";
   const dailySnowSum = processedLong.length > 0 ? processedLong[0].snow : "0.0";
-  const isSnowing = parseFloat(current.snow) > 0;
+  // Snow should be treated like rain - only show if weather code explicitly indicates snow, not based on temperature
+  const isSnowing = current.code && SNOW_WEATHER_CODES.includes(current.code);
   
   // Konfiguration basierend auf echtem Status
   const weatherConf = getWeatherConfig(current.code || 0, isRealNight ? 0 : 1, lang);
@@ -3183,7 +3186,7 @@ export default function WeatherApp() {
                           <div className="text-4xl font-bold mb-1 tracking-tighter">{formatTemp(row.temp)}°</div>
                           <div className="text-sm opacity-60 text-center leading-tight h-8 flex items-center justify-center line-clamp-2 w-full mb-2">{conf.text}</div>
                            <div className="mb-2 h-4">
-                             {parseFloat(row.snow) > 0 ? (
+                             {SNOW_WEATHER_CODES.includes(row.code) && parseFloat(row.snow) > 0 ? (
                                <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {row.snow.toFixed(1)}</span>
                              ) : parseFloat(row.precip) > 0 ? (
                                <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={10}/> {row.precip.toFixed(1)}</span>
@@ -3278,7 +3281,7 @@ export default function WeatherApp() {
                     {processedLong.map((day, i) => {
                       const DayIcon = getWeatherConfig(day.code, 1, lang).icon;
                       const confColor = getConfidenceColor(day.reliability);
-                      const isDaySnow = parseFloat(day.snow) > 0;
+                      const isDaySnow = SNOW_WEATHER_CODES.includes(day.code) && parseFloat(day.snow) > 0;
                       let probColor = "text-slate-400 opacity-50"; 
                       if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
 
