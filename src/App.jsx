@@ -3186,8 +3186,8 @@ export default function WeatherApp() {
                           <div className="text-4xl font-bold mb-1 tracking-tighter">{formatTemp(row.temp)}°</div>
                           <div className="text-sm opacity-60 text-center leading-tight h-8 flex items-center justify-center line-clamp-2 w-full mb-2">{conf.text}</div>
                            <div className="mb-2 h-4">
-                             {SNOW_WEATHER_CODES.includes(row.code) && parseFloat(row.snow) > 0 ? (
-                               <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {row.snow.toFixed(1)}</span>
+                             {SNOW_WEATHER_CODES.includes(row.code) ? (
+                               <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {(parseFloat(row.snow) || parseFloat(row.precip)).toFixed(1)}</span>
                              ) : parseFloat(row.precip) > 0 ? (
                                <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={10}/> {row.precip.toFixed(1)}</span>
                              ) : ( <span className="opacity-20 text-xs">-</span> )}
@@ -3281,7 +3281,7 @@ export default function WeatherApp() {
                     {processedLong.map((day, i) => {
                       const DayIcon = getWeatherConfig(day.code, 1, lang).icon;
                       const confColor = getConfidenceColor(day.reliability);
-                      const isDaySnow = SNOW_WEATHER_CODES.includes(day.code) && parseFloat(day.snow) > 0;
+                      const isDaySnow = SNOW_WEATHER_CODES.includes(day.code);
                       let probColor = "text-slate-400 opacity-50"; 
                       if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
 
@@ -3305,7 +3305,7 @@ export default function WeatherApp() {
                           
                           {/* Precip */}
                            <div className="mb-1 h-4 flex items-center justify-center w-full">
-                             {isDaySnow ? <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {day.snow}cm</span> : parseFloat(day.rain) > 0.1 ? <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {day.rain}mm</span> : <span className="opacity-20 text-xs">-</span>}
+                             {isDaySnow ? <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {(parseFloat(day.snow) || parseFloat(day.rain)).toFixed(1)}cm</span> : parseFloat(day.rain) > 0.1 ? <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {day.rain}mm</span> : <span className="opacity-20 text-xs">-</span>}
                            </div>
                            <div className={`text-[10px] mb-2 ${probColor} h-3`}>{day.prob > 0 ? `${day.prob}% ${t('probability')}` : ''}</div>
                            
