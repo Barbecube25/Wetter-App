@@ -1,4 +1,4 @@
-package com.wetter.daubenrath;
+package com.barbecubewetterscoutai.app;
 
 import com.getcapacitor.BridgeActivity;
 

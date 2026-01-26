@@ -15,8 +15,8 @@ This project has been successfully configured to build Android App Bundles (.aab
    - Full Gradle-based Android project created
    - MainActivity configured to host the web app
    - App resources (icons, splash screens) pre-configured
-   - Application ID: `com.wetter.daubenrath`
-   - App Name: "Wetter Daubenrath"
+   - Application ID: `com.barbecubewetterscoutai.app`
+   - App Name: "WetterScoutAI"
 
 3. **Permissions Configured**
    - INTERNET - For API access
@@ -40,8 +40,8 @@ This project has been successfully configured to build Android App Bundles (.aab
 
 ### Current Version Information
 
-- **versionCode**: 1
-- **versionName**: "1.0"
+- **versionCode**: 15
+- **versionName**: "15.0"
 - Location: `android/app/build.gradle`
 
 ### Next Steps for the User

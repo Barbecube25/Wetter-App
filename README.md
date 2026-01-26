@@ -1,6 +1,6 @@
-# Wetter Daubenrath 🌦️
+# WetterScoutAI 🌦️
 
-Eine moderne Wetter-App für Daubenrath mit React, Vite und Capacitor.
+Eine moderne Wetter-App mit React, Vite und Capacitor.
 
 ## Features
 

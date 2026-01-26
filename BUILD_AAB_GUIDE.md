@@ -108,11 +108,11 @@ Before publishing an update, you must increase the version:
 Example:
 ```gradle
 defaultConfig {
-    applicationId "com.wetter.daubenrath"
+    applicationId "com.barbecubewetterscoutai.app"
     minSdkVersion rootProject.ext.minSdkVersion
     targetSdkVersion rootProject.ext.targetSdkVersion
-    versionCode 2  // <- Increase
-    versionName "1.1"  // <- Optional update
+    versionCode 16  // <- Increase
+    versionName "16.0"  // <- Optional update
     ...
 }
 ```

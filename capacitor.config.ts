@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.wetter.daubenrath',
-  appName: 'Wetter Daubenrath',
+  appId: 'com.barbecubewetterscoutai.app',
+  appName: 'WetterScoutAI',
   webDir: 'dist',
   server: {
     androidScheme: 'https'
