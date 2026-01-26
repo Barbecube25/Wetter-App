@@ -2645,12 +2645,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
     showDeciduousLeaves = true;
   } else if (season === 'winter') {
     // In winter: deciduous trees are bare (no leaves), evergreens stay green
-    treeLeaf = "#16a34a"; // evergreen color
     showDeciduousLeaves = false; // Hide leaves on deciduous trees
-    if (isSnow || isDeepFreeze) {
-      // Even evergreens get snowy in winter
-      treeLeaf = "#16a34a"; // Keep evergreen color, snow will be added separately
-    }
   } else if (season === 'spring') {
     treeLeaf = isNight ? "#86efac" : "#22c55e"; // bright spring green with some pink blossoms
     showDeciduousLeaves = true;
@@ -2671,7 +2666,19 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   if (isStormyWind) treeAnim = "anim-tree-storm";
   else if (isWindy) treeAnim = "anim-tree-windy";
 
-  const rainRotation = isStormyWind ? "rotate(20deg)" : "rotate(0deg)";
+  const rainRotation = isStormyWind ? "rotate(20)" : "rotate(0)";
+
+  // Reusable bare branches element for winter deciduous trees
+  const bareBranches = (
+    <>
+      <line x1="10" y1="10" x2="5" y2="5" stroke={treeTrunk} strokeWidth="1" />
+      <line x1="10" y1="10" x2="15" y2="5" stroke={treeTrunk} strokeWidth="1" />
+      <line x1="10" y1="7" x2="6" y2="3" stroke={treeTrunk} strokeWidth="0.8" />
+      <line x1="10" y1="7" x2="14" y2="3" stroke={treeTrunk} strokeWidth="0.8" />
+      <line x1="10" y1="4" x2="7" y2="0" stroke={treeTrunk} strokeWidth="0.8" />
+      <line x1="10" y1="4" x2="13" y2="0" stroke={treeTrunk} strokeWidth="0.8" />
+    </>
+  );
 
   return (
     <svg viewBox="0 0 360 160" className="w-full h-full overflow-hidden" preserveAspectRatio="xMidYMax slice">
@@ -2779,17 +2786,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
                 <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
                 <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
               </>
-            ) : (
-              <>
-                {/* Bare branches in winter */}
-                <line x1="10" y1="10" x2="5" y2="5" stroke={treeTrunk} strokeWidth="1" />
-                <line x1="10" y1="10" x2="15" y2="5" stroke={treeTrunk} strokeWidth="1" />
-                <line x1="10" y1="7" x2="6" y2="3" stroke={treeTrunk} strokeWidth="0.8" />
-                <line x1="10" y1="7" x2="14" y2="3" stroke={treeTrunk} strokeWidth="0.8" />
-                <line x1="10" y1="4" x2="7" y2="0" stroke={treeTrunk} strokeWidth="0.8" />
-                <line x1="10" y1="4" x2="13" y2="0" stroke={treeTrunk} strokeWidth="0.8" />
-              </>
-            )}
+            ) : bareBranches}
         </g>
       </g>
 
@@ -2811,17 +2808,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
                 <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
                 <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
               </>
-            ) : (
-              <>
-                {/* Bare branches in winter */}
-                <line x1="10" y1="10" x2="5" y2="5" stroke={treeTrunk} strokeWidth="1" />
-                <line x1="10" y1="10" x2="15" y2="5" stroke={treeTrunk} strokeWidth="1" />
-                <line x1="10" y1="7" x2="6" y2="3" stroke={treeTrunk} strokeWidth="0.8" />
-                <line x1="10" y1="7" x2="14" y2="3" stroke={treeTrunk} strokeWidth="0.8" />
-                <line x1="10" y1="4" x2="7" y2="0" stroke={treeTrunk} strokeWidth="0.8" />
-                <line x1="10" y1="4" x2="13" y2="0" stroke={treeTrunk} strokeWidth="0.8" />
-              </>
-            )}
+            ) : bareBranches}
         </g>
       </g>
       
