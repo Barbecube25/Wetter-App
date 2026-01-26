@@ -2522,19 +2522,20 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const isTropicalNight = isNight && temp > 20;
 
   // --- SEASON DETECTION ---
-  const month = d.getMonth(); // 0-11
-  let detectedSeason = 'summer';
-  if (month >= 2 && month <= 4) detectedSeason = 'spring';
-  else if (month >= 5 && month <= 7) detectedSeason = 'summer';
-  else if (month >= 8 && month <= 10) detectedSeason = 'autumn';
-  else detectedSeason = 'winter';
+  const month = d.getMonth(); // 0-11 (0=Jan, 11=Dec)
+  let detectedSeason = 'winter';
+  if (month >= 2 && month <= 4) detectedSeason = 'spring'; // Mar-May
+  else if (month >= 5 && month <= 7) detectedSeason = 'summer'; // Jun-Aug
+  else if (month >= 8 && month <= 10) detectedSeason = 'autumn'; // Sep-Nov
+  else detectedSeason = 'winter'; // Dec-Feb (11, 0, 1)
   const season = demoSeason || detectedSeason;
 
   // --- SEASONAL EVENTS ---
   const dayOfMonth = d.getDate();
   let detectedEvent = 'none';
   if (month === 11 && dayOfMonth >= 1 && dayOfMonth <= 26) detectedEvent = 'christmas';
-  else if (month === 3 && dayOfMonth >= 1 && dayOfMonth <= 30) detectedEvent = 'easter';
+  // Easter approximation: March 22 - April 25 range
+  else if ((month === 2 && dayOfMonth >= 22) || (month === 3 && dayOfMonth <= 25)) detectedEvent = 'easter';
   else if (month === 9 && dayOfMonth >= 20 && dayOfMonth <= 31) detectedEvent = 'halloween';
   else if (month === 11 && dayOfMonth === 31) detectedEvent = 'newyear';
   const event = demoEvent || detectedEvent;
