@@ -2516,7 +2516,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const isDrizzle = [51, 53, 55].includes(code);
   const isLightRain = [61, 80].includes(code);
   const isMediumRain = [63, 81].includes(code);
-  const isHeavyRain = [65, 82].includes(code) || (code >= 95 && !isHail);
+  const isHeavyRain = [65, 82].includes(code);
   const isRain = isLightRain || isMediumRain || isHeavyRain;
   const isLightSnow = [71, 77, 85].includes(code);
   const isMediumSnow = [73].includes(code);
@@ -2543,11 +2543,14 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   // --- SEASONAL EVENTS ---
   const dayOfMonth = d.getDate();
   let detectedEvent = 'none';
-  if (month === 11 && dayOfMonth >= 1 && dayOfMonth <= 26) detectedEvent = 'christmas';
-  // Easter approximation: March 22 - April 25 (months are 0-indexed: 2=Mar, 3=Apr)
-  else if ((month === 2 && dayOfMonth >= 22) || (month === 3 && dayOfMonth <= 25)) detectedEvent = 'easter';
-  else if (month === 9 && dayOfMonth >= 20 && dayOfMonth <= 31) detectedEvent = 'halloween';
+  // Christmas: Dec 1-25 (leave gap for New Year)
+  if (month === 11 && dayOfMonth >= 1 && dayOfMonth <= 25) detectedEvent = 'christmas';
+  // New Year's Eve: Dec 31
   else if (month === 11 && dayOfMonth === 31) detectedEvent = 'newyear';
+  // Easter: Narrower range around typical Easter dates (late March to mid-April)
+  else if ((month === 2 && dayOfMonth >= 25) || (month === 3 && dayOfMonth <= 20)) detectedEvent = 'easter';
+  // Halloween: Oct 20-31
+  else if (month === 9 && dayOfMonth >= 20 && dayOfMonth <= 31) detectedEvent = 'halloween';
   const event = demoEvent || detectedEvent;
 
   
