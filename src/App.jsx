@@ -2496,7 +2496,19 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   }
   const isNight = calculatedIsDay === 0;
   
+  // Override weather/temp if demo mode (before weather condition checks)
+  if (demoWeather) {
+    const demoMap = {
+      'clear': 0, 'partly_cloudy': 2, 'overcast': 3, 'rain': 63, 'snow': 73, 
+      'storm': 95, 'fog': 45, 'hail': 96
+    };
+    code = demoMap[demoWeather] !== undefined ? demoMap[demoWeather] : code;
+    if (demoWeather === 'heat') temp = 35;
+    if (demoWeather === 'freeze') temp = -10;
+  }
+  
   // --- WETTERZUSTÄNDE ---
+  const isHail = [96, 99].includes(code);
   const isClear = code === 0 || code === 1;
   const isPartlyCloudy = code === 2;
   const isOvercast = code === 3 || code === 45 || code === 48; 
@@ -2504,7 +2516,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const isDrizzle = [51, 53, 55].includes(code);
   const isLightRain = [61, 80].includes(code);
   const isMediumRain = [63, 81].includes(code);
-  const isHeavyRain = [65, 82].includes(code) || (code >= 95 && code !== 96 && code !== 99);
+  const isHeavyRain = [65, 82].includes(code) || (code >= 95 && !isHail);
   const isRain = isLightRain || isMediumRain || isHeavyRain;
   const isLightSnow = [71, 77, 85].includes(code);
   const isMediumSnow = [73].includes(code);
@@ -2518,38 +2530,25 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const isFreezing = temp <= 0;
   const isWindy = windSpeed >= 30;
   const isStormyWind = windSpeed >= 60;
-  const isHail = [96, 99].includes(code);
   const isTropicalNight = isNight && temp > 20;
 
   // --- SEASON DETECTION ---
   const month = d.getMonth(); // 0-11 (0=Jan, 11=Dec)
-  let detectedSeason = 'winter';
-  if (month >= 2 && month <= 4) detectedSeason = 'spring'; // Mar-May
-  else if (month >= 5 && month <= 7) detectedSeason = 'summer'; // Jun-Aug
-  else if (month >= 8 && month <= 10) detectedSeason = 'autumn'; // Sep-Nov
-  else detectedSeason = 'winter'; // Dec-Feb (11, 0, 1)
+  let detectedSeason = 'winter'; // Default to winter for Dec (11), Jan (0), Feb (1)
+  if (month >= 2 && month <= 4) detectedSeason = 'spring'; // Mar-May (2-4)
+  else if (month >= 5 && month <= 7) detectedSeason = 'summer'; // Jun-Aug (5-7)
+  else if (month >= 8 && month <= 10) detectedSeason = 'autumn'; // Sep-Nov (8-10)
   const season = demoSeason || detectedSeason;
 
   // --- SEASONAL EVENTS ---
   const dayOfMonth = d.getDate();
   let detectedEvent = 'none';
   if (month === 11 && dayOfMonth >= 1 && dayOfMonth <= 26) detectedEvent = 'christmas';
-  // Easter approximation: March 22 - April 25 range
+  // Easter approximation: March 22 - April 25 (months are 0-indexed: 2=Mar, 3=Apr)
   else if ((month === 2 && dayOfMonth >= 22) || (month === 3 && dayOfMonth <= 25)) detectedEvent = 'easter';
   else if (month === 9 && dayOfMonth >= 20 && dayOfMonth <= 31) detectedEvent = 'halloween';
   else if (month === 11 && dayOfMonth === 31) detectedEvent = 'newyear';
   const event = demoEvent || detectedEvent;
-
-  // Override weather if demo mode
-  if (demoWeather) {
-    const demoMap = {
-      'clear': 0, 'partly_cloudy': 2, 'overcast': 3, 'rain': 63, 'snow': 73, 
-      'storm': 95, 'fog': 45, 'heat': 0, 'freeze': 0, 'hail': 96
-    };
-    code = demoMap[demoWeather] !== undefined ? demoMap[demoWeather] : code;
-    if (demoWeather === 'heat') temp = 32;
-    if (demoWeather === 'freeze') temp = -8;
-  }
 
   
   let celestialX = -50;
