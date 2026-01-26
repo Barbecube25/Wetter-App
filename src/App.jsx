@@ -123,7 +123,31 @@ const TRANSLATIONS = {
     thursday: "Donnerstag",
     friday: "Freitag",
     saturday: "Samstag",
-    sunday: "Sonntag"
+    sunday: "Sonntag",
+    // Tutorial
+    tutorialSkip: "Überspringen",
+    tutorialNext: "Weiter",
+    tutorialPrev: "Zurück",
+    tutorialFinish: "Los geht's!",
+    tutorialWelcomeTitle: "Willkommen zur Wetter-App!",
+    tutorialWelcomeDesc: "Lass uns die App gemeinsam einrichten. Du kannst dieses Tutorial jederzeit überspringen.",
+    tutorialLangTitle: "Wähle deine Sprache",
+    tutorialLangDesc: "Die App unterstützt mehrere Sprachen für dein Wettererlebnis.",
+    tutorialHomeTitle: "Setze deinen Heimatort",
+    tutorialHomeDesc: "Dein Heimatort wird als Standard-Standort verwendet.",
+    tutorialOverviewTitle: "Übersicht Tab",
+    tutorialOverviewDesc: "Hier findest du eine detaillierte Übersicht mit Tagesbericht, Niederschlags-Prognose und 7-Tage-Trend.",
+    tutorialLongtermTitle: "14-Tage Prognose",
+    tutorialLongtermDesc: "Plane voraus mit der erweiterten 14-Tage Wettervorhersage.",
+    tutorialRadarTitle: "Niederschlags-Radar",
+    tutorialRadarDesc: "Verfolge Regen und Schnee in Echtzeit mit dem interaktiven Radar.",
+    tutorialChartTitle: "Vergleichs-Charts",
+    tutorialChartDesc: "Vergleiche verschiedene Wettermodelle und analysiere Trends.",
+    tutorialTravelTitle: "Reiseplaner",
+    tutorialTravelDesc: "Plane deine Reisen und überprüfe die Wetterwahrscheinlichkeit für deinen Ausflug.",
+    tutorialSettingsTitle: "Einstellungen",
+    tutorialSettingsDesc: "Hier kannst du die Sprache, Einheiten (°C/°F), das Design (Hell/Dunkel/Auto) und deinen Heimatort anpassen.",
+    tutorialComplete: "Tutorial abgeschlossen! Du kannst jederzeit in den Einstellungen Änderungen vornehmen."
   },
   en: {
     home: "Home",
@@ -239,7 +263,31 @@ const TRANSLATIONS = {
     thursday: "Thursday",
     friday: "Friday",
     saturday: "Saturday",
-    sunday: "Sunday"
+    sunday: "Sunday",
+    // Tutorial
+    tutorialSkip: "Skip",
+    tutorialNext: "Next",
+    tutorialPrev: "Back",
+    tutorialFinish: "Let's go!",
+    tutorialWelcomeTitle: "Welcome to Weather App!",
+    tutorialWelcomeDesc: "Let's set up the app together. You can skip this tutorial at any time.",
+    tutorialLangTitle: "Choose your language",
+    tutorialLangDesc: "The app supports multiple languages for your weather experience.",
+    tutorialHomeTitle: "Set your home location",
+    tutorialHomeDesc: "Your home location will be used as the default location.",
+    tutorialOverviewTitle: "Overview Tab",
+    tutorialOverviewDesc: "Here you'll find a detailed overview with daily report, precipitation forecast and 7-day trend.",
+    tutorialLongtermTitle: "14-Day Forecast",
+    tutorialLongtermDesc: "Plan ahead with the extended 14-day weather forecast.",
+    tutorialRadarTitle: "Precipitation Radar",
+    tutorialRadarDesc: "Track rain and snow in real-time with the interactive radar.",
+    tutorialChartTitle: "Comparison Charts",
+    tutorialChartDesc: "Compare different weather models and analyze trends.",
+    tutorialTravelTitle: "Travel Planner",
+    tutorialTravelDesc: "Plan your trips and check weather probability for your excursion.",
+    tutorialSettingsTitle: "Settings",
+    tutorialSettingsDesc: "Here you can customize language, units (°C/°F), theme (Light/Dark/Auto) and your home location.",
+    tutorialComplete: "Tutorial complete! You can make changes in settings at any time."
   },
   fr: {
     home: "Accueil",
@@ -355,7 +403,31 @@ const TRANSLATIONS = {
     thursday: "Jeudi",
     friday: "Vendredi",
     saturday: "Samedi",
-    sunday: "Dimanche"
+    sunday: "Dimanche",
+    // Tutorial
+    tutorialSkip: "Passer",
+    tutorialNext: "Suivant",
+    tutorialPrev: "Retour",
+    tutorialFinish: "C'est parti !",
+    tutorialWelcomeTitle: "Bienvenue sur l'app météo !",
+    tutorialWelcomeDesc: "Configurons l'application ensemble. Vous pouvez ignorer ce tutoriel à tout moment.",
+    tutorialLangTitle: "Choisissez votre langue",
+    tutorialLangDesc: "L'application prend en charge plusieurs langues pour votre expérience météo.",
+    tutorialHomeTitle: "Définir votre lieu principal",
+    tutorialHomeDesc: "Votre lieu principal sera utilisé comme emplacement par défaut.",
+    tutorialOverviewTitle: "Onglet Historique",
+    tutorialOverviewDesc: "Vous trouverez ici un aperçu détaillé avec rapport quotidien, prévisions de précipitations et tendance sur 7 jours.",
+    tutorialLongtermTitle: "Prévisions 14 jours",
+    tutorialLongtermDesc: "Planifiez à l'avance avec les prévisions météo étendues sur 14 jours.",
+    tutorialRadarTitle: "Radar de précipitations",
+    tutorialRadarDesc: "Suivez la pluie et la neige en temps réel avec le radar interactif.",
+    tutorialChartTitle: "Graphiques de comparaison",
+    tutorialChartDesc: "Comparez différents modèles météo et analysez les tendances.",
+    tutorialTravelTitle: "Planificateur de voyage",
+    tutorialTravelDesc: "Planifiez vos voyages et vérifiez la probabilité météo pour votre sortie.",
+    tutorialSettingsTitle: "Paramètres",
+    tutorialSettingsDesc: "Ici vous pouvez personnaliser la langue, les unités (°C/°F), le thème (Clair/Sombre/Auto) et votre lieu principal.",
+    tutorialComplete: "Tutoriel terminé ! Vous pouvez modifier les paramètres à tout moment."
   },
   es: {
     home: "Inicio",
@@ -471,7 +543,31 @@ const TRANSLATIONS = {
     thursday: "Jueves",
     friday: "Viernes",
     saturday: "Sábado",
-    sunday: "Domingo"
+    sunday: "Domingo",
+    // Tutorial
+    tutorialSkip: "Saltar",
+    tutorialNext: "Siguiente",
+    tutorialPrev: "Atrás",
+    tutorialFinish: "¡Empecemos!",
+    tutorialWelcomeTitle: "¡Bienvenido a la app del tiempo!",
+    tutorialWelcomeDesc: "Configuremos la aplicación juntos. Puedes omitir este tutorial en cualquier momento.",
+    tutorialLangTitle: "Elige tu idioma",
+    tutorialLangDesc: "La aplicación admite varios idiomas para tu experiencia meteorológica.",
+    tutorialHomeTitle: "Establece tu ubicación principal",
+    tutorialHomeDesc: "Tu ubicación principal se utilizará como ubicación predeterminada.",
+    tutorialOverviewTitle: "Pestaña Resumen",
+    tutorialOverviewDesc: "Aquí encontrarás un resumen detallado con informe diario, pronóstico de precipitaciones y tendencia de 7 días.",
+    tutorialLongtermTitle: "Pronóstico de 14 días",
+    tutorialLongtermDesc: "Planifica con anticipación con el pronóstico meteorológico extendido de 14 días.",
+    tutorialRadarTitle: "Radar de precipitaciones",
+    tutorialRadarDesc: "Rastrea lluvia y nieve en tiempo real con el radar interactivo.",
+    tutorialChartTitle: "Gráficos de comparación",
+    tutorialChartDesc: "Compara diferentes modelos meteorológicos y analiza tendencias.",
+    tutorialTravelTitle: "Planificador de viajes",
+    tutorialTravelDesc: "Planifica tus viajes y verifica la probabilidad meteorológica para tu excursión.",
+    tutorialSettingsTitle: "Ajustes",
+    tutorialSettingsDesc: "Aquí puedes personalizar el idioma, unidades (°C/°F), tema (Claro/Oscuro/Auto) y tu ubicación principal.",
+    tutorialComplete: "¡Tutorial completo! Puedes realizar cambios en los ajustes en cualquier momento."
   },
   it: {
     home: "Home",
@@ -587,7 +683,31 @@ const TRANSLATIONS = {
     thursday: "Giovedì",
     friday: "Venerdì",
     saturday: "Sabato",
-    sunday: "Domenica"
+    sunday: "Domenica",
+    // Tutorial
+    tutorialSkip: "Salta",
+    tutorialNext: "Avanti",
+    tutorialPrev: "Indietro",
+    tutorialFinish: "Andiamo!",
+    tutorialWelcomeTitle: "Benvenuto nell'app meteo!",
+    tutorialWelcomeDesc: "Configuriamo l'app insieme. Puoi saltare questo tutorial in qualsiasi momento.",
+    tutorialLangTitle: "Scegli la tua lingua",
+    tutorialLangDesc: "L'app supporta più lingue per la tua esperienza meteo.",
+    tutorialHomeTitle: "Imposta il tuo luogo principale",
+    tutorialHomeDesc: "Il tuo luogo principale verrà utilizzato come posizione predefinita.",
+    tutorialOverviewTitle: "Scheda Panoramica",
+    tutorialOverviewDesc: "Qui troverai una panoramica dettagliata con rapporto giornaliero, previsioni precipitazioni e tendenza 7 giorni.",
+    tutorialLongtermTitle: "Previsioni a 14 giorni",
+    tutorialLongtermDesc: "Pianifica in anticipo con le previsioni meteo estese a 14 giorni.",
+    tutorialRadarTitle: "Radar precipitazioni",
+    tutorialRadarDesc: "Traccia pioggia e neve in tempo reale con il radar interattivo.",
+    tutorialChartTitle: "Grafici di confronto",
+    tutorialChartDesc: "Confronta diversi modelli meteorologici e analizza le tendenze.",
+    tutorialTravelTitle: "Pianificatore di viaggio",
+    tutorialTravelDesc: "Pianifica i tuoi viaggi e controlla la probabilità meteo per la tua escursione.",
+    tutorialSettingsTitle: "Impostazioni",
+    tutorialSettingsDesc: "Qui puoi personalizzare lingua, unità (°C/°F), tema (Chiaro/Scuro/Auto) e il tuo luogo principale.",
+    tutorialComplete: "Tutorial completato! Puoi apportare modifiche nelle impostazioni in qualsiasi momento."
   },
   tr: {
     home: "Ana Sayfa",
@@ -703,7 +823,31 @@ const TRANSLATIONS = {
     thursday: "Perşembe",
     friday: "Cuma",
     saturday: "Cumartesi",
-    sunday: "Pazar"
+    sunday: "Pazar",
+    // Tutorial
+    tutorialSkip: "Atla",
+    tutorialNext: "İleri",
+    tutorialPrev: "Geri",
+    tutorialFinish: "Hadi başlayalım!",
+    tutorialWelcomeTitle: "Hava durumu uygulamasına hoş geldiniz!",
+    tutorialWelcomeDesc: "Uygulamayı birlikte kuralım. Bu öğreticiyi istediğiniz zaman atlayabilirsiniz.",
+    tutorialLangTitle: "Dilinizi seçin",
+    tutorialLangDesc: "Uygulama, hava durumu deneyiminiz için birden fazla dili destekler.",
+    tutorialHomeTitle: "Ana konumunuzu ayarlayın",
+    tutorialHomeDesc: "Ana konumunuz varsayılan konum olarak kullanılacaktır.",
+    tutorialOverviewTitle: "Genel Bakış Sekmesi",
+    tutorialOverviewDesc: "Burada günlük rapor, yağış tahmini ve 7 günlük trend ile ayrıntılı bir genel bakış bulacaksınız.",
+    tutorialLongtermTitle: "14 Günlük Tahmin",
+    tutorialLongtermDesc: "Genişletilmiş 14 günlük hava durumu tahmini ile önceden planlayın.",
+    tutorialRadarTitle: "Yağış Radarı",
+    tutorialRadarDesc: "Etkileşimli radar ile yağmur ve karı gerçek zamanlı olarak takip edin.",
+    tutorialChartTitle: "Karşılaştırma Grafikleri",
+    tutorialChartDesc: "Farklı hava durumu modellerini karşılaştırın ve trendleri analiz edin.",
+    tutorialTravelTitle: "Seyahat Planlayıcı",
+    tutorialTravelDesc: "Seyahatlerinizi planlayın ve geziniz için hava durumu olasılığını kontrol edin.",
+    tutorialSettingsTitle: "Ayarlar",
+    tutorialSettingsDesc: "Burada dil, birimler (°C/°F), tema (Açık/Koyu/Otomatik) ve ana konumunuzu özelleştirebilirsiniz.",
+    tutorialComplete: "Öğretici tamamlandı! Ayarlarda istediğiniz zaman değişiklik yapabilirsiniz."
   },
   pl: {
     home: "Start",
@@ -819,7 +963,31 @@ const TRANSLATIONS = {
     thursday: "Czwartek",
     friday: "Piątek",
     saturday: "Sobota",
-    sunday: "Niedziela"
+    sunday: "Niedziela",
+    // Tutorial
+    tutorialSkip: "Pomiń",
+    tutorialNext: "Dalej",
+    tutorialPrev: "Wstecz",
+    tutorialFinish: "Zaczynamy!",
+    tutorialWelcomeTitle: "Witamy w aplikacji pogodowej!",
+    tutorialWelcomeDesc: "Skonfigurujmy aplikację razem. Możesz pominąć ten samouczek w dowolnym momencie.",
+    tutorialLangTitle: "Wybierz swój język",
+    tutorialLangDesc: "Aplikacja obsługuje wiele języków dla Twojego doświadczenia pogodowego.",
+    tutorialHomeTitle: "Ustaw swoją lokalizację domową",
+    tutorialHomeDesc: "Twoja lokalizacja domowa będzie używana jako domyślna lokalizacja.",
+    tutorialOverviewTitle: "Karta Przegląd",
+    tutorialOverviewDesc: "Tutaj znajdziesz szczegółowy przegląd z raportem dziennym, prognozą opadów i trendem 7-dniowym.",
+    tutorialLongtermTitle: "Prognoza 14-dniowa",
+    tutorialLongtermDesc: "Planuj z wyprzedzeniem dzięki rozszerzonej prognozie pogody na 14 dni.",
+    tutorialRadarTitle: "Radar opadów",
+    tutorialRadarDesc: "Śledź deszcz i śnieg w czasie rzeczywistym za pomocą interaktywnego radaru.",
+    tutorialChartTitle: "Wykresy porównawcze",
+    tutorialChartDesc: "Porównaj różne modele pogodowe i analizuj trendy.",
+    tutorialTravelTitle: "Planowanie podróży",
+    tutorialTravelDesc: "Zaplanuj swoje podróże i sprawdź prawdopodobieństwo pogody dla swojej wycieczki.",
+    tutorialSettingsTitle: "Ustawienia",
+    tutorialSettingsDesc: "Tutaj możesz dostosować język, jednostki (°C/°F), motyw (Jasny/Ciemny/Auto) i swoją lokalizację domową.",
+    tutorialComplete: "Samouczek ukończony! Możesz wprowadzać zmiany w ustawieniach w dowolnym momencie."
   },
   nl: {
     home: "Home",
@@ -935,7 +1103,31 @@ const TRANSLATIONS = {
     thursday: "Donderdag",
     friday: "Vrijdag",
     saturday: "Zaterdag",
-    sunday: "Zondag"
+    sunday: "Zondag",
+    // Tutorial
+    tutorialSkip: "Overslaan",
+    tutorialNext: "Volgende",
+    tutorialPrev: "Terug",
+    tutorialFinish: "Laten we gaan!",
+    tutorialWelcomeTitle: "Welkom bij de weer-app!",
+    tutorialWelcomeDesc: "Laten we de app samen instellen. U kunt deze handleiding op elk moment overslaan.",
+    tutorialLangTitle: "Kies uw taal",
+    tutorialLangDesc: "De app ondersteunt meerdere talen voor uw weerervaring.",
+    tutorialHomeTitle: "Stel uw thuislocatie in",
+    tutorialHomeDesc: "Uw thuislocatie wordt gebruikt als standaardlocatie.",
+    tutorialOverviewTitle: "Overzicht-tabblad",
+    tutorialOverviewDesc: "Hier vindt u een gedetailleerd overzicht met dagrapport, neerslagverwachting en 7-daagse trend.",
+    tutorialLongtermTitle: "14-daagse voorspelling",
+    tutorialLongtermDesc: "Plan vooruit met de uitgebreide weersvoorspelling van 14 dagen.",
+    tutorialRadarTitle: "Neerslag Radar",
+    tutorialRadarDesc: "Volg regen en sneeuw in realtime met de interactieve radar.",
+    tutorialChartTitle: "Vergelijkingsgrafieken",
+    tutorialChartDesc: "Vergelijk verschillende weermodellen en analyseer trends.",
+    tutorialTravelTitle: "Reisplanner",
+    tutorialTravelDesc: "Plan uw reizen en controleer de weerskans voor uw excursie.",
+    tutorialSettingsTitle: "Instellingen",
+    tutorialSettingsDesc: "Hier kunt u de taal, eenheden (°C/°F), thema (Licht/Donker/Auto) en uw thuislocatie aanpassen.",
+    tutorialComplete: "Handleiding voltooid! U kunt op elk moment wijzigingen aanbrengen in de instellingen."
   },
   hr: {
     home: "Početna",
@@ -1051,7 +1243,31 @@ const TRANSLATIONS = {
     thursday: "Četvrtak",
     friday: "Petak",
     saturday: "Subota",
-    sunday: "Nedjelja"
+    sunday: "Nedjelja",
+    // Tutorial
+    tutorialSkip: "Preskoči",
+    tutorialNext: "Sljedeće",
+    tutorialPrev: "Natrag",
+    tutorialFinish: "Krenimo!",
+    tutorialWelcomeTitle: "Dobrodošli u aplikaciju za vrijeme!",
+    tutorialWelcomeDesc: "Postavimo aplikaciju zajedno. Možete preskočiti ovaj vodič u bilo kojem trenutku.",
+    tutorialLangTitle: "Odaberite svoj jezik",
+    tutorialLangDesc: "Aplikacija podržava više jezika za vaše vremensko iskustvo.",
+    tutorialHomeTitle: "Postavite svoju osnovnu lokaciju",
+    tutorialHomeDesc: "Vaša osnovna lokacija će se koristiti kao zadana lokacija.",
+    tutorialOverviewTitle: "Kartica pregleda",
+    tutorialOverviewDesc: "Ovdje ćete pronaći detaljan pregled s dnevnim izvješćem, prognozom oborina i 7-dnevnim trendom.",
+    tutorialLongtermTitle: "14-dnevna prognoza",
+    tutorialLongtermDesc: "Planirajte unaprijed s proširenom vremenskom prognozom od 14 dana.",
+    tutorialRadarTitle: "Radar oborina",
+    tutorialRadarDesc: "Pratite kišu i snijeg u stvarnom vremenu s interaktivnim radarom.",
+    tutorialChartTitle: "Grafikoni usporedbe",
+    tutorialChartDesc: "Usporedite različite vremenske modele i analizirajte trendove.",
+    tutorialTravelTitle: "Planer putovanja",
+    tutorialTravelDesc: "Planirajte svoja putovanja i provjerite vremensku vjerojatnost za vaš izlet.",
+    tutorialSettingsTitle: "Postavke",
+    tutorialSettingsDesc: "Ovdje možete prilagoditi jezik, jedinice (°C/°F), temu (Svijetla/Tamna/Auto) i svoju osnovnu lokaciju.",
+    tutorialComplete: "Vodič završen! Možete napraviti promjene u postavkama u bilo kojem trenutku."
   },
   el: {
     home: "Αρχική",
@@ -1167,7 +1383,31 @@ const TRANSLATIONS = {
     thursday: "Πέμπτη",
     friday: "Παρασκευή",
     saturday: "Σάββατο",
-    sunday: "Κυριακή"
+    sunday: "Κυριακή",
+    // Tutorial
+    tutorialSkip: "Παράλειψη",
+    tutorialNext: "Επόμενο",
+    tutorialPrev: "Πίσω",
+    tutorialFinish: "Πάμε!",
+    tutorialWelcomeTitle: "Καλώς ήρθατε στην εφαρμογή καιρού!",
+    tutorialWelcomeDesc: "Ας ρυθμίσουμε την εφαρμογή μαζί. Μπορείτε να παραλείψετε αυτό το σεμινάριο ανά πάσα στιγμή.",
+    tutorialLangTitle: "Επιλέξτε τη γλώσσα σας",
+    tutorialLangDesc: "Η εφαρμογή υποστηρίζει πολλές γλώσσες για την εμπειρία καιρού σας.",
+    tutorialHomeTitle: "Ορίστε την κύρια τοποθεσία σας",
+    tutorialHomeDesc: "Η κύρια τοποθεσία σας θα χρησιμοποιηθεί ως προεπιλεγμένη τοποθεσία.",
+    tutorialOverviewTitle: "Καρτέλα Επισκόπησης",
+    tutorialOverviewDesc: "Εδώ θα βρείτε μια λεπτομερή επισκόπηση με ημερήσια αναφορά, πρόβλεψη βροχόπτωσης και 7ήμερη τάση.",
+    tutorialLongtermTitle: "Πρόβλεψη 14 ημερών",
+    tutorialLongtermDesc: "Σχεδιάστε εκ των προτέρων με την εκτεταμένη πρόβλεψη καιρού 14 ημερών.",
+    tutorialRadarTitle: "Ραντάρ βροχόπτωσης",
+    tutorialRadarDesc: "Παρακολουθήστε τη βροχή και το χιόνι σε πραγματικό χρόνο με το διαδραστικό ραντάρ.",
+    tutorialChartTitle: "Γραφήματα σύγκρισης",
+    tutorialChartDesc: "Συγκρίνετε διαφορετικά μοντέλα καιρού και αναλύστε τις τάσεις.",
+    tutorialTravelTitle: "Σχεδιαστής ταξιδιού",
+    tutorialTravelDesc: "Σχεδιάστε τα ταξίδια σας και ελέγξτε την πιθανότητα καιρού για την εκδρομή σας.",
+    tutorialSettingsTitle: "Ρυθμίσεις",
+    tutorialSettingsDesc: "Εδώ μπορείτε να προσαρμόσετε τη γλώσσα, τις μονάδες (°C/°F), το θέμα (Φωτεινό/Σκοτεινό/Αυτόματο) και την κύρια τοποθεσία σας.",
+    tutorialComplete: "Το σεμινάριο ολοκληρώθηκε! Μπορείτε να κάνετε αλλαγές στις ρυθμίσεις ανά πάσα στιγμή."
   },
   da: {
     home: "Hjem",
@@ -1283,7 +1523,31 @@ const TRANSLATIONS = {
     thursday: "Torsdag",
     friday: "Fredag",
     saturday: "Lørdag",
-    sunday: "Søndag"
+    sunday: "Søndag",
+    // Tutorial
+    tutorialSkip: "Spring over",
+    tutorialNext: "Næste",
+    tutorialPrev: "Tilbage",
+    tutorialFinish: "Lad os komme i gang!",
+    tutorialWelcomeTitle: "Velkommen til vejr-appen!",
+    tutorialWelcomeDesc: "Lad os konfigurere appen sammen. Du kan springe denne vejledning over når som helst.",
+    tutorialLangTitle: "Vælg dit sprog",
+    tutorialLangDesc: "Appen understøtter flere sprog til din vejroplevelse.",
+    tutorialHomeTitle: "Indstil din hjemmeplacering",
+    tutorialHomeDesc: "Din hjemmeplacering vil blive brugt som standardplacering.",
+    tutorialOverviewTitle: "Oversigtsfane",
+    tutorialOverviewDesc: "Her finder du en detaljeret oversigt med daglig rapport, nedbørsprognose og 7-dages tendens.",
+    tutorialLongtermTitle: "14-dages prognose",
+    tutorialLongtermDesc: "Planlæg forud med den udvidede vejrudsigt på 14 dage.",
+    tutorialRadarTitle: "Nedbørsradar",
+    tutorialRadarDesc: "Spor regn og sne i realtid med den interaktive radar.",
+    tutorialChartTitle: "Sammenligningsdiagrammer",
+    tutorialChartDesc: "Sammenlign forskellige vejrmodeller og analyser tendenser.",
+    tutorialTravelTitle: "Rejseplanlægger",
+    tutorialTravelDesc: "Planlæg dine ture og tjek vejrsandsynligheden for din udflugt.",
+    tutorialSettingsTitle: "Indstillinger",
+    tutorialSettingsDesc: "Her kan du tilpasse sprog, enheder (°C/°F), tema (Lys/Mørk/Auto) og din hjemmeplacering.",
+    tutorialComplete: "Vejledning fuldført! Du kan foretage ændringer i indstillingerne når som helst."
   },
   ru: {
     home: "Главная",
@@ -1399,7 +1663,31 @@ const TRANSLATIONS = {
     thursday: "Четверг",
     friday: "Пятница",
     saturday: "Суббота",
-    sunday: "Воскресенье"
+    sunday: "Воскресенье",
+    // Tutorial
+    tutorialSkip: "Пропустить",
+    tutorialNext: "Далее",
+    tutorialPrev: "Назад",
+    tutorialFinish: "Поехали!",
+    tutorialWelcomeTitle: "Добро пожаловать в приложение погоды!",
+    tutorialWelcomeDesc: "Давайте настроим приложение вместе. Вы можете пропустить это руководство в любое время.",
+    tutorialLangTitle: "Выберите свой язык",
+    tutorialLangDesc: "Приложение поддерживает несколько языков для вашего погодного опыта.",
+    tutorialHomeTitle: "Установите домашнее местоположение",
+    tutorialHomeDesc: "Ваше домашнее местоположение будет использоваться по умолчанию.",
+    tutorialOverviewTitle: "Вкладка Обзор",
+    tutorialOverviewDesc: "Здесь вы найдете подробный обзор с ежедневным отчетом, прогнозом осадков и 7-дневным трендом.",
+    tutorialLongtermTitle: "Прогноз на 14 дней",
+    tutorialLongtermDesc: "Планируйте заранее с расширенным прогнозом погоды на 14 дней.",
+    tutorialRadarTitle: "Радар осадков",
+    tutorialRadarDesc: "Отслеживайте дождь и снег в реальном времени с помощью интерактивного радара.",
+    tutorialChartTitle: "Сравнительные графики",
+    tutorialChartDesc: "Сравнивайте различные модели погоды и анализируйте тенденции.",
+    tutorialTravelTitle: "Планировщик путешествий",
+    tutorialTravelDesc: "Планируйте свои поездки и проверяйте вероятность погоды для вашей экскурсии.",
+    tutorialSettingsTitle: "Настройки",
+    tutorialSettingsDesc: "Здесь вы можете настроить язык, единицы измерения (°C/°F), тему (Светлая/Темная/Авто) и ваше домашнее местоположение.",
+    tutorialComplete: "Руководство завершено! Вы можете вносить изменения в настройках в любое время."
   }
 };
 
@@ -1430,6 +1718,19 @@ const getSavedSettings = () => {
         // Default Settings erweitert um theme: 'auto'
         return saved ? JSON.parse(saved) : { language: 'de', unit: 'celsius', theme: 'auto' };
     } catch (e) { return { language: 'de', unit: 'celsius', theme: 'auto' }; }
+};
+
+const getTutorialCompleted = () => {
+    try {
+        const completed = localStorage.getItem('weather_tutorial_completed');
+        return completed === 'true';
+    } catch (e) { return false; }
+};
+
+const setTutorialCompleted = () => {
+    try {
+        localStorage.setItem('weather_tutorial_completed', 'true');
+    } catch (e) { console.error('Failed to save tutorial status', e); }
 };
 
 const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
@@ -3368,6 +3669,237 @@ const HomeSetupModal = ({ onSave, lang='de' }) => {
     );
 };
 
+// --- TUTORIAL COMPONENT (Für den allerersten Start) ---
+const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' }) => {
+    const [step, setStep] = useState(0);
+    const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+    
+    const steps = [
+        {
+            title: t.tutorialWelcomeTitle,
+            desc: t.tutorialWelcomeDesc,
+            icon: Sparkles,
+            showSkip: true
+        },
+        {
+            title: t.tutorialLangTitle,
+            desc: t.tutorialLangDesc,
+            icon: Languages,
+            content: 'language'
+        },
+        {
+            title: t.tutorialHomeTitle,
+            desc: t.tutorialHomeDesc,
+            icon: Home,
+            content: 'home'
+        },
+        {
+            title: t.tutorialOverviewTitle,
+            desc: t.tutorialOverviewDesc,
+            icon: List,
+            content: 'tab'
+        },
+        {
+            title: t.tutorialLongtermTitle,
+            desc: t.tutorialLongtermDesc,
+            icon: CalendarDays,
+            content: 'tab'
+        },
+        {
+            title: t.tutorialRadarTitle,
+            desc: t.tutorialRadarDesc,
+            icon: MapIcon,
+            content: 'tab'
+        },
+        {
+            title: t.tutorialChartTitle,
+            desc: t.tutorialChartDesc,
+            icon: BarChart2,
+            content: 'tab'
+        },
+        {
+            title: t.tutorialTravelTitle,
+            desc: t.tutorialTravelDesc,
+            icon: Plane,
+            content: 'tab'
+        },
+        {
+            title: t.tutorialSettingsTitle,
+            desc: t.tutorialSettingsDesc,
+            icon: Settings,
+            content: 'settings'
+        }
+    ];
+    
+    const currentStep = steps[step];
+    const Icon = currentStep.icon;
+    const isLastStep = step === steps.length - 1;
+    
+    const handleNext = () => {
+        if (isLastStep) {
+            onComplete();
+        } else {
+            setStep(step + 1);
+        }
+    };
+    
+    const handlePrev = () => {
+        if (step > 0) {
+            setStep(step - 1);
+        }
+    };
+    
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-lg animate-in fade-in duration-500">
+            <div className="bg-gradient-to-br from-white to-slate-50 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+                {/* Header with Progress */}
+                <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white relative overflow-hidden">
+                    <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-lg">
+                                <Icon size={28} />
+                            </div>
+                            {currentStep.showSkip && (
+                                <button 
+                                    onClick={onSkip}
+                                    className="px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl text-sm font-bold transition"
+                                >
+                                    {t.tutorialSkip}
+                                </button>
+                            )}
+                        </div>
+                        <h2 className="text-2xl font-black mb-2">{currentStep.title}</h2>
+                        <p className="text-white/90 text-sm leading-relaxed">{currentStep.desc}</p>
+                    </div>
+                    
+                    {/* Progress Dots */}
+                    <div className="flex gap-1.5 mt-4 relative z-10">
+                        {steps.map((_, idx) => (
+                            <div 
+                                key={idx}
+                                className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${
+                                    idx === step ? 'bg-white shadow-md' : 
+                                    idx < step ? 'bg-white/60' : 'bg-white/20'
+                                }`}
+                            />
+                        ))}
+                    </div>
+                </div>
+                
+                {/* Content */}
+                <div className="p-6">
+                    {currentStep.content === 'language' && (
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 block">{t.language}</label>
+                            {['de', 'en', 'fr', 'es', 'it', 'tr', 'pl', 'nl', 'hr', 'el', 'da', 'ru'].map(l => (
+                                <button
+                                    key={l}
+                                    onClick={() => setSettings({ ...settings, language: l })}
+                                    className={`w-full p-3 rounded-xl font-bold text-left flex items-center justify-between transition ${
+                                        settings.language === l 
+                                            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30' 
+                                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                    }`}
+                                >
+                                    <span>{TRANSLATIONS[l]?.language || l.toUpperCase()}</span>
+                                    {settings.language === l && <Check size={20} />}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                    
+                    {currentStep.content === 'home' && (
+                        <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 text-center border border-blue-200">
+                            <div className="w-16 h-16 bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                <Home size={32} />
+                            </div>
+                            <p className="text-slate-700 font-medium mb-4">{t.welcomeDesc}</p>
+                            <div className="text-sm text-slate-500 italic">
+                                {t.tutorialHomeDesc}
+                            </div>
+                        </div>
+                    )}
+                    
+                    {currentStep.content === 'tab' && (
+                        <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-6 border border-slate-200">
+                            <div className="w-full aspect-video bg-slate-200 rounded-xl mb-4 flex items-center justify-center">
+                                <Icon size={48} className="text-slate-400" />
+                            </div>
+                            <p className="text-slate-600 text-sm leading-relaxed">{currentStep.desc}</p>
+                        </div>
+                    )}
+                    
+                    {currentStep.content === 'settings' && (
+                        <div className="space-y-4">
+                            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <Globe size={20} className="text-blue-500" />
+                                    <span className="font-bold text-slate-800">{t.language}</span>
+                                </div>
+                                <p className="text-xs text-slate-500 ml-8">{t.tutorialLangDesc}</p>
+                            </div>
+                            
+                            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <Thermometer size={20} className="text-red-500" />
+                                    <span className="font-bold text-slate-800">{t.units}</span>
+                                </div>
+                                <p className="text-xs text-slate-500 ml-8">°C / °F</p>
+                            </div>
+                            
+                            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <Palette size={20} className="text-purple-500" />
+                                    <span className="font-bold text-slate-800">{t.theme}</span>
+                                </div>
+                                <p className="text-xs text-slate-500 ml-8">{t.themeLight} / {t.themeDark} / {t.themeAuto}</p>
+                            </div>
+                            
+                            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <Home size={20} className="text-green-500" />
+                                    <span className="font-bold text-slate-800">{t.homeLoc}</span>
+                                </div>
+                                <p className="text-xs text-slate-500 ml-8">{t.changeHome}</p>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {isLastStep && (
+                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 text-center border border-green-200 mt-4">
+                            <div className="w-16 h-16 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                <CheckCircle2 size={32} />
+                            </div>
+                            <p className="text-slate-700 font-bold text-lg mb-2">{t.tutorialComplete}</p>
+                        </div>
+                    )}
+                </div>
+                
+                {/* Navigation Buttons */}
+                <div className="flex gap-3 p-6 pt-0">
+                    {step > 0 && (
+                        <button
+                            onClick={handlePrev}
+                            className="px-6 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition flex items-center gap-2"
+                        >
+                            <ArrowLeft size={18} />
+                            {t.tutorialPrev}
+                        </button>
+                    )}
+                    <button
+                        onClick={handleNext}
+                        className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition flex items-center justify-center gap-2"
+                    >
+                        {isLastStep ? t.tutorialFinish : t.tutorialNext}
+                        {!isLastStep && <ArrowRight size={18} />}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 // --- 4. MAIN APP COMPONENT ---
 
@@ -3379,6 +3911,7 @@ export default function WeatherApp() {
   const [currentLoc, setCurrentLoc] = useState(homeLoc); 
   const [showHomeSetup, setShowHomeSetup] = useState(false);
   const [settings, setSettings] = useState(() => getSavedSettings()); // NEU
+  const [showTutorial, setShowTutorial] = useState(() => !getTutorialCompleted()); // TUTORIAL STATE
 
   const [shortTermData, setShortTermData] = useState(null);
   const [longTermData, setLongTermData] = useState(null);
@@ -3460,7 +3993,13 @@ export default function WeatherApp() {
 
   // Initial Location Logic / Home Check
   useEffect(() => {
-    // Wenn kein Home Location existiert (erster Start), zeige Setup
+    // Show tutorial first if not completed
+    if (showTutorial && !getTutorialCompleted()) {
+        setLoading(false);
+        return;
+    }
+    
+    // Wenn kein Home Location existiert (nach Tutorial), zeige Setup
     if (!homeLoc) {
         setShowHomeSetup(true);
         setLoading(false);
@@ -3507,7 +4046,7 @@ export default function WeatherApp() {
     };
 
     initLocation();
-  }, [homeLoc]); // Re-run init if homeLoc changes (e.g. after setup)
+  }, [homeLoc, showTutorial]); // Re-run init if homeLoc or tutorial status changes
 
   // Update localStorage when locations change
   useEffect(() => {
@@ -4224,7 +4763,36 @@ export default function WeatherApp() {
 
   // --- STANDARD APP ---
 
-  // SHOW SETUP MODAL FIRST
+  // SHOW TUTORIAL FIRST (only on very first launch)
+  if (showTutorial && !getTutorialCompleted()) {
+      return (
+          <div className="min-h-screen bg-slate-900 font-sans">
+              <TutorialModal 
+                  onComplete={() => {
+                      setTutorialCompleted();
+                      setShowTutorial(false);
+                      // If no home location, show home setup next
+                      if (!homeLoc) {
+                          setShowHomeSetup(true);
+                      }
+                  }}
+                  onSkip={() => {
+                      setTutorialCompleted();
+                      setShowTutorial(false);
+                      // If no home location, show home setup next
+                      if (!homeLoc) {
+                          setShowHomeSetup(true);
+                      }
+                  }}
+                  settings={settings}
+                  setSettings={setSettings}
+                  lang={lang}
+              />
+          </div>
+      );
+  }
+
+  // SHOW SETUP MODAL AFTER TUTORIAL OR WHEN NO HOME
   if (showHomeSetup && !homeLoc) {
       return (
           <div className="min-h-screen bg-slate-900 font-sans">
