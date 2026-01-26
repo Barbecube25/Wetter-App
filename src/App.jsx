@@ -2014,18 +2014,78 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
                      <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
                         <Globe size={16}/> {t.language}
                      </label>
-                     <div className="flex gap-2 bg-slate-100 p-1 rounded-xl">
+                     <div className="grid grid-cols-2 gap-2 bg-slate-100 p-2 rounded-xl max-h-60 overflow-y-auto">
                          <button 
                              onClick={() => setLocalSettings({...localSettings, language: 'de'})}
-                             className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${localSettings.language === 'de' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'de' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
                          >
-                             Deutsch
+                             🇩🇪 Deutsch
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, language: 'en'})}
-                             className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${localSettings.language === 'en' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'en' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
                          >
-                             English
+                             🇬🇧 English
+                         </button>
+                         <button 
+                             onClick={() => setLocalSettings({...localSettings, language: 'fr'})}
+                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'fr' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                         >
+                             🇫🇷 Français
+                         </button>
+                         <button 
+                             onClick={() => setLocalSettings({...localSettings, language: 'es'})}
+                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'es' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                         >
+                             🇪🇸 Español
+                         </button>
+                         <button 
+                             onClick={() => setLocalSettings({...localSettings, language: 'it'})}
+                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'it' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                         >
+                             🇮🇹 Italiano
+                         </button>
+                         <button 
+                             onClick={() => setLocalSettings({...localSettings, language: 'tr'})}
+                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'tr' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                         >
+                             🇹🇷 Türkçe
+                         </button>
+                         <button 
+                             onClick={() => setLocalSettings({...localSettings, language: 'pl'})}
+                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'pl' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                         >
+                             🇵🇱 Polski
+                         </button>
+                         <button 
+                             onClick={() => setLocalSettings({...localSettings, language: 'nl'})}
+                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'nl' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                         >
+                             🇳🇱 Nederlands
+                         </button>
+                         <button 
+                             onClick={() => setLocalSettings({...localSettings, language: 'hr'})}
+                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'hr' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                         >
+                             🇭🇷 Hrvatski
+                         </button>
+                         <button 
+                             onClick={() => setLocalSettings({...localSettings, language: 'el'})}
+                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'el' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                         >
+                             🇬🇷 Ελληνικά
+                         </button>
+                         <button 
+                             onClick={() => setLocalSettings({...localSettings, language: 'da'})}
+                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'da' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                         >
+                             🇩🇰 Dansk
+                         </button>
+                         <button 
+                             onClick={() => setLocalSettings({...localSettings, language: 'ru'})}
+                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'ru' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                         >
+                             🇷🇺 Русский
                          </button>
                      </div>
                  </div>
