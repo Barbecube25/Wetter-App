@@ -1825,6 +1825,19 @@ const styles = `
   @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
   @keyframes lightning-flash { 0%, 92%, 100% { opacity: 0; } 93%, 95% { opacity: 1; background: white; } }
   @keyframes sunrise-glow { 0% { opacity: 0.4; } 50% { opacity: 0.8; } 100% { opacity: 0.4; } }
+  @keyframes hail-fall { 
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 0; } 
+    10% { opacity: 1; } 
+    100% { transform: translateY(180px) rotate(360deg); opacity: 0; } 
+  }
+  @keyframes tropical-glow { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.4; } }
+  @keyframes firework { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+  @keyframes float-leaves { 
+    0% { transform: translateY(-20px) translateX(0px) rotate(0deg); opacity: 0; } 
+    10% { opacity: 0.8; } 
+    50% { transform: translateY(80px) translateX(15px) rotate(180deg); }
+    100% { transform: translateY(160px) translateX(-20px) rotate(360deg); opacity: 0; } 
+  }
   
   .animate-float { animation: float 6s ease-in-out infinite; }
   .anim-clouds { animation: float-clouds 20s ease-in-out infinite; }
@@ -1855,6 +1868,10 @@ const styles = `
   
   .anim-heat { animation: heat-shimmer 2s infinite linear; }
   .anim-sparkle { animation: ice-sparkle 3s infinite ease-in-out; }
+  .animate-hail { animation: hail-fall 1.2s infinite linear; }
+  .anim-tropical { animation: tropical-glow 3s infinite ease-in-out; }
+  .anim-firework { animation: firework 2s infinite ease-out; }
+  .animate-leaves { animation: float-leaves 8s infinite linear; }
 `;
 
 // --- 2. HILFSFUNKTIONEN ---
@@ -2450,7 +2467,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
     );
 };
 
-const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed, lang='de' }) => {
+const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed, lang='de', demoWeather, demoSeason, demoEvent }) => {
   // Move helper to top of component to use it for initial variables
   const getDecimalHour = (dateInput) => {
     if (!dateInput) return 0;
@@ -2486,11 +2503,13 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   // Nieselregen: Codes 51, 53, 55
   const isDrizzle = [51, 53, 55].includes(code);
   const isLightRain = [61, 80].includes(code);
-  const isHeavyRain = [63, 65, 81, 82].includes(code) || (code >= 95);
-  const isRain = isLightRain || isHeavyRain;
+  const isMediumRain = [63, 81].includes(code);
+  const isHeavyRain = [65, 82].includes(code) || (code >= 95 && code !== 96 && code !== 99);
+  const isRain = isLightRain || isMediumRain || isHeavyRain;
   const isLightSnow = [71, 77, 85].includes(code);
-  const isHeavySnow = [73, 75, 86].includes(code);
-  const isSnow = isLightSnow || isHeavySnow;
+  const isMediumSnow = [73].includes(code);
+  const isHeavySnow = [75, 86].includes(code);
+  const isSnow = isLightSnow || isMediumSnow || isHeavySnow;
   const isSleet = [56, 57, 66, 67].includes(code);
   const isStorm = [95, 96, 99].includes(code);
   const isFog = [45, 48].includes(code);
@@ -2499,6 +2518,37 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const isFreezing = temp <= 0;
   const isWindy = windSpeed >= 30;
   const isStormyWind = windSpeed >= 60;
+  const isHail = [96, 99].includes(code);
+  const isTropicalNight = isNight && temp > 20;
+
+  // --- SEASON DETECTION ---
+  const month = d.getMonth(); // 0-11
+  let detectedSeason = 'summer';
+  if (month >= 2 && month <= 4) detectedSeason = 'spring';
+  else if (month >= 5 && month <= 7) detectedSeason = 'summer';
+  else if (month >= 8 && month <= 10) detectedSeason = 'autumn';
+  else detectedSeason = 'winter';
+  const season = demoSeason || detectedSeason;
+
+  // --- SEASONAL EVENTS ---
+  const dayOfMonth = d.getDate();
+  let detectedEvent = 'none';
+  if (month === 11 && dayOfMonth >= 1 && dayOfMonth <= 26) detectedEvent = 'christmas';
+  else if (month === 3 && dayOfMonth >= 1 && dayOfMonth <= 30) detectedEvent = 'easter';
+  else if (month === 9 && dayOfMonth >= 20 && dayOfMonth <= 31) detectedEvent = 'halloween';
+  else if (month === 11 && dayOfMonth === 31) detectedEvent = 'newyear';
+  const event = demoEvent || detectedEvent;
+
+  // Override weather if demo mode
+  if (demoWeather) {
+    const demoMap = {
+      'clear': 0, 'partly_cloudy': 2, 'overcast': 3, 'rain': 63, 'snow': 73, 
+      'storm': 95, 'fog': 45, 'heat': 0, 'freeze': 0, 'hail': 96
+    };
+    code = demoMap[demoWeather] !== undefined ? demoMap[demoWeather] : code;
+    if (demoWeather === 'heat') temp = 32;
+    if (demoWeather === 'freeze') temp = -8;
+  }
 
   
   let celestialX = -50;
@@ -2542,7 +2592,16 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const groundColor = (isSnow || isDeepFreeze) ? "#e2e8f0" : (isNight ? "#0f172a" : "#4ade80"); // Nachts dunklerer Boden
   const mountainColor = (isSnow || isDeepFreeze) ? "#f1f5f9" : (isNight ? "#1e293b" : "#64748b"); 
   const treeTrunk = isNight ? "#4a3830" : "#78350f";
-  const treeLeaf = (isSnow || isDeepFreeze) ? "#f8fafc" : (isNight ? "#15803d" : "#16a34a"); // Nachts satteres Grün für Kontrast
+  
+  // Season-based tree colors
+  let treeLeaf = "#16a34a"; // default green
+  if (season === 'autumn') {
+    treeLeaf = "#f59e0b"; // orange/amber
+  } else if (season === 'winter') {
+    treeLeaf = (isSnow || isDeepFreeze) ? "#f8fafc" : "#16a34a"; // snow white or evergreen
+  } else if (season === 'spring' || season === 'summer') {
+    treeLeaf = (isSnow || isDeepFreeze) ? "#f8fafc" : (isNight ? "#15803d" : "#16a34a");
+  }
   
   const houseWall = isNight ? "#78350f" : "#b45309"; 
   const houseRoof = (isSnow || isDeepFreeze) ? "#f1f5f9" : (isNight ? "#451a03" : "#7c2d12");
@@ -2730,8 +2789,10 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
 
       {(isRain || isSleet) && (
          <g fill={isSleet ? "#cbd5e1" : "#93c5fd"} opacity={0.8} transform={rainRotation}>
-            {[...Array(isHeavyRain ? 60 : 30)].map((_, i) => (
-               <rect key={i} x={Math.random() * 400 - 20} y="40" width={isHeavyRain ? 2 : 1.5} height={isHeavyRain ? 15 : 12} 
+            {[...Array(isHeavyRain ? 60 : isMediumRain ? 40 : 30)].map((_, i) => (
+               <rect key={i} x={Math.random() * 400 - 20} y="40" 
+                     width={isHeavyRain ? 2 : isMediumRain ? 1.7 : 1.5} 
+                     height={isHeavyRain ? 15 : isMediumRain ? 13 : 12} 
                      className={isHeavyRain ? "animate-rain-storm" : `animate-rain-${i%3 === 0 ? '1' : i%3 === 1 ? '2' : '3'}`} 
                      style={{animationDelay: `${Math.random()}s`}} />
             ))}
@@ -2740,10 +2801,10 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
 
       {(isSnow || isSleet) && (
          <g fill="white" opacity="0.9" transform={rainRotation}>
-            {[...Array(isHeavySnow ? 80 : 40)].map((_, i) => {
+            {[...Array(isHeavySnow ? 80 : isMediumSnow ? 60 : 40)].map((_, i) => {
                const startX = Math.random() * 400 - 20;
                const delay = Math.random() * 5;
-               const size = Math.random() * 2 + 1;
+               const size = isHeavySnow ? Math.random() * 3 + 1.5 : isMediumSnow ? Math.random() * 2.5 + 1 : Math.random() * 2 + 1;
                const isSlow = i % 2 === 0;
                return (
                   <circle 
@@ -2751,7 +2812,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
                     cx={startX} 
                     cy="-10" 
                     r={size} 
-                    className={isHeavySnow || isStormyWind ? "animate-snow-fast" : "animate-snow-slow"} 
+                    className={isHeavySnow || isStormyWind ? "animate-snow-fast" : isMediumSnow ? "animate-snow-fast" : "animate-snow-slow"} 
                     style={{
                         animationDelay: `${delay}s`, 
                         opacity: Math.random() * 0.5 + 0.5
@@ -2766,6 +2827,154 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
          <g className="anim-lightning">
             <path d="M160 30 L140 60 L155 60 L135 130" stroke="#fef08a" strokeWidth="3" fill="none" filter="url(#iceGlow)" />
             <rect x="-50" y="0" width="500" height="200" fill="white" opacity="0.1" />
+         </g>
+      )}
+
+      {/* Hail */}
+      {isHail && (
+         <g fill="white" opacity="0.9">
+            {[...Array(60)].map((_, i) => (
+               <circle 
+                 key={i} 
+                 cx={Math.random() * 400 - 20} 
+                 cy="-10" 
+                 r={Math.random() * 2 + 1.5} 
+                 className="animate-hail" 
+                 style={{animationDelay: `${Math.random() * 1.2}s`}} 
+               />
+            ))}
+         </g>
+      )}
+
+      {/* Tropical Night Glow */}
+      {isTropicalNight && (
+         <g className="anim-tropical">
+            <rect x="-50" y="0" width="500" height="160" fill="#fbbf24" opacity="0.15" />
+         </g>
+      )}
+
+      {/* Spring Blossoms */}
+      {season === 'spring' && !isSnow && (
+         <g>
+            <circle cx="45" cy="108" r="2" fill="#fecdd3" />
+            <circle cx="50" cy="105" r="1.5" fill="#fda4af" />
+            <circle cx="160" cy="110" r="2" fill="#fecdd3" />
+            <circle cx="165" cy="107" r="1.5" fill="#fda4af" />
+            <circle cx="285" cy="125" r="2" fill="#fecdd3" />
+            <circle cx="325" cy="123" r="1.5" fill="#fda4af" />
+            {/* Ground flowers */}
+            <circle cx="80" cy="155" r="2" fill="#fda4af" />
+            <circle cx="120" cy="153" r="2" fill="#fecdd3" />
+            <circle cx="240" cy="157" r="2" fill="#fda4af" />
+            <circle cx="300" cy="154" r="2" fill="#fecdd3" />
+         </g>
+      )}
+
+      {/* Autumn Falling Leaves */}
+      {season === 'autumn' && (
+         <g>
+            {[...Array(15)].map((_, i) => {
+               const colors = ['#f59e0b', '#dc2626', '#eab308'];
+               const color = colors[i % 3];
+               return (
+                  <ellipse 
+                    key={i} 
+                    cx={Math.random() * 400 - 20} 
+                    cy="-10" 
+                    rx="3" 
+                    ry="2" 
+                    fill={color} 
+                    className="animate-leaves" 
+                    style={{animationDelay: `${Math.random() * 8}s`}} 
+                  />
+               );
+            })}
+            {/* Ground leaves */}
+            <ellipse cx="90" cy="155" rx="3" ry="2" fill="#dc2626" opacity="0.7" />
+            <ellipse cx="140" cy="153" rx="3" ry="2" fill="#f59e0b" opacity="0.7" />
+            <ellipse cx="190" cy="156" rx="3" ry="2" fill="#eab308" opacity="0.7" />
+            <ellipse cx="250" cy="154" rx="3" ry="2" fill="#dc2626" opacity="0.7" />
+         </g>
+      )}
+
+      {/* Winter - Bare deciduous trees (already handled by treeLeaf color) */}
+      {season === 'winter' && (isSnow || isDeepFreeze) && (
+         <g>
+            {/* Snow on tree branches */}
+            <ellipse cx="45" cy="110" rx="4" ry="2" fill="white" opacity="0.8" />
+            <ellipse cx="160" cy="112" rx="4" ry="2" fill="white" opacity="0.8" />
+            <ellipse cx="285" cy="127" rx="4" ry="2" fill="white" opacity="0.8" />
+            <ellipse cx="325" cy="126" rx="3" ry="1.5" fill="white" opacity="0.8" />
+         </g>
+      )}
+
+      {/* Christmas Decorations */}
+      {event === 'christmas' && (
+         <g>
+            {/* Ornaments on trees */}
+            <circle cx="42" cy="112" r="2" fill="#dc2626" />
+            <circle cx="48" cy="108" r="2" fill="#eab308" />
+            <circle cx="158" cy="114" r="2" fill="#dc2626" />
+            <circle cx="164" cy="110" r="2" fill="#3b82f6" />
+            <circle cx="283" cy="129" r="2" fill="#eab308" />
+            <circle cx="287" cy="125" r="2" fill="#dc2626" />
+         </g>
+      )}
+
+      {/* Easter */}
+      {event === 'easter' && (
+         <g>
+            {/* Easter bunny near house */}
+            <ellipse cx="175" cy="137" rx="3" ry="4" fill="#d4d4d4" />
+            <circle cx="175" cy="133" r="2" fill="#d4d4d4" />
+            <ellipse cx="174" cy="131" rx="0.5" ry="1.5" fill="#d4d4d4" />
+            <ellipse cx="176" cy="131" rx="0.5" ry="1.5" fill="#d4d4d4" />
+            {/* Hidden eggs */}
+            <ellipse cx="100" cy="153" rx="2" ry="2.5" fill="#fda4af" />
+            <ellipse cx="260" cy="156" rx="2" ry="2.5" fill="#93c5fd" />
+            <ellipse cx="180" cy="155" rx="2" ry="2.5" fill="#bef264" />
+         </g>
+      )}
+
+      {/* Halloween Pumpkins */}
+      {event === 'halloween' && (
+         <g>
+            <ellipse cx="170" cy="138" rx="4" ry="3.5" fill="#f97316" />
+            <rect x="169" y="135" width="2" height="1" fill="#451a03" />
+            <ellipse cx="240" cy="139" rx="3" ry="2.5" fill="#f97316" />
+            <rect x="239" y="137" width="2" height="1" fill="#451a03" />
+         </g>
+      )}
+
+      {/* New Year Fireworks */}
+      {event === 'newyear' && (
+         <g>
+            {[...Array(5)].map((_, i) => (
+               <g key={i}>
+                  <circle cx={80 + i * 60} cy={30 + (i % 2) * 20} r="0.5" fill="#fef08a">
+                     <animate attributeName="r" values="0.5;8;0.5" dur="2s" repeatCount="indefinite" begin={`${i * 0.4}s`} />
+                     <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" begin={`${i * 0.4}s`} />
+                  </circle>
+                  {[...Array(8)].map((_, j) => {
+                     const angle = (j * 45) * Math.PI / 180;
+                     return (
+                        <line 
+                          key={j}
+                          x1={80 + i * 60} 
+                          y1={30 + (i % 2) * 20} 
+                          x2={80 + i * 60 + Math.cos(angle) * 10} 
+                          y2={30 + (i % 2) * 20 + Math.sin(angle) * 10} 
+                          stroke={['#fef08a', '#fda4af', '#93c5fd'][i % 3]} 
+                          strokeWidth="1.5"
+                        >
+                          <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite" begin={`${i * 0.4}s`} />
+                          <animate attributeName="x2" values={`${80 + i * 60};${80 + i * 60 + Math.cos(angle) * 15};${80 + i * 60}`} dur="2s" repeatCount="indefinite" begin={`${i * 0.4}s`} />
+                          <animate attributeName="y2" values={`${30 + (i % 2) * 20};${30 + (i % 2) * 20 + Math.sin(angle) * 15};${30 + (i % 2) * 20}`} dur="2s" repeatCount="indefinite" begin={`${i * 0.4}s`} />
+                        </line>
+                     );
+                  })}
+               </g>
+            ))}
          </g>
       )}
 
@@ -3930,6 +4139,12 @@ export default function WeatherApp() {
   const [showSettingsModal, setShowSettingsModal] = useState(false); // NEU
   const [viewMode, setViewMode] = useState(null);
 
+  // Demo mode state
+  const [showDemoPanel, setShowDemoPanel] = useState(false);
+  const [demoWeather, setDemoWeather] = useState(null);
+  const [demoSeason, setDemoSeason] = useState(null);
+  const [demoEvent, setDemoEvent] = useState(null);
+
   // WICHTIG: Echtzeit-State für die Animation (NEU)
   const [now, setNow] = useState(new Date());
 
@@ -4715,8 +4930,106 @@ export default function WeatherApp() {
         </div>
         <div className="h-full w-full">
             {/* WICHTIG: hier locationTime übergeben! */}
-            <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} lang={lang} />
+            <WeatherLandscape 
+              code={current.code} 
+              isDay={isRealNight ? 0 : 1} 
+              date={locationTime} 
+              temp={current.temp} 
+              sunrise={sunriseSunset.sunrise} 
+              sunset={sunriseSunset.sunset} 
+              windSpeed={current.wind} 
+              lang={lang}
+              demoWeather={demoWeather}
+              demoSeason={demoSeason}
+              demoEvent={demoEvent}
+            />
         </div>
+        
+        {/* Demo Control Panel */}
+        <div className="absolute top-20 right-4 z-50">
+          <button 
+            onClick={() => setShowDemoPanel(!showDemoPanel)}
+            className="bg-black/30 backdrop-blur-md p-2 rounded-full text-white hover:bg-black/40 transition-colors"
+            title="Demo Controls"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v6m0 6v6M1 12h6m6 0h6"/>
+            </svg>
+          </button>
+        </div>
+
+        {showDemoPanel && (
+          <div className="absolute top-20 right-4 mt-12 bg-black/80 backdrop-blur-md rounded-lg p-4 text-white text-sm z-50 min-w-[200px]">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="font-bold">Demo Mode</h3>
+              <button 
+                onClick={() => {
+                  setDemoWeather(null);
+                  setDemoSeason(null);
+                  setDemoEvent(null);
+                }}
+                className="text-xs bg-white/20 px-2 py-1 rounded hover:bg-white/30"
+              >
+                Reset
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs opacity-80 mb-1">Weather</label>
+                <select 
+                  value={demoWeather || ''} 
+                  onChange={(e) => setDemoWeather(e.target.value || null)}
+                  className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-sm"
+                >
+                  <option value="">Auto</option>
+                  <option value="clear">Clear</option>
+                  <option value="partly_cloudy">Partly Cloudy</option>
+                  <option value="overcast">Overcast</option>
+                  <option value="rain">Rain</option>
+                  <option value="snow">Snow</option>
+                  <option value="storm">Storm</option>
+                  <option value="fog">Fog</option>
+                  <option value="heat">Heat</option>
+                  <option value="freeze">Freeze</option>
+                  <option value="hail">Hail</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs opacity-80 mb-1">Season</label>
+                <select 
+                  value={demoSeason || ''} 
+                  onChange={(e) => setDemoSeason(e.target.value || null)}
+                  className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-sm"
+                >
+                  <option value="">Auto</option>
+                  <option value="spring">Spring</option>
+                  <option value="summer">Summer</option>
+                  <option value="autumn">Autumn</option>
+                  <option value="winter">Winter</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs opacity-80 mb-1">Event</label>
+                <select 
+                  value={demoEvent || ''} 
+                  onChange={(e) => setDemoEvent(e.target.value || null)}
+                  className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-sm"
+                >
+                  <option value="">None</option>
+                  <option value="christmas">Christmas</option>
+                  <option value="easter">Easter</option>
+                  <option value="halloween">Halloween</option>
+                  <option value="newyear">New Year</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="absolute bottom-8 left-0 right-0 text-center text-white drop-shadow-md pointer-events-none">
             <div className="text-6xl font-bold">{formatTemp(current.temp)}°</div>
             <div className="text-xl opacity-90 mb-2">{weatherConf.text}</div>
