@@ -2467,7 +2467,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
     );
 };
 
-const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed, lang='de', demoWeather, demoSeason, demoEvent }) => {
+const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed, lang='de', demoWeather, demoSeason, demoEvent, demoTime, demoWindSpeed }) => {
   // Move helper to top of component to use it for initial variables
   const getDecimalHour = (dateInput) => {
     if (!dateInput) return 0;
@@ -2478,7 +2478,20 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   };
     
   const d = date ? new Date(date) : new Date();
-  const currentHour = d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
+  
+  // Override time if demoTime is provided (format: "HH:MM")
+  let currentHour = d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
+  if (demoTime) {
+    const [hours, minutes] = demoTime.split(':').map(Number);
+    if (!isNaN(hours) && !isNaN(minutes)) {
+      currentHour = hours + minutes / 60;
+    }
+  }
+  
+  // Override windSpeed if demoWindSpeed is provided
+  if (demoWindSpeed !== null && demoWindSpeed !== undefined) {
+    windSpeed = demoWindSpeed;
+  }
   
   // FIX: Nutze || statt ?? damit 0 (fehlende Daten) als false gewertet wird und der Default greift
   const sunriseHour = getDecimalHour(sunrise) || 6.5; 
@@ -2499,12 +2512,39 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   // Override weather/temp if demo mode (before weather condition checks)
   if (demoWeather) {
     const demoMap = {
-      'clear': 0, 'partly_cloudy': 2, 'overcast': 3, 'rain': 63, 'snow': 73, 
-      'storm': 95, 'fog': 45, 'hail': 96
+      // Clear/Cloudy conditions
+      'clear': 0, 
+      'slightly_cloudy': 2, 
+      'cloudy': 2, 
+      'overcast': 3,
+      'strongly_overcast': 3,
+      
+      // Rain conditions
+      'drizzle': 51,
+      'light_rain': 61, 
+      'medium_rain': 63,
+      'rain': 63,
+      'heavy_rain': 65,
+      'storm': 95,
+      
+      // Snow conditions
+      'light_snow': 71,
+      'medium_snow': 73,
+      'snow': 73,
+      'heavy_snow': 75,
+      
+      // Other conditions
+      'sleet': 56,
+      'fog': 45,
+      'hail': 96,
+      'thunderstorm': 95
     };
     code = demoMap[demoWeather] !== undefined ? demoMap[demoWeather] : code;
+    
+    // Temperature overrides
     if (demoWeather === 'heat') temp = 35;
     if (demoWeather === 'freeze') temp = -10;
+    if (demoWeather === 'tropical_night') temp = 25;
   }
   
   // --- WETTERZUSTÄNDE ---
@@ -2598,13 +2638,24 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   
   // Season-based tree colors
   let treeLeaf = "#16a34a"; // default green
+  let showDeciduousLeaves = true; // Flag to show/hide leaves on deciduous trees
+  
   if (season === 'autumn') {
     treeLeaf = "#f59e0b"; // orange/amber
+    showDeciduousLeaves = true;
   } else if (season === 'winter') {
-    treeLeaf = (isSnow || isDeepFreeze) ? "#f8fafc" : "#16a34a"; // snow white or evergreen
-  } else if (season === 'spring' || season === 'summer') {
-    treeLeaf = (isSnow || isDeepFreeze) ? "#f8fafc" : (isNight ? "#15803d" : "#16a34a");
+    // In winter: deciduous trees are bare (no leaves), evergreens stay green
+    showDeciduousLeaves = false; // Hide leaves on deciduous trees
+  } else if (season === 'spring') {
+    treeLeaf = isNight ? "#86efac" : "#22c55e"; // bright spring green with some pink blossoms
+    showDeciduousLeaves = true;
+  } else if (season === 'summer') {
+    treeLeaf = isNight ? "#15803d" : "#16a34a"; // rich deep green
+    showDeciduousLeaves = true;
   }
+  
+  // Evergreen color (stays the same in all seasons)
+  const evergreenColor = (isSnow || isDeepFreeze) ? "#1e7b42" : (isNight ? "#15803d" : "#16a34a");
   
   const houseWall = isNight ? "#78350f" : "#b45309"; 
   const houseRoof = (isSnow || isDeepFreeze) ? "#f1f5f9" : (isNight ? "#451a03" : "#7c2d12");
@@ -2615,7 +2666,19 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   if (isStormyWind) treeAnim = "anim-tree-storm";
   else if (isWindy) treeAnim = "anim-tree-windy";
 
-  const rainRotation = isStormyWind ? "rotate(20deg)" : "rotate(0deg)";
+  const rainRotation = isStormyWind ? "rotate(20)" : "rotate(0)";
+
+  // Reusable bare branches element for winter deciduous trees
+  const bareBranches = (
+    <>
+      <line x1="10" y1="10" x2="5" y2="5" stroke={treeTrunk} strokeWidth="1" />
+      <line x1="10" y1="10" x2="15" y2="5" stroke={treeTrunk} strokeWidth="1" />
+      <line x1="10" y1="7" x2="6" y2="3" stroke={treeTrunk} strokeWidth="0.8" />
+      <line x1="10" y1="7" x2="14" y2="3" stroke={treeTrunk} strokeWidth="0.8" />
+      <line x1="10" y1="4" x2="7" y2="0" stroke={treeTrunk} strokeWidth="0.8" />
+      <line x1="10" y1="4" x2="13" y2="0" stroke={treeTrunk} strokeWidth="0.8" />
+    </>
+  );
 
   return (
     <svg viewBox="0 0 360 160" className="w-full h-full overflow-hidden" preserveAspectRatio="xMidYMax slice">
@@ -2714,39 +2777,47 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
 
       {/* --- BÄUME --- */}
       
-      {/* Baum Links - Rand */}
+      {/* Baum Links - Rand (Deciduous tree) */}
       <g transform="translate(40, 120)">
         <g className={treeAnim}>
             <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-            <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
-            <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+            {showDeciduousLeaves ? (
+              <>
+                <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+                <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+              </>
+            ) : bareBranches}
         </g>
       </g>
 
-      {/* Baum Links - Neben Haus */}
+      {/* Baum Links - Neben Haus (Evergreen - Pine tree) */}
       <g transform="translate(155, 120) scale(0.9)">
         <g className={treeAnim} style={{animationDelay: '0.2s'}}>
             <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-            <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
-            <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+            <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
+            <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
         </g>
       </g>
       
-      {/* Baumgruppe Rechts */}
+      {/* Baumgruppe Rechts (Deciduous tree) */}
       <g transform="translate(280, 135) scale(0.9)">
         <g className={treeAnim} style={{animationDelay: '0.5s'}}>
             <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-            <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
-            <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+            {showDeciduousLeaves ? (
+              <>
+                <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+                <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+              </>
+            ) : bareBranches}
         </g>
       </g>
       
-      {/* Baum Rechts - Rand */}
+      {/* Baum Rechts - Rand (Evergreen - Pine tree) */}
       <g transform="translate(320, 134) scale(0.8)">
         <g className={treeAnim} style={{animationDelay: '0.7s'}}>
             <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-            <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
-            <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+            <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
+            <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
         </g>
       </g>
 
@@ -4147,6 +4218,8 @@ export default function WeatherApp() {
   const [demoWeather, setDemoWeather] = useState(null);
   const [demoSeason, setDemoSeason] = useState(null);
   const [demoEvent, setDemoEvent] = useState(null);
+  const [demoTime, setDemoTime] = useState(null); // Time override for demo mode (HH:MM format)
+  const [demoWindSpeed, setDemoWindSpeed] = useState(null); // Wind speed override for demo mode
 
   // WICHTIG: Echtzeit-State für die Animation (NEU)
   const [now, setNow] = useState(new Date());
@@ -4946,6 +5019,8 @@ export default function WeatherApp() {
               demoWeather={demoWeather}
               demoSeason={demoSeason}
               demoEvent={demoEvent}
+              demoTime={demoTime}
+              demoWindSpeed={demoWindSpeed}
             />
         </div>
         
@@ -4964,7 +5039,7 @@ export default function WeatherApp() {
         </div>
 
         {showDemoPanel && (
-          <div className="absolute top-20 right-4 mt-12 bg-black/80 backdrop-blur-md rounded-lg p-4 text-white text-sm z-50 min-w-[200px]">
+          <div className="absolute top-20 right-4 mt-12 bg-black/80 backdrop-blur-md rounded-lg p-4 text-white text-sm z-50 min-w-[250px] max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-3">
               <h3 className="font-bold">Demo Mode</h3>
               <button 
@@ -4972,6 +5047,8 @@ export default function WeatherApp() {
                   setDemoWeather(null);
                   setDemoSeason(null);
                   setDemoEvent(null);
+                  setDemoTime(null);
+                  setDemoWindSpeed(null);
                 }}
                 className="text-xs bg-white/20 px-2 py-1 rounded hover:bg-white/30"
               >
@@ -4981,53 +5058,105 @@ export default function WeatherApp() {
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs opacity-80 mb-1">Weather</label>
+                <label className="block text-xs opacity-80 mb-1">Wetter / Weather</label>
                 <select 
                   value={demoWeather || ''} 
                   onChange={(e) => setDemoWeather(e.target.value || null)}
                   className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-sm"
                 >
                   <option value="">Auto</option>
-                  <option value="clear">Clear</option>
-                  <option value="partly_cloudy">Partly Cloudy</option>
-                  <option value="overcast">Overcast</option>
-                  <option value="rain">Rain</option>
-                  <option value="snow">Snow</option>
-                  <option value="storm">Storm</option>
-                  <option value="fog">Fog</option>
-                  <option value="heat">Heat</option>
-                  <option value="freeze">Freeze</option>
-                  <option value="hail">Hail</option>
+                  <optgroup label="Bewölkung / Clouds">
+                    <option value="clear">☀️ Sonnenschein / Sunshine</option>
+                    <option value="slightly_cloudy">🌤️ Leicht bewölkt / Slightly Cloudy</option>
+                    <option value="cloudy">⛅ Bewölkt / Cloudy</option>
+                    <option value="overcast">☁️ Stark bewölkt / Overcast</option>
+                  </optgroup>
+                  <optgroup label="Regen / Rain">
+                    <option value="drizzle">🌦️ Nieselregen / Drizzle</option>
+                    <option value="light_rain">🌧️ Leichter Regen / Light Rain</option>
+                    <option value="medium_rain">🌧️ Mittlerer Regen / Medium Rain</option>
+                    <option value="heavy_rain">🌧️ Starker Regen / Heavy Rain</option>
+                    <option value="thunderstorm">⛈️ Gewitter / Thunderstorm</option>
+                    <option value="storm">🌩️ Sturm / Storm</option>
+                  </optgroup>
+                  <optgroup label="Schnee / Snow">
+                    <option value="light_snow">🌨️ Leichter Schnee / Light Snow</option>
+                    <option value="medium_snow">❄️ Mittlerer Schnee / Medium Snow</option>
+                    <option value="heavy_snow">❄️ Starker Schnee / Heavy Snow</option>
+                    <option value="sleet">🌨️ Glätte / Sleet</option>
+                  </optgroup>
+                  <optgroup label="Andere / Other">
+                    <option value="fog">🌫️ Nebel / Fog</option>
+                    <option value="hail">🌨️ Hagel / Hail</option>
+                    <option value="heat">🔥 Hitze / Heat (35°C)</option>
+                    <option value="freeze">🥶 Kälte / Cold (-10°C)</option>
+                    <option value="tropical_night">🌡️ Tropische Nacht / Tropical Night</option>
+                  </optgroup>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs opacity-80 mb-1">Season</label>
+                <label className="block text-xs opacity-80 mb-1">Wind</label>
+                <select 
+                  value={demoWindSpeed !== null ? demoWindSpeed : ''} 
+                  onChange={(e) => setDemoWindSpeed(e.target.value ? Number(e.target.value) : null)}
+                  className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-sm"
+                >
+                  <option value="">Auto</option>
+                  <option value="5">💨 Leicht / Light (5 km/h)</option>
+                  <option value="20">💨 Mäßig / Moderate (20 km/h)</option>
+                  <option value="35">💨 Starker Wind / Strong Wind (35 km/h)</option>
+                  <option value="60">🌪️ Stürmisch / Stormy (60 km/h)</option>
+                  <option value="100">🌪️ Orkan / Hurricane (100 km/h)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs opacity-80 mb-1">Uhrzeit / Time</label>
+                <select 
+                  value={demoTime || ''} 
+                  onChange={(e) => setDemoTime(e.target.value || null)}
+                  className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-sm"
+                >
+                  <option value="">Auto (Echtzeit)</option>
+                  <option value="06:00">🌅 Sonnenaufgang / Sunrise (06:00)</option>
+                  <option value="08:00">🌄 Morgen / Morning (08:00)</option>
+                  <option value="12:00">☀️ Mittag / Noon (12:00)</option>
+                  <option value="16:00">🌤️ Nachmittag / Afternoon (16:00)</option>
+                  <option value="18:00">🌆 Abend / Evening (18:00)</option>
+                  <option value="20:00">🌇 Sonnenuntergang / Sunset (20:00)</option>
+                  <option value="22:00">🌙 Nacht / Night (22:00)</option>
+                  <option value="00:00">🌃 Mitternacht / Midnight (00:00)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs opacity-80 mb-1">Jahreszeit / Season</label>
                 <select 
                   value={demoSeason || ''} 
                   onChange={(e) => setDemoSeason(e.target.value || null)}
                   className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-sm"
                 >
                   <option value="">Auto</option>
-                  <option value="spring">Spring</option>
-                  <option value="summer">Summer</option>
-                  <option value="autumn">Autumn</option>
-                  <option value="winter">Winter</option>
+                  <option value="spring">🌸 Frühling / Spring</option>
+                  <option value="summer">☀️ Sommer / Summer</option>
+                  <option value="autumn">🍂 Herbst / Autumn</option>
+                  <option value="winter">❄️ Winter</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs opacity-80 mb-1">Event</label>
+                <label className="block text-xs opacity-80 mb-1">Ereignis / Event</label>
                 <select 
                   value={demoEvent || ''} 
                   onChange={(e) => setDemoEvent(e.target.value || null)}
                   className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-sm"
                 >
-                  <option value="">None</option>
-                  <option value="christmas">Christmas</option>
-                  <option value="easter">Easter</option>
-                  <option value="halloween">Halloween</option>
-                  <option value="newyear">New Year</option>
+                  <option value="">Keines / None</option>
+                  <option value="christmas">🎄 Weihnachten / Christmas</option>
+                  <option value="easter">🐰 Ostern / Easter</option>
+                  <option value="halloween">🎃 Halloween</option>
+                  <option value="newyear">🎆 Silvester / New Year</option>
                 </select>
               </div>
             </div>
