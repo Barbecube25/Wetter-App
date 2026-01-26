@@ -3187,7 +3187,9 @@ export default function WeatherApp() {
                           <div className="text-sm opacity-60 text-center leading-tight h-8 flex items-center justify-center line-clamp-2 w-full mb-2">{conf.text}</div>
                            <div className="mb-2 h-4">
                              {SNOW_WEATHER_CODES.includes(row.code) ? (
-                               <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {(parseFloat(row.snow) || parseFloat(row.precip)).toFixed(1)}</span>
+                               parseFloat(row.snow) > 0 || parseFloat(row.precip) > 0 ? (
+                                 <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {(parseFloat(row.snow) > 0 ? parseFloat(row.snow) : parseFloat(row.precip)).toFixed(1)}</span>
+                               ) : ( <span className="opacity-20 text-xs">-</span> )
                              ) : parseFloat(row.precip) > 0 ? (
                                <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={10}/> {row.precip.toFixed(1)}</span>
                              ) : ( <span className="opacity-20 text-xs">-</span> )}
@@ -3305,7 +3307,13 @@ export default function WeatherApp() {
                           
                           {/* Precip */}
                            <div className="mb-1 h-4 flex items-center justify-center w-full">
-                             {isDaySnow ? <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {(parseFloat(day.snow) || parseFloat(day.rain)).toFixed(1)}cm</span> : parseFloat(day.rain) > 0.1 ? <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {day.rain}mm</span> : <span className="opacity-20 text-xs">-</span>}
+                             {isDaySnow ? (
+                               parseFloat(day.snow) > 0 || parseFloat(day.rain) > 0.1 ? (
+                                 <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {(parseFloat(day.snow) > 0 ? parseFloat(day.snow) : (parseFloat(day.rain) / 10)).toFixed(1)}cm</span>
+                               ) : ( <span className="opacity-20 text-xs">-</span> )
+                             ) : parseFloat(day.rain) > 0.1 ? (
+                               <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {day.rain}mm</span>
+                             ) : ( <span className="opacity-20 text-xs">-</span> )}
                            </div>
                            <div className={`text-[10px] mb-2 ${probColor} h-3`}>{day.prob > 0 ? `${day.prob}% ${t('probability')}` : ''}</div>
                            
