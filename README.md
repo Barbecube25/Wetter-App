@@ -1,51 +1,127 @@
-Datenschutzerklärung für WetterScout AI
+# WetterScoutAI 🌦️
 
-Stand: 26.05.2025
+Eine moderne Wetter-App mit React, Vite und Capacitor.
 
-Wir freuen uns, dass Sie unsere App WetterScout AI nutzen. Der Schutz Ihrer persönlichen Daten ist uns wichtig. Nachfolgend informieren wir Sie darüber, welche Daten wir erheben und wie wir sie verwenden.
+## Features
 
-1. Verantwortlicher
+- 📍 GPS-basierte Standorterkennung
+- 🌡️ Lokale Wettervorhersagen
+- ⚠️ DWD Wetterwarnungen
+- 📊 Wetter-Charts und Visualisierungen
+- 🤖 KI-generierte Wetterberichte
+- 🌧️ Niederschlagsradar
+- 📱 Progressive Web App (PWA) und native Android App
 
-Michael Pannitz
+## Technologie-Stack
 
-michael.pannitz@gmail.com
+- **Frontend**: React 18.2, Vite 5.2
+- **Styling**: Tailwind CSS 3.4
+- **Charts**: Recharts 2.12
+- **Icons**: Lucide React
+- **Mobile**: Capacitor 8.0
+- **Wetter-APIs**: Open-Meteo, Windy, DWD Brightsky
 
-2. Welche Daten wir erfassen
+## Entwicklung
 
-2.1 Standortdaten (GPS)
+### Installation
 
-Unsere App benötigt Zugriff auf Ihren Standort (genauer und ungefährer Standort), um Ihnen lokale Wetterdaten, Warnungen und den Sonnenstand für Ihre aktuelle Position anzuzeigen.
+```bash
+npm install
+```
 
-Verwendung: Die Koordinaten (Breiten- und Längengrad) werden ausschließlich kurzzeitig an unsere Wetter-Datenanbieter (siehe Punkt 3) übermittelt, um die Vorhersage abzurufen.
+### Development Server starten
 
-Speicherung: Ihr Standort wird nicht auf unseren Servern gespeichert. Er wird lediglich lokal auf Ihrem Gerät im Arbeitsspeicher oder temporären Speicher (Cache) vorgehalten, um die App-Funktionalität zu gewährleisten. Es erfolgt kein Bewegungstracking und keine Erstellung von Bewegungsprofilen.
+```bash
+npm run dev
+```
 
-2.2 Gerätespeicher
+Die App ist dann unter `http://localhost:5173` verfügbar.
 
-Wir speichern Ihre favorisierten Orte und App-Einstellungen (z.B. gespeicherte Reisen) ausschließlich lokal auf Ihrem Gerät (Local Storage / Shared Preferences). Diese Daten verlassen Ihr Gerät nicht.
+### Production Build
 
-3. Datenweitergabe an Dritte (Dienstleister)
+```bash
+npm run build
+```
 
-Damit die App funktioniert, müssen technisch bedingt Daten an folgende spezialisierte Wetterdienste übertragen werden. Diese Übertragung erfolgt anonymisiert (nur Koordinaten, keine Geräte-ID oder IP-Adresse, sofern nicht technisch für den Verbindungsaufbau zwingend nötig).
+Die gebauten Dateien befinden sich im `dist/` Ordner.
 
-Open-Meteo.com: Dient zum Abruf der Wettervorhersage-Daten (Modelle ICON, GFS, AROME etc.).
+## Android App Bundle (.aab) erstellen
 
-Datenschutzerklärung: https://open-meteo.com/en/features#terms
+Siehe detaillierte Anleitungen:
+- 🇩🇪 [BUILD_AAB_ANLEITUNG.md](./BUILD_AAB_ANLEITUNG.md) (Deutsch)
+- 🇬🇧 [BUILD_AAB_GUIDE.md](./BUILD_AAB_GUIDE.md) (English)
 
-Windy.com: Dient zur Anzeige des Regen-Radars.
+### Quick Start
 
-Datenschutzerklärung: https://windy.com/privacy
+```bash
+# 1. Dependencies installieren
+npm install
 
-Brightsky / DWD (Deutscher Wetterdienst): Dient zum Abruf von amtlichen Wetterwarnungen innerhalb Deutschlands.
+# 2. Web-App bauen und mit Android synchronisieren
+npm run android:sync
 
-Es werden keine personenbezogenen Daten zu Werbezwecken an Dritte verkauft oder weitergegeben.
+# 3. Android Studio öffnen
+npm run android:open
 
-4. Rechte des Nutzers
+# 4. In Android Studio: Build → Generate Signed Bundle / APK
+```
 
-Sie haben das Recht, jederzeit die Berechtigung zur Standortnutzung in den Einstellungen Ihres Betriebssystems (Android) zu widerrufen. Die App ist dann jedoch nur noch eingeschränkt nutzbar (z.B. nur manuelle Ortssuche).
+## Verfügbare NPM Scripte
 
-Da wir keine Nutzerkonten führen und keine Daten auf eigenen Servern speichern, können wir keine Auskunft über gespeicherte Daten geben, da wir schlichtweg keine Daten von Ihnen besitzen.
+- `npm run dev` - Development Server starten
+- `npm run build` - Production Build erstellen
+- `npm run preview` - Production Build lokal testen
+- `npm run android:sync` - Web-App bauen und mit Android synchronisieren
+- `npm run android:open` - Android Studio öffnen
+- `npm run android:run` - App auf verbundenem Gerät ausführen
 
-5. Kontakt
+## Android Berechtigungen
 
-Bei Fragen zum Datenschutz können Sie uns unter der oben genannten E-Mail-Adresse kontaktieren.
+Die App benötigt folgende Berechtigungen:
+- `INTERNET` - Zugriff auf Wetter-APIs
+- `ACCESS_FINE_LOCATION` - Genauer GPS-Standort
+- `ACCESS_COARSE_LOCATION` - Ungefährer Standort
+
+## Datenschutz
+
+Siehe [DATENSCHUTZ.md](./DATENSCHUTZ.md) für Details zur Datenverarbeitung und Privatsphäre.
+
+## Projekt-Struktur
+
+```
+.
+├── src/                    # React Quellcode
+├── public/                 # Statische Assets
+├── android/                # Native Android Projekt (Capacitor)
+├── dist/                   # Build-Ausgabe (wird ignoriert)
+├── capacitor.config.ts     # Capacitor Konfiguration
+├── vite.config.js          # Vite Konfiguration
+├── tailwind.config.js      # Tailwind CSS Konfiguration
+└── package.json            # NPM Dependencies und Scripte
+```
+
+## Veröffentlichung
+
+### Google Play Store
+
+1. App Bundle erstellen (siehe BUILD_AAB_ANLEITUNG.md)
+2. Zur [Google Play Console](https://play.google.com/console) gehen
+3. Neues Release erstellen und .aab Datei hochladen
+4. Release Notes ausfüllen und veröffentlichen
+
+### Web (PWA)
+
+Die App kann auch als Progressive Web App bereitgestellt werden:
+
+```bash
+npm run build
+# Inhalte des dist/ Ordners auf Webserver deployen
+```
+
+## Lizenz
+
+Siehe LICENSE für Details.
+
+## Kontakt
+
+Bei Fragen oder Problemen: michael.pannitz@gmail.com
