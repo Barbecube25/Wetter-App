@@ -4887,7 +4887,8 @@ export default function WeatherApp() {
       const getDec = (d) => {
           if (!d) return 0;
           const dateObj = typeof d === 'string' ? parseLocalTime(d) : d;
-          return dateObj.getHours() + dateObj.getMinutes() / 60;
+          // Sekunden hinzufügen für präzisere Synchronisation mit WeatherLandscape
+          return dateObj.getHours() + dateObj.getMinutes() / 60 + dateObj.getSeconds() / 3600;
       };
       
       // WICHTIG: Nutze locationTime statt now!
