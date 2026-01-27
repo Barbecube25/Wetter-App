@@ -16,10 +16,41 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Signing configuration for release builds
+    // Uncomment and configure when you have a keystore file
+    /*
+    signingConfigs {
+        release {
+            storeFile file(System.getenv("KEYSTORE_FILE") ?: "release-keystore.jks")
+            storePassword System.getenv("KEYSTORE_PASSWORD") ?: "your-keystore-password"
+            keyAlias System.getenv("KEY_ALIAS") ?: "wetter-app-key"
+            keyPassword System.getenv("KEY_PASSWORD") ?: "your-key-password"
+        }
+    }
+    */
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // Uncomment to use signing config when you have a keystore
+            // signingConfig signingConfigs.release
+        }
+    }
+
+    // App Bundle configuration for optimized delivery
+    bundle {
+        language {
+            // Disable split for languages to include all in base module
+            enableSplit = false
+        }
+        density {
+            // Enable density split for smaller downloads
+            enableSplit = true
+        }
+        abi {
+            // Enable ABI split for smaller downloads
+            enableSplit = true
         }
     }
 }
