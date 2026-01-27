@@ -50,8 +50,20 @@ Die gebauten Dateien befinden sich im `dist/` Ordner.
 Siehe detaillierte Anleitungen:
 - 🇩🇪 [BUILD_AAB_ANLEITUNG.md](./BUILD_AAB_ANLEITUNG.md) (Deutsch)
 - 🇬🇧 [BUILD_AAB_GUIDE.md](./BUILD_AAB_GUIDE.md) (English)
+- ✅ [AAB_CHECKLIST.md](./AAB_CHECKLIST.md) - Schritt-für-Schritt Checkliste
+- 🔐 [android/KEYSTORE_SETUP.md](./android/KEYSTORE_SETUP.md) - Keystore Konfiguration
 
-### Quick Start
+### Quick Start (Automatisch)
+
+```bash
+# Alles automatisch vorbereiten
+./prepare-aab.sh
+
+# Oder mit npm script
+npm run prepare:aab
+```
+
+### Quick Start (Manuell)
 
 ```bash
 # 1. Dependencies installieren
@@ -71,6 +83,7 @@ npm run android:open
 - `npm run dev` - Development Server starten
 - `npm run build` - Production Build erstellen
 - `npm run preview` - Production Build lokal testen
+- `npm run prepare:aab` - **NEU:** Projekt für AAB-Build vorbereiten
 - `npm run android:sync` - Web-App bauen und mit Android synchronisieren
 - `npm run android:open` - Android Studio öffnen
 - `npm run android:run` - App auf verbundenem Gerät ausführen

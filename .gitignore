@@ -32,5 +32,11 @@ android/local.properties
 android/.idea/
 android/*.iml
 
+# Android Keystore files - NEVER commit these!
+*.jks
+*.keystore
+android/keystore.properties
+keystore.properties
+
 # Capacitor
 android/app/src/main/assets/public/
