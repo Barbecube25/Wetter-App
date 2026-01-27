@@ -98,6 +98,7 @@ const TRANSLATIONS = {
     peakRainAt: "Stärkster Regen um",
     nextHours: "Nächste Stunden",
     hourlyForecast: "Stündliche Vorhersage",
+    hours: "Std",
     now: "Jetzt",
     ab: "Ab",
     oclock: "Uhr",
@@ -242,6 +243,7 @@ const TRANSLATIONS = {
     peakRainAt: "Peak rain at",
     nextHours: "Next Hours",
     hourlyForecast: "Hourly Forecast",
+    hours: "hrs",
     now: "Now",
     ab: "From",
     oclock: "",
@@ -386,6 +388,7 @@ const TRANSLATIONS = {
     peakRainAt: "Pluie maximale à",
     nextHours: "Prochaines heures",
     hourlyForecast: "Prévisions horaires",
+    hours: "h",
     now: "Maintenant",
     ab: "À partir de",
     oclock: "h",
@@ -530,6 +533,7 @@ const TRANSLATIONS = {
     peakRainAt: "Lluvia máxima a las",
     nextHours: "Próximas horas",
     hourlyForecast: "Previsión horaria",
+    hours: "h",
     now: "Ahora",
     ab: "Desde",
     oclock: "h",
@@ -674,6 +678,7 @@ const TRANSLATIONS = {
     peakRainAt: "Pioggia massima alle",
     nextHours: "Prossime ore",
     hourlyForecast: "Previsioni orarie",
+    hours: "ore",
     now: "Adesso",
     ab: "Da",
     oclock: "",
@@ -818,6 +823,7 @@ const TRANSLATIONS = {
     peakRainAt: "En yoğun yağış saati",
     nextHours: "Önümüzdeki saatler",
     hourlyForecast: "Saatlik tahmin",
+    hours: "saat",
     now: "Şimdi",
     ab: "İtibaren",
     oclock: "",
@@ -962,6 +968,7 @@ const TRANSLATIONS = {
     peakRainAt: "Najsilniejszy deszcz o",
     nextHours: "Następne godziny",
     hourlyForecast: "Prognoza godzinowa",
+    hours: "godz",
     now: "Teraz",
     ab: "Od",
     oclock: "",
@@ -1106,6 +1113,7 @@ const TRANSLATIONS = {
     peakRainAt: "Zwaarste regen om",
     nextHours: "Volgende uren",
     hourlyForecast: "Uurlijkse voorspelling",
+    hours: "uur",
     now: "Nu",
     ab: "Vanaf",
     oclock: "uur",
@@ -1250,6 +1258,7 @@ const TRANSLATIONS = {
     peakRainAt: "Najjača kiša u",
     nextHours: "Sljedeći sati",
     hourlyForecast: "Satna prognoza",
+    hours: "sati",
     now: "Sada",
     ab: "Od",
     oclock: "h",
@@ -1394,6 +1403,7 @@ const TRANSLATIONS = {
     peakRainAt: "Μέγιστη βροχή στις",
     nextHours: "Επόμενες ώρες",
     hourlyForecast: "Ωριαία πρόβλεψη",
+    hours: "ώρες",
     now: "Τώρα",
     ab: "Από",
     oclock: "",
@@ -1538,6 +1548,7 @@ const TRANSLATIONS = {
     peakRainAt: "Kraftigste regn kl.",
     nextHours: "Næste timer",
     hourlyForecast: "Timeprognose",
+    hours: "timer",
     now: "Nu",
     ab: "Fra",
     oclock: "",
@@ -1682,6 +1693,7 @@ const TRANSLATIONS = {
     peakRainAt: "Максимальный дождь в",
     nextHours: "Следующие часы",
     hourlyForecast: "Почасовой прогноз",
+    hours: "ч",
     now: "Сейчас",
     ab: "С",
     oclock: "",
@@ -3120,7 +3132,8 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
     
     // Ist es gerade nass? (in der aktuellen Stunde oder nächsten Stunde)
     const current = data[0]; 
-    const isRainingNow = current.precip > 0.0 || current.snow > 0.0 || (current.precipProb && current.precipProb > 30);
+    // Only consider it "raining now" if there's actual measurable precipitation
+    const isRainingNow = current.precip > 0.0 || current.snow > 0.0;
     
     let result = { 
        type: 'none', // none, rain_now, rain_later, snow_now, snow_later
@@ -3224,6 +3237,12 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
             result.maxIntensity = hourlyAmount;
             result.startTime = current.time;
             result.peakTime = current.time;
+        } else {
+            // Compare current intensity with future peak intensity
+            if (hourlyAmount > result.maxIntensity) {
+                result.maxIntensity = hourlyAmount;
+                result.peakTime = current.time;
+            }
         }
         // Otherwise, keep the future rain data we already collected
     } else if (foundStart) {
@@ -3263,7 +3282,23 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
   // Custom headline logic
   let headline = t.nextRain;
   let timeDisplay = "--:--";
-  const locale = lang === 'en' ? 'en-US' : 'de-DE';
+  
+  // Improved locale mapping for all supported languages
+  const localeMap = {
+    'de': 'de-DE',
+    'en': 'en-US',
+    'fr': 'fr-FR',
+    'es': 'es-ES',
+    'it': 'it-IT',
+    'tr': 'tr-TR',
+    'pl': 'pl-PL',
+    'nl': 'nl-NL',
+    'hr': 'hr-HR',
+    'el': 'el-GR',
+    'da': 'da-DK',
+    'ru': 'ru-RU'
+  };
+  const locale = localeMap[lang] || 'de-DE';
 
   if (type === 'none') {
       headline = lang === 'en' ? "Currently no rain expected" : "Aktuell kein Regen zu erwarten";
@@ -3353,7 +3388,7 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
 
             <div className="text-right">
                 <div className="text-xl font-bold text-slate-700 leading-tight">{amount.toFixed(1)}<span className="text-sm text-slate-500 font-normal ml-0.5">mm</span></div>
-                <div className="text-lg font-medium text-slate-500 leading-tight">{duration} <span className="text-sm">Std</span></div>
+                <div className="text-lg font-medium text-slate-500 leading-tight">{duration} <span className="text-sm">{t.hours}</span></div>
             </div>
         </div>
 
@@ -3404,7 +3439,7 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
                                     {forecast.time.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})}
                                 </span>
                                 <span className="text-sm font-bold text-blue-600 mt-1">
-                                    {forecast.amount.toFixed(1)}mm
+                                    {forecast.amount.toFixed(1)} mm
                                 </span>
                             </div>
                         ))}
