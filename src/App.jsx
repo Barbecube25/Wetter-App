@@ -3353,8 +3353,8 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
     
     // Ist es gerade nass? (in der aktuellen Stunde oder nächsten Stunde)
     const current = data[0]; 
-    // Only consider it "raining now" if there's actual measurable precipitation
-    const isRainingNow = current.precip > 0.0 || current.snow > 0.0;
+    // Only consider it "raining now" if there's actual measurable precipitation (minimum 0.1mm)
+    const isRainingNow = current.precip > 0.1 || current.snow > 0.1;
     
     let result = { 
        type: 'none', // none, rain_now, rain_later, snow_now, snow_later
@@ -3388,9 +3388,9 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
         }
         
         if (startIndex !== -1) {
-            // Check next 2 hours (8 * 15min slots)
+            // Check next 2 hours (8 * 15min slots) - only show if precipitation >= 0.1mm
             for(let i=startIndex; i < Math.min(startIndex + 8, mTime.length); i++) {
-                if (mPrecip[i] > 0.0) {
+                if (mPrecip[i] > 0.1) {
                      result.minutelyStart = new Date(mTime[i]);
                      break; 
                 }
@@ -3405,7 +3405,7 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
     // Loop um Start und Ende zu finden (Hourly Data)
     for (let i = 0; i < futureData.length; i++) {
        const d = futureData[i];
-       const hasPrecip = d.precip > 0.0 || d.snow > 0.0 || (d.precipProb !== undefined && d.precipProb > 50);
+       const hasPrecip = d.precip > 0.1 || d.snow > 0.1 || (d.precipProb !== undefined && d.precipProb > 50);
        
        if (hasPrecip) {
            if (!foundStart) {
