@@ -6224,11 +6224,11 @@ export default function WeatherApp() {
                   which includes ECMWF model data and actual radar precipitation measurements.
                   This provides users with visual confirmation of current precipitation patterns
                   and helps verify the forecast accuracy. The radar data supplements the numerical
-                  weather models (ECMWF, GFS, ICON) used for precipitation forecasts.
+                  weather models (ICON, GFS, AROME, GEM) used for precipitation forecasts throughout the app.
                   
-                  Note: The 0.1mm minimum threshold for rain/snow display (implemented above)
+                  Note: The 0.1mm minimum threshold for rain/snow display (implemented in PrecipitationTile)
                   helps filter out trace amounts that may not be meteorologically significant,
-                  improving forecast reliability.
+                  improving forecast reliability and preventing false rain indicators.
                 */}
                 <div className="flex-1 w-full rounded-2xl overflow-hidden shadow-inner bg-slate-200 relative">
                   <iframe 
