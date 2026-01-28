@@ -3395,7 +3395,6 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
         </g>
       </g>
 
-
       {/* Baumgruppe Rechts (Deciduous tree) */}
       <g transform="translate(280, 135) scale(0.9)">
         <g className={treeAnim} style={{animationDelay: '0.5s'}}>
