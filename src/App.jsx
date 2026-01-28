@@ -5330,27 +5330,27 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
     };
     
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-lg animate-in fade-in duration-500">
-            <div className="bg-gradient-to-br from-white to-slate-50 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-500 max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-m3-surface/95 backdrop-blur-lg animate-in fade-in duration-500">
+            <div className="bg-m3-surface-container rounded-m3-xl max-w-md w-full shadow-m3-5 overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-500 max-h-[90vh] flex flex-col">
                 {/* Header with Progress */}
-                <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white relative overflow-hidden flex-shrink-0">
+                <div className="bg-m3-primary p-6 text-m3-on-primary relative overflow-hidden flex-shrink-0">
                     <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                     <div className="relative z-10">
                         <div className="flex items-center justify-between mb-3">
-                            <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-lg">
+                            <div className="w-14 h-14 bg-m3-primary-container/30 backdrop-blur-md rounded-m3-lg flex items-center justify-center shadow-m3-2">
                                 <Icon size={28} />
                             </div>
                             {currentStep.showSkip && (
                                 <button 
                                     onClick={onSkip}
-                                    className="px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl text-sm font-bold transition"
+                                    className="px-4 py-2 bg-m3-primary-container/30 hover:bg-m3-primary-container/40 backdrop-blur-md rounded-m3-md text-sm font-bold transition"
                                 >
                                     {t.tutorialSkip}
                                 </button>
                             )}
                         </div>
                         <h2 className="text-2xl font-black mb-2">{currentStep.title}</h2>
-                        <p className="text-white/90 text-sm leading-relaxed">{currentStep.desc}</p>
+                        <p className="text-m3-on-primary/90 text-sm leading-relaxed">{currentStep.desc}</p>
                     </div>
                     
                     {/* Progress Dots */}
@@ -5358,9 +5358,9 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                         {steps.map((_, idx) => (
                             <div 
                                 key={idx}
-                                className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${
-                                    idx === step ? 'bg-white shadow-md' : 
-                                    idx < step ? 'bg-white/60' : 'bg-white/20'
+                                className={`flex-1 h-1.5 rounded-m3-full transition-all duration-300 ${
+                                    idx === step ? 'bg-m3-on-primary shadow-m3-1' : 
+                                    idx < step ? 'bg-m3-on-primary/60' : 'bg-m3-on-primary/20'
                                 }`}
                             />
                         ))}
@@ -5368,17 +5368,17 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                 </div>
                 
                 {/* Content - Scrollable */}
-                <div className="p-6 overflow-y-auto flex-1">
+                <div className="p-6 overflow-y-auto flex-1 bg-m3-surface">
                     {currentStep.content === 'language' && (
                         <div className="grid grid-cols-3 gap-3">
                             {['de', 'en', 'fr', 'es', 'it', 'tr', 'pl', 'nl', 'hr', 'el', 'da', 'ru'].map(l => (
                                 <button
                                     key={l}
                                     onClick={() => setSettings({ ...settings, language: l })}
-                                    className={`p-4 rounded-xl font-bold text-center flex flex-col items-center justify-center gap-2 transition ${
+                                    className={`p-4 rounded-m3-md font-bold text-center flex flex-col items-center justify-center gap-2 transition ${
                                         settings.language === l 
-                                            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30 scale-105' 
-                                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                            ? 'bg-m3-primary text-m3-on-primary shadow-m3-2 scale-105' 
+                                            : 'bg-m3-surface-container text-m3-on-surface hover:bg-m3-surface-container-high'
                                     }`}
                                 >
                                     <span className="text-3xl">{LANGUAGE_FLAGS[l]}</span>
@@ -5393,12 +5393,12 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                         <div className="space-y-4">
                             {!selectedHomeLoc ? (
                                 <>
-                                    <p className="text-slate-600 text-sm mb-4">{t.welcomeDesc}</p>
+                                    <p className="text-m3-on-surface-variant text-sm mb-4">{t.welcomeDesc}</p>
                                     
                                     <button 
                                         onClick={handleUseGPS}
                                         disabled={gpsLoading}
-                                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 transition active:scale-95 disabled:opacity-50"
+                                        className="w-full py-3 bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary font-bold rounded-m3-md flex items-center justify-center gap-2 shadow-m3-2 transition active:scale-95 disabled:opacity-50"
                                     >
                                         {gpsLoading ? <RefreshCw className="animate-spin" size={20}/> : <Crosshair size={20}/>}
                                         {t.useGps}
@@ -5406,10 +5406,10 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
 
                                     <div className="relative">
                                         <div className="absolute inset-0 flex items-center">
-                                            <div className="w-full border-t border-slate-200"></div>
+                                            <div className="w-full border-t border-m3-outline-variant"></div>
                                         </div>
                                         <div className="relative flex justify-center text-xs uppercase">
-                                            <span className="bg-white px-2 text-slate-400">{t.orSearch}</span>
+                                            <span className="bg-m3-surface px-2 text-m3-on-surface-variant">{t.orSearch}</span>
                                         </div>
                                     </div>
 
@@ -5417,46 +5417,46 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                                         <input 
                                             type="text" 
                                             placeholder={t.searchPlace}
-                                            className="w-full pl-4 pr-12 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50 text-slate-800"
+                                            className="w-full pl-4 pr-12 py-3 rounded-m3-md border border-m3-outline focus:ring-2 focus:ring-m3-primary focus:outline-none bg-m3-surface-container text-m3-on-surface"
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
                                             onKeyDown={(e) => e.key === 'Enter' && handleHomeSearch()}
                                         />
                                         <button 
                                             onClick={handleHomeSearch} 
-                                            className="absolute right-2 top-2 p-1.5 bg-slate-200 rounded-lg text-slate-600 hover:bg-slate-300 transition"
+                                            className="absolute right-2 top-2 p-1.5 bg-m3-surface-container-high rounded-m3-sm text-m3-on-surface-variant hover:bg-m3-surface-container-highest transition"
                                         >
                                             {isSearching ? <RefreshCw className="animate-spin" size={16}/> : <Search size={16}/>}
                                         </button>
                                     </div>
 
                                     {searchResults.length > 0 && (
-                                        <div className="text-left border border-slate-200 rounded-xl overflow-hidden max-h-[200px] overflow-y-auto">
+                                        <div className="text-left border border-m3-outline-variant rounded-m3-md overflow-hidden max-h-[200px] overflow-y-auto">
                                             {searchResults.map(res => (
                                                 <button 
                                                     key={res.id} 
                                                     onClick={() => handleSelectHome(res)} 
-                                                    className="w-full p-3 hover:bg-blue-50 text-left border-b border-slate-100 last:border-0 text-sm font-bold text-slate-700 transition"
+                                                    className="w-full p-3 hover:bg-m3-primary-container text-left border-b border-m3-outline-variant last:border-0 text-sm font-bold text-m3-on-surface transition"
                                                 >
-                                                    {res.name} <span className="font-normal text-slate-400">({res.country})</span>
+                                                    {res.name} <span className="font-normal text-m3-on-surface-variant">({res.country})</span>
                                                 </button>
                                             ))}
                                         </div>
                                     )}
                                 </>
                             ) : (
-                                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200">
-                                    <div className="w-16 h-16 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                <div className="bg-m3-tertiary-container rounded-m3-lg p-6 border border-m3-tertiary">
+                                    <div className="w-16 h-16 bg-m3-tertiary text-m3-on-tertiary rounded-m3-full flex items-center justify-center mx-auto mb-4 shadow-m3-3">
                                         <Check size={32} />
                                     </div>
-                                    <p className="text-slate-700 font-bold mb-4 text-center">{t.locFound || "Ort gefunden!"}</p>
+                                    <p className="text-m3-on-tertiary-container font-bold mb-4 text-center">{t.locFound || "Ort gefunden!"}</p>
                                     
-                                    <div className="bg-white/50 p-4 rounded-xl">
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 block">{t.homeLoc}</label>
+                                    <div className="bg-m3-surface/50 p-4 rounded-m3-md">
+                                        <label className="text-xs font-bold text-m3-on-surface-variant uppercase tracking-wide mb-2 block">{t.homeLoc}</label>
                                         <div className="flex items-center gap-2">
                                             <input 
                                                 type="text" 
-                                                className="w-full bg-transparent font-bold text-lg text-slate-800 focus:outline-none border-b-2 border-green-500 pb-1"
+                                                className="w-full bg-transparent font-bold text-lg text-m3-on-surface focus:outline-none border-b-2 border-m3-tertiary pb-1"
                                                 value={customHomeName}
                                                 onChange={(e) => {
                                                     const newName = e.target.value;
@@ -5466,7 +5466,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                                                     }
                                                 }}
                                             />
-                                            <Edit2 size={16} className="text-slate-400"/>
+                                            <Edit2 size={16} className="text-m3-on-surface-variant"/>
                                         </div>
                                     </div>
                                     
@@ -5477,7 +5477,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                                             setSearchQuery("");
                                             setSearchResults([]);
                                         }}
-                                        className="mt-4 text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1 mx-auto"
+                                        className="mt-4 text-sm text-m3-on-surface-variant hover:text-m3-on-surface flex items-center gap-1 mx-auto"
                                     >
                                         <ArrowLeft size={14} /> {t.changeLocation || "Ort ändern"}
                                     </button>
@@ -5487,66 +5487,66 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                     )}
                     
                     {currentStep.content === 'tab' && (
-                        <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-6 border border-slate-200">
-                            <div className="w-full aspect-video bg-slate-200 rounded-xl mb-4 flex items-center justify-center">
-                                <Icon size={48} className="text-slate-400" />
+                        <div className="bg-m3-surface-container rounded-m3-lg p-6 border border-m3-outline-variant">
+                            <div className="w-full aspect-video bg-m3-surface-container-high rounded-m3-md mb-4 flex items-center justify-center">
+                                <Icon size={48} className="text-m3-on-surface-variant" />
                             </div>
-                            <p className="text-slate-600 text-sm leading-relaxed">{currentStep.desc}</p>
+                            <p className="text-m3-on-surface-variant text-sm leading-relaxed">{currentStep.desc}</p>
                         </div>
                     )}
                     
                     {currentStep.content === 'settings' && (
                         <div className="space-y-4">
-                            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                            <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <Globe size={20} className="text-blue-500" />
-                                    <span className="font-bold text-slate-800">{t.language}</span>
+                                    <Globe size={20} className="text-m3-primary" />
+                                    <span className="font-bold text-m3-on-surface">{t.language}</span>
                                 </div>
-                                <p className="text-xs text-slate-500 ml-8">{t.tutorialLangDesc}</p>
+                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.tutorialLangDesc}</p>
                             </div>
                             
-                            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                            <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <Thermometer size={20} className="text-red-500" />
-                                    <span className="font-bold text-slate-800">{t.units}</span>
+                                    <Thermometer size={20} className="text-m3-error" />
+                                    <span className="font-bold text-m3-on-surface">{t.units}</span>
                                 </div>
-                                <p className="text-xs text-slate-500 ml-8">°C / °F</p>
+                                <p className="text-xs text-m3-on-surface-variant ml-8">°C / °F</p>
                             </div>
                             
-                            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                            <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <Palette size={20} className="text-purple-500" />
-                                    <span className="font-bold text-slate-800">{t.theme}</span>
+                                    <Palette size={20} className="text-m3-tertiary" />
+                                    <span className="font-bold text-m3-on-surface">{t.theme}</span>
                                 </div>
-                                <p className="text-xs text-slate-500 ml-8">{t.themeLight} / {t.themeDark} / {t.themeAuto}</p>
+                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.themeLight} / {t.themeDark} / {t.themeAuto}</p>
                             </div>
                             
-                            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                            <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <Home size={20} className="text-green-500" />
-                                    <span className="font-bold text-slate-800">{t.homeLoc}</span>
+                                    <Home size={20} className="text-m3-tertiary" />
+                                    <span className="font-bold text-m3-on-surface">{t.homeLoc}</span>
                                 </div>
-                                <p className="text-xs text-slate-500 ml-8">{t.changeHome}</p>
+                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.changeHome}</p>
                             </div>
                         </div>
                     )}
                     
                     {isLastStep && (
-                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 text-center border border-green-200 mt-4">
-                            <div className="w-16 h-16 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                        <div className="bg-m3-tertiary-container rounded-m3-lg p-6 text-center border border-m3-tertiary mt-4">
+                            <div className="w-16 h-16 bg-m3-tertiary text-m3-on-tertiary rounded-m3-full flex items-center justify-center mx-auto mb-4 shadow-m3-3">
                                 <CheckCircle2 size={32} />
                             </div>
-                            <p className="text-slate-700 font-bold text-lg mb-2">{t.tutorialComplete}</p>
+                            <p className="text-m3-on-tertiary-container font-bold text-lg mb-2">{t.tutorialComplete}</p>
                         </div>
                     )}
                 </div>
                 
                 {/* Navigation Buttons */}
-                <div className="flex gap-3 p-6 pt-0 flex-shrink-0">
+                <div className="flex gap-3 p-6 pt-0 flex-shrink-0 bg-m3-surface">
                     {step > 0 && (
                         <button
                             onClick={handlePrev}
-                            className="px-6 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition flex items-center gap-2"
+                            className="px-6 py-3 rounded-m3-md font-bold text-m3-on-surface hover:bg-m3-surface-container transition flex items-center gap-2"
                         >
                             <ArrowLeft size={18} />
                             {t.tutorialPrev}
@@ -5555,7 +5555,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                     <button
                         onClick={handleNext}
                         disabled={currentStep.content === 'home' && !homeLocation}
-                        className={`flex-1 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition flex items-center justify-center gap-2 ${
+                        className={`flex-1 py-3 bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary font-bold rounded-m3-md shadow-m3-2 transition flex items-center justify-center gap-2 ${
                             currentStep.content === 'home' && !homeLocation ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
                     >
@@ -6421,11 +6421,11 @@ export default function WeatherApp() {
   // Snow should be treated like rain - only show if weather code explicitly indicates snow, not based on temperature
   const isSnowing = current.code && SNOW_WEATHER_CODES.includes(current.code);
   
-  // Konfiguration basierend auf echtem Status
+  // Konfiguration basierend auf echtem Status - Material 3 Theme
   const weatherConf = getWeatherConfig(current.code || 0, isRealNight ? 0 : 1, lang);
-  const bgGradient = isRealNight ? 'from-slate-900 to-slate-800' : 'from-blue-500 to-sky-400';
-  const textColor = 'text-white';
-  const cardBg = isRealNight ? 'bg-slate-800/60 border-slate-700/50 text-white' : 'bg-white/80 border-white/40 text-slate-900';
+  const bgGradient = isRealNight ? 'from-m3-inverse-surface to-slate-900' : 'from-m3-surface to-m3-surface-container';
+  const textColor = isRealNight ? 'text-m3-inverse-on-surface' : 'text-m3-on-surface';
+  const cardBg = isRealNight ? 'bg-m3-surface-container/80 border-m3-outline-variant/50 text-m3-on-surface' : 'bg-m3-surface-container/80 border-m3-outline-variant/40 text-m3-on-surface';
   const windColorClass = getWindColorClass(current.wind || 0);
 
   // Create a 3-day forecast: rest of today, tomorrow, and day after tomorrow
@@ -6724,7 +6724,7 @@ export default function WeatherApp() {
   // SHOW TUTORIAL FIRST (only on very first launch)
   if (showTutorial) {
       return (
-          <div className="min-h-screen bg-slate-900 font-sans">
+          <div className="min-h-screen bg-m3-surface font-sans">
               <TutorialModal 
                   onComplete={(homeLocationFromTutorial) => {
                       setTutorialCompleted();
@@ -6757,12 +6757,12 @@ export default function WeatherApp() {
   // SHOW SETUP MODAL AFTER TUTORIAL OR WHEN NO HOME (with optional cancel button)
   if (showHomeSetup || !homeLoc) {
       return (
-          <div className="min-h-screen bg-slate-900 font-sans relative">
+          <div className="min-h-screen bg-m3-surface font-sans relative">
               {/* Cancel Button nur wenn homeLoc bereits existiert (also nicht beim allerersten Start) */}
               {homeLoc && (
                   <button 
                     onClick={() => setShowHomeSetup(false)}
-                    className="absolute top-6 right-6 text-white/50 hover:text-white z-[110]"
+                    className="absolute top-6 right-6 text-m3-on-surface/50 hover:text-m3-on-surface z-[110]"
                   >
                     <X size={32} />
                   </button>
@@ -6780,9 +6780,9 @@ export default function WeatherApp() {
   }
 
   // Erst laden, wenn Home gesetzt ist
-  if (loading || !currentLoc) return <div className="min-h-screen bg-slate-100 flex items-center justify-center"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
+  if (loading || !currentLoc) return <div className="min-h-screen bg-m3-surface flex items-center justify-center"><div className="w-12 h-12 border-4 border-m3-primary border-t-transparent rounded-full animate-spin"></div></div>;
   
-  if (error) return <div className="min-h-screen flex items-center justify-center p-8 bg-red-50 text-red-900 font-bold">{error} <button onClick={() => setCurrentLoc(homeLoc)} className="ml-4 underline">Reset</button></div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center p-8 bg-m3-error-container text-m3-on-error-container font-bold">{error} <button onClick={() => setCurrentLoc(homeLoc)} className="ml-4 underline">Reset</button></div>;
 
   return (
     <div className={`min-h-screen transition-all duration-1000 bg-gradient-to-br ${bgGradient} font-sans pb-20 overflow-hidden relative`}>
