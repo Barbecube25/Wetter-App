@@ -157,7 +157,10 @@ const TRANSLATIONS = {
     locationDenied: "Standortzugriff verweigert",
     changeLocation: "Ort ändern",
     locFound: "Ort gefunden!",
-    homeLocation: "Zuhause"
+    homeLocation: "Zuhause",
+    gpsAvailable: "GPS-Daten verfügbar",
+    gpsNotAvailable: "Keine GPS-Daten",
+    usingGpsData: "Verwendet GPS-Position"
   },
   en: {
     home: "Home",
@@ -307,7 +310,10 @@ const TRANSLATIONS = {
     locationDenied: "Location access denied",
     changeLocation: "Change location",
     locFound: "Location found!",
-    homeLocation: "Home"
+    homeLocation: "Home",
+    gpsAvailable: "GPS data available",
+    gpsNotAvailable: "No GPS data",
+    usingGpsData: "Using GPS position"
   },
   fr: {
     home: "Accueil",
@@ -457,7 +463,10 @@ const TRANSLATIONS = {
     locationDenied: "Accès à la localisation refusé",
     changeLocation: "Changer de lieu",
     locFound: "Lieu trouvé !",
-    homeLocation: "Maison"
+    homeLocation: "Maison",
+    gpsAvailable: "Données GPS disponibles",
+    gpsNotAvailable: "Aucune donnée GPS",
+    usingGpsData: "Utilise la position GPS"
   },
   es: {
     home: "Inicio",
@@ -607,7 +616,10 @@ const TRANSLATIONS = {
     locationDenied: "Acceso a ubicación denegado",
     changeLocation: "Cambiar ubicación",
     locFound: "¡Ubicación encontrada!",
-    homeLocation: "Casa"
+    homeLocation: "Casa",
+    gpsAvailable: "Datos GPS disponibles",
+    gpsNotAvailable: "Sin datos GPS",
+    usingGpsData: "Usando posición GPS"
   },
   it: {
     home: "Home",
@@ -757,7 +769,10 @@ const TRANSLATIONS = {
     locationDenied: "Accesso alla posizione negato",
     changeLocation: "Cambia posizione",
     locFound: "Posizione trovata!",
-    homeLocation: "Casa"
+    homeLocation: "Casa",
+    gpsAvailable: "Dati GPS disponibili",
+    gpsNotAvailable: "Nessun dato GPS",
+    usingGpsData: "Usa posizione GPS"
   },
   tr: {
     home: "Ana Sayfa",
@@ -907,7 +922,10 @@ const TRANSLATIONS = {
     locationDenied: "Konum erişimi reddedildi",
     changeLocation: "Konumu değiştir",
     locFound: "Konum bulundu!",
-    homeLocation: "Ev"
+    homeLocation: "Ev",
+    gpsAvailable: "GPS verileri mevcut",
+    gpsNotAvailable: "GPS verisi yok",
+    usingGpsData: "GPS konumunu kullanıyor"
   },
   pl: {
     home: "Start",
@@ -1057,7 +1075,10 @@ const TRANSLATIONS = {
     locationDenied: "Dostęp do lokalizacji został odrzucony",
     changeLocation: "Zmień lokalizację",
     locFound: "Lokalizacja znaleziona!",
-    homeLocation: "Dom"
+    homeLocation: "Dom",
+    gpsAvailable: "Dane GPS dostępne",
+    gpsNotAvailable: "Brak danych GPS",
+    usingGpsData: "Używa pozycji GPS"
   },
   nl: {
     home: "Home",
@@ -1207,7 +1228,10 @@ const TRANSLATIONS = {
     locationDenied: "Toegang tot locatie geweigerd",
     changeLocation: "Locatie wijzigen",
     locFound: "Locatie gevonden!",
-    homeLocation: "Thuis"
+    homeLocation: "Thuis",
+    gpsAvailable: "GPS-gegevens beschikbaar",
+    gpsNotAvailable: "Geen GPS-gegevens",
+    usingGpsData: "Gebruikt GPS-positie"
   },
   hr: {
     home: "Početna",
@@ -1357,7 +1381,10 @@ const TRANSLATIONS = {
     locationDenied: "Pristup lokaciji odbijen",
     changeLocation: "Promijenite lokaciju",
     locFound: "Lokacija pronađena!",
-    homeLocation: "Kuća"
+    homeLocation: "Kuća",
+    gpsAvailable: "GPS podaci dostupni",
+    gpsNotAvailable: "Nema GPS podataka",
+    usingGpsData: "Koristi GPS poziciju"
   },
   el: {
     home: "Αρχική",
@@ -1507,7 +1534,10 @@ const TRANSLATIONS = {
     locationDenied: "Η πρόσβαση στην τοποθεσία απορρίφθηκε",
     changeLocation: "Αλλαγή τοποθεσίας",
     locFound: "Η τοποθεσία βρέθηκε!",
-    homeLocation: "Σπίτι"
+    homeLocation: "Σπίτι",
+    gpsAvailable: "Διαθέσιμα δεδομένα GPS",
+    gpsNotAvailable: "Χωρίς δεδομένα GPS",
+    usingGpsData: "Χρήση θέσης GPS"
   },
   da: {
     home: "Hjem",
@@ -1657,7 +1687,10 @@ const TRANSLATIONS = {
     locationDenied: "Adgang til placering nægtet",
     changeLocation: "Skift placering",
     locFound: "Placering fundet!",
-    homeLocation: "Hjem"
+    homeLocation: "Hjem",
+    gpsAvailable: "GPS-data tilgængelige",
+    gpsNotAvailable: "Ingen GPS-data",
+    usingGpsData: "Bruger GPS-position"
   },
   ru: {
     home: "Главная",
@@ -1806,7 +1839,10 @@ const TRANSLATIONS = {
     noGpsAvailable: "GPS недоступен",
     locationDenied: "Доступ к местоположению запрещён",
     changeLocation: "Изменить местоположение",
-    homeLocation: "Дом"
+    homeLocation: "Дом",
+    gpsAvailable: "Данные GPS доступны",
+    gpsNotAvailable: "Нет данных GPS",
+    usingGpsData: "Используется позиция GPS"
   }
 };
 
@@ -4726,6 +4762,7 @@ export default function WeatherApp() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showAllHours, setShowAllHours] = useState(false); 
   const [sunriseSunset, setSunriseSunset] = useState({ sunrise: null, sunset: null });
+  const [gpsAvailable, setGpsAvailable] = useState(false); // Track GPS data availability
   const [modelRuns, setModelRuns] = useState({ icon: '', gfs: '', arome: '' });
   const [showIosInstall, setShowIosInstall] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -4825,6 +4862,7 @@ export default function WeatherApp() {
 
         if (!navigator.geolocation) {
              setCurrentLoc(homeLoc);
+             setGpsAvailable(false); // No GPS support
              return;
         }
 
@@ -4837,6 +4875,7 @@ export default function WeatherApp() {
                 const dist = getDistanceFromLatLonInKm(lat, lon, homeLoc.lat, homeLoc.lon);
                 if (dist < 2.0) { // If closer than 2km to home
                     setCurrentLoc(homeLoc);
+                    setGpsAvailable(true); // GPS is available
                 } else {
                     // Fetch City Name
                     try {
@@ -4844,14 +4883,17 @@ export default function WeatherApp() {
                         const data = await res.json();
                         const city = data.results?.[0]?.name || t('myLocation');
                         setCurrentLoc({ name: city, lat, lon, type: 'gps' });
+                        setGpsAvailable(true); // GPS is available
                     } catch (e) {
                         setCurrentLoc({ name: t('myLocation'), lat, lon, type: 'gps' });
+                        setGpsAvailable(true); // GPS is available
                     }
                 }
             },
             (err) => {
                 console.warn("GPS Access denied or failed", err);
                 setCurrentLoc(homeLoc); // Fallback to Home
+                setGpsAvailable(false); // GPS failed
             }
         );
     };
@@ -4931,7 +4973,10 @@ export default function WeatherApp() {
       }
   };
 
-  const handleSetHome = () => setCurrentLoc(homeLoc);
+  const handleSetHome = () => {
+    setCurrentLoc(homeLoc);
+    setGpsAvailable(homeLoc && homeLoc.type === 'gps'); // Update GPS availability
+  };
   
   const handleSetCurrent = () => {
     setLoading(true);
@@ -4940,6 +4985,7 @@ export default function WeatherApp() {
     
     if (!navigator.geolocation) { 
         setError("GPS wird von diesem Browser/Gerät nicht unterstützt."); 
+        setGpsAvailable(false); // GPS is not supported
         setLoading(false); 
         return; 
     }
@@ -4956,6 +5002,7 @@ export default function WeatherApp() {
               const dist = getDistanceFromLatLonInKm(lat, lon, homeLoc.lat, homeLoc.lon);
               if (dist < 2.0) { 
                   setCurrentLoc(homeLoc);
+                  setGpsAvailable(true); // GPS data is available (near home)
                   if (currentLoc && currentLoc.id === homeLoc.id) fetchData();
                   return;
               }
@@ -4986,9 +5033,11 @@ export default function WeatherApp() {
               region: regionName,
               country: countryName
           });
+          setGpsAvailable(true); // GPS data is available
       },
       (err) => { 
           console.error("GPS Fehler:", err);
+          setGpsAvailable(false); // GPS data is not available
           let msg = "Standort konnte nicht ermittelt werden.";
           
           // Detaillierte Fehleranalyse für den User
@@ -5692,6 +5741,17 @@ export default function WeatherApp() {
                 <div className="flex items-center gap-1"><Sunrise size={16}/> {formatTime(sunriseSunset.sunrise)}</div>
                 <div className="flex items-center gap-1"><Sunset size={16}/> {formatTime(sunriseSunset.sunset)}</div>
             </div>
+            
+            {/* GPS Availability Indicator */}
+            <div className="mt-2 flex justify-center">
+              <div className={`px-2 py-0.5 rounded-full text-xs font-medium backdrop-blur-sm ${
+                gpsAvailable 
+                  ? 'bg-green-500/20 text-green-100 border border-green-400/30' 
+                  : 'bg-yellow-500/20 text-yellow-100 border border-yellow-400/30'
+              }`}>
+                {gpsAvailable ? `✓ ${t.gpsAvailable}` : `⚠ ${t.gpsNotAvailable}`}
+              </div>
+            </div>
         </div>
       </div>
     );
@@ -5811,7 +5871,11 @@ export default function WeatherApp() {
             isOpen={showLocationModal} 
             onClose={() => setShowLocationModal(false)}
             savedLocations={locations}
-            onSelectLocation={(loc) => { setCurrentLoc(loc); setShowLocationModal(false); }}
+            onSelectLocation={(loc) => { 
+              setCurrentLoc(loc); 
+              setGpsAvailable(loc.type === 'gps'); // Update GPS availability based on location type
+              setShowLocationModal(false); 
+            }}
             onAddCurrentLocation={handleAddLocation}
             onDeleteLocation={handleDeleteLocation}
             currentLoc={currentLoc}
@@ -6084,7 +6148,17 @@ export default function WeatherApp() {
 
           {activeTab === 'radar' && (
             <div className="h-full flex flex-col min-h-[450px]">
-                <h3 className="text-sm font-bold uppercase opacity-70 mb-4">{t('precipRadar')}</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold uppercase opacity-70">{t('precipRadar')}</h3>
+                  {/* GPS Availability Indicator for Radar */}
+                  <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    gpsAvailable 
+                      ? 'bg-green-500/20 text-green-700 border border-green-400/40' 
+                      : 'bg-yellow-500/20 text-yellow-700 border border-yellow-400/40'
+                  }`}>
+                    {gpsAvailable ? `✓ ${t.gpsAvailable}` : `⚠ ${t.gpsNotAvailable}`}
+                  </div>
+                </div>
                 <div className="flex-1 w-full rounded-2xl overflow-hidden shadow-inner bg-slate-200 relative">
                   <iframe 
                     width="100%" 
