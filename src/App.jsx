@@ -5749,7 +5749,7 @@ export default function WeatherApp() {
                   ? 'bg-green-500/20 text-green-100 border border-green-400/30' 
                   : 'bg-yellow-500/20 text-yellow-100 border border-yellow-400/30'
               }`}>
-                {gpsAvailable ? `✓ ${t.gpsAvailable}` : `⚠ ${t.gpsNotAvailable}`}
+                {gpsAvailable ? `✓ ${t('gpsAvailable')}` : `⚠ ${t('gpsNotAvailable')}`}
               </div>
             </div>
         </div>
@@ -6156,7 +6156,7 @@ export default function WeatherApp() {
                       ? 'bg-green-500/20 text-green-700 border border-green-400/40' 
                       : 'bg-yellow-500/20 text-yellow-700 border border-yellow-400/40'
                   }`}>
-                    {gpsAvailable ? `✓ ${t.gpsAvailable}` : `⚠ ${t.gpsNotAvailable}`}
+                    {gpsAvailable ? `✓ ${t('gpsAvailable')}` : `⚠ ${t('gpsNotAvailable')}`}
                   </div>
                 </div>
                 <div className="flex-1 w-full rounded-2xl overflow-hidden shadow-inner bg-slate-200 relative">
