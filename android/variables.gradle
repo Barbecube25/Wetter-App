@@ -16,6 +16,8 @@ ext {
     // Material 3 Compose versions
     material3Version = '1.4.0'
     material3WindowSizeVersion = '1.4.0'
-    material3AdaptiveNavVersion = '1.5.0-alpha13'
-    kotlinCompilerExtensionVersion = '1.5.14'
+    material3AdaptiveNavVersion = '1.5.0-alpha13' // Alpha version as per requirements
+    composeUiVersion = '1.7.6'
+    activityComposeVersion = '1.9.3'
+    kotlinCompilerExtensionVersion = '1.5.4' // Compatible with Kotlin 1.9.24
 }
