@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
+import { StatusBar } from '@capacitor/status-bar';
 
 // --- 1. KONSTANTEN & CONFIG & ÜBERSETZUNGEN ---
 
@@ -4783,6 +4784,32 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
     
     const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
     
+    // Hide status bar and navigation bar on mount, restore on unmount
+    useEffect(() => {
+        const hideStatusBar = async () => {
+            try {
+                await StatusBar.hide();
+            } catch (e) {
+                // Status bar not available (e.g., in browser)
+                console.log('Status bar hide not available:', e);
+            }
+        };
+        
+        const showStatusBar = async () => {
+            try {
+                await StatusBar.show();
+            } catch (e) {
+                console.log('Status bar show not available:', e);
+            }
+        };
+        
+        hideStatusBar();
+        
+        return () => {
+            showStatusBar();
+        };
+    }, []);
+    
     // Home location search handler
     const handleHomeSearch = async () => {
         if (!searchQuery.trim()) return;
@@ -4937,9 +4964,9 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
     
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-lg animate-in fade-in duration-500">
-            <div className="bg-gradient-to-br from-white to-slate-50 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+            <div className="bg-gradient-to-br from-white to-slate-50 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-500 max-h-[90vh] flex flex-col">
                 {/* Header with Progress */}
-                <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white relative overflow-hidden">
+                <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white relative overflow-hidden flex-shrink-0">
                     <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                     <div className="relative z-10">
                         <div className="flex items-center justify-between mb-3">
@@ -4973,8 +5000,8 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                     </div>
                 </div>
                 
-                {/* Content */}
-                <div className="p-6">
+                {/* Content - Scrollable */}
+                <div className="p-6 overflow-y-auto flex-1">
                     {currentStep.content === 'language' && (
                         <div className="grid grid-cols-3 gap-3">
                             {['de', 'en', 'fr', 'es', 'it', 'tr', 'pl', 'nl', 'hr', 'el', 'da', 'ru'].map(l => (
@@ -5148,7 +5175,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                 </div>
                 
                 {/* Navigation Buttons */}
-                <div className="flex gap-3 p-6 pt-0">
+                <div className="flex gap-3 p-6 pt-0 flex-shrink-0">
                     {step > 0 && (
                         <button
                             onClick={handlePrev}
