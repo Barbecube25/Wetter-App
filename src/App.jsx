@@ -4786,6 +4786,8 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
     
     // Hide status bar and navigation bar on mount, restore on unmount
     useEffect(() => {
+        let isMounted = true;
+        
         const hideStatusBar = async () => {
             try {
                 await StatusBar.hide();
@@ -4797,7 +4799,9 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
         
         const showStatusBar = async () => {
             try {
-                await StatusBar.show();
+                if (isMounted) {
+                    await StatusBar.show();
+                }
             } catch (e) {
                 console.log('Status bar show not available:', e);
             }
@@ -4806,6 +4810,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
         hideStatusBar();
         
         return () => {
+            isMounted = false;
             showStatusBar();
         };
     }, []);
