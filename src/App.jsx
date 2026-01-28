@@ -6909,7 +6909,7 @@ export default function WeatherApp() {
         {/* Modern Weather Card with better elevation */}
         <div className="bg-m3-surface-container rounded-m3-3xl p-6 shadow-m3-4 relative overflow-hidden min-h-[280px] border border-m3-outline-variant">
           {/* Weather background animation */}
-          <div className="absolute inset-0 z-0 pointer-events-none opacity-30">
+          <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
             <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} lang={lang} />
           </div>
           
