@@ -2391,7 +2391,7 @@ const generateAIReport = (type, data, lang = 'de') => {
                 if (snowWillStick) {
                     todayText += lang === 'en'
                         ? ` Snow may stick.`
-                        : ` Der Schnee könnte liegenbleiben.`;
+                        : ` Der Schnee könnte liegen bleiben.`;
                 }
             } else {
                 todayText += lang === 'en' 
@@ -2571,7 +2571,7 @@ const generateAIReport = (type, data, lang = 'de') => {
                 if (snowWillStickTomorrow) {
                     tomorrowText += lang === 'en'
                         ? ` Snow may stick.`
-                        : ` Könnte liegenbleiben.`;
+                        : ` Könnte liegen bleiben.`;
                 }
             } else {
                 tomorrowText += lang === 'en' 
@@ -2750,7 +2750,7 @@ const generateAIReport = (type, data, lang = 'de') => {
                     : `Mal Sonne, mal Wolken – bleibt größtenteils trocken (nur ${totalPrecipDays} Regentag${totalPrecipDays === 1 ? '' : 'e'}).`;
              }
         } else {
-             if (twSunDays >= thisWeek.length / 2) twText += lang === 'en' ? "High pressure influence likely: Mostly sunny and dry." : "Hoch Einfluss wahrscheinlich: Überwiegend sonnig und trocken – schön!";
+             if (twSunDays >= thisWeek.length / 2) twText += lang === 'en' ? "High pressure influence likely: Mostly sunny and dry." : "Hochdruckeinfluss wahrscheinlich: Überwiegend sonnig und trocken – schön!";
              else twText += lang === 'en' ? "Cloudy but dry conditions expected." : "Eher bewölkt, aber trocken.";
         }
         
@@ -2840,7 +2840,7 @@ const generateAIReport = (type, data, lang = 'de') => {
         } else {
              nwText += lang === 'en'
                 ? `High pressure influence likely: Mostly sunny and dry.`
-                : `Hoch Einfluss wahrscheinlich: Überwiegend sonnig und trocken!`;
+                : `Hochdruckeinfluss wahrscheinlich: Überwiegend sonnig und trocken!`;
         }
         
         nwText += `\n(${lang === 'en' ? 'Certainty' : 'Prognosesicherheit'}: ${nwRel}%)`;
