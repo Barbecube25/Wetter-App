@@ -9,7 +9,7 @@ const config: CapacitorConfig = {
   },
   plugins: {
     Geolocation: {
-      // Enable geolocation plugin
+      // Required for Geolocation plugin initialization
     }
   }
 };
