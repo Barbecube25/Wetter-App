@@ -6405,12 +6405,70 @@ export default function WeatherApp() {
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang), [processedLong, lang]);
 
-  // Filter to show only remaining hours of today (not extending into tomorrow)
-  const displayedHours = useMemo(() => {
+  // Create a 3-day forecast: rest of today, tomorrow, and day after tomorrow
+  const threeDayForecast = useMemo(() => {
+    if (!processedShort.length || !processedLong.length) return [];
+    
     const now = new Date();
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-    return processedShort.filter(hour => hour.time <= todayEnd);
-  }, [processedShort]);
+    const remainingHoursToday = processedShort.filter(hour => hour.time <= todayEnd);
+    
+    const result = [];
+    
+    // 1. Rest of today (aggregated from hourly data)
+    if (remainingHoursToday.length > 0) {
+      const temps = remainingHoursToday.map(h => h.temp);
+      const maxTemp = Math.max(...temps);
+      const minTemp = Math.min(...temps);
+      const avgReliability = Math.round(remainingHoursToday.reduce((sum, h) => sum + h.reliability, 0) / remainingHoursToday.length);
+      
+      // Find the most common weather code
+      const weatherCodes = remainingHoursToday.map(h => h.code);
+      const codeFreq = {};
+      weatherCodes.forEach(code => { codeFreq[code] = (codeFreq[code] || 0) + 1; });
+      const mostCommonCode = parseInt(Object.keys(codeFreq).reduce((a, b) => codeFreq[a] > codeFreq[b] ? a : b, 0));
+      
+      // Aggregate precipitation
+      const totalRain = remainingHoursToday.reduce((sum, h) => sum + parseFloat(h.precip || 0), 0).toFixed(1);
+      const totalSnow = remainingHoursToday.reduce((sum, h) => sum + parseFloat(h.snow || 0), 0).toFixed(1);
+      const maxWind = Math.max(...remainingHoursToday.map(h => h.wind || 0));
+      const maxGust = Math.max(...remainingHoursToday.map(h => h.gust || 0));
+      const avgDir = remainingHoursToday[Math.floor(remainingHoursToday.length / 2)]?.dir || 0;
+      const maxPrecipProb = Math.max(...remainingHoursToday.map(h => h.precipProb || 0));
+      
+      result.push({
+        date: now,
+        dayName: t('restOfDay'),
+        dayNameFull: t('restOfDay'),
+        dateShort: t('today'),
+        max: maxTemp,
+        min: minTemp,
+        rain: totalRain,
+        snow: totalSnow,
+        wind: Math.round(maxWind),
+        gust: Math.round(maxGust),
+        dir: avgDir,
+        code: mostCommonCode,
+        reliability: avgReliability,
+        prob: Math.round(maxPrecipProb)
+      });
+    }
+    
+    // 2. Tomorrow (from processedLong[1])
+    if (processedLong.length > 1) {
+      result.push({
+        ...processedLong[1],
+        dateShort: t('tomorrow')
+      });
+    }
+    
+    // 3. Day after tomorrow (from processedLong[2])
+    if (processedLong.length > 2) {
+      result.push(processedLong[2]);
+    }
+    
+    return result;
+  }, [processedShort, processedLong, lang, t]);
 
   // --- WIDGET VIEWS ---
   if (viewMode === 'animation') {
@@ -6826,39 +6884,66 @@ export default function WeatherApp() {
             <div className="space-y-4">
                <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} />
                <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} lang={lang} />
-               <h3 className="text-sm font-bold uppercase tracking-wide opacity-90 ml-2">{t('restOfDay')} - {t('hourlyForecast')}</h3>
+               <h3 className="text-sm font-bold uppercase tracking-wide opacity-90 ml-2">{t('trend')}</h3>
                <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide"> 
                   <div className="flex gap-3 w-max">
-                    {displayedHours.map((row, i) => {
-                      const conf = getWeatherConfig(row.code, row.isDay, lang);
-                      const HourIcon = conf.icon;
+                    {threeDayForecast.map((day, i) => {
+                      const DayIcon = getWeatherConfig(day.code, 1, lang).icon;
+                      const confColor = getConfidenceColor(day.reliability);
+                      const isDaySnow = SNOW_WEATHER_CODES.includes(day.code);
+                      let probColor = "text-slate-400 opacity-50"; 
+                      if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
+
                       return (
-                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[130px] w-[130px] hover:bg-white/10 transition relative group">
-                          <div className="text-lg font-bold mb-2" style={{textShadow: '0 1px 3px rgba(0,0,0,0.5)'}}>{row.displayTime}</div>
-                          <HourIcon size={40} className="mb-2" style={{filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))'}} />
-                          <div className="text-4xl font-bold mb-1 tracking-tighter" style={{textShadow: '0 1px 3px rgba(0,0,0,0.5)'}}>{formatTemp(row.temp)}°</div>
-                          <div className="text-sm text-center leading-tight h-8 flex items-center justify-center line-clamp-2 w-full mb-2 font-medium" style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{conf.text}</div>
-                           <div className="mb-2 h-4">
-                             {SNOW_WEATHER_CODES.includes(row.code) ? (
-                               parseFloat(row.snow) > 0 || parseFloat(row.precip) > 0 ? (
-                                 <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {(parseFloat(row.snow) > 0 ? parseFloat(row.snow) : parseFloat(row.precip)).toFixed(1)}</span>
+                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[160px] w-[160px] hover:bg-white/10 transition relative group">
+                          {/* Day & Date */}
+                          <div className="text-base font-bold mb-0.5" style={{textShadow: '0 1px 3px rgba(0,0,0,0.5)'}}>{day.dayName}</div>
+                          <div className="text-xs mb-2 font-medium" style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{day.dateShort}</div>
+                          
+                          {/* Icon */}
+                          <DayIcon size={48} className="mb-2" style={{filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))'}} />
+                          
+                          {/* Temp Range */}
+                          <div className="flex items-center gap-2 mb-2 w-full justify-center">
+                            <span className="text-2xl font-bold text-blue-400">{formatTemp(day.min)}°</span>
+                            <div className="h-1 w-6 bg-white/10 rounded-full overflow-hidden">
+                               <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
+                            </div>
+                            <span className="text-2xl font-bold text-red-400">{formatTemp(day.max)}°</span>
+                         </div>
+                          
+                           <div className="mb-1 min-h-[16px] flex flex-col items-center justify-center w-full gap-0.5">
+                             {parseFloat(day.rain) > 0.1 && parseFloat(day.snow) > 0.1 ? (
+                               // Mixed precipitation - show both
+                               <>
+                                 <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><CloudRain size={10}/> {day.rain}mm</span>
+                                 <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {day.snow}cm</span>
+                               </>
+                             ) : isDaySnow ? (
+                               parseFloat(day.snow) > 0 || parseFloat(day.rain) > 0.1 ? (
+                                 <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {(parseFloat(day.snow) > 0 ? parseFloat(day.snow) : (parseFloat(day.rain) / 10)).toFixed(1)}cm</span>
                                ) : ( <span className="opacity-20 text-xs">-</span> )
-                             ) : parseFloat(row.precip) > 0 ? (
-                               <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={10}/> {row.precip.toFixed(1)}</span>
+                             ) : parseFloat(day.rain) > 0.1 ? (
+                               <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {day.rain}mm</span>
                              ) : ( <span className="opacity-20 text-xs">-</span> )}
                            </div>
-                           <div className="flex flex-col items-center gap-0.5 mb-2">
-                              <div className="flex items-center gap-1">
-                                 <Navigation size={10} style={{ transform: `rotate(${row.dir}deg)` }} />
-                                 <span className={`text-xs font-bold ${getWindColorClass(row.wind)}`} style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{row.wind}</span>
+                           <div className={`text-xs mb-2 ${probColor} h-3`}>{day.prob > 0 ? `${day.prob}% ${t('probability')}` : ''}</div>
+                           
+                           {/* Wind */}
+                           <div className="flex flex-col items-center gap-0.5 mb-2 w-full">
+                              <div className="flex items-center justify-center gap-1 w-full">
+                                 <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
+                                 <span className={`text-sm font-bold ${getWindColorClass(day.wind)}`} style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{day.wind}</span>
                               </div>
-                              <span className={`text-xs font-medium ${getWindColorClass(row.gust)}`} style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{t('gusts')} {row.gust}</span>
+                              <span className={`text-xs font-medium ${getWindColorClass(day.gust)}`} style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{t('gusts')} {day.gust}</span>
                            </div>
-                           {row.uvIndex >= 1 && (<div className={`px-1.5 py-0.5 rounded text-xs font-bold border ${getUvBadgeClass(row.uvIndex)}`}>UV {(row.uvIndex).toFixed(0)}</div>)}
-                           <div className="mt-2 text-xs flex items-center gap-1">
-                              <ShieldCheck size={10} className={getConfidenceColor(row.reliability)} />
-                              <span className={`${getConfidenceColor(row.reliability)} font-medium`} style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{row.reliability}% {t('safe')}</span>
+
+                           {/* Reliability Indicator */}
+                           <div className="mt-1 text-xs flex items-center gap-1 border border-white/10 px-2 py-0.5 rounded-full">
+                              <ShieldCheck size={10} className={confColor} />
+                              <span className={confColor} style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{day.reliability}% {t('safe')}</span>
                            </div>
+                           
                         </div>
                       );
                     })}
