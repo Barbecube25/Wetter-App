@@ -6232,12 +6232,12 @@ export default function WeatherApp() {
           </div>
         )}
         
-        <div className="absolute bottom-8 left-0 right-0 text-center text-white drop-shadow-md pointer-events-none">
+        <div className="absolute bottom-8 left-0 right-0 text-center text-white pointer-events-none" style={{textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5)'}}>
             <div className="text-6xl font-bold">{formatTemp(current.temp)}°</div>
-            <div className="text-xl opacity-90 mb-2">{weatherConf.text}</div>
+            <div className="text-xl mb-2">{weatherConf.text}</div>
             
             {/* NEU: Sonnenaufgang und Untergang */}
-            <div className="flex justify-center gap-6 text-sm font-medium opacity-95">
+            <div className="flex justify-center gap-6 text-sm font-medium">
                 <div className="flex items-center gap-1"><Sunrise size={16}/> {formatTime(sunriseSunset.sunrise)}</div>
                 <div className="flex items-center gap-1"><Sunset size={16}/> {formatTime(sunriseSunset.sunset)}</div>
             </div>
@@ -6487,10 +6487,10 @@ export default function WeatherApp() {
                       const HourIcon = conf.icon;
                       return (
                         <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[130px] w-[130px] hover:bg-white/10 transition relative group">
-                          <div className="text-lg font-bold opacity-90 mb-2">{row.displayTime}</div>
-                          <HourIcon size={40} className="opacity-90 mb-2" />
-                          <div className="text-4xl font-bold mb-1 tracking-tighter">{formatTemp(row.temp)}°</div>
-                          <div className="text-sm opacity-85 text-center leading-tight h-8 flex items-center justify-center line-clamp-2 w-full mb-2">{conf.text}</div>
+                          <div className="text-lg font-bold mb-2" style={{textShadow: '0 1px 3px rgba(0,0,0,0.5)'}}>{row.displayTime}</div>
+                          <HourIcon size={40} className="mb-2" style={{filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))'}} />
+                          <div className="text-4xl font-bold mb-1 tracking-tighter" style={{textShadow: '0 1px 3px rgba(0,0,0,0.5)'}}>{formatTemp(row.temp)}°</div>
+                          <div className="text-sm text-center leading-tight h-8 flex items-center justify-center line-clamp-2 w-full mb-2 font-medium" style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{conf.text}</div>
                            <div className="mb-2 h-4">
                              {SNOW_WEATHER_CODES.includes(row.code) ? (
                                parseFloat(row.snow) > 0 || parseFloat(row.precip) > 0 ? (
@@ -6501,16 +6501,16 @@ export default function WeatherApp() {
                              ) : ( <span className="opacity-20 text-xs">-</span> )}
                            </div>
                            <div className="flex flex-col items-center gap-0.5 mb-2">
-                              <div className="flex items-center gap-1 opacity-90">
+                              <div className="flex items-center gap-1">
                                  <Navigation size={10} style={{ transform: `rotate(${row.dir}deg)` }} />
-                                 <span className={`text-xs font-bold ${getWindColorClass(row.wind)}`}>{row.wind}</span>
+                                 <span className={`text-xs font-bold ${getWindColorClass(row.wind)}`} style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{row.wind}</span>
                               </div>
-                              <span className={`text-xs opacity-85 ${getWindColorClass(row.gust)}`}>{t('gusts')} {row.gust}</span>
+                              <span className={`text-xs font-medium ${getWindColorClass(row.gust)}`} style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{t('gusts')} {row.gust}</span>
                            </div>
                            {row.uvIndex >= 1 && (<div className={`px-1.5 py-0.5 rounded text-xs font-bold border ${getUvBadgeClass(row.uvIndex)}`}>UV {(row.uvIndex).toFixed(0)}</div>)}
-                           <div className="mt-2 text-xs flex items-center gap-1 opacity-90">
+                           <div className="mt-2 text-xs flex items-center gap-1">
                               <ShieldCheck size={10} className={getConfidenceColor(row.reliability)} />
-                              <span className={`${getConfidenceColor(row.reliability)} font-medium`}>{row.reliability}% {t('safe')}</span>
+                              <span className={`${getConfidenceColor(row.reliability)} font-medium`} style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{row.reliability}% {t('safe')}</span>
                            </div>
                         </div>
                       );
@@ -6596,11 +6596,11 @@ export default function WeatherApp() {
                       return (
                         <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[160px] w-[160px] hover:bg-white/10 transition relative group">
                           {/* Day & Date */}
-                          <div className="text-base font-bold opacity-90 mb-0.5">{day.dayName}</div>
-                          <div className="text-xs opacity-85 mb-2">{day.dateShort}</div>
+                          <div className="text-base font-bold mb-0.5" style={{textShadow: '0 1px 3px rgba(0,0,0,0.5)'}}>{day.dayName}</div>
+                          <div className="text-xs mb-2 font-medium" style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{day.dateShort}</div>
                           
                           {/* Icon */}
-                          <DayIcon size={48} className="opacity-90 mb-2" />
+                          <DayIcon size={48} className="mb-2" style={{filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))'}} />
                           
                           {/* Temp Range */}
                           <div className="flex items-center gap-2 mb-2 w-full justify-center">
@@ -6630,17 +6630,17 @@ export default function WeatherApp() {
                            
                            {/* Wind */}
                            <div className="flex flex-col items-center gap-0.5 mb-2 w-full">
-                              <div className="flex items-center justify-center gap-1 opacity-90 w-full">
+                              <div className="flex items-center justify-center gap-1 w-full">
                                  <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
-                                 <span className={`text-sm font-bold ${getWindColorClass(day.wind)}`}>{day.wind}</span>
+                                 <span className={`text-sm font-bold ${getWindColorClass(day.wind)}`} style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{day.wind}</span>
                               </div>
-                              <span className={`text-xs opacity-85 ${getWindColorClass(day.gust)}`}>{t('gusts')} {day.gust}</span>
+                              <span className={`text-xs font-medium ${getWindColorClass(day.gust)}`} style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{t('gusts')} {day.gust}</span>
                            </div>
 
                            {/* Reliability Indicator */}
-                           <div className="mt-1 text-xs flex items-center gap-1 opacity-90 border border-white/10 px-2 py-0.5 rounded-full">
+                           <div className="mt-1 text-xs flex items-center gap-1 border border-white/10 px-2 py-0.5 rounded-full">
                               <ShieldCheck size={10} className={confColor} />
-                              <span className={confColor}>{day.reliability}% {t('safe')}</span>
+                              <span className={confColor} style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{day.reliability}% {t('safe')}</span>
                            </div>
                            
                         </div>
