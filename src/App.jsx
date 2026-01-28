@@ -2295,23 +2295,22 @@ const generateAIReport = (type, data, lang = 'de') => {
         let periodSnow = 0;
         
         todayData.forEach((d, idx) => {
-            const hasRain = d.precip > 0.1 || d.snow > 0.1;
-            const isSnow = d.snow > d.precip;
+            const hasPrecip = parseFloat(d.precip || 0) > 0.1 || parseFloat(d.snow || 0) > 0.1;
             
-            if (hasRain && !inRainPeriod) {
+            if (hasPrecip && !inRainPeriod) {
                 // Start new period
                 inRainPeriod = true;
                 periodStart = d.time;
                 periodAmount = parseFloat(d.precip) + parseFloat(d.snow || 0);
                 periodRain = parseFloat(d.precip || 0);
                 periodSnow = parseFloat(d.snow || 0);
-            } else if (hasRain && inRainPeriod) {
+            } else if (hasPrecip && inRainPeriod) {
                 // Continue period
                 periodEnd = d.time;
                 periodAmount += parseFloat(d.precip) + parseFloat(d.snow || 0);
                 periodRain += parseFloat(d.precip || 0);
                 periodSnow += parseFloat(d.snow || 0);
-            } else if (!hasRain && inRainPeriod) {
+            } else if (!hasPrecip && inRainPeriod) {
                 // End period
                 rainPeriods.push({
                     start: periodStart,
@@ -2319,7 +2318,7 @@ const generateAIReport = (type, data, lang = 'de') => {
                     amount: periodAmount,
                     rain: periodRain,
                     snow: periodSnow,
-                    isSnow: isSnow,
+                    isSnow: periodSnow > periodRain,
                     isMixed: periodRain > 0.1 && periodSnow > 0.1
                 });
                 inRainPeriod = false;
@@ -2339,7 +2338,7 @@ const generateAIReport = (type, data, lang = 'de') => {
                 amount: periodAmount,
                 rain: periodRain,
                 snow: periodSnow,
-                isSnow: snowSumToday > rainSumToday,
+                isSnow: periodSnow > periodRain,
                 isMixed: periodRain > 0.1 && periodSnow > 0.1
             });
         }
@@ -2415,6 +2414,8 @@ const generateAIReport = (type, data, lang = 'de') => {
                     precipDetails = lang === 'en' 
                         ? `${period.rain.toFixed(1)}mm rain, ${period.snow.toFixed(1)}mm snow`
                         : `${period.rain.toFixed(1)}mm Regen, ${period.snow.toFixed(1)}mm Schnee`;
+                } else if (period.isSnow && period.snow > 0.1) {
+                    precipDetails = `${period.snow.toFixed(1)}mm`;
                 }
                 
                 if (startTime === endTime) {
