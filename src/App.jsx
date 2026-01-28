@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Bell } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
 import { StatusBar } from '@capacitor/status-bar';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 // --- 1. KONSTANTEN & CONFIG & ÜBERSETZUNGEN ---
 
@@ -166,7 +167,15 @@ const TRANSLATIONS = {
     homeLocation: "Zuhause",
     gpsAvailable: "GPS-Daten verfügbar",
     gpsNotAvailable: "Keine GPS-Daten",
-    usingGpsData: "Verwendet GPS-Position"
+    usingGpsData: "Verwendet GPS-Position",
+    // Notifications
+    notifications: "Benachrichtigungen",
+    notificationDaily: "Tägliche Wettervorhersage",
+    notificationDailyDesc: "Erhalte eine Zusammenfassung wie der Tag wird",
+    notificationNextDay: "Ausblick auf morgen",
+    notificationNextDayDesc: "Erhalte eine Vorschau auf den nächsten Tag",
+    notificationTime: "Benachrichtigungszeit",
+    notificationTimeDesc: "Wähle die Uhrzeit für deine Benachrichtigungen"
   },
   en: {
     home: "Home",
@@ -323,7 +332,15 @@ const TRANSLATIONS = {
     homeLocation: "Home",
     gpsAvailable: "GPS data available",
     gpsNotAvailable: "No GPS data",
-    usingGpsData: "Using GPS position"
+    usingGpsData: "Using GPS position",
+    // Notifications
+    notifications: "Notifications",
+    notificationDaily: "Daily weather forecast",
+    notificationDailyDesc: "Receive a summary of how the day will be",
+    notificationNextDay: "Next day outlook",
+    notificationNextDayDesc: "Receive a preview of the next day",
+    notificationTime: "Notification time",
+    notificationTimeDesc: "Choose the time for your notifications"
   },
   fr: {
     home: "Accueil",
@@ -480,7 +497,15 @@ const TRANSLATIONS = {
     homeLocation: "Maison",
     gpsAvailable: "Données GPS disponibles",
     gpsNotAvailable: "Aucune donnée GPS",
-    usingGpsData: "Utilise la position GPS"
+    usingGpsData: "Utilise la position GPS",
+    // Notifications
+    notifications: "Notifications",
+    notificationDaily: "Prévisions météo quotidiennes",
+    notificationDailyDesc: "Recevez un résumé de la journée",
+    notificationNextDay: "Aperçu du lendemain",
+    notificationNextDayDesc: "Recevez un aperçu du jour suivant",
+    notificationTime: "Heure de notification",
+    notificationTimeDesc: "Choisissez l'heure pour vos notifications"
   },
   es: {
     home: "Inicio",
@@ -637,7 +662,15 @@ const TRANSLATIONS = {
     homeLocation: "Casa",
     gpsAvailable: "Datos GPS disponibles",
     gpsNotAvailable: "Sin datos GPS",
-    usingGpsData: "Usando posición GPS"
+    usingGpsData: "Usando posición GPS",
+    // Notifications
+    notifications: "Notificaciones",
+    notificationDaily: "Pronóstico del tiempo diario",
+    notificationDailyDesc: "Recibe un resumen de cómo será el día",
+    notificationNextDay: "Perspectiva del día siguiente",
+    notificationNextDayDesc: "Recibe una vista previa del día siguiente",
+    notificationTime: "Hora de notificación",
+    notificationTimeDesc: "Elige la hora para tus notificaciones"
   },
   it: {
     home: "Home",
@@ -794,7 +827,15 @@ const TRANSLATIONS = {
     homeLocation: "Casa",
     gpsAvailable: "Dati GPS disponibili",
     gpsNotAvailable: "Nessun dato GPS",
-    usingGpsData: "Usa posizione GPS"
+    usingGpsData: "Usa posizione GPS",
+    // Notifications
+    notifications: "Notifiche",
+    notificationDaily: "Previsioni meteo giornaliere",
+    notificationDailyDesc: "Ricevi un riepilogo di come sarà la giornata",
+    notificationNextDay: "Prospettive del giorno successivo",
+    notificationNextDayDesc: "Ricevi un'anteprima del giorno successivo",
+    notificationTime: "Ora della notifica",
+    notificationTimeDesc: "Scegli l'ora per le tue notifiche"
   },
   tr: {
     home: "Ana Sayfa",
@@ -951,7 +992,15 @@ const TRANSLATIONS = {
     homeLocation: "Ev",
     gpsAvailable: "GPS verileri mevcut",
     gpsNotAvailable: "GPS verisi yok",
-    usingGpsData: "GPS konumunu kullanıyor"
+    usingGpsData: "GPS konumunu kullanıyor",
+    // Notifications
+    notifications: "Bildirimler",
+    notificationDaily: "Günlük hava durumu tahmini",
+    notificationDailyDesc: "Günün nasıl geçeceğine dair özet alın",
+    notificationNextDay: "Yarının görünümü",
+    notificationNextDayDesc: "Bir sonraki günün önizlemesini alın",
+    notificationTime: "Bildirim zamanı",
+    notificationTimeDesc: "Bildirimleriniz için saati seçin"
   },
   pl: {
     home: "Start",
@@ -1108,7 +1157,15 @@ const TRANSLATIONS = {
     homeLocation: "Dom",
     gpsAvailable: "Dane GPS dostępne",
     gpsNotAvailable: "Brak danych GPS",
-    usingGpsData: "Używa pozycji GPS"
+    usingGpsData: "Używa pozycji GPS",
+    // Notifications
+    notifications: "Powiadomienia",
+    notificationDaily: "Codzienna prognoza pogody",
+    notificationDailyDesc: "Otrzymuj podsumowanie przebiegu dnia",
+    notificationNextDay: "Perspektywa na jutro",
+    notificationNextDayDesc: "Otrzymuj podgląd następnego dnia",
+    notificationTime: "Czas powiadomienia",
+    notificationTimeDesc: "Wybierz godzinę powiadomień"
   },
   nl: {
     home: "Home",
@@ -1265,7 +1322,15 @@ const TRANSLATIONS = {
     homeLocation: "Thuis",
     gpsAvailable: "GPS-gegevens beschikbaar",
     gpsNotAvailable: "Geen GPS-gegevens",
-    usingGpsData: "Gebruikt GPS-positie"
+    usingGpsData: "Gebruikt GPS-positie",
+    // Notifications
+    notifications: "Meldingen",
+    notificationDaily: "Dagelijkse weersverwachting",
+    notificationDailyDesc: "Ontvang een samenvatting van hoe de dag wordt",
+    notificationNextDay: "Vooruitzicht voor morgen",
+    notificationNextDayDesc: "Ontvang een voorvertoning van de volgende dag",
+    notificationTime: "Meldingstijd",
+    notificationTimeDesc: "Kies de tijd voor je meldingen"
   },
   hr: {
     home: "Početna",
@@ -1422,7 +1487,15 @@ const TRANSLATIONS = {
     homeLocation: "Kuća",
     gpsAvailable: "GPS podaci dostupni",
     gpsNotAvailable: "Nema GPS podataka",
-    usingGpsData: "Koristi GPS poziciju"
+    usingGpsData: "Koristi GPS poziciju",
+    // Notifications
+    notifications: "Obavijesti",
+    notificationDaily: "Dnevna vremenska prognoza",
+    notificationDailyDesc: "Primite sažetak kako će proći dan",
+    notificationNextDay: "Pogled na sutra",
+    notificationNextDayDesc: "Primite pregled sljedećeg dana",
+    notificationTime: "Vrijeme obavijesti",
+    notificationTimeDesc: "Odaberite vrijeme za svoje obavijesti"
   },
   el: {
     home: "Αρχική",
@@ -1579,7 +1652,15 @@ const TRANSLATIONS = {
     homeLocation: "Σπίτι",
     gpsAvailable: "Διαθέσιμα δεδομένα GPS",
     gpsNotAvailable: "Χωρίς δεδομένα GPS",
-    usingGpsData: "Χρήση θέσης GPS"
+    usingGpsData: "Χρήση θέσης GPS",
+    // Notifications
+    notifications: "Ειδοποιήσεις",
+    notificationDaily: "Ημερήσια πρόγνωση καιρού",
+    notificationDailyDesc: "Λάβετε μια περίληψη του πώς θα είναι η ημέρα",
+    notificationNextDay: "Προοπτική της επόμενης ημέρας",
+    notificationNextDayDesc: "Λάβετε μια προεπισκόπηση της επόμενης ημέρας",
+    notificationTime: "Ώρα ειδοποίησης",
+    notificationTimeDesc: "Επιλέξτε την ώρα για τις ειδοποιήσεις σας"
   },
   da: {
     home: "Hjem",
@@ -1736,7 +1817,15 @@ const TRANSLATIONS = {
     homeLocation: "Hjem",
     gpsAvailable: "GPS-data tilgængelige",
     gpsNotAvailable: "Ingen GPS-data",
-    usingGpsData: "Bruger GPS-position"
+    usingGpsData: "Bruger GPS-position",
+    // Notifications
+    notifications: "Notifikationer",
+    notificationDaily: "Daglig vejrudsigt",
+    notificationDailyDesc: "Modtag et resumé af hvordan dagen bliver",
+    notificationNextDay: "Udsigt til i morgen",
+    notificationNextDayDesc: "Modtag et forhåndsvisning af næste dag",
+    notificationTime: "Notifikationstid",
+    notificationTimeDesc: "Vælg tidspunktet for dine notifikationer"
   },
   ru: {
     home: "Главная",
@@ -1892,7 +1981,15 @@ const TRANSLATIONS = {
     homeLocation: "Дом",
     gpsAvailable: "Данные GPS доступны",
     gpsNotAvailable: "Нет данных GPS",
-    usingGpsData: "Используется позиция GPS"
+    usingGpsData: "Используется позиция GPS",
+    // Notifications
+    notifications: "Уведомления",
+    notificationDaily: "Ежедневный прогноз погоды",
+    notificationDailyDesc: "Получайте сводку о том, каким будет день",
+    notificationNextDay: "Прогноз на завтра",
+    notificationNextDayDesc: "Получайте предварительный просмотр следующего дня",
+    notificationTime: "Время уведомления",
+    notificationTimeDesc: "Выберите время для ваших уведомлений"
   }
 };
 
@@ -1920,9 +2017,25 @@ const getSavedTrips = () => {
 const getSavedSettings = () => {
     try {
         const saved = localStorage.getItem('weather_settings');
-        // Default Settings erweitert um theme: 'auto'
-        return saved ? JSON.parse(saved) : { language: 'de', unit: 'celsius', theme: 'auto' };
-    } catch (e) { return { language: 'de', unit: 'celsius', theme: 'auto' }; }
+        // Default Settings erweitert um theme: 'auto' und Benachrichtigungen
+        return saved ? JSON.parse(saved) : { 
+            language: 'de', 
+            unit: 'celsius', 
+            theme: 'auto',
+            notificationDaily: false,
+            notificationNextDay: false,
+            notificationTime: '07:00'
+        };
+    } catch (e) { 
+        return { 
+            language: 'de', 
+            unit: 'celsius', 
+            theme: 'auto',
+            notificationDaily: false,
+            notificationNextDay: false,
+            notificationTime: '07:00'
+        }; 
+    }
 };
 
 const getTutorialCompleted = () => {
@@ -1936,6 +2049,109 @@ const setTutorialCompleted = () => {
     try {
         localStorage.setItem('weather_tutorial_completed', 'true');
     } catch (e) { console.error('Failed to save tutorial status', e); }
+};
+
+// --- NOTIFICATION FUNCTIONS ---
+const requestNotificationPermission = async () => {
+    try {
+        const result = await LocalNotifications.requestPermissions();
+        return result.display === 'granted';
+    } catch (e) {
+        console.error('Failed to request notification permission', e);
+        return false;
+    }
+};
+
+const scheduleNotifications = async (settings, locationName, weatherData) => {
+    try {
+        // Cancel all existing notifications first
+        await LocalNotifications.cancel({ notifications: [{ id: 1 }, { id: 2 }] });
+        
+        if (!settings.notificationDaily && !settings.notificationNextDay) {
+            return; // No notifications enabled
+        }
+        
+        // Check permission
+        const hasPermission = await requestNotificationPermission();
+        if (!hasPermission) {
+            console.log('Notification permission not granted');
+            return;
+        }
+        
+        const [hours, minutes] = (settings.notificationTime || '07:00').split(':').map(Number);
+        const now = new Date();
+        
+        // Schedule Daily Forecast (Today's weather)
+        if (settings.notificationDaily && weatherData?.shortTerm) {
+            const dailySchedule = new Date();
+            dailySchedule.setHours(hours, minutes, 0, 0);
+            
+            // If time has passed today, schedule for tomorrow
+            if (dailySchedule <= now) {
+                dailySchedule.setDate(dailySchedule.getDate() + 1);
+            }
+            
+            const report = generateAIReport('daily', weatherData.shortTerm, settings.language);
+            
+            await LocalNotifications.schedule({
+                notifications: [{
+                    id: 1,
+                    title: report.title || "Tägliche Wettervorhersage",
+                    body: report.summary?.substring(0, 200) || "Schaue dir die Wettervorhersage für heute an!",
+                    schedule: { 
+                        at: dailySchedule,
+                        repeats: true,
+                        every: 'day'
+                    },
+                    sound: 'default',
+                    smallIcon: 'ic_stat_icon_config_sample'
+                }]
+            });
+        }
+        
+        // Schedule Next Day Outlook (Tomorrow's weather)
+        if (settings.notificationNextDay && weatherData?.shortTerm) {
+            const nextDaySchedule = new Date();
+            nextDaySchedule.setHours(hours, minutes, 0, 0);
+            
+            // Schedule for today if time hasn't passed, otherwise tomorrow
+            if (nextDaySchedule <= now) {
+                nextDaySchedule.setDate(nextDaySchedule.getDate() + 1);
+            }
+            
+            // Generate report for tomorrow
+            const tomorrowData = weatherData.shortTerm.filter(d => {
+                const itemDate = new Date(d.time);
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                return itemDate.getDate() === tomorrow.getDate();
+            });
+            
+            if (tomorrowData.length > 0) {
+                const report = generateAIReport('daily', tomorrowData, settings.language);
+                const t = TRANSLATIONS[settings.language] || TRANSLATIONS['de'];
+                
+                await LocalNotifications.schedule({
+                    notifications: [{
+                        id: 2,
+                        title: `${t.outlook} ${t.tomorrow}`,
+                        body: report.summary?.substring(0, 200) || "Schaue dir die Wettervorhersage für morgen an!",
+                        schedule: { 
+                            at: nextDaySchedule,
+                            repeats: true,
+                            every: 'day'
+                        },
+                        sound: 'default',
+                        smallIcon: 'ic_stat_icon_config_sample'
+                    }]
+                });
+            }
+        }
+        
+        console.log('Notifications scheduled successfully');
+    } catch (e) {
+        console.error('Failed to schedule notifications', e);
+    }
 };
 
 const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
@@ -2351,10 +2567,23 @@ const generateAIReport = (type, data, lang = 'de') => {
             });
         }
         
-        // Temperature text
-        todayText += lang === 'en' 
-            ? `Expect temperatures between ${Math.round(minToday)}° and ${Math.round(maxToday)}°. `
-            : `Die Temperatur bewegt sich zwischen ${Math.round(minToday)}° und ${Math.round(maxToday)}°. `;
+        // Temperature text with more natural language
+        const tempRange = Math.round(maxToday) - Math.round(minToday);
+        let tempDesc = "";
+        if (tempRange > 15) {
+            tempDesc = lang === 'en' 
+                ? `Quite a temperature swing today! Starting at ${Math.round(minToday)}° and warming up to ${Math.round(maxToday)}°. `
+                : `Heute gibt's große Temperaturschwankungen! Los geht's mit ${Math.round(minToday)}°, später dann bis zu ${Math.round(maxToday)}°. `;
+        } else if (tempRange > 8) {
+            tempDesc = lang === 'en' 
+                ? `Temperatures will vary between ${Math.round(minToday)}° and ${Math.round(maxToday)}° throughout the day. `
+                : `Die Temperatur schwankt heute zwischen ${Math.round(minToday)}° und ${Math.round(maxToday)}°. `;
+        } else {
+            tempDesc = lang === 'en' 
+                ? `Pretty steady temperatures around ${Math.round((minToday + maxToday) / 2)}° (${Math.round(minToday)}° to ${Math.round(maxToday)}°). `
+                : `Recht konstante Temperaturen um die ${Math.round((minToday + maxToday) / 2)}° (${Math.round(minToday)}° bis ${Math.round(maxToday)}°). `;
+        }
+        todayText += tempDesc;
         
         // Precipitation text with snow details
         if (rainSumToday + snowSumToday > 2.0) {
@@ -2532,9 +2761,18 @@ const generateAIReport = (type, data, lang = 'de') => {
         }
         
         let tomorrowText = `🌅 ${t.outlook} ${t.tomorrow} (${tomorrowDate.toLocaleDateString(locale, {weekday:'long'})}):\n`;
-        tomorrowText += lang === 'en'
-            ? `Expect temperatures between ${Math.round(tMin)}° in the morning and ${Math.round(tMax)}° in the afternoon. `
-            : `Morgens etwa ${Math.round(tMin)}°, nachmittags klettert das Thermometer auf ${Math.round(tMax)}°. `;
+        
+        // More natural temperature description for tomorrow
+        const tomorrowTempDiff = Math.round(tMax) - Math.round(tMin);
+        if (tomorrowTempDiff > 12) {
+            tomorrowText += lang === 'en'
+                ? `A cool start at ${Math.round(tMin)}° in the morning, then warming nicely to ${Math.round(tMax)}° by afternoon. `
+                : `Morgens noch frische ${Math.round(tMin)}°, dann wird's richtig angenehm mit bis zu ${Math.round(tMax)}° am Nachmittag. `;
+        } else {
+            tomorrowText += lang === 'en'
+                ? `Temperatures ranging from ${Math.round(tMin)}° in the morning to ${Math.round(tMax)}° in the afternoon. `
+                : `Morgens etwa ${Math.round(tMin)}°, nachmittags klettert das Thermometer auf ${Math.round(tMax)}°. `;
+        }
         
         // Precipitation text with snow details
         if (tRain + tSnow > 2.0) {
@@ -3066,6 +3304,67 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
                              °F (Fahrenheit)
                          </button>
                      </div>
+                 </div>
+
+                 {/* NOTIFICATIONS */}
+                 <div className="mb-6">
+                     <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <Bell size={16}/> {t.notifications}
+                     </label>
+                     
+                     {/* Daily Forecast Notification */}
+                     <div className="mb-3 p-3 bg-slate-50 rounded-xl">
+                         <div className="flex items-center justify-between mb-2">
+                             <div className="flex-1">
+                                 <div className="font-semibold text-sm text-slate-700">{t.notificationDaily}</div>
+                                 <div className="text-xs text-slate-500 mt-1">{t.notificationDailyDesc}</div>
+                             </div>
+                             <label className="relative inline-block w-12 h-6 ml-3">
+                                 <input 
+                                     type="checkbox" 
+                                     checked={localSettings.notificationDaily || false}
+                                     onChange={(e) => setLocalSettings({...localSettings, notificationDaily: e.target.checked})}
+                                     className="sr-only peer"
+                                 />
+                                 <span className="absolute inset-0 bg-slate-300 rounded-full peer-checked:bg-blue-600 transition cursor-pointer"></span>
+                                 <span className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-6"></span>
+                             </label>
+                         </div>
+                     </div>
+                     
+                     {/* Next Day Outlook Notification */}
+                     <div className="mb-3 p-3 bg-slate-50 rounded-xl">
+                         <div className="flex items-center justify-between mb-2">
+                             <div className="flex-1">
+                                 <div className="font-semibold text-sm text-slate-700">{t.notificationNextDay}</div>
+                                 <div className="text-xs text-slate-500 mt-1">{t.notificationNextDayDesc}</div>
+                             </div>
+                             <label className="relative inline-block w-12 h-6 ml-3">
+                                 <input 
+                                     type="checkbox" 
+                                     checked={localSettings.notificationNextDay || false}
+                                     onChange={(e) => setLocalSettings({...localSettings, notificationNextDay: e.target.checked})}
+                                     className="sr-only peer"
+                                 />
+                                 <span className="absolute inset-0 bg-slate-300 rounded-full peer-checked:bg-blue-600 transition cursor-pointer"></span>
+                                 <span className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-6"></span>
+                             </label>
+                         </div>
+                     </div>
+                     
+                     {/* Notification Time */}
+                     {(localSettings.notificationDaily || localSettings.notificationNextDay) && (
+                         <div className="p-3 bg-slate-50 rounded-xl">
+                             <label className="block text-sm font-semibold text-slate-700 mb-2">{t.notificationTime}</label>
+                             <input 
+                                 type="time" 
+                                 value={localSettings.notificationTime || '07:00'}
+                                 onChange={(e) => setLocalSettings({...localSettings, notificationTime: e.target.value})}
+                                 className="w-full py-2 px-3 bg-white border border-slate-200 rounded-lg text-slate-700 font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                             />
+                             <div className="text-xs text-slate-500 mt-2">{t.notificationTimeDesc}</div>
+                         </div>
+                     )}
                  </div>
 
                  <button 
@@ -5330,6 +5629,13 @@ export default function WeatherApp() {
   useEffect(() => {
       localStorage.setItem('weather_settings', JSON.stringify(settings));
   }, [settings]);
+
+  // Schedule notifications when settings or weather data changes
+  useEffect(() => {
+      if (shortTermData && currentLoc) {
+          scheduleNotifications(settings, currentLoc.name, { shortTerm: shortTermData });
+      }
+  }, [settings.notificationDaily, settings.notificationNextDay, settings.notificationTime, settings.language, shortTermData, currentLoc]);
 
   // --- Helpers for Display ---
   const t = (key) => TRANSLATIONS[settings.language]?.[key] || TRANSLATIONS['de'][key] || key;
