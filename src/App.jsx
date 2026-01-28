@@ -6087,7 +6087,12 @@ export default function WeatherApp() {
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang), [processedLong, lang]);
 
-  const displayedHours = processedShort.slice(0, 24);
+  // Filter to show only remaining hours of today (not extending into tomorrow)
+  const displayedHours = useMemo(() => {
+    const now = new Date();
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    return processedShort.filter(hour => hour.time <= todayEnd);
+  }, [processedShort]);
 
   // --- WIDGET VIEWS ---
   if (viewMode === 'animation') {
@@ -6503,7 +6508,7 @@ export default function WeatherApp() {
             <div className="space-y-4">
                <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} />
                <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} lang={lang} />
-               <h3 className="text-sm font-bold uppercase tracking-wide opacity-90 ml-2">Stündlicher Verlauf (24h)</h3>
+               <h3 className="text-sm font-bold uppercase tracking-wide opacity-90 ml-2">{t('restOfDay')} - {t('hourlyForecast')}</h3>
                <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide"> 
                   <div className="flex gap-3 w-max">
                     {displayedHours.map((row, i) => {
