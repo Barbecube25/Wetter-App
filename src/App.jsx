@@ -79,7 +79,7 @@ const TRANSLATIONS = {
     saveTrip: "Reise speichern",
     myTrips: "Meine Reisen",
     tripSaved: "Reise gespeichert!",
-    radarCredit: "Radarbild bereitgestellt von RainViewer.com", // ÄNDERUNG: Updated Credit
+    radarCredit: "Radarbild bereitgestellt von Windy.com", // Radar data from Windy.com
     noRain: "Trocken",
     rain: "Regen",
     snow: "Schnee",
@@ -236,7 +236,7 @@ const TRANSLATIONS = {
     saveTrip: "Save Trip",
     myTrips: "My Trips",
     tripSaved: "Trip saved!",
-    radarCredit: "Radar image provided by RainViewer.com", // ÄNDERUNG: Updated Credit
+    radarCredit: "Radar image provided by Windy.com", // Radar data from Windy.com
     noRain: "Dry",
     rain: "Rain",
     snow: "Snow",
@@ -393,7 +393,7 @@ const TRANSLATIONS = {
     saveTrip: "Enregistrer le voyage",
     myTrips: "Mes voyages",
     tripSaved: "Voyage enregistré !",
-    radarCredit: "Image radar fournie par RainViewer.com",
+    radarCredit: "Image radar fournie par Windy.com",
     noRain: "Sec",
     rain: "Pluie",
     snow: "Neige",
@@ -550,7 +550,7 @@ const TRANSLATIONS = {
     saveTrip: "Guardar viaje",
     myTrips: "Mis viajes",
     tripSaved: "¡Viaje guardado!",
-    radarCredit: "Imagen de radar proporcionada por RainViewer.com",
+    radarCredit: "Imagen de radar proporcionada por Windy.com",
     noRain: "Seco",
     rain: "Lluvia",
     snow: "Nieve",
@@ -707,7 +707,7 @@ const TRANSLATIONS = {
     saveTrip: "Salva viaggio",
     myTrips: "I miei viaggi",
     tripSaved: "Viaggio salvato!",
-    radarCredit: "Immagine radar fornita da RainViewer.com",
+    radarCredit: "Immagine radar fornita da Windy.com",
     noRain: "Asciutto",
     rain: "Pioggia",
     snow: "Neve",
@@ -864,7 +864,7 @@ const TRANSLATIONS = {
     saveTrip: "Seyahati kaydet",
     myTrips: "Seyahatlerim",
     tripSaved: "Seyahat kaydedildi!",
-    radarCredit: "Radar görüntüsü RainViewer.com tarafından sağlanmıştır",
+    radarCredit: "Radar görüntüsü Windy.com tarafından sağlanmıştır",
     noRain: "Kuru",
     rain: "Yağmur",
     snow: "Kar",
@@ -1021,7 +1021,7 @@ const TRANSLATIONS = {
     saveTrip: "Zapisz podróż",
     myTrips: "Moje podróże",
     tripSaved: "Podróż zapisana!",
-    radarCredit: "Obraz radarowy dostarczony przez RainViewer.com",
+    radarCredit: "Obraz radarowy dostarczony przez Windy.com",
     noRain: "Sucho",
     rain: "Deszcz",
     snow: "Śnieg",
@@ -1178,7 +1178,7 @@ const TRANSLATIONS = {
     saveTrip: "Reis opslaan",
     myTrips: "Mijn reizen",
     tripSaved: "Reis opgeslagen!",
-    radarCredit: "Radarbeeld geleverd door RainViewer.com",
+    radarCredit: "Radarbeeld geleverd door Windy.com",
     noRain: "Droog",
     rain: "Regen",
     snow: "Sneeuw",
@@ -1335,7 +1335,7 @@ const TRANSLATIONS = {
     saveTrip: "Spremi putovanje",
     myTrips: "Moja putovanja",
     tripSaved: "Putovanje spremljeno!",
-    radarCredit: "Radarsku sliku omogućio RainViewer.com",
+    radarCredit: "Radarsku sliku omogućio Windy.com",
     noRain: "Suho",
     rain: "Kiša",
     snow: "Snijeg",
@@ -1492,7 +1492,7 @@ const TRANSLATIONS = {
     saveTrip: "Αποθήκευση ταξιδιού",
     myTrips: "Τα ταξίδια μου",
     tripSaved: "Το ταξίδι αποθηκεύτηκε!",
-    radarCredit: "Εικόνα radar παρέχεται από το RainViewer.com",
+    radarCredit: "Εικόνα radar παρέχεται από το Windy.com",
     noRain: "Στεγνό",
     rain: "Βροχή",
     snow: "Χιόνι",
@@ -1649,7 +1649,7 @@ const TRANSLATIONS = {
     saveTrip: "Gem rejse",
     myTrips: "Mine rejser",
     tripSaved: "Rejse gemt!",
-    radarCredit: "Radarbillede leveret af RainViewer.com",
+    radarCredit: "Radarbillede leveret af Windy.com",
     noRain: "Tørt",
     rain: "Regn",
     snow: "Sne",
@@ -1806,7 +1806,7 @@ const TRANSLATIONS = {
     saveTrip: "Сохранить поездку",
     myTrips: "Мои поездки",
     tripSaved: "Поездка сохранена!",
-    radarCredit: "Радарное изображение предоставлено RainViewer.com",
+    radarCredit: "Радарное изображение предоставлено Windy.com",
     noRain: "Сухо",
     rain: "Дождь",
     snow: "Снег",
@@ -2281,6 +2281,8 @@ const generateAIReport = (type, data, lang = 'de') => {
         let periodStart = null;
         let periodEnd = null;
         let periodAmount = 0;
+        let periodRain = 0;
+        let periodSnow = 0;
         
         todayData.forEach((d, idx) => {
             const hasRain = d.precip > 0.1 || d.snow > 0.1;
@@ -2291,22 +2293,31 @@ const generateAIReport = (type, data, lang = 'de') => {
                 inRainPeriod = true;
                 periodStart = d.time;
                 periodAmount = parseFloat(d.precip) + parseFloat(d.snow || 0);
+                periodRain = parseFloat(d.precip || 0);
+                periodSnow = parseFloat(d.snow || 0);
             } else if (hasRain && inRainPeriod) {
                 // Continue period
                 periodEnd = d.time;
                 periodAmount += parseFloat(d.precip) + parseFloat(d.snow || 0);
+                periodRain += parseFloat(d.precip || 0);
+                periodSnow += parseFloat(d.snow || 0);
             } else if (!hasRain && inRainPeriod) {
                 // End period
                 rainPeriods.push({
                     start: periodStart,
                     end: periodEnd || periodStart,
                     amount: periodAmount,
-                    isSnow: isSnow
+                    rain: periodRain,
+                    snow: periodSnow,
+                    isSnow: isSnow,
+                    isMixed: periodRain > 0.1 && periodSnow > 0.1
                 });
                 inRainPeriod = false;
                 periodStart = null;
                 periodEnd = null;
                 periodAmount = 0;
+                periodRain = 0;
+                periodSnow = 0;
             }
         });
         
@@ -2316,7 +2327,10 @@ const generateAIReport = (type, data, lang = 'de') => {
                 start: periodStart,
                 end: periodEnd || periodStart,
                 amount: periodAmount,
-                isSnow: snowSumToday > rainSumToday
+                rain: periodRain,
+                snow: periodSnow,
+                isSnow: snowSumToday > rainSumToday,
+                isMixed: periodRain > 0.1 && periodSnow > 0.1
             });
         }
         
@@ -2352,16 +2366,28 @@ const generateAIReport = (type, data, lang = 'de') => {
             rainPeriods.forEach((period, idx) => {
                 const startTime = period.start.toLocaleTimeString(locale, {hour:'2-digit', minute:'2-digit'});
                 const endTime = period.end.toLocaleTimeString(locale, {hour:'2-digit', minute:'2-digit'});
-                const precipType = period.isSnow ? (lang === 'en' ? 'Snow' : 'Schnee') : (lang === 'en' ? 'Rain' : 'Regen');
+                let precipType;
+                if (period.isMixed) {
+                    precipType = lang === 'en' ? 'Mixed precipitation' : 'Mischniederschlag';
+                } else {
+                    precipType = period.isSnow ? (lang === 'en' ? 'Snow' : 'Schnee') : (lang === 'en' ? 'Rain' : 'Regen');
+                }
+                
+                let precipDetails = `${period.amount.toFixed(1)}mm`;
+                if (period.isMixed && (period.rain > 0.1 || period.snow > 0.1)) {
+                    precipDetails = lang === 'en' 
+                        ? `${period.rain.toFixed(1)}mm rain, ${period.snow.toFixed(1)}mm snow`
+                        : `${period.rain.toFixed(1)}mm Regen, ${period.snow.toFixed(1)}mm Schnee`;
+                }
                 
                 if (startTime === endTime) {
                     todayText += lang === 'en'
-                        ? `${precipType} around ${startTime} (${period.amount.toFixed(1)}mm). `
-                        : `${precipType} gegen ${startTime} Uhr (${period.amount.toFixed(1)}mm). `;
+                        ? `${precipType} around ${startTime} (${precipDetails}). `
+                        : `${precipType} gegen ${startTime} Uhr (${precipDetails}). `;
                 } else {
                     todayText += lang === 'en'
-                        ? `${precipType} from ${startTime} to ${endTime} (${period.amount.toFixed(1)}mm). `
-                        : `${precipType} von ${startTime} bis ${endTime} Uhr (${period.amount.toFixed(1)}mm). `;
+                        ? `${precipType} from ${startTime} to ${endTime} (${precipDetails}). `
+                        : `${precipType} von ${startTime} bis ${endTime} Uhr (${precipDetails}). `;
                 }
             });
         }
@@ -3405,17 +3431,20 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
     const isRainingNow = current.precip > 0.1 || current.snow > 0.1;
     
     let result = { 
-       type: 'none', // none, rain_now, rain_later, snow_now, snow_later
+       type: 'none', // none, rain_now, rain_later, snow_now, snow_later, mixed_now, mixed_later
        startTime: null,
        endTime: null,
        amount: 0,
+       rainAmount: 0,
+       snowAmount: 0,
        duration: 0,
        isSnow: false,
+       isMixed: false,
        maxIntensity: 0,
        minutelyStart: null,
        currentIntensity: 0,
        peakTime: null,
-       hourlyForecast: [] // Array of {time, amount} for next hours
+       hourlyForecast: [] // Array of {time, amount, rain, snow} for next hours
     };
 
     // 1. Check Minutely Data for precise start time (Next 2 hours)
@@ -3465,8 +3494,13 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
                const isSnowCode = d.code && SNOW_WEATHER_CODES.includes(d.code);
                result.isSnow = isSnowCode;
            }
-           const hourlyAmount = d.precip > 0 ? d.precip : d.snow;
+           const hourlyAmount = d.precip + d.snow;
+           const hourlyRain = d.precip > 0 ? d.precip : 0;
+           const hourlySnow = d.snow > 0 ? d.snow : 0;
+           
            result.amount += hourlyAmount; 
+           result.rainAmount += hourlyRain;
+           result.snowAmount += hourlySnow;
            result.maxIntensity = Math.max(result.maxIntensity, hourlyAmount);
            result.duration++;
            
@@ -3476,7 +3510,7 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
                peakTime = d.time;
            }
            if (i < 6) { // Only first 6 hours for hourly forecast
-               result.hourlyForecast.push({ time: d.time, amount: hourlyAmount });
+               result.hourlyForecast.push({ time: d.time, amount: hourlyAmount, rain: hourlyRain, snow: hourlySnow });
            }
        } else {
            if (foundStart) {
@@ -3489,21 +3523,39 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
     
     result.peakTime = peakTime;
     
+    // Determine if it's mixed precipitation
+    if (result.rainAmount > 0.1 && result.snowAmount > 0.1) {
+        result.isMixed = true;
+    }
+    
     // Check if it's currently raining FIRST (highest priority)
     if (isRainingNow) {
-        // Es regnet jetzt
-        const hourlyAmount = current.precip || current.snow;
+        // Es regnet/schneit jetzt
+        const hourlyRain = current.precip || 0;
+        const hourlySnow = current.snow || 0;
+        const hourlyAmount = hourlyRain + hourlySnow;
         result.currentIntensity = hourlyAmount;
         
         // Check weather code to verify actual snow event
         // Snow should be treated like rain - only show if weather code explicitly indicates snow, not based on temperature
         const isSnowCode = current.code && SNOW_WEATHER_CODES.includes(current.code);
-        result.type = isSnowCode ? 'snow_now' : 'rain_now';
+        
+        // Determine if mixed precipitation now
+        const isMixedNow = hourlyRain > 0.1 && hourlySnow > 0.1;
+        
+        if (isMixedNow) {
+            result.type = 'mixed_now';
+            result.isMixed = true;
+        } else {
+            result.type = isSnowCode ? 'snow_now' : 'rain_now';
+        }
         
         // If we haven't found future rain, just count current hour
         if (!foundStart) {
             result.duration = 1; 
             result.amount = hourlyAmount;
+            result.rainAmount = hourlyRain;
+            result.snowAmount = hourlySnow;
             result.maxIntensity = hourlyAmount;
             result.startTime = current.time;
             result.peakTime = current.time;
@@ -3522,9 +3574,17 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
         const isNow = startDiff <= 0; // Or very close
         
         if (isNow) {
-            result.type = result.isSnow ? 'snow_now' : 'rain_now';
+            if (result.isMixed) {
+                result.type = 'mixed_now';
+            } else {
+                result.type = result.isSnow ? 'snow_now' : 'rain_now';
+            }
         } else {
-            result.type = result.isSnow ? 'snow_later' : 'rain_later';
+            if (result.isMixed) {
+                result.type = 'mixed_later';
+            } else {
+                result.type = result.isSnow ? 'snow_later' : 'rain_later';
+            }
         }
     }
     
@@ -3533,9 +3593,10 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
 
   if (!analysis) return null;
 
-  const { type, startTime, duration, amount, isSnow, maxIntensity, minutelyStart, currentIntensity, peakTime, hourlyForecast } = analysis;
+  const { type, startTime, duration, amount, rainAmount, snowAmount, isSnow, isMixed, maxIntensity, minutelyStart, currentIntensity, peakTime, hourlyForecast } = analysis;
   const isRain = type.includes('rain');
   const isNow = type.includes('now');
+  const isMixedPrecip = type.includes('mixed');
   
   // Zeit-Logik
   const now = new Date();
@@ -3573,12 +3634,21 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
   if (type === 'none') {
       headline = t.noPrecipExp;
   } else if (isNow) {
-      headline = t.rainNow;
+      if (isMixedPrecip) {
+          headline = lang === 'en' ? 'Mixed Precipitation Now' : 'Mischprecipitation jetzt';
+      } else {
+          headline = t.rainNow;
+      }
       timeDisplay = t.now;
   } else if (minutelyStart) {
       // Precise start time
       const diffMins = Math.round((minutelyStart - now) / 60000);
-      const precipType = isSnow ? t.snow : t.rain;
+      let precipType;
+      if (isMixedPrecip) {
+          precipType = lang === 'en' ? 'Mixed Precip.' : 'Mischniederschlag';
+      } else {
+          precipType = isSnow ? t.snow : t.rain;
+      }
       if (diffMins <= 0) {
            headline = `${precipType} ${t.startingNow}`;
            timeDisplay = t.now;
@@ -3587,7 +3657,12 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
            timeDisplay = minutelyStart.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'});
       }
   } else if (isSoon) {
-      const precipType = isSnow ? t.snow : t.rain;
+      let precipType;
+      if (isMixedPrecip) {
+          precipType = lang === 'en' ? 'Mixed Precip.' : 'Mischniederschlag';
+      } else {
+          precipType = isSnow ? t.snow : t.rain;
+      }
       headline = `${precipType} ${t.startingSoon}`;
       timeDisplay = startTime ? startTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'}) : "Gleich";
   } else {
@@ -3610,23 +3685,24 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
       );
   }
 
-  const Icon = isSnow ? Snowflake : CloudRain;
-  const colorClass = isSnow ? "text-cyan-600 bg-cyan-100 border-cyan-200" : "text-blue-600 bg-blue-100 border-blue-200";
-  const bgClass = isSnow ? "bg-cyan-50/80" : "bg-blue-50/80";
+  const Icon = isMixedPrecip ? CloudSnow : (isSnow ? Snowflake : CloudRain);
+  const colorClass = isMixedPrecip ? "text-purple-600 bg-purple-100 border-purple-200" : (isSnow ? "text-cyan-600 bg-cyan-100 border-cyan-200" : "text-blue-600 bg-blue-100 border-blue-200");
+  const bgClass = isMixedPrecip ? "bg-purple-50/80" : (isSnow ? "bg-cyan-50/80" : "bg-blue-50/80");
 
   // Intensitäts-Logik
   const getIntensityInfo = (rate) => {
       // Basic translation mapping for intensity
-      if (rate < 0.5) return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: isSnow ? 'bg-cyan-300' : 'bg-blue-300' };
-      if (rate < 1.0) return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: isSnow ? 'bg-cyan-400' : 'bg-blue-400' };
-      if (rate < 4.0) return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: isSnow ? 'bg-cyan-500' : 'bg-blue-600' };
-      return { label: lang === 'en' ? 'Very Heavy' : 'Sehr Stark', percent: 100, color: isSnow ? 'bg-cyan-700' : 'bg-blue-800' };
+      const baseColor = isMixedPrecip ? 'purple' : (isSnow ? 'cyan' : 'blue');
+      if (rate < 0.5) return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: `bg-${baseColor}-300` };
+      if (rate < 1.0) return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: `bg-${baseColor}-400` };
+      if (rate < 4.0) return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: isMixedPrecip ? 'bg-purple-500' : (isSnow ? 'bg-cyan-500' : 'bg-blue-600') };
+      return { label: lang === 'en' ? 'Very Heavy' : 'Sehr Stark', percent: 100, color: isMixedPrecip ? 'bg-purple-700' : (isSnow ? 'bg-cyan-700' : 'bg-blue-800') };
   };
 
   const intensity = getIntensityInfo(maxIntensity);
 
   return (
-    <div className={`${bgClass} border ${isSnow ? 'border-cyan-100' : 'border-blue-100'} rounded-2xl p-4 shadow-sm mb-4 relative overflow-hidden`}>
+    <div className={`${bgClass} border ${isMixedPrecip ? 'border-purple-100' : (isSnow ? 'border-cyan-100' : 'border-blue-100')} rounded-2xl p-4 shadow-sm mb-4 relative overflow-hidden`}>
         <div className="flex justify-between items-center z-10 relative">
             <div className="flex items-center gap-4">
                 <div className={`p-3 rounded-lg ${colorClass} bg-opacity-30`}>
@@ -3653,13 +3729,19 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
                         )}
                     </div>
                     <div className="text-sm font-bold uppercase text-slate-500 tracking-wide mt-1">
-                        {isSnow ? t.snow : t.rain} • {intensity.label}
+                        {isMixedPrecip ? (lang === 'en' ? 'Mixed Precipitation' : 'Mischniederschlag') : (isSnow ? t.snow : t.rain)} • {intensity.label}
                     </div>
                 </div>
             </div>
 
             <div className="text-right">
                 <div className="text-xl font-bold text-slate-700 leading-tight">{amount.toFixed(1)}<span className="text-sm text-slate-500 font-normal ml-0.5">mm</span></div>
+                {isMixedPrecip && (rainAmount > 0.1 || snowAmount > 0.1) && (
+                    <div className="text-xs text-slate-500 mt-1">
+                        {rainAmount > 0.1 && <span className="flex items-center justify-end gap-1"><CloudRain size={12}/>{rainAmount.toFixed(1)}mm</span>}
+                        {snowAmount > 0.1 && <span className="flex items-center justify-end gap-1"><Snowflake size={12}/>{snowAmount.toFixed(1)}mm</span>}
+                    </div>
+                )}
                 <div className="text-lg font-medium text-slate-500 leading-tight">{duration} <span className="text-sm">{t.hours}</span></div>
             </div>
         </div>
@@ -3701,20 +3783,34 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
             {hourlyForecast.length > 0 && (
                 <div className="bg-white/30 rounded-xl p-3">
                     <div className="flex items-center gap-2 mb-2">
-                        <BarChart2 size={18} className="text-blue-600" />
+                        <BarChart2 size={18} className={isMixedPrecip ? "text-purple-600" : "text-blue-600"} />
                         <span className="text-sm font-bold text-slate-700">{t.nextHours}</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
-                        {hourlyForecast.slice(0, 6).map((forecast, idx) => (
-                            <div key={idx} className="flex flex-col items-center bg-white/40 rounded-lg p-2">
-                                <span className="text-xs font-medium text-slate-600">
-                                    {forecast.time.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})}
-                                </span>
-                                <span className="text-sm font-bold text-blue-600 mt-1">
-                                    {forecast.amount.toFixed(1)} mm
-                                </span>
-                            </div>
-                        ))}
+                        {hourlyForecast.slice(0, 6).map((forecast, idx) => {
+                            const hasMixedInHour = forecast.rain > 0.1 && forecast.snow > 0.1;
+                            return (
+                                <div key={idx} className="flex flex-col items-center bg-white/40 rounded-lg p-2">
+                                    <span className="text-xs font-medium text-slate-600">
+                                        {forecast.time.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})}
+                                    </span>
+                                    {hasMixedInHour ? (
+                                        <div className="text-xs font-bold mt-1">
+                                            <div className="flex items-center gap-1 text-blue-600">
+                                                <CloudRain size={10}/>{forecast.rain.toFixed(1)}
+                                            </div>
+                                            <div className="flex items-center gap-1 text-cyan-600">
+                                                <Snowflake size={10}/>{forecast.snow.toFixed(1)}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <span className={`text-sm font-bold mt-1 ${forecast.snow > 0.1 ? 'text-cyan-600' : 'text-blue-600'}`}>
+                                            {forecast.amount.toFixed(1)} mm
+                                        </span>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             )}
@@ -6222,8 +6318,14 @@ export default function WeatherApp() {
                          </div>
                           
                           {/* Precip */}
-                           <div className="mb-1 h-4 flex items-center justify-center w-full">
-                             {isDaySnow ? (
+                           <div className="mb-1 min-h-[16px] flex flex-col items-center justify-center w-full gap-0.5">
+                             {parseFloat(day.rain) > 0.1 && parseFloat(day.snow) > 0 ? (
+                               // Mixed precipitation - show both
+                               <>
+                                 <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><CloudRain size={10}/> {day.rain}mm</span>
+                                 <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {day.snow}cm</span>
+                               </>
+                             ) : isDaySnow ? (
                                parseFloat(day.snow) > 0 || parseFloat(day.rain) > 0.1 ? (
                                  <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {(parseFloat(day.snow) > 0 ? parseFloat(day.snow) : (parseFloat(day.rain) / 10)).toFixed(1)}cm</span>
                                ) : ( <span className="opacity-20 text-xs">-</span> )
