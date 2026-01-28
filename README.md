@@ -8,8 +8,9 @@ Eine moderne Wetter-App mit React, Vite und Capacitor.
 - 🌡️ Lokale Wettervorhersagen
 - ⚠️ DWD Wetterwarnungen
 - 📊 Wetter-Charts und Visualisierungen
-- 🤖 KI-generierte Wetterberichte
+- 🤖 KI-generierte Wetterberichte (verbessert und detaillierter)
 - 🌧️ Niederschlagsradar
+- 🔔 Lokale Benachrichtigungen für tägliche Wettervorhersagen
 - 📱 Progressive Web App (PWA) und native Android App
 
 ## Technologie-Stack
@@ -94,6 +95,29 @@ Die App benötigt folgende Berechtigungen:
 - `INTERNET` - Zugriff auf Wetter-APIs
 - `ACCESS_FINE_LOCATION` - Genauer GPS-Standort
 - `ACCESS_COARSE_LOCATION` - Ungefährer Standort
+- `POST_NOTIFICATIONS` - Lokale Benachrichtigungen (Android 13+)
+
+## Neue Funktionen
+
+### Benachrichtigungen
+
+Die App unterstützt jetzt lokale Benachrichtigungen für:
+- **Tägliche Wettervorhersage**: Erhalte eine Zusammenfassung wie der Tag wird
+- **Ausblick auf morgen**: Erhalte eine Vorschau auf den nächsten Tag
+
+Benachrichtigungen können in den Einstellungen konfiguriert werden:
+1. Öffne die Einstellungen (⚙️ Symbol)
+2. Scrolle zu "Benachrichtigungen"
+3. Aktiviere die gewünschten Benachrichtigungstypen
+4. Wähle die Uhrzeit für deine Benachrichtigungen
+
+### Verbesserter KI-Bericht
+
+Die KI-generierten Wetterberichte sind jetzt:
+- Ausführlicher und detaillierter
+- Natürlicher formuliert
+- Mit mehr Kontext zu Temperaturverläufen
+- Besser strukturiert für verschiedene Wetterbedingungen
 
 ## Datenschutz
 
