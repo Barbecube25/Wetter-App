@@ -4235,10 +4235,98 @@ const HomeSetupModal = ({ onSave, lang='de' }) => {
     );
 };
 
+// Language flags for tutorial
+const LANGUAGE_FLAGS = {
+    de: '🇩🇪',
+    en: '🇬🇧',
+    fr: '🇫🇷',
+    es: '🇪🇸',
+    it: '🇮🇹',
+    tr: '🇹🇷',
+    pl: '🇵🇱',
+    nl: '🇳🇱',
+    hr: '🇭🇷',
+    el: '🇬🇷',
+    da: '🇩🇰',
+    ru: '🇷🇺'
+};
+
 // --- TUTORIAL COMPONENT (Für den allerersten Start) ---
 const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' }) => {
     const [step, setStep] = useState(0);
+    const [homeLocation, setHomeLocation] = useState(null);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [gpsLoading, setGpsLoading] = useState(false);
+    const [customHomeName, setCustomHomeName] = useState("");
+    const [selectedHomeLoc, setSelectedHomeLoc] = useState(null);
+    
     const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+    
+    // Home location search handler
+    const handleHomeSearch = async () => {
+        if (!searchQuery.trim()) return;
+        setIsSearching(true);
+        try {
+            const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery.trim())}&count=5&language=de&format=json`);
+            const data = await res.json();
+            setSearchResults(data.results || []);
+        } catch (e) {
+            console.error(e);
+            setSearchResults([]);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+    
+    // GPS handler
+    const handleUseGPS = () => {
+        if (!navigator.geolocation) {
+            alert(t.noGpsAvailable || "GPS nicht verfügbar");
+            return;
+        }
+        setGpsLoading(true);
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            try {
+                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
+                const data = await res.json();
+                const city = data.results?.[0]?.name || t.myLocation;
+                const loc = { name: city, lat, lon, id: 'home_default', type: 'home' };
+                setSelectedHomeLoc(loc);
+                setCustomHomeName(city);
+                setHomeLocation(loc);
+            } catch (e) {
+                const loc = { name: "GPS Standort", lat, lon, id: 'home_default', type: 'home' };
+                setSelectedHomeLoc(loc);
+                setCustomHomeName("Zuhause");
+                setHomeLocation(loc);
+            } finally {
+                setGpsLoading(false);
+            }
+        }, () => {
+            alert(t.locationDenied || "Standortzugriff verweigert.");
+            setGpsLoading(false);
+        });
+    };
+    
+    // Select location from search results
+    const handleSelectHome = (result) => {
+        const loc = { 
+            name: result.name, 
+            lat: result.latitude, 
+            lon: result.longitude, 
+            id: 'home_default', 
+            type: 'home' 
+        };
+        setSelectedHomeLoc(loc);
+        setCustomHomeName(result.name);
+        setHomeLocation(loc);
+        setSearchResults([]);
+        setSearchQuery("");
+    };
     
     const steps = [
         {
@@ -4303,7 +4391,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
     
     const handleNext = () => {
         if (isLastStep) {
-            onComplete();
+            onComplete(homeLocation);
         } else {
             setStep(step + 1);
         }
@@ -4356,34 +4444,116 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                 {/* Content */}
                 <div className="p-6">
                     {currentStep.content === 'language' && (
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 block">{t.language}</label>
+                        <div className="grid grid-cols-3 gap-3">
                             {['de', 'en', 'fr', 'es', 'it', 'tr', 'pl', 'nl', 'hr', 'el', 'da', 'ru'].map(l => (
                                 <button
                                     key={l}
                                     onClick={() => setSettings({ ...settings, language: l })}
-                                    className={`w-full p-3 rounded-xl font-bold text-left flex items-center justify-between transition ${
+                                    className={`p-4 rounded-xl font-bold text-center flex flex-col items-center justify-center gap-2 transition ${
                                         settings.language === l 
-                                            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30' 
+                                            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30 scale-105' 
                                             : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                     }`}
                                 >
-                                    <span>{TRANSLATIONS[l]?.language || l.toUpperCase()}</span>
-                                    {settings.language === l && <Check size={20} />}
+                                    <span className="text-3xl">{LANGUAGE_FLAGS[l]}</span>
+                                    <span className="text-xs">{TRANSLATIONS[l]?.language || l.toUpperCase()}</span>
+                                    {settings.language === l && <Check size={16} />}
                                 </button>
                             ))}
                         </div>
                     )}
                     
                     {currentStep.content === 'home' && (
-                        <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 text-center border border-blue-200">
-                            <div className="w-16 h-16 bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                                <Home size={32} />
-                            </div>
-                            <p className="text-slate-700 font-medium mb-4">{t.welcomeDesc}</p>
-                            <div className="text-sm text-slate-500 italic">
-                                {t.tutorialHomeDesc}
-                            </div>
+                        <div className="space-y-4">
+                            {!selectedHomeLoc ? (
+                                <>
+                                    <p className="text-slate-600 text-sm mb-4">{t.welcomeDesc}</p>
+                                    
+                                    <button 
+                                        onClick={handleUseGPS}
+                                        disabled={gpsLoading}
+                                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 transition active:scale-95 disabled:opacity-50"
+                                    >
+                                        {gpsLoading ? <RefreshCw className="animate-spin" size={20}/> : <Crosshair size={20}/>}
+                                        {t.useGps}
+                                    </button>
+
+                                    <div className="relative">
+                                        <div className="absolute inset-0 flex items-center">
+                                            <div className="w-full border-t border-slate-200"></div>
+                                        </div>
+                                        <div className="relative flex justify-center text-xs uppercase">
+                                            <span className="bg-white px-2 text-slate-400">{t.orSearch}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="relative">
+                                        <input 
+                                            type="text" 
+                                            placeholder={t.searchPlace}
+                                            className="w-full pl-4 pr-12 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50 text-slate-800"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleHomeSearch()}
+                                        />
+                                        <button 
+                                            onClick={handleHomeSearch} 
+                                            className="absolute right-2 top-2 p-1.5 bg-slate-200 rounded-lg text-slate-600 hover:bg-slate-300 transition"
+                                        >
+                                            {isSearching ? <RefreshCw className="animate-spin" size={16}/> : <Search size={16}/>}
+                                        </button>
+                                    </div>
+
+                                    {searchResults.length > 0 && (
+                                        <div className="text-left border border-slate-200 rounded-xl overflow-hidden max-h-[200px] overflow-y-auto">
+                                            {searchResults.map(res => (
+                                                <button 
+                                                    key={res.id} 
+                                                    onClick={() => handleSelectHome(res)} 
+                                                    className="w-full p-3 hover:bg-blue-50 text-left border-b border-slate-100 last:border-0 text-sm font-bold text-slate-700 transition"
+                                                >
+                                                    {res.name} <span className="font-normal text-slate-400">({res.country})</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200">
+                                    <div className="w-16 h-16 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                        <Check size={32} />
+                                    </div>
+                                    <p className="text-slate-700 font-bold mb-4 text-center">{t.locFound || "Ort gefunden!"}</p>
+                                    
+                                    <div className="bg-white/50 p-4 rounded-xl">
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 block">{t.homeLoc}</label>
+                                        <div className="flex items-center gap-2">
+                                            <input 
+                                                type="text" 
+                                                className="w-full bg-transparent font-bold text-lg text-slate-800 focus:outline-none border-b-2 border-green-500 pb-1"
+                                                value={customHomeName}
+                                                onChange={(e) => {
+                                                    setCustomHomeName(e.target.value);
+                                                    setHomeLocation({ ...homeLocation, name: e.target.value });
+                                                }}
+                                            />
+                                            <Edit2 size={16} className="text-slate-400"/>
+                                        </div>
+                                    </div>
+                                    
+                                    <button 
+                                        onClick={() => {
+                                            setSelectedHomeLoc(null);
+                                            setHomeLocation(null);
+                                            setSearchQuery("");
+                                            setSearchResults([]);
+                                        }}
+                                        className="mt-4 text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1 mx-auto"
+                                    >
+                                        <ArrowLeft size={14} /> {t.changeLocation || "Ort ändern"}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                     
@@ -5497,11 +5667,15 @@ export default function WeatherApp() {
       return (
           <div className="min-h-screen bg-slate-900 font-sans">
               <TutorialModal 
-                  onComplete={() => {
+                  onComplete={(homeLocationFromTutorial) => {
                       setTutorialCompleted();
                       setShowTutorial(false);
-                      // If no home location, show home setup next
-                      if (!homeLoc) {
+                      // If home location was set in tutorial, save it
+                      if (homeLocationFromTutorial) {
+                          setHomeLoc(homeLocationFromTutorial);
+                          setCurrentLoc(homeLocationFromTutorial);
+                      } else if (!homeLoc) {
+                          // If no home location, show home setup next
                           setShowHomeSetup(true);
                       }
                   }}
