@@ -2388,7 +2388,7 @@ const getMoonPhase = (d) => {
 };
 
 // --- 3. KI LOGIK (REVISED - MIT STRUKTURIERTEN DATEN & SPRACHE) ---
-const generateAIReport = (type, data, lang = 'de') => {
+const generateAIReport = (type, data, lang = 'de', extraData = null) => {
   if (!data) return { title: "Lade...", summary: "Warte auf Daten...", details: null, warning: null, confidence: null };
   if (Array.isArray(data) && data.length === 0) return { title: "Lade...", summary: "Warte auf Daten...", details: null, warning: null, confidence: null };
   
@@ -2866,6 +2866,22 @@ const generateAIReport = (type, data, lang = 'de') => {
     confidence = 90; 
     const maxGustNow = Math.max(...(todayData.map(d=>d.gust)||[]), 0);
     if (maxGustNow > 60) warning = lang === 'en' ? "GALE GUSTS (Today)" : "STURMBÖEN (Heute)";
+    
+    // Add structured details for 3-day forecast if extraData (threeDayForecast) is provided
+    if (extraData && Array.isArray(extraData) && extraData.length > 0) {
+      structuredDetails = [{
+        title: lang === 'en' ? '3-Day Forecast' : '3-Tage-Vorhersage',
+        items: extraData.map(d => ({
+          day: d.dayName,
+          date: d.dateShort,
+          code: d.code,
+          min: Math.round(d.min),
+          max: Math.round(d.max),
+          rain: parseFloat(d.rain),
+          wind: d.wind
+        }))
+      }];
+    }
   }
 
   if (type === 'longterm') {
@@ -6401,10 +6417,6 @@ export default function WeatherApp() {
   const cardBg = isRealNight ? 'bg-slate-800/60 border-slate-700/50 text-white' : 'bg-white/80 border-white/40 text-slate-900';
   const windColorClass = getWindColorClass(current.wind || 0);
 
-  const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang), [processedShort, lang]);
-  const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
-  const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang), [processedLong, lang]);
-
   // Create a 3-day forecast: rest of today, tomorrow, and day after tomorrow
   const threeDayForecast = useMemo(() => {
     if (!processedShort.length || !processedLong.length) return [];
@@ -6469,6 +6481,10 @@ export default function WeatherApp() {
     
     return result;
   }, [processedShort, processedLong, lang, t]);
+
+  const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, threeDayForecast), [processedShort, lang, threeDayForecast]);
+  const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
+  const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang), [processedLong, lang]);
 
   // --- WIDGET VIEWS ---
   if (viewMode === 'animation') {
@@ -6884,71 +6900,6 @@ export default function WeatherApp() {
             <div className="space-y-4">
                <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} />
                <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} lang={lang} />
-               <h3 className="text-sm font-bold uppercase tracking-wide opacity-90 ml-2">{t('trend')}</h3>
-               <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide"> 
-                  <div className="flex gap-3 w-max">
-                    {threeDayForecast.map((day, i) => {
-                      const DayIcon = getWeatherConfig(day.code, 1, lang).icon;
-                      const confColor = getConfidenceColor(day.reliability);
-                      const isDaySnow = SNOW_WEATHER_CODES.includes(day.code);
-                      let probColor = "text-slate-400 opacity-50"; 
-                      if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
-
-                      return (
-                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[160px] w-[160px] hover:bg-white/10 transition relative group">
-                          {/* Day & Date */}
-                          <div className="text-base font-bold mb-0.5" style={{textShadow: '0 1px 3px rgba(0,0,0,0.5)'}}>{day.dayName}</div>
-                          <div className="text-xs mb-2 font-medium" style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{day.dateShort}</div>
-                          
-                          {/* Icon */}
-                          <DayIcon size={48} className="mb-2" style={{filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))'}} />
-                          
-                          {/* Temp Range */}
-                          <div className="flex items-center gap-2 mb-2 w-full justify-center">
-                            <span className="text-2xl font-bold text-blue-400">{formatTemp(day.min)}°</span>
-                            <div className="h-1 w-6 bg-white/10 rounded-full overflow-hidden">
-                               <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
-                            </div>
-                            <span className="text-2xl font-bold text-red-400">{formatTemp(day.max)}°</span>
-                         </div>
-                          
-                           <div className="mb-1 min-h-[16px] flex flex-col items-center justify-center w-full gap-0.5">
-                             {parseFloat(day.rain) > 0.1 && parseFloat(day.snow) > 0.1 ? (
-                               // Mixed precipitation - show both
-                               <>
-                                 <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><CloudRain size={10}/> {day.rain}mm</span>
-                                 <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {day.snow}cm</span>
-                               </>
-                             ) : isDaySnow ? (
-                               parseFloat(day.snow) > 0 || parseFloat(day.rain) > 0.1 ? (
-                                 <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {(parseFloat(day.snow) > 0 ? parseFloat(day.snow) : (parseFloat(day.rain) / 10)).toFixed(1)}cm</span>
-                               ) : ( <span className="opacity-20 text-xs">-</span> )
-                             ) : parseFloat(day.rain) > 0.1 ? (
-                               <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {day.rain}mm</span>
-                             ) : ( <span className="opacity-20 text-xs">-</span> )}
-                           </div>
-                           <div className={`text-xs mb-2 ${probColor} h-3`}>{day.prob > 0 ? `${day.prob}% ${t('probability')}` : ''}</div>
-                           
-                           {/* Wind */}
-                           <div className="flex flex-col items-center gap-0.5 mb-2 w-full">
-                              <div className="flex items-center justify-center gap-1 w-full">
-                                 <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
-                                 <span className={`text-sm font-bold ${getWindColorClass(day.wind)}`} style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{day.wind}</span>
-                              </div>
-                              <span className={`text-xs font-medium ${getWindColorClass(day.gust)}`} style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{t('gusts')} {day.gust}</span>
-                           </div>
-
-                           {/* Reliability Indicator */}
-                           <div className="mt-1 text-xs flex items-center gap-1 border border-white/10 px-2 py-0.5 rounded-full">
-                              <ShieldCheck size={10} className={confColor} />
-                              <span className={confColor} style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{day.reliability}% {t('safe')}</span>
-                           </div>
-                           
-                        </div>
-                      );
-                    })}
-                  </div>
-               </div>
             </div>
           )}
 
