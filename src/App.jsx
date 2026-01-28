@@ -3635,7 +3635,7 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
       headline = t.noPrecipExp;
   } else if (isNow) {
       if (isMixedPrecip) {
-          headline = lang === 'en' ? 'Mixed Precipitation Now' : 'Mischprecipitation jetzt';
+          headline = lang === 'en' ? 'Mixed Precipitation Now' : 'Mischniederschlag jetzt';
       } else {
           headline = t.rainNow;
       }
@@ -3692,11 +3692,24 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
   // Intensitäts-Logik
   const getIntensityInfo = (rate) => {
       // Basic translation mapping for intensity
-      const baseColor = isMixedPrecip ? 'purple' : (isSnow ? 'cyan' : 'blue');
-      if (rate < 0.5) return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: `bg-${baseColor}-300` };
-      if (rate < 1.0) return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: `bg-${baseColor}-400` };
-      if (rate < 4.0) return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: isMixedPrecip ? 'bg-purple-500' : (isSnow ? 'bg-cyan-500' : 'bg-blue-600') };
-      return { label: lang === 'en' ? 'Very Heavy' : 'Sehr Stark', percent: 100, color: isMixedPrecip ? 'bg-purple-700' : (isSnow ? 'bg-cyan-700' : 'bg-blue-800') };
+      if (rate < 0.5) {
+          if (isMixedPrecip) return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: 'bg-purple-300' };
+          if (isSnow) return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: 'bg-cyan-300' };
+          return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: 'bg-blue-300' };
+      }
+      if (rate < 1.0) {
+          if (isMixedPrecip) return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: 'bg-purple-400' };
+          if (isSnow) return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: 'bg-cyan-400' };
+          return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: 'bg-blue-400' };
+      }
+      if (rate < 4.0) {
+          if (isMixedPrecip) return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: 'bg-purple-500' };
+          if (isSnow) return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: 'bg-cyan-500' };
+          return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: 'bg-blue-600' };
+      }
+      if (isMixedPrecip) return { label: lang === 'en' ? 'Very Heavy' : 'Sehr Stark', percent: 100, color: 'bg-purple-700' };
+      if (isSnow) return { label: lang === 'en' ? 'Very Heavy' : 'Sehr Stark', percent: 100, color: 'bg-cyan-700' };
+      return { label: lang === 'en' ? 'Very Heavy' : 'Sehr Stark', percent: 100, color: 'bg-blue-800' };
   };
 
   const intensity = getIntensityInfo(maxIntensity);
@@ -3797,10 +3810,10 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
                                     {hasMixedInHour ? (
                                         <div className="text-xs font-bold mt-1">
                                             <div className="flex items-center gap-1 text-blue-600">
-                                                <CloudRain size={10}/>{forecast.rain.toFixed(1)}
+                                                <CloudRain size={10}/>{forecast.rain.toFixed(1)}mm
                                             </div>
                                             <div className="flex items-center gap-1 text-cyan-600">
-                                                <Snowflake size={10}/>{forecast.snow.toFixed(1)}
+                                                <Snowflake size={10}/>{forecast.snow.toFixed(1)}mm
                                             </div>
                                         </div>
                                     ) : (
@@ -6317,9 +6330,8 @@ export default function WeatherApp() {
                             <span className="text-2xl font-bold text-red-400">{formatTemp(day.max)}°</span>
                          </div>
                           
-                          {/* Precip */}
                            <div className="mb-1 min-h-[16px] flex flex-col items-center justify-center w-full gap-0.5">
-                             {parseFloat(day.rain) > 0.1 && parseFloat(day.snow) > 0 ? (
+                             {parseFloat(day.rain) > 0.1 && parseFloat(day.snow) > 0.1 ? (
                                // Mixed precipitation - show both
                                <>
                                  <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><CloudRain size={10}/> {day.rain}mm</span>
