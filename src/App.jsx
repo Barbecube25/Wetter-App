@@ -3369,7 +3369,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       )}
 
       {/* --- HAUS (zuerst gerendert, damit Bäume davor können) --- */}
-      <g transform="translate(180, 120)">
+      <g transform="translate(140, 120)">
           <rect x="25" y="-10" width="6" height="15" fill="#57534e" />
           <rect x="5" y="10" width="40" height="30" fill={houseWall} />
           <path d="M-2 10 L25 -15 L52 10 Z" fill={houseRoof} filter={isSnow ? "brightness(1.1)" : "none"} />
