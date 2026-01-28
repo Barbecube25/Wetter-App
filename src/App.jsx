@@ -6818,94 +6818,178 @@ export default function WeatherApp() {
           />
       )}
 
-      <header className="pt-14 px-5 flex justify-between items-start z-10 relative">
-        <div className={textColor}>
-          <div className="flex gap-2 mb-2">
-             <button onClick={handleSetHome} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.id === homeLoc.id ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Home size={14} /> {t('home')}</button>
-             <button onClick={handleSetCurrent} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${currentLoc.type === 'gps' ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><Crosshair size={14} /> {t('gps')}</button>
-             <button onClick={() => setShowLocationModal(true)} className={`px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition hover:bg-white/20 ${showLocationModal ? 'bg-white/30 ring-1 ring-white/40' : 'opacity-70'}`}><MapIcon size={14} /> {t('places')}</button>
-          </div>
-          <h1 className="text-3xl font-light mt-2 tracking-tight">
-            {currentLoc.name}
-            {currentLoc.type === 'gps' && <span className="text-sm ml-2 opacity-70">📍</span>}
-          </h1>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 opacity-80 text-xs font-medium">
-              <div className="flex items-center gap-1">
-                <Clock size={12} /><span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}</span>
-              </div>
-              
-              {/* NEU: Region & Land statt Koordinaten (falls vorhanden) */}
-              {(currentLoc.region || currentLoc.country) && (
+      <header className="pt-6 px-4 pb-4 z-10 relative">
+        {/* Modern Material 3 Top App Bar */}
+        <div className="max-w-4xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex-1">
+              <h1 className="text-m3-headline-medium font-bold text-m3-on-surface mb-1">
+                {currentLoc.name}
+                {currentLoc.type === 'gps' && <span className="text-m3-primary ml-2">📍</span>}
+              </h1>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-m3-body-small text-m3-on-surface-variant">
+                <div className="flex items-center gap-1">
+                  <Clock size={12} /><span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}</span>
+                </div>
+                {(currentLoc.region || currentLoc.country) && (
                   <div className="flex items-center gap-1">
-                      <MapPin size={12} />
-                      <span>
-                        {currentLoc.region}
-                        {currentLoc.region && currentLoc.country ? ', ' : ''}
-                        {currentLoc.country}
-                      </span>
+                    <MapPin size={12} />
+                    <span>
+                      {currentLoc.region}
+                      {currentLoc.region && currentLoc.country ? ', ' : ''}
+                      {currentLoc.country}
+                    </span>
                   </div>
-              )}
+                )}
+              </div>
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <button onClick={fetchData} className="p-3 rounded-m3-full bg-m3-surface-container-high hover:bg-m3-surface-container-highest text-m3-on-surface transition-all shadow-m3-1 hover:shadow-m3-2">
+                <RefreshCw size={20} />
+              </button>
+              <button onClick={() => setShowFeedback(true)} className="p-3 rounded-m3-full bg-m3-secondary-container hover:bg-m3-secondary text-m3-on-secondary-container hover:text-m3-on-secondary transition-all shadow-m3-1 hover:shadow-m3-2">
+                <MessageSquarePlus size={20} />
+              </button>
+              <button onClick={() => setShowSettingsModal(true)} className="p-3 rounded-m3-full bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary transition-all shadow-m3-2 hover:shadow-m3-3">
+                <Settings size={20} />
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="flex flex-col gap-2 items-end">
-           {deferredPrompt && (<button onClick={handleInstallClick} className="p-3 rounded-full backdrop-blur-md bg-blue-600 text-white animate-pulse shadow-lg"><Download size={20} /></button>)}
-           
-           {/* iOS Install Tip */}
-           {showIosInstall && (
-             <div className="bg-white/90 backdrop-blur-md p-3 rounded-xl shadow-xl text-black max-w-[200px] text-xs relative animate-in fade-in slide-in-from-top-4 duration-500">
-                <button onClick={() => setShowIosInstall(false)} className="absolute top-1 right-1 opacity-50"><X size={14}/></button>
-                <div className="font-bold mb-1 flex items-center gap-1"><Share size={12} /> {t('installTitle')}</div>
-                <p>{t('installDesc')}</p>
-                <div className="w-3 h-3 bg-white/90 absolute -bottom-1.5 left-1/2 -translate-x-1/2 rotate-45"></div>
-             </div>
-           )}
 
-           <div className="flex gap-2">
-               {/* SETTINGS BUTTON */}
-               <button onClick={() => setShowSettingsModal(true)} className={`p-3 rounded-full backdrop-blur-md transition shadow-md ${textColor} bg-white/20 hover:bg-white/30`}>
-                   <Settings size={20} />
-               </button>
+          {/* Location Chips */}
+          <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+            <button onClick={handleSetHome} className={`px-4 py-2 rounded-m3-full flex items-center gap-2 text-m3-label-large font-medium transition-all whitespace-nowrap ${currentLoc.id === homeLoc.id ? 'bg-m3-primary-container text-m3-on-primary-container shadow-m3-1' : 'bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface'}`}>
+              <Home size={16} /> {t('home')}
+            </button>
+            <button onClick={handleSetCurrent} className={`px-4 py-2 rounded-m3-full flex items-center gap-2 text-m3-label-large font-medium transition-all whitespace-nowrap ${currentLoc.type === 'gps' ? 'bg-m3-tertiary-container text-m3-on-tertiary-container shadow-m3-1' : 'bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface'}`}>
+              <Crosshair size={16} /> {t('gps')}
+            </button>
+            <button onClick={() => setShowLocationModal(true)} className={`px-4 py-2 rounded-m3-full flex items-center gap-2 text-m3-label-large font-medium transition-all whitespace-nowrap ${showLocationModal ? 'bg-m3-secondary-container text-m3-on-secondary-container shadow-m3-1' : 'bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface'}`}>
+              <MapIcon size={16} /> {t('places')}
+            </button>
+          </div>
 
-               {/* FEEDBACK BUTTON */}
-               <button onClick={() => setShowFeedback(true)} className={`p-3 rounded-full backdrop-blur-md transition shadow-md ${textColor} bg-white/20 hover:bg-white/30`}>
-                   <MessageSquarePlus size={20} />
-               </button>
+          {/* iOS Install Tip */}
+          {showIosInstall && (
+            <div className="bg-m3-surface-container p-4 rounded-m3-2xl shadow-m3-3 text-m3-on-surface max-w-sm mb-4 relative animate-m3-slide-up">
+              <button onClick={() => setShowIosInstall(false)} className="absolute top-2 right-2 text-m3-on-surface-variant hover:text-m3-on-surface"><X size={18}/></button>
+              <div className="font-bold text-m3-title-medium mb-2 flex items-center gap-2"><Share size={18} /> {t('installTitle')}</div>
+              <p className="text-m3-body-small text-m3-on-surface-variant">{t('installDesc')}</p>
+            </div>
+          )}
 
-               <button onClick={fetchData} className={`p-3 rounded-full backdrop-blur-md bg-white/20 transition shadow-md ${textColor}`}><RefreshCw size={20} /></button>
-           </div>
+          {/* Install FAB */}
+          {deferredPrompt && (
+            <button onClick={handleInstallClick} className="fixed bottom-20 right-4 z-50 p-4 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-4 hover:shadow-m3-5 transition-all animate-m3-scale-in">
+              <Download size={24} />
+            </button>
+          )}
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto p-4 z-10 relative space-y-6">
-        <div className={`rounded-3xl p-6 ${cardBg} shadow-lg relative overflow-hidden min-h-[240px] flex items-center`}>
-          {/* WICHTIG: locationTime auch hier übergeben */}
-          <div className="absolute inset-0 z-0 pointer-events-none"><WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} lang={lang} /></div>
-          <div className="flex items-center justify-between w-full relative z-10">
-            <div className="flex flex-col">
-               <span className="text-7xl font-bold tracking-tighter leading-none drop-shadow-lg text-white">{formatTemp(current.temp)}°</span>
-               <div className="flex items-center gap-1.5 mt-2 opacity-90 font-medium text-sm text-white drop-shadow-md"><Thermometer size={16} /><span>{t('feelsLike')} {formatTemp(current.appTemp)}°</span></div>
-               <div className="flex items-center gap-2 mt-1 opacity-95 font-medium text-sm text-white drop-shadow-md"><span>H: {formatTemp(processedLong[0]?.max)}°</span><span>T: {formatTemp(processedLong[0]?.min)}°</span></div>
-               <div className="mt-1 text-lg font-medium tracking-wide text-white drop-shadow-md">{weatherConf.text}</div>
+      <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4">
+        {/* Modern Weather Card with better elevation */}
+        <div className="bg-m3-surface-container rounded-m3-3xl p-6 shadow-m3-4 relative overflow-hidden min-h-[280px] border border-m3-outline-variant">
+          {/* Weather background animation */}
+          <div className="absolute inset-0 z-0 pointer-events-none opacity-30">
+            <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} lang={lang} />
+          </div>
+          
+          <div className="relative z-10">
+            {/* Main Temperature Display */}
+            <div className="mb-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="text-m3-display-large font-light text-m3-on-surface">{formatTemp(current.temp)}°</span>
+                  <div className="flex items-center gap-2 mt-2 text-m3-body-large text-m3-on-surface-variant">
+                    <Thermometer size={20} />
+                    <span>{t('feelsLike')} {formatTemp(current.appTemp)}°</span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1 text-m3-title-small text-m3-on-surface-variant">
+                    <span>H: {formatTemp(processedLong[0]?.max)}°</span>
+                    <span>•</span>
+                    <span>T: {formatTemp(processedLong[0]?.min)}°</span>
+                  </div>
+                  <div className="mt-3 text-m3-title-large text-m3-on-surface">{weatherConf.text}</div>
+                </div>
+                
+                {/* Weather Icon */}
+                <div className="text-6xl opacity-80">
+                  {React.createElement(weatherConf.icon, { size: 64 })}
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col gap-2 items-end text-right pl-3 border-l border-white/20 ml-2 backdrop-blur-sm bg-black/5 rounded-xl p-2">
-               <div className="flex flex-col items-end"><div className={`flex items-center gap-1 opacity-90 text-sm font-bold ${getUvColorClass(current.uvIndex)} drop-shadow-sm`}><Sun size={14} /> <span>{current.uvIndex}</span></div><span className="text-xs opacity-95 uppercase font-bold text-white drop-shadow-sm">{t('uv')}</span></div>
-               <div className="flex items-center gap-3">
-                  <div className="flex flex-col items-end"><div className="flex items-center gap-1 opacity-90 text-sm font-bold text-white drop-shadow-sm"><Waves size={14} /> <span>{current.humidity}%</span></div><span className="text-xs opacity-95 uppercase font-bold text-white drop-shadow-sm">{t('humidity')}</span></div>
-                  <div className="flex flex-col items-end"><div className="flex items-center gap-1 opacity-90 text-sm font-bold text-white drop-shadow-sm"><Thermometer size={14} /> <span>{formatTemp(current.dewPoint)}°</span></div><span className="text-xs opacity-95 uppercase font-bold text-white drop-shadow-sm">{t('dewPoint')}</span></div>
-               </div>
-               <div className="flex flex-col items-end mt-1"><div className={`flex items-center gap-1.5 text-sm font-bold ${windColorClass} drop-shadow-sm`}><Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }}/><span>{current.wind} <span className="text-xs font-normal opacity-90">({current.gust})</span></span></div><span className="text-xs opacity-95 uppercase font-bold text-white drop-shadow-sm">{t('wind')} ({t('gusts')}) km/h</span></div>
-               {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0) && (<div className="flex flex-col items-end mt-1"><div className="flex items-center gap-1.5 opacity-90 text-sm font-bold text-blue-300 drop-shadow-sm">{isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>}<span>{isSnowing ? dailySnowSum : dailyRainSum} {isSnowing ? 'cm' : 'mm'}</span></div><span className="text-xs opacity-95 uppercase font-bold text-white drop-shadow-sm">{t('precip')} (24h)</span></div>)}
+
+            {/* Weather Details Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-m3-surface-container-high rounded-m3-xl p-3 border border-m3-outline-variant">
+                <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
+                  <Sun size={14} /> {t('uv')}
+                </div>
+                <div className={`text-m3-title-large font-bold ${getUvColorClass(current.uvIndex)}`}>{current.uvIndex}</div>
+              </div>
+              
+              <div className="bg-m3-surface-container-high rounded-m3-xl p-3 border border-m3-outline-variant">
+                <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
+                  <Waves size={14} /> {t('humidity')}
+                </div>
+                <div className="text-m3-title-large font-bold text-m3-on-surface">{current.humidity}%</div>
+              </div>
+              
+              <div className="bg-m3-surface-container-high rounded-m3-xl p-3 border border-m3-outline-variant">
+                <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
+                  <Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }} /> {t('wind')}
+                </div>
+                <div className={`text-m3-title-large font-bold ${windColorClass}`}>
+                  {current.wind} <span className="text-m3-body-small">km/h</span>
+                </div>
+              </div>
+              
+              {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0) ? (
+                <div className="bg-m3-tertiary-container rounded-m3-xl p-3 border border-m3-tertiary">
+                  <div className="flex items-center gap-2 text-m3-on-tertiary-container text-m3-label-small mb-1">
+                    {isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip')}
+                  </div>
+                  <div className="text-m3-title-large font-bold text-m3-on-tertiary-container">
+                    {isSnowing ? dailySnowSum : dailyRainSum} {isSnowing ? 'cm' : 'mm'}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-m3-surface-container-high rounded-m3-xl p-3 border border-m3-outline-variant">
+                  <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
+                    <Thermometer size={14} /> {t('dewPoint')}
+                  </div>
+                  <div className="text-m3-title-large font-bold text-m3-on-surface">{formatTemp(current.dewPoint)}°</div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        <div className={`p-1 rounded-m3-full backdrop-blur-md flex shadow-m3-2 border border-m3-outline-variant ${cardBg}`}>
-           {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
-             <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 py-3 rounded-m3-full text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === tab.id ? 'bg-m3-primary text-m3-on-primary shadow-m3-2' : 'hover:bg-m3-surface-container-high opacity-70 text-m3-on-surface'}`}><tab.icon size={16} /> <span className="hidden sm:inline">{tab.label}</span></button>
-           ))}
+        {/* Enhanced Tab Navigation */}
+        <div className="bg-m3-surface-container rounded-m3-3xl p-2 shadow-m3-2 border border-m3-outline-variant">
+          <div className="grid grid-cols-5 gap-1">
+            {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
+              <button 
+                key={tab.id} 
+                onClick={() => setActiveTab(tab.id)} 
+                className={`flex flex-col items-center justify-center py-3 px-2 rounded-m3-2xl text-m3-label-medium font-medium transition-all ${
+                  activeTab === tab.id 
+                    ? 'bg-m3-primary text-m3-on-primary shadow-m3-2' 
+                    : 'text-m3-on-surface-variant hover:bg-m3-surface-container-high hover:text-m3-on-surface'
+                }`}
+              >
+                <tab.icon size={20} className="mb-1" />
+                <span className="text-[10px] sm:text-xs">{tab.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className={`backdrop-blur-md rounded-m3-xl p-5 shadow-m3-3 ${cardBg} min-h-[450px]`}>
+        {/* Content Card with modern elevation */}
+        <div className="bg-m3-surface-container rounded-m3-3xl p-6 shadow-m3-3 border border-m3-outline-variant min-h-[450px]">
           
           {activeTab === 'overview' && (
             <div className="space-y-4">
