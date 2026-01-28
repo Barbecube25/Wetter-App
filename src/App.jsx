@@ -152,7 +152,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Plane deine Reisen und überprüfe die Wetterwahrscheinlichkeit für deinen Ausflug.",
     tutorialSettingsTitle: "Einstellungen",
     tutorialSettingsDesc: "Hier kannst du die Sprache, Einheiten (°C/°F), das Design (Hell/Dunkel/Auto) und deinen Heimatort anpassen.",
-    tutorialComplete: "Tutorial abgeschlossen! Du kannst jederzeit in den Einstellungen Änderungen vornehmen."
+    tutorialComplete: "Tutorial abgeschlossen! Du kannst jederzeit in den Einstellungen Änderungen vornehmen.",
+    noGpsAvailable: "GPS nicht verfügbar",
+    locationDenied: "Standortzugriff verweigert",
+    changeLocation: "Ort ändern",
+    locFound: "Ort gefunden!",
+    homeLocation: "Zuhause"
   },
   en: {
     home: "Home",
@@ -297,7 +302,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Plan your trips and check weather probability for your excursion.",
     tutorialSettingsTitle: "Settings",
     tutorialSettingsDesc: "Here you can customize language, units (°C/°F), theme (Light/Dark/Auto) and your home location.",
-    tutorialComplete: "Tutorial complete! You can make changes in settings at any time."
+    tutorialComplete: "Tutorial complete! You can make changes in settings at any time.",
+    noGpsAvailable: "GPS not available",
+    locationDenied: "Location access denied",
+    changeLocation: "Change location",
+    locFound: "Location found!",
+    homeLocation: "Home"
   },
   fr: {
     home: "Accueil",
@@ -442,7 +452,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Planifiez vos voyages et vérifiez la probabilité météo pour votre sortie.",
     tutorialSettingsTitle: "Paramètres",
     tutorialSettingsDesc: "Ici vous pouvez personnaliser la langue, les unités (°C/°F), le thème (Clair/Sombre/Auto) et votre lieu principal.",
-    tutorialComplete: "Tutoriel terminé ! Vous pouvez modifier les paramètres à tout moment."
+    tutorialComplete: "Tutoriel terminé ! Vous pouvez modifier les paramètres à tout moment.",
+    noGpsAvailable: "GPS non disponible",
+    locationDenied: "Accès à la localisation refusé",
+    changeLocation: "Changer de lieu",
+    locFound: "Lieu trouvé !",
+    homeLocation: "Maison"
   },
   es: {
     home: "Inicio",
@@ -587,7 +602,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Planifica tus viajes y verifica la probabilidad meteorológica para tu excursión.",
     tutorialSettingsTitle: "Ajustes",
     tutorialSettingsDesc: "Aquí puedes personalizar el idioma, unidades (°C/°F), tema (Claro/Oscuro/Auto) y tu ubicación principal.",
-    tutorialComplete: "¡Tutorial completo! Puedes realizar cambios en los ajustes en cualquier momento."
+    tutorialComplete: "¡Tutorial completo! Puedes realizar cambios en los ajustes en cualquier momento.",
+    noGpsAvailable: "GPS no disponible",
+    locationDenied: "Acceso a ubicación denegado",
+    changeLocation: "Cambiar ubicación",
+    locFound: "¡Ubicación encontrada!",
+    homeLocation: "Casa"
   },
   it: {
     home: "Home",
@@ -732,7 +752,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Pianifica i tuoi viaggi e controlla la probabilità meteo per la tua escursione.",
     tutorialSettingsTitle: "Impostazioni",
     tutorialSettingsDesc: "Qui puoi personalizzare lingua, unità (°C/°F), tema (Chiaro/Scuro/Auto) e il tuo luogo principale.",
-    tutorialComplete: "Tutorial completato! Puoi apportare modifiche nelle impostazioni in qualsiasi momento."
+    tutorialComplete: "Tutorial completato! Puoi apportare modifiche nelle impostazioni in qualsiasi momento.",
+    noGpsAvailable: "GPS non disponibile",
+    locationDenied: "Accesso alla posizione negato",
+    changeLocation: "Cambia posizione",
+    locFound: "Posizione trovata!",
+    homeLocation: "Casa"
   },
   tr: {
     home: "Ana Sayfa",
@@ -877,7 +902,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Seyahatlerinizi planlayın ve geziniz için hava durumu olasılığını kontrol edin.",
     tutorialSettingsTitle: "Ayarlar",
     tutorialSettingsDesc: "Burada dil, birimler (°C/°F), tema (Açık/Koyu/Otomatik) ve ana konumunuzu özelleştirebilirsiniz.",
-    tutorialComplete: "Öğretici tamamlandı! Ayarlarda istediğiniz zaman değişiklik yapabilirsiniz."
+    tutorialComplete: "Öğretici tamamlandı! Ayarlarda istediğiniz zaman değişiklik yapabilirsiniz.",
+    noGpsAvailable: "GPS mevcut değil",
+    locationDenied: "Konum erişimi reddedildi",
+    changeLocation: "Konumu değiştir",
+    locFound: "Konum bulundu!",
+    homeLocation: "Ev"
   },
   pl: {
     home: "Start",
@@ -1022,7 +1052,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Zaplanuj swoje podróże i sprawdź prawdopodobieństwo pogody dla swojej wycieczki.",
     tutorialSettingsTitle: "Ustawienia",
     tutorialSettingsDesc: "Tutaj możesz dostosować język, jednostki (°C/°F), motyw (Jasny/Ciemny/Auto) i swoją lokalizację domową.",
-    tutorialComplete: "Samouczek ukończony! Możesz wprowadzać zmiany w ustawieniach w dowolnym momencie."
+    tutorialComplete: "Samouczek ukończony! Możesz wprowadzać zmiany w ustawieniach w dowolnym momencie.",
+    noGpsAvailable: "GPS niedostępny",
+    locationDenied: "Dostęp do lokalizacji został odrzucony",
+    changeLocation: "Zmień lokalizację",
+    locFound: "Lokalizacja znaleziona!",
+    homeLocation: "Dom"
   },
   nl: {
     home: "Home",
@@ -1167,7 +1202,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Plan uw reizen en controleer de weerskans voor uw excursie.",
     tutorialSettingsTitle: "Instellingen",
     tutorialSettingsDesc: "Hier kunt u de taal, eenheden (°C/°F), thema (Licht/Donker/Auto) en uw thuislocatie aanpassen.",
-    tutorialComplete: "Handleiding voltooid! U kunt op elk moment wijzigingen aanbrengen in de instellingen."
+    tutorialComplete: "Handleiding voltooid! U kunt op elk moment wijzigingen aanbrengen in de instellingen.",
+    noGpsAvailable: "GPS niet beschikbaar",
+    locationDenied: "Toegang tot locatie geweigerd",
+    changeLocation: "Locatie wijzigen",
+    locFound: "Locatie gevonden!",
+    homeLocation: "Thuis"
   },
   hr: {
     home: "Početna",
@@ -1312,7 +1352,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Planirajte svoja putovanja i provjerite vremensku vjerojatnost za vaš izlet.",
     tutorialSettingsTitle: "Postavke",
     tutorialSettingsDesc: "Ovdje možete prilagoditi jezik, jedinice (°C/°F), temu (Svijetla/Tamna/Auto) i svoju osnovnu lokaciju.",
-    tutorialComplete: "Vodič završen! Možete napraviti promjene u postavkama u bilo kojem trenutku."
+    tutorialComplete: "Vodič završen! Možete napraviti promjene u postavkama u bilo kojem trenutku.",
+    noGpsAvailable: "GPS nije dostupan",
+    locationDenied: "Pristup lokaciji odbijen",
+    changeLocation: "Promijenite lokaciju",
+    locFound: "Lokacija pronađena!",
+    homeLocation: "Kuća"
   },
   el: {
     home: "Αρχική",
@@ -1457,7 +1502,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Σχεδιάστε τα ταξίδια σας και ελέγξτε την πιθανότητα καιρού για την εκδρομή σας.",
     tutorialSettingsTitle: "Ρυθμίσεις",
     tutorialSettingsDesc: "Εδώ μπορείτε να προσαρμόσετε τη γλώσσα, τις μονάδες (°C/°F), το θέμα (Φωτεινό/Σκοτεινό/Αυτόματο) και την κύρια τοποθεσία σας.",
-    tutorialComplete: "Το σεμινάριο ολοκληρώθηκε! Μπορείτε να κάνετε αλλαγές στις ρυθμίσεις ανά πάσα στιγμή."
+    tutorialComplete: "Το σεμινάριο ολοκληρώθηκε! Μπορείτε να κάνετε αλλαγές στις ρυθμίσεις ανά πάσα στιγμή.",
+    noGpsAvailable: "Το GPS δεν είναι διαθέσιμο",
+    locationDenied: "Η πρόσβαση στην τοποθεσία απορρίφθηκε",
+    changeLocation: "Αλλαγή τοποθεσίας",
+    locFound: "Η τοποθεσία βρέθηκε!",
+    homeLocation: "Σπίτι"
   },
   da: {
     home: "Hjem",
@@ -1602,7 +1652,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Planlæg dine ture og tjek vejrsandsynligheden for din udflugt.",
     tutorialSettingsTitle: "Indstillinger",
     tutorialSettingsDesc: "Her kan du tilpasse sprog, enheder (°C/°F), tema (Lys/Mørk/Auto) og din hjemmeplacering.",
-    tutorialComplete: "Vejledning fuldført! Du kan foretage ændringer i indstillingerne når som helst."
+    tutorialComplete: "Vejledning fuldført! Du kan foretage ændringer i indstillingerne når som helst.",
+    noGpsAvailable: "GPS ikke tilgængelig",
+    locationDenied: "Adgang til placering nægtet",
+    changeLocation: "Skift placering",
+    locFound: "Placering fundet!",
+    homeLocation: "Hjem"
   },
   ru: {
     home: "Главная",
@@ -1747,7 +1802,11 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Планируйте свои поездки и проверяйте вероятность погоды для вашей экскурсии.",
     tutorialSettingsTitle: "Настройки",
     tutorialSettingsDesc: "Здесь вы можете настроить язык, единицы измерения (°C/°F), тему (Светлая/Темная/Авто) и ваше домашнее местоположение.",
-    tutorialComplete: "Руководство завершено! Вы можете вносить изменения в настройках в любое время."
+    tutorialComplete: "Руководство завершено! Вы можете вносить изменения в настройках в любое время.",
+    noGpsAvailable: "GPS недоступен",
+    locationDenied: "Доступ к местоположению запрещён",
+    changeLocation: "Изменить местоположение",
+    homeLocation: "Дом"
   }
 };
 
@@ -4235,10 +4294,100 @@ const HomeSetupModal = ({ onSave, lang='de' }) => {
     );
 };
 
+// Language flags for tutorial
+const LANGUAGE_FLAGS = {
+    de: '🇩🇪',
+    en: '🇬🇧',
+    fr: '🇫🇷',
+    es: '🇪🇸',
+    it: '🇮🇹',
+    tr: '🇹🇷',
+    pl: '🇵🇱',
+    nl: '🇳🇱',
+    hr: '🇭🇷',
+    el: '🇬🇷',
+    da: '🇩🇰',
+    ru: '🇷🇺'
+};
+
 // --- TUTORIAL COMPONENT (Für den allerersten Start) ---
 const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' }) => {
     const [step, setStep] = useState(0);
+    const [homeLocation, setHomeLocation] = useState(null);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [gpsLoading, setGpsLoading] = useState(false);
+    const [customHomeName, setCustomHomeName] = useState("");
+    const [selectedHomeLoc, setSelectedHomeLoc] = useState(null);
+    
     const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+    
+    // Home location search handler
+    const handleHomeSearch = async () => {
+        if (!searchQuery.trim()) return;
+        setIsSearching(true);
+        try {
+            const searchLang = settings?.language || lang || 'de';
+            const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery.trim())}&count=5&language=${searchLang}&format=json`);
+            const data = await res.json();
+            setSearchResults(data.results || []);
+        } catch (e) {
+            console.error(e);
+            setSearchResults([]);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+    
+    // GPS handler
+    const handleUseGPS = () => {
+        if (!navigator.geolocation) {
+            alert(t.noGpsAvailable);
+            return;
+        }
+        setGpsLoading(true);
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            try {
+                const searchLang = settings?.language || lang || 'de';
+                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=${searchLang}&format=json`);
+                const data = await res.json();
+                const city = data.results?.[0]?.name || t.myLocation;
+                const loc = { name: city, lat, lon, id: 'home_default', type: 'home' };
+                setSelectedHomeLoc(loc);
+                setCustomHomeName(city);
+                setHomeLocation(loc);
+            } catch (e) {
+                const loc = { name: "GPS Standort", lat, lon, id: 'home_default', type: 'home' };
+                setSelectedHomeLoc(loc);
+                setCustomHomeName(t.homeLocation);
+                setHomeLocation(loc);
+            } finally {
+                setGpsLoading(false);
+            }
+        }, () => {
+            alert(t.locationDenied);
+            setGpsLoading(false);
+        });
+    };
+    
+    // Select location from search results
+    const handleSelectHome = (result) => {
+        const loc = { 
+            name: result.name, 
+            lat: result.latitude, 
+            lon: result.longitude, 
+            id: 'home_default', 
+            type: 'home' 
+        };
+        setSelectedHomeLoc(loc);
+        setCustomHomeName(result.name);
+        setHomeLocation(loc);
+        setSearchResults([]);
+        setSearchQuery("");
+    };
     
     const steps = [
         {
@@ -4303,7 +4452,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
     
     const handleNext = () => {
         if (isLastStep) {
-            onComplete();
+            onComplete(homeLocation);
         } else {
             setStep(step + 1);
         }
@@ -4356,34 +4505,119 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                 {/* Content */}
                 <div className="p-6">
                     {currentStep.content === 'language' && (
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 block">{t.language}</label>
+                        <div className="grid grid-cols-3 gap-3">
                             {['de', 'en', 'fr', 'es', 'it', 'tr', 'pl', 'nl', 'hr', 'el', 'da', 'ru'].map(l => (
                                 <button
                                     key={l}
                                     onClick={() => setSettings({ ...settings, language: l })}
-                                    className={`w-full p-3 rounded-xl font-bold text-left flex items-center justify-between transition ${
+                                    className={`p-4 rounded-xl font-bold text-center flex flex-col items-center justify-center gap-2 transition ${
                                         settings.language === l 
-                                            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30' 
+                                            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30 scale-105' 
                                             : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                     }`}
                                 >
-                                    <span>{TRANSLATIONS[l]?.language || l.toUpperCase()}</span>
-                                    {settings.language === l && <Check size={20} />}
+                                    <span className="text-3xl">{LANGUAGE_FLAGS[l]}</span>
+                                    <span className="text-xs">{TRANSLATIONS[l]?.language || l.toUpperCase()}</span>
+                                    {settings.language === l && <Check size={16} />}
                                 </button>
                             ))}
                         </div>
                     )}
                     
                     {currentStep.content === 'home' && (
-                        <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 text-center border border-blue-200">
-                            <div className="w-16 h-16 bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                                <Home size={32} />
-                            </div>
-                            <p className="text-slate-700 font-medium mb-4">{t.welcomeDesc}</p>
-                            <div className="text-sm text-slate-500 italic">
-                                {t.tutorialHomeDesc}
-                            </div>
+                        <div className="space-y-4">
+                            {!selectedHomeLoc ? (
+                                <>
+                                    <p className="text-slate-600 text-sm mb-4">{t.welcomeDesc}</p>
+                                    
+                                    <button 
+                                        onClick={handleUseGPS}
+                                        disabled={gpsLoading}
+                                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 transition active:scale-95 disabled:opacity-50"
+                                    >
+                                        {gpsLoading ? <RefreshCw className="animate-spin" size={20}/> : <Crosshair size={20}/>}
+                                        {t.useGps}
+                                    </button>
+
+                                    <div className="relative">
+                                        <div className="absolute inset-0 flex items-center">
+                                            <div className="w-full border-t border-slate-200"></div>
+                                        </div>
+                                        <div className="relative flex justify-center text-xs uppercase">
+                                            <span className="bg-white px-2 text-slate-400">{t.orSearch}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="relative">
+                                        <input 
+                                            type="text" 
+                                            placeholder={t.searchPlace}
+                                            className="w-full pl-4 pr-12 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50 text-slate-800"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleHomeSearch()}
+                                        />
+                                        <button 
+                                            onClick={handleHomeSearch} 
+                                            className="absolute right-2 top-2 p-1.5 bg-slate-200 rounded-lg text-slate-600 hover:bg-slate-300 transition"
+                                        >
+                                            {isSearching ? <RefreshCw className="animate-spin" size={16}/> : <Search size={16}/>}
+                                        </button>
+                                    </div>
+
+                                    {searchResults.length > 0 && (
+                                        <div className="text-left border border-slate-200 rounded-xl overflow-hidden max-h-[200px] overflow-y-auto">
+                                            {searchResults.map(res => (
+                                                <button 
+                                                    key={res.id} 
+                                                    onClick={() => handleSelectHome(res)} 
+                                                    className="w-full p-3 hover:bg-blue-50 text-left border-b border-slate-100 last:border-0 text-sm font-bold text-slate-700 transition"
+                                                >
+                                                    {res.name} <span className="font-normal text-slate-400">({res.country})</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200">
+                                    <div className="w-16 h-16 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                        <Check size={32} />
+                                    </div>
+                                    <p className="text-slate-700 font-bold mb-4 text-center">{t.locFound || "Ort gefunden!"}</p>
+                                    
+                                    <div className="bg-white/50 p-4 rounded-xl">
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 block">{t.homeLoc}</label>
+                                        <div className="flex items-center gap-2">
+                                            <input 
+                                                type="text" 
+                                                className="w-full bg-transparent font-bold text-lg text-slate-800 focus:outline-none border-b-2 border-green-500 pb-1"
+                                                value={customHomeName}
+                                                onChange={(e) => {
+                                                    const newName = e.target.value;
+                                                    setCustomHomeName(newName);
+                                                    if (newName.trim()) {
+                                                        setHomeLocation({ ...homeLocation, name: newName.trim() });
+                                                    }
+                                                }}
+                                            />
+                                            <Edit2 size={16} className="text-slate-400"/>
+                                        </div>
+                                    </div>
+                                    
+                                    <button 
+                                        onClick={() => {
+                                            setSelectedHomeLoc(null);
+                                            setHomeLocation(null);
+                                            setSearchQuery("");
+                                            setSearchResults([]);
+                                        }}
+                                        className="mt-4 text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1 mx-auto"
+                                    >
+                                        <ArrowLeft size={14} /> {t.changeLocation || "Ort ändern"}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                     
@@ -4455,7 +4689,10 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                     )}
                     <button
                         onClick={handleNext}
-                        className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition flex items-center justify-center gap-2"
+                        disabled={currentStep.content === 'home' && !homeLocation}
+                        className={`flex-1 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition flex items-center justify-center gap-2 ${
+                            currentStep.content === 'home' && !homeLocation ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
                     >
                         {isLastStep ? t.tutorialFinish : t.tutorialNext}
                         {!isLastStep && <ArrowRight size={18} />}
@@ -5497,11 +5734,15 @@ export default function WeatherApp() {
       return (
           <div className="min-h-screen bg-slate-900 font-sans">
               <TutorialModal 
-                  onComplete={() => {
+                  onComplete={(homeLocationFromTutorial) => {
                       setTutorialCompleted();
                       setShowTutorial(false);
-                      // If no home location, show home setup next
-                      if (!homeLoc) {
+                      // If home location was set in tutorial, save it
+                      if (homeLocationFromTutorial) {
+                          setHomeLoc(homeLocationFromTutorial);
+                          setCurrentLoc(homeLocationFromTutorial);
+                      } else if (!homeLoc) {
+                          // If no home location, show home setup next
                           setShowHomeSetup(true);
                       }
                   }}
