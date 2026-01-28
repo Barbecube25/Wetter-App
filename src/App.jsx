@@ -6450,19 +6450,19 @@ export default function WeatherApp() {
           <div className="absolute inset-0 z-0 pointer-events-none"><WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} lang={lang} /></div>
           <div className="flex items-center justify-between w-full relative z-10">
             <div className="flex flex-col">
-               <span className="text-7xl font-bold tracking-tighter leading-none drop-shadow-lg text-white">{formatTemp(current.temp)}°</span>
-               <div className="flex items-center gap-1.5 mt-2 opacity-90 font-medium text-sm text-white drop-shadow-md"><Thermometer size={16} /><span>{t('feelsLike')} {formatTemp(current.appTemp)}°</span></div>
-               <div className="flex items-center gap-2 mt-1 opacity-80 font-medium text-sm text-white drop-shadow-md"><span>H: {formatTemp(processedLong[0]?.max)}°</span><span>T: {formatTemp(processedLong[0]?.min)}°</span></div>
-               <div className="mt-1 text-lg font-medium tracking-wide text-white drop-shadow-md">{weatherConf.text}</div>
+               <span className="text-7xl font-bold tracking-tighter leading-none text-white" style={{ textShadow: '0 0 20px rgba(0,0,0,0.8), 0 2px 10px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.7)' }}>{formatTemp(current.temp)}°</span>
+               <div className="flex items-center gap-1.5 mt-2 font-medium text-sm text-white" style={{ textShadow: '0 0 10px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.9)' }}><Thermometer size={16} /><span>{t('feelsLike')} {formatTemp(current.appTemp)}°</span></div>
+               <div className="flex items-center gap-2 mt-1 font-medium text-sm text-white" style={{ textShadow: '0 0 10px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.9)' }}><span>H: {formatTemp(processedLong[0]?.max)}°</span><span>T: {formatTemp(processedLong[0]?.min)}°</span></div>
+               <div className="mt-1 text-lg font-medium tracking-wide text-white" style={{ textShadow: '0 0 10px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.9)' }}>{weatherConf.text}</div>
             </div>
-            <div className="flex flex-col gap-2 items-end text-right pl-3 border-l border-white/20 ml-2 backdrop-blur-sm bg-black/5 rounded-xl p-2">
-               <div className="flex flex-col items-end"><div className={`flex items-center gap-1 opacity-90 text-sm font-bold ${getUvColorClass(current.uvIndex)} drop-shadow-sm`}><Sun size={14} /> <span>{current.uvIndex}</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">{t('uv')}</span></div>
+            <div className="flex flex-col gap-2 items-end text-right pl-3 border-l border-white/30 ml-2 backdrop-blur-sm bg-black/20 rounded-xl p-2">
+               <div className="flex flex-col items-end"><div className={`flex items-center gap-1 text-sm font-bold ${getUvColorClass(current.uvIndex)}`} style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}><Sun size={14} /> <span>{current.uvIndex}</span></div><span className="text-[9px] uppercase font-bold text-white" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{t('uv')}</span></div>
                <div className="flex items-center gap-3">
-                  <div className="flex flex-col items-end"><div className="flex items-center gap-1 opacity-90 text-sm font-bold text-white drop-shadow-sm"><Waves size={14} /> <span>{current.humidity}%</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">{t('humidity')}</span></div>
-                  <div className="flex flex-col items-end"><div className="flex items-center gap-1 opacity-90 text-sm font-bold text-white drop-shadow-sm"><Thermometer size={14} /> <span>{formatTemp(current.dewPoint)}°</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">{t('dewPoint')}</span></div>
+                  <div className="flex flex-col items-end"><div className="flex items-center gap-1 text-sm font-bold text-white" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}><Waves size={14} /> <span>{current.humidity}%</span></div><span className="text-[9px] uppercase font-bold text-white" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{t('humidity')}</span></div>
+                  <div className="flex flex-col items-end"><div className="flex items-center gap-1 text-sm font-bold text-white" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}><Thermometer size={14} /> <span>{formatTemp(current.dewPoint)}°</span></div><span className="text-[9px] uppercase font-bold text-white" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{t('dewPoint')}</span></div>
                </div>
-               <div className="flex flex-col items-end mt-1"><div className={`flex items-center gap-1.5 text-sm font-bold ${windColorClass} drop-shadow-sm`}><Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }}/><span>{current.wind} <span className="text-xs font-normal opacity-80">({current.gust})</span></span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">{t('wind')} ({t('gusts')}) km/h</span></div>
-               {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0) && (<div className="flex flex-col items-end mt-1"><div className="flex items-center gap-1.5 opacity-90 text-sm font-bold text-blue-300 drop-shadow-sm">{isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>}<span>{isSnowing ? dailySnowSum : dailyRainSum} {isSnowing ? 'cm' : 'mm'}</span></div><span className="text-[9px] opacity-80 uppercase font-bold text-white drop-shadow-sm">{t('precip')} (24h)</span></div>)}
+               <div className="flex flex-col items-end mt-1"><div className={`flex items-center gap-1.5 text-sm font-bold ${windColorClass}`} style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}><Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }}/><span>{current.wind} <span className="text-xs font-normal">({current.gust})</span></span></div><span className="text-[9px] uppercase font-bold text-white" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{t('wind')} ({t('gusts')}) km/h</span></div>
+               {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0) && (<div className="flex flex-col items-end mt-1"><div className="flex items-center gap-1.5 text-sm font-bold text-blue-300" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>}<span>{isSnowing ? dailySnowSum : dailyRainSum} {isSnowing ? 'cm' : 'mm'}</span></div><span className="text-[9px] uppercase font-bold text-white" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>{t('precip')} (24h)</span></div>)}
             </div>
           </div>
         </div>
@@ -6486,11 +6486,11 @@ export default function WeatherApp() {
                       const conf = getWeatherConfig(row.code, row.isDay, lang);
                       const HourIcon = conf.icon;
                       return (
-                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[130px] w-[130px] hover:bg-white/10 transition relative group">
-                          <div className="text-lg font-bold opacity-90 mb-2">{row.displayTime}</div>
-                          <HourIcon size={40} className="opacity-90 mb-2" />
+                        <div key={i} className="flex flex-col items-center bg-white/10 border border-white/20 rounded-2xl p-3 min-w-[130px] w-[130px] hover:bg-white/15 transition relative group backdrop-blur-sm" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                          <div className="text-lg font-bold mb-2">{row.displayTime}</div>
+                          <HourIcon size={40} className="mb-2" />
                           <div className="text-4xl font-bold mb-1 tracking-tighter">{formatTemp(row.temp)}°</div>
-                          <div className="text-sm opacity-60 text-center leading-tight h-8 flex items-center justify-center line-clamp-2 w-full mb-2">{conf.text}</div>
+                          <div className="text-sm text-center leading-tight h-8 flex items-center justify-center line-clamp-2 w-full mb-2" style={{ opacity: 0.85 }}>{conf.text}</div>
                            <div className="mb-2 h-4">
                              {SNOW_WEATHER_CODES.includes(row.code) ? (
                                parseFloat(row.snow) > 0 || parseFloat(row.precip) > 0 ? (
@@ -6501,14 +6501,14 @@ export default function WeatherApp() {
                              ) : ( <span className="opacity-20 text-xs">-</span> )}
                            </div>
                            <div className="flex flex-col items-center gap-0.5 mb-2">
-                              <div className="flex items-center gap-1 opacity-80">
+                              <div className="flex items-center gap-1">
                                  <Navigation size={10} style={{ transform: `rotate(${row.dir}deg)` }} />
                                  <span className={`text-xs font-bold ${getWindColorClass(row.wind)}`}>{row.wind}</span>
                               </div>
-                              <span className={`text-[9px] opacity-60 ${getWindColorClass(row.gust)}`}>{t('gusts')} {row.gust}</span>
+                              <span className={`text-[9px] ${getWindColorClass(row.gust)}`} style={{ opacity: 0.75 }}>{t('gusts')} {row.gust}</span>
                            </div>
                            {row.uvIndex >= 1 && (<div className={`px-1.5 py-0.5 rounded text-[9px] font-bold border ${getUvBadgeClass(row.uvIndex)}`}>UV {(row.uvIndex).toFixed(0)}</div>)}
-                           <div className="mt-2 text-[10px] flex items-center gap-1 opacity-70">
+                           <div className="mt-2 text-[10px] flex items-center gap-1" style={{ opacity: 0.8 }}>
                               <ShieldCheck size={10} className={getConfidenceColor(row.reliability)} />
                               <span className={`${getConfidenceColor(row.reliability)} font-medium`}>{row.reliability}% {t('safe')}</span>
                            </div>
