@@ -2253,11 +2253,11 @@ const generateAIReport = (type, data, lang = 'de') => {
     
     let parts = [intro];
     
-    // Adjust today's forecast scope based on time of day to provide relevant outlook:
-    // - Morning (0-11): Show remaining hours of the whole day
-    // - Midday (12-17): Show afternoon through night hours
-    // - Afternoon/Evening (18-23): Show evening and night hours
-    // This ensures the forecast always represents the appropriate time period
+    // Show forecast for remaining hours of today (after current hour).
+    // This naturally provides time-appropriate forecasts:
+    // - In the morning: forecast covers the whole day ahead
+    // - At midday: forecast covers afternoon and evening
+    // - In the afternoon/evening: forecast covers remaining evening/night hours
     const todayData = data.filter(d => d.time.getDate() === now.getDate() && d.time.getHours() > currentHour);
     const tomorrowDate = new Date(now);
     tomorrowDate.setDate(tomorrowDate.getDate() + 1);
