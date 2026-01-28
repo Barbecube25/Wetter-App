@@ -3395,15 +3395,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
         </g>
       </g>
 
-      {/* Baum Links - Neben Haus (Evergreen - Pine tree) */}
-      <g transform="translate(155, 120) scale(0.9)">
-        <g className={treeAnim} style={{animationDelay: '0.2s'}}>
-            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-            <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
-            <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
-        </g>
-      </g>
-      
+
       {/* Baumgruppe Rechts (Deciduous tree) */}
       <g transform="translate(280, 135) scale(0.9)">
         <g className={treeAnim} style={{animationDelay: '0.5s'}}>
