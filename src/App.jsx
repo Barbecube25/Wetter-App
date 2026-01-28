@@ -3369,7 +3369,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       )}
 
       {/* --- HAUS (zuerst gerendert, damit Bäume davor können) --- */}
-      <g transform="translate(190, 120)">
+      <g transform="translate(180, 120)">
           <rect x="25" y="-10" width="6" height="15" fill="#57534e" />
           <rect x="5" y="10" width="40" height="30" fill={houseWall} />
           <path d="M-2 10 L25 -15 L52 10 Z" fill={houseRoof} filter={isSnow ? "brightness(1.1)" : "none"} />
@@ -3420,6 +3420,39 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       {/* Baum Rechts - Rand (Evergreen - Pine tree) */}
       <g transform="translate(320, 134) scale(0.8)">
         <g className={treeAnim} style={{animationDelay: '0.7s'}}>
+            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+            <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
+            <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
+        </g>
+      </g>
+
+      {/* Zusätzliche Bäume auf der Wiese */}
+      
+      {/* Kleiner Baum zwischen Links und Haus (Deciduous tree) */}
+      <g transform="translate(100, 130) scale(0.7)">
+        <g className={treeAnim} style={{animationDelay: '0.3s'}}>
+            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+            {showDeciduousLeaves ? (
+              <>
+                <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+                <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+              </>
+            ) : bareBranches}
+        </g>
+      </g>
+
+      {/* Kleiner Baum rechts vom Haus (Evergreen - Pine tree) */}
+      <g transform="translate(230, 128) scale(0.75)">
+        <g className={treeAnim} style={{animationDelay: '0.4s'}}>
+            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+            <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
+            <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
+        </g>
+      </g>
+
+      {/* Zusätzlicher kleiner Baum links (Evergreen - Pine tree) */}
+      <g transform="translate(70, 135) scale(0.65)">
+        <g className={treeAnim} style={{animationDelay: '0.6s'}}>
             <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
             <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
             <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
