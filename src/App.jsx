@@ -3156,13 +3156,15 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-             <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden p-6 animate-in zoom-in-95 duration-200">
-                 <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+             <div className="bg-white rounded-3xl max-w-sm w-full max-h-[90vh] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+                 <div className="flex justify-between items-center px-6 pt-6 pb-4 border-b border-slate-100 flex-shrink-0">
                      <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                          <Settings size={24} className="text-blue-600"/> {t.settings}
                      </h2>
                      <button onClick={onClose}><X className="text-slate-400"/></button>
                  </div>
+                 
+                 <div className="overflow-y-auto px-6 py-4 flex-1">
 
                  {/* CHANGE HOME LOCATION (NEU) */}
                  <div className="mb-6">
@@ -3366,13 +3368,16 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
                          </div>
                      )}
                  </div>
+                 </div>
 
-                 <button 
-                    onClick={() => { onSave(localSettings); onClose(); }}
-                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition active:scale-95"
-                 >
-                     {t.save}
-                 </button>
+                 <div className="px-6 pb-6 pt-4 border-t border-slate-100 flex-shrink-0">
+                     <button 
+                        onClick={() => { onSave(localSettings); onClose(); }}
+                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition active:scale-95"
+                     >
+                         {t.save}
+                     </button>
+                 </div>
              </div>
         </div>
     );
