@@ -6846,13 +6846,25 @@ export default function WeatherApp() {
             
             {/* Action Buttons */}
             <div className="flex gap-2">
-              <button onClick={fetchData} className="p-3 rounded-m3-full bg-m3-surface-container-high hover:bg-m3-surface-container-highest text-m3-on-surface transition-all shadow-m3-1 hover:shadow-m3-2">
+              <button 
+                onClick={fetchData} 
+                aria-label={t('refresh') || "Refresh weather data"}
+                className="p-3 rounded-m3-full bg-m3-surface-container-high hover:bg-m3-surface-container-highest text-m3-on-surface transition-all shadow-m3-1 hover:shadow-m3-2"
+              >
                 <RefreshCw size={20} />
               </button>
-              <button onClick={() => setShowFeedback(true)} className="p-3 rounded-m3-full bg-m3-secondary-container hover:bg-m3-secondary text-m3-on-secondary-container hover:text-m3-on-secondary transition-all shadow-m3-1 hover:shadow-m3-2">
+              <button 
+                onClick={() => setShowFeedback(true)} 
+                aria-label={t('feedback') || "Send feedback"}
+                className="p-3 rounded-m3-full bg-m3-secondary-container hover:bg-m3-secondary text-m3-on-secondary-container hover:text-m3-on-secondary transition-all shadow-m3-1 hover:shadow-m3-2"
+              >
                 <MessageSquarePlus size={20} />
               </button>
-              <button onClick={() => setShowSettingsModal(true)} className="p-3 rounded-m3-full bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary transition-all shadow-m3-2 hover:shadow-m3-3">
+              <button 
+                onClick={() => setShowSettingsModal(true)} 
+                aria-label={t('settings') || "Settings"}
+                className="p-3 rounded-m3-full bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary transition-all shadow-m3-2 hover:shadow-m3-3"
+              >
                 <Settings size={20} />
               </button>
             </div>
@@ -6882,7 +6894,11 @@ export default function WeatherApp() {
 
           {/* Install FAB */}
           {deferredPrompt && (
-            <button onClick={handleInstallClick} className="fixed bottom-20 right-4 z-50 p-4 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-4 hover:shadow-m3-5 transition-all animate-m3-scale-in">
+            <button 
+              onClick={handleInstallClick} 
+              aria-label={t('installTitle') || "Install application"}
+              className="fixed bottom-20 right-4 z-50 p-4 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-4 hover:shadow-m3-5 transition-all animate-m3-scale-in"
+            >
               <Download size={24} />
             </button>
           )}
