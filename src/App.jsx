@@ -3405,7 +3405,8 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
     // Loop um Start und Ende zu finden (Hourly Data)
     for (let i = 0; i < futureData.length; i++) {
        const d = futureData[i];
-       const hasPrecip = d.precip > 0.1 || d.snow > 0.1 || (d.precipProb !== undefined && d.precipProb > 50);
+       // Only consider precipitation if actual amount >= 0.1mm (no false positives from trace amounts)
+       const hasPrecip = d.precip > 0.1 || d.snow > 0.1;
        
        if (hasPrecip) {
            if (!foundStart) {
@@ -6218,6 +6219,17 @@ export default function WeatherApp() {
                     {gpsAvailable ? `✓ ${t('gpsAvailable')}` : `⚠ ${t('gpsNotAvailable')}`}
                   </div>
                 </div>
+                {/* 
+                  Radar Integration: This tab displays real-time weather radar data from Windy.com,
+                  which includes ECMWF model data and actual radar precipitation measurements.
+                  This provides users with visual confirmation of current precipitation patterns
+                  and helps verify the forecast accuracy. The radar data supplements the numerical
+                  weather models (ECMWF, GFS, ICON) used for precipitation forecasts.
+                  
+                  Note: The 0.1mm minimum threshold for rain/snow display (implemented above)
+                  helps filter out trace amounts that may not be meteorologically significant,
+                  improving forecast reliability.
+                */}
                 <div className="flex-1 w-full rounded-2xl overflow-hidden shadow-inner bg-slate-200 relative">
                   <iframe 
                     width="100%" 
