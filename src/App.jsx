@@ -3353,8 +3353,8 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
     
     // Ist es gerade nass? (in der aktuellen Stunde oder nächsten Stunde)
     const current = data[0]; 
-    // Only consider it "raining now" if there's actual measurable precipitation
-    const isRainingNow = current.precip > 0.0 || current.snow > 0.0;
+    // Only consider it "raining now" if there's actual measurable precipitation (minimum 0.1mm)
+    const isRainingNow = current.precip > 0.1 || current.snow > 0.1;
     
     let result = { 
        type: 'none', // none, rain_now, rain_later, snow_now, snow_later
@@ -3388,9 +3388,9 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
         }
         
         if (startIndex !== -1) {
-            // Check next 2 hours (8 * 15min slots)
+            // Check next 2 hours (8 * 15min slots) - only show if precipitation >= 0.1mm
             for(let i=startIndex; i < Math.min(startIndex + 8, mTime.length); i++) {
-                if (mPrecip[i] > 0.0) {
+                if (mPrecip[i] > 0.1) {
                      result.minutelyStart = new Date(mTime[i]);
                      break; 
                 }
@@ -3405,7 +3405,8 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
     // Loop um Start und Ende zu finden (Hourly Data)
     for (let i = 0; i < futureData.length; i++) {
        const d = futureData[i];
-       const hasPrecip = d.precip > 0.0 || d.snow > 0.0 || (d.precipProb !== undefined && d.precipProb > 50);
+       // Only consider precipitation if actual amount >= 0.1mm (no false positives from trace amounts)
+       const hasPrecip = d.precip > 0.1 || d.snow > 0.1;
        
        if (hasPrecip) {
            if (!foundStart) {
@@ -6218,6 +6219,17 @@ export default function WeatherApp() {
                     {gpsAvailable ? `✓ ${t('gpsAvailable')}` : `⚠ ${t('gpsNotAvailable')}`}
                   </div>
                 </div>
+                {/* 
+                  Radar Integration: This tab displays real-time weather radar data from Windy.com,
+                  which includes ECMWF model data and actual radar precipitation measurements.
+                  This provides users with visual confirmation of current precipitation patterns
+                  and helps verify the forecast accuracy. The radar data supplements the numerical
+                  weather models (ICON, GFS, AROME, GEM) used for precipitation forecasts throughout the app.
+                  
+                  Note: The 0.1mm minimum threshold for rain/snow display (implemented in PrecipitationTile)
+                  helps filter out trace amounts that may not be meteorologically significant,
+                  improving forecast reliability and preventing false rain indicators.
+                */}
                 <div className="flex-1 w-full rounded-2xl overflow-hidden shadow-inner bg-slate-200 relative">
                   <iframe 
                     width="100%" 
