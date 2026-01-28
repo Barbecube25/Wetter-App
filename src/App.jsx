@@ -5452,11 +5452,11 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                                     <p className="text-m3-on-tertiary-container font-bold mb-4 text-center">{t.locFound || "Ort gefunden!"}</p>
                                     
                                     <div className="bg-m3-surface/50 p-4 rounded-m3-md">
-                                        <label className="text-xs font-bold text-m3-on-surface-variant uppercase tracking-wide mb-2 block">{t.homeLoc}</label>
+                                        <label className="text-xs font-bold text-m3-on-tertiary-container uppercase tracking-wide mb-2 block">{t.homeLoc}</label>
                                         <div className="flex items-center gap-2">
                                             <input 
                                                 type="text" 
-                                                className="w-full bg-transparent font-bold text-lg text-m3-on-surface focus:outline-none border-b-2 border-m3-tertiary pb-1"
+                                                className="w-full bg-transparent font-bold text-lg text-m3-on-tertiary-container focus:outline-none border-b-2 border-m3-tertiary pb-1"
                                                 value={customHomeName}
                                                 onChange={(e) => {
                                                     const newName = e.target.value;
@@ -5466,7 +5466,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                                                     }
                                                 }}
                                             />
-                                            <Edit2 size={16} className="text-m3-on-surface-variant"/>
+                                            <Edit2 size={16} className="text-m3-on-tertiary-container"/>
                                         </div>
                                     </div>
                                     
@@ -5477,7 +5477,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                                             setSearchQuery("");
                                             setSearchResults([]);
                                         }}
-                                        className="mt-4 text-sm text-m3-on-surface-variant hover:text-m3-on-surface flex items-center gap-1 mx-auto"
+                                        className="mt-4 text-sm text-m3-on-tertiary-container hover:text-m3-tertiary flex items-center gap-1 mx-auto"
                                     >
                                         <ArrowLeft size={14} /> {t.changeLocation || "Ort ändern"}
                                     </button>
@@ -6421,9 +6421,9 @@ export default function WeatherApp() {
   // Snow should be treated like rain - only show if weather code explicitly indicates snow, not based on temperature
   const isSnowing = current.code && SNOW_WEATHER_CODES.includes(current.code);
   
-  // Konfiguration basierend auf echtem Status - Material 3 Theme
+  // Configuration based on actual status - Material 3 Theme
   const weatherConf = getWeatherConfig(current.code || 0, isRealNight ? 0 : 1, lang);
-  const bgGradient = isRealNight ? 'from-m3-inverse-surface to-slate-900' : 'from-m3-surface to-m3-surface-container';
+  const bgGradient = isRealNight ? 'from-m3-inverse-surface to-m3-inverse-surface' : 'from-m3-surface to-m3-surface-container';
   const textColor = isRealNight ? 'text-m3-inverse-on-surface' : 'text-m3-on-surface';
   const cardBg = isRealNight ? 'bg-m3-surface-container/80 border-m3-outline-variant/50 text-m3-on-surface' : 'bg-m3-surface-container/80 border-m3-outline-variant/40 text-m3-on-surface';
   const windColorClass = getWindColorClass(current.wind || 0);
