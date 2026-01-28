@@ -2367,7 +2367,7 @@ const generateAIReport = (type, data, lang = 'de') => {
                 if (snowProbToday > 0) {
                     todayText += lang === 'en'
                         ? ` Snow probability: ${snowProbToday}%.`
-                        : ` Schneewahrscheinlichkeit liegt bei ${snowProbToday}%.`;
+                        : ` Die Schneewahrscheinlichkeit liegt bei ${snowProbToday}%.`;
                 }
                 if (snowWillStick) {
                     todayText += lang === 'en'
@@ -2547,7 +2547,7 @@ const generateAIReport = (type, data, lang = 'de') => {
                 if (snowProbTomorrow > 0) {
                     tomorrowText += lang === 'en'
                         ? ` Snow probability: ${snowProbTomorrow}%.`
-                        : ` Schneewahrscheinlichkeit: ${snowProbTomorrow}%.`;
+                        : ` Die Schneewahrscheinlichkeit liegt bei ${snowProbTomorrow}%.`;
                 }
                 if (snowWillStickTomorrow) {
                     tomorrowText += lang === 'en'
