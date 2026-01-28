@@ -10,6 +10,9 @@ const config: CapacitorConfig = {
   plugins: {
     Geolocation: {
       // Required for Geolocation plugin initialization
+    },
+    StatusBar: {
+      // Status bar configuration
     }
   }
 };
