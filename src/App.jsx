@@ -6937,51 +6937,51 @@ export default function WeatherApp() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Weather Details Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="bg-m3-surface-container-high rounded-m3-xl p-3 border border-m3-outline-variant">
-                <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
-                  <Sun size={14} /> {t('uv')}
-                </div>
-                <div className={`text-m3-title-large font-bold ${getUvColorClass(current.uvIndex)}`}>{current.uvIndex}</div>
-              </div>
-              
-              <div className="bg-m3-surface-container-high rounded-m3-xl p-3 border border-m3-outline-variant">
-                <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
-                  <Waves size={14} /> {t('humidity')}
-                </div>
-                <div className="text-m3-title-large font-bold text-m3-on-surface">{current.humidity}%</div>
-              </div>
-              
-              <div className="bg-m3-surface-container-high rounded-m3-xl p-3 border border-m3-outline-variant">
-                <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
-                  <Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }} /> {t('wind')}
-                </div>
-                <div className={`text-m3-title-large font-bold ${windColorClass}`}>
-                  {current.wind} <span className="text-m3-body-small">km/h</span>
-                </div>
-              </div>
-              
-              {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0) ? (
-                <div className="bg-m3-tertiary-container rounded-m3-xl p-3 border border-m3-tertiary">
-                  <div className="flex items-center gap-2 text-m3-on-tertiary-container text-m3-label-small mb-1">
-                    {isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip')}
-                  </div>
-                  <div className="text-m3-title-large font-bold text-m3-on-tertiary-container">
-                    {isSnowing ? dailySnowSum : dailyRainSum} {isSnowing ? 'cm' : 'mm'}
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-m3-surface-container-high rounded-m3-xl p-3 border border-m3-outline-variant">
-                  <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
-                    <Thermometer size={14} /> {t('dewPoint')}
-                  </div>
-                  <div className="text-m3-title-large font-bold text-m3-on-surface">{formatTemp(current.dewPoint)}°</div>
-                </div>
-              )}
+        {/* Weather Details Grid - Moved below animation card */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="bg-m3-surface-container-high rounded-m3-xl p-3 border border-m3-outline-variant shadow-m3-1">
+            <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
+              <Sun size={14} /> {t('uv')}
+            </div>
+            <div className={`text-m3-title-large font-bold ${getUvColorClass(current.uvIndex)}`}>{current.uvIndex}</div>
+          </div>
+          
+          <div className="bg-m3-surface-container-high rounded-m3-xl p-3 border border-m3-outline-variant shadow-m3-1">
+            <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
+              <Waves size={14} /> {t('humidity')}
+            </div>
+            <div className="text-m3-title-large font-bold text-m3-on-surface">{current.humidity}%</div>
+          </div>
+          
+          <div className="bg-m3-surface-container-high rounded-m3-xl p-3 border border-m3-outline-variant shadow-m3-1">
+            <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
+              <Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }} /> {t('wind')}
+            </div>
+            <div className={`text-m3-title-large font-bold ${windColorClass}`}>
+              {current.wind} <span className="text-m3-body-small">km/h</span>
             </div>
           </div>
+          
+          {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0) ? (
+            <div className="bg-m3-tertiary-container rounded-m3-xl p-3 border border-m3-tertiary shadow-m3-1">
+              <div className="flex items-center gap-2 text-m3-on-tertiary-container text-m3-label-small mb-1">
+                {isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip')}
+              </div>
+              <div className="text-m3-title-large font-bold text-m3-on-tertiary-container">
+                {isSnowing ? dailySnowSum : dailyRainSum} {isSnowing ? 'cm' : 'mm'}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-m3-surface-container-high rounded-m3-xl p-3 border border-m3-outline-variant shadow-m3-1">
+              <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
+                <Thermometer size={14} /> {t('dewPoint')}
+              </div>
+              <div className="text-m3-title-large font-bold text-m3-on-surface">{formatTemp(current.dewPoint)}°</div>
+            </div>
+          )}
         </div>
 
         {/* Enhanced Tab Navigation */}
