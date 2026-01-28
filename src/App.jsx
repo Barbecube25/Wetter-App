@@ -4766,6 +4766,31 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
 };
 
 
+// --- Helper function to check and request location permissions ---
+const checkAndRequestLocationPermission = async () => {
+  try {
+    // Check current permission status
+    const permStatus = await Geolocation.checkPermissions();
+    
+    if (permStatus.location === 'granted') {
+      return { granted: true };
+    }
+    
+    // Request permissions if not granted
+    const requestResult = await Geolocation.requestPermissions();
+    
+    if (requestResult.location === 'granted') {
+      return { granted: true };
+    }
+    
+    return { granted: false, error: 'Standortzugriff verweigert. Bitte erlauben Sie den Zugriff in den App-Einstellungen.' };
+  } catch (error) {
+    console.error('Permission check error:', error);
+    return { granted: false, error: 'Fehler beim Überprüfen der Standortberechtigung.' };
+  }
+};
+
+
 // --- 4. MAIN APP COMPONENT ---
 
 export default function WeatherApp() {
@@ -5007,30 +5032,6 @@ export default function WeatherApp() {
   const handleSetHome = () => {
     setCurrentLoc(homeLoc);
     setGpsAvailable(homeLoc && homeLoc.type === 'gps'); // Update GPS availability
-  };
-  
-  // Helper function to check and request location permissions
-  const checkAndRequestLocationPermission = async () => {
-    try {
-      // Check current permission status
-      const permStatus = await Geolocation.checkPermissions();
-      
-      if (permStatus.location === 'granted') {
-        return { granted: true };
-      }
-      
-      // Request permissions if not granted
-      const requestResult = await Geolocation.requestPermissions();
-      
-      if (requestResult.location === 'granted') {
-        return { granted: true };
-      }
-      
-      return { granted: false, error: 'Standortzugriff verweigert. Bitte erlauben Sie den Zugriff in den App-Einstellungen.' };
-    } catch (error) {
-      console.error('Permission check error:', error);
-      return { granted: false, error: 'Fehler beim Überprüfen der Standortberechtigung.' };
-    }
   };
   
   const handleSetCurrent = async () => {
