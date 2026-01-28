@@ -3183,24 +3183,24 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-             <div className="bg-white rounded-3xl max-w-sm w-full max-h-[90vh] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-                 <div className="flex justify-between items-center px-6 pt-6 pb-4 border-b border-slate-100 flex-shrink-0">
-                     <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                         <Settings size={24} className="text-blue-600"/> {t.settings}
+             <div className="bg-m3-surface rounded-m3-xl max-w-sm w-full max-h-[90vh] shadow-m3-5 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+                 <div className="flex justify-between items-center px-6 pt-6 pb-4 border-b border-m3-outline-variant flex-shrink-0">
+                     <h2 className="text-xl font-bold text-m3-on-surface flex items-center gap-2">
+                         <Settings size={24} className="text-m3-primary"/> {t.settings}
                      </h2>
-                     <button onClick={onClose}><X className="text-slate-400"/></button>
+                     <button onClick={onClose}><X className="text-m3-on-surface-variant"/></button>
                  </div>
                  
                  <div className="overflow-y-auto px-6 py-4 flex-1">
 
                  {/* CHANGE HOME LOCATION (NEU) */}
                  <div className="mb-6">
-                     <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                     <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
                         <MapIcon size={16}/> {t.homeLoc}
                      </label>
                      <button 
                          onClick={() => { onClose(); onChangeHome(); }}
-                         className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition flex items-center justify-center gap-2"
+                         className="w-full py-3 bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface font-bold rounded-m3-md transition flex items-center justify-center gap-2"
                      >
                          <Edit2 size={16}/> {t.changeHome}
                      </button>
@@ -3208,79 +3208,79 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
 
                  {/* LANGUAGE */}
                  <div className="mb-6">
-                     <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                     <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
                         <Globe size={16}/> {t.language}
                      </label>
-                     <div className="grid grid-cols-2 gap-2 bg-slate-100 p-2 rounded-xl max-h-60 overflow-y-auto">
+                     <div className="grid grid-cols-2 gap-2 bg-m3-surface-container p-2 rounded-m3-md max-h-60 overflow-y-auto">
                          <button 
                              onClick={() => setLocalSettings({...localSettings, language: 'de'})}
-                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'de' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`py-2 px-3 rounded-m3-sm text-sm font-bold transition ${localSettings.language === 'de' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              🇩🇪 Deutsch
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, language: 'en'})}
-                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'en' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`py-2 px-3 rounded-m3-sm text-sm font-bold transition ${localSettings.language === 'en' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              🇬🇧 English
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, language: 'fr'})}
-                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'fr' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`py-2 px-3 rounded-m3-sm text-sm font-bold transition ${localSettings.language === 'fr' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              🇫🇷 Français
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, language: 'es'})}
-                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'es' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`py-2 px-3 rounded-m3-sm text-sm font-bold transition ${localSettings.language === 'es' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              🇪🇸 Español
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, language: 'it'})}
-                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'it' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`py-2 px-3 rounded-m3-sm text-sm font-bold transition ${localSettings.language === 'it' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              🇮🇹 Italiano
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, language: 'tr'})}
-                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'tr' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`py-2 px-3 rounded-m3-sm text-sm font-bold transition ${localSettings.language === 'tr' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              🇹🇷 Türkçe
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, language: 'pl'})}
-                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'pl' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`py-2 px-3 rounded-m3-sm text-sm font-bold transition ${localSettings.language === 'pl' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              🇵🇱 Polski
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, language: 'nl'})}
-                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'nl' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`py-2 px-3 rounded-m3-sm text-sm font-bold transition ${localSettings.language === 'nl' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              🇳🇱 Nederlands
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, language: 'hr'})}
-                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'hr' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`py-2 px-3 rounded-m3-sm text-sm font-bold transition ${localSettings.language === 'hr' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              🇭🇷 Hrvatski
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, language: 'el'})}
-                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'el' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`py-2 px-3 rounded-m3-sm text-sm font-bold transition ${localSettings.language === 'el' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              🇬🇷 Ελληνικά
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, language: 'da'})}
-                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'da' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`py-2 px-3 rounded-m3-sm text-sm font-bold transition ${localSettings.language === 'da' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              🇩🇰 Dansk
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, language: 'ru'})}
-                             className={`py-2 px-3 rounded-lg text-sm font-bold transition ${localSettings.language === 'ru' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`py-2 px-3 rounded-m3-sm text-sm font-bold transition ${localSettings.language === 'ru' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              🇷🇺 Русский
                          </button>
@@ -3289,25 +3289,25 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
 
                  {/* THEME (NEU) */}
                  <div className="mb-6">
-                     <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                     <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
                         <Palette size={16}/> {t.theme}
                      </label>
-                     <div className="flex gap-2 bg-slate-100 p-1 rounded-xl">
+                     <div className="flex gap-2 bg-m3-surface-container p-1 rounded-m3-md">
                          <button 
                              onClick={() => setLocalSettings({...localSettings, theme: 'auto'})}
-                             className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition ${localSettings.theme === 'auto' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.theme === 'auto' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              {t.themeAuto}
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, theme: 'light'})}
-                             className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition ${localSettings.theme === 'light' ? 'bg-white shadow-sm text-amber-500' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.theme === 'light' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              {t.themeLight}
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, theme: 'dark'})}
-                             className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition ${localSettings.theme === 'dark' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.theme === 'dark' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              {t.themeDark}
                          </button>
@@ -3316,19 +3316,19 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
 
                  {/* UNITS */}
                  <div className="mb-8">
-                     <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                     <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
                         <Thermometer size={16}/> {t.units}
                      </label>
-                     <div className="flex gap-2 bg-slate-100 p-1 rounded-xl">
+                     <div className="flex gap-2 bg-m3-surface-container p-1 rounded-m3-md">
                          <button 
                              onClick={() => setLocalSettings({...localSettings, unit: 'celsius'})}
-                             className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${localSettings.unit === 'celsius' ? 'bg-white shadow-sm text-red-500' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`flex-1 py-2 rounded-m3-sm text-sm font-bold transition ${localSettings.unit === 'celsius' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              °C (Celsius)
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, unit: 'fahrenheit'})}
-                             className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${localSettings.unit === 'fahrenheit' ? 'bg-white shadow-sm text-red-500' : 'text-slate-500 hover:text-slate-700'}`}
+                             className={`flex-1 py-2 rounded-m3-sm text-sm font-bold transition ${localSettings.unit === 'fahrenheit' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              °F (Fahrenheit)
                          </button>
@@ -3337,16 +3337,16 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
 
                  {/* NOTIFICATIONS */}
                  <div className="mb-6">
-                     <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                     <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
                         <Bell size={16}/> {t.notifications}
                      </label>
                      
                      {/* Daily Forecast Notification */}
-                     <div className="mb-3 p-3 bg-slate-50 rounded-xl">
+                     <div className="mb-3 p-3 bg-m3-surface-container rounded-m3-md">
                          <div className="flex items-center justify-between mb-2">
                              <div className="flex-1">
-                                 <div className="font-semibold text-sm text-slate-700">{t.notificationDaily}</div>
-                                 <div className="text-xs text-slate-500 mt-1">{t.notificationDailyDesc}</div>
+                                 <div className="font-semibold text-sm text-m3-on-surface">{t.notificationDaily}</div>
+                                 <div className="text-xs text-m3-on-surface-variant mt-1">{t.notificationDailyDesc}</div>
                              </div>
                              <label className="relative inline-block w-12 h-6 ml-3">
                                  <input 
@@ -3355,18 +3355,18 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
                                      onChange={(e) => setLocalSettings({...localSettings, notificationDaily: e.target.checked})}
                                      className="sr-only peer"
                                  />
-                                 <span className="absolute inset-0 bg-slate-300 rounded-full peer-checked:bg-blue-600 transition cursor-pointer"></span>
-                                 <span className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-6"></span>
+                                 <span className="absolute inset-0 bg-m3-outline rounded-m3-full peer-checked:bg-m3-primary transition cursor-pointer"></span>
+                                 <span className="absolute left-1 top-1 w-4 h-4 bg-m3-surface rounded-m3-full transition-transform peer-checked:translate-x-6"></span>
                              </label>
                          </div>
                      </div>
                      
                      {/* Next Day Outlook Notification */}
-                     <div className="mb-3 p-3 bg-slate-50 rounded-xl">
+                     <div className="mb-3 p-3 bg-m3-surface-container rounded-m3-md">
                          <div className="flex items-center justify-between mb-2">
                              <div className="flex-1">
-                                 <div className="font-semibold text-sm text-slate-700">{t.notificationNextDay}</div>
-                                 <div className="text-xs text-slate-500 mt-1">{t.notificationNextDayDesc}</div>
+                                 <div className="font-semibold text-sm text-m3-on-surface">{t.notificationNextDay}</div>
+                                 <div className="text-xs text-m3-on-surface-variant mt-1">{t.notificationNextDayDesc}</div>
                              </div>
                              <label className="relative inline-block w-12 h-6 ml-3">
                                  <input 
@@ -3375,32 +3375,32 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
                                      onChange={(e) => setLocalSettings({...localSettings, notificationNextDay: e.target.checked})}
                                      className="sr-only peer"
                                  />
-                                 <span className="absolute inset-0 bg-slate-300 rounded-full peer-checked:bg-blue-600 transition cursor-pointer"></span>
-                                 <span className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-6"></span>
+                                 <span className="absolute inset-0 bg-m3-outline rounded-m3-full peer-checked:bg-m3-primary transition cursor-pointer"></span>
+                                 <span className="absolute left-1 top-1 w-4 h-4 bg-m3-surface rounded-m3-full transition-transform peer-checked:translate-x-6"></span>
                              </label>
                          </div>
                      </div>
                      
                      {/* Notification Time */}
                      {(localSettings.notificationDaily || localSettings.notificationNextDay) && (
-                         <div className="p-3 bg-slate-50 rounded-xl">
-                             <label className="block text-sm font-semibold text-slate-700 mb-2">{t.notificationTime}</label>
+                         <div className="p-3 bg-m3-surface-container rounded-m3-md">
+                             <label className="block text-sm font-semibold text-m3-on-surface mb-2">{t.notificationTime}</label>
                              <input 
                                  type="time" 
                                  value={localSettings.notificationTime || '07:00'}
                                  onChange={(e) => setLocalSettings({...localSettings, notificationTime: e.target.value})}
-                                 className="w-full py-2 px-3 bg-white border border-slate-200 rounded-lg text-slate-700 font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                 className="w-full py-2 px-3 bg-m3-surface border border-m3-outline rounded-m3-sm text-m3-on-surface font-medium focus:ring-2 focus:ring-m3-primary focus:border-transparent"
                              />
-                             <div className="text-xs text-slate-500 mt-2">{t.notificationTimeDesc}</div>
+                             <div className="text-xs text-m3-on-surface-variant mt-2">{t.notificationTimeDesc}</div>
                          </div>
                      )}
                  </div>
                  </div>
 
-                 <div className="px-6 pb-6 pt-4 border-t border-slate-100 flex-shrink-0">
+                 <div className="px-6 pb-6 pt-4 border-t border-m3-outline-variant flex-shrink-0">
                      <button 
                         onClick={() => { onSave(localSettings); onClose(); }}
-                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition active:scale-95"
+                        className="w-full py-3 bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary font-bold rounded-m3-md shadow-m3-2 transition active:scale-95"
                      >
                          {t.save}
                      </button>
@@ -6899,13 +6899,13 @@ export default function WeatherApp() {
           </div>
         </div>
 
-        <div className={`p-1.5 rounded-full backdrop-blur-md flex shadow-md border border-white/20 ${cardBg}`}>
+        <div className={`p-1 rounded-m3-full backdrop-blur-md flex shadow-m3-2 border border-m3-outline-variant ${cardBg}`}>
            {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
-             <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 py-3 rounded-full text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === tab.id ? 'bg-white/90 text-slate-900 shadow-md' : 'hover:bg-white/10 opacity-70'}`}><tab.icon size={16} /> <span className="hidden sm:inline">{tab.label}</span></button>
+             <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 py-3 rounded-m3-full text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === tab.id ? 'bg-m3-primary text-m3-on-primary shadow-m3-2' : 'hover:bg-m3-surface-container-high opacity-70 text-m3-on-surface'}`}><tab.icon size={16} /> <span className="hidden sm:inline">{tab.label}</span></button>
            ))}
         </div>
 
-        <div className={`backdrop-blur-md rounded-[32px] p-5 shadow-2xl ${cardBg} min-h-[450px]`}>
+        <div className={`backdrop-blur-md rounded-m3-xl p-5 shadow-m3-3 ${cardBg} min-h-[450px]`}>
           
           {activeTab === 'overview' && (
             <div className="space-y-4">
