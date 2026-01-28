@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset } from 'lucide-react';
+import { Geolocation } from '@capacitor/geolocation';
 
 // --- 1. KONSTANTEN & CONFIG & ÜBERSETZUNGEN ---
 
@@ -4206,13 +4207,28 @@ const HomeSetupModal = ({ onSave, lang='de' }) => {
         }
     };
 
-    const handleUseGPS = () => {
-        if (!navigator.geolocation) return alert("Kein GPS verfügbar");
+    const handleUseGPS = async () => {
         setGpsLoading(true);
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-             const lat = pos.coords.latitude;
-             const lon = pos.coords.longitude;
-             try {
+        
+        // Check and request permissions first
+        const permissionResult = await checkAndRequestLocationPermission();
+        
+        if (!permissionResult.granted) {
+            alert(permissionResult.error);
+            setGpsLoading(false);
+            return;
+        }
+        
+        try {
+            const position = await Geolocation.getCurrentPosition({
+                enableHighAccuracy: true,
+                timeout: 15000
+            });
+            
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            try {
                 // Name auflösen
                 const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
                 const data = await res.json();
@@ -4225,13 +4241,12 @@ const HomeSetupModal = ({ onSave, lang='de' }) => {
                 const loc = { name: "GPS Standort", lat, lon, id: 'home_default', type: 'home' };
                 setSelectedLoc(loc);
                 setCustomName("Zuhause");
-            } finally {
-                setGpsLoading(false);
             }
-        }, () => {
-            alert("Standortzugriff verweigert.");
+        } catch (error) {
+            alert("Standortzugriff konnte nicht abgerufen werden: " + (error.message || 'Unbekannter Fehler'));
+        } finally {
             setGpsLoading(false);
-        });
+        }
     };
 
     const handleSelect = (res) => {
@@ -4377,15 +4392,27 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
     };
     
     // GPS handler
-    const handleUseGPS = () => {
-        if (!navigator.geolocation) {
-            alert(t.noGpsAvailable);
+    const handleUseGPS = async () => {
+        setGpsLoading(true);
+        
+        // Check and request permissions first
+        const permissionResult = await checkAndRequestLocationPermission();
+        
+        if (!permissionResult.granted) {
+            alert(permissionResult.error || t.locationDenied);
+            setGpsLoading(false);
             return;
         }
-        setGpsLoading(true);
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            const lat = pos.coords.latitude;
-            const lon = pos.coords.longitude;
+        
+        try {
+            const position = await Geolocation.getCurrentPosition({
+                enableHighAccuracy: true,
+                timeout: 15000
+            });
+            
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
             try {
                 const searchLang = settings?.language || lang || 'de';
                 const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=${searchLang}&format=json`);
@@ -4400,13 +4427,12 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                 setSelectedHomeLoc(loc);
                 setCustomHomeName(t.homeLocation);
                 setHomeLocation(loc);
-            } finally {
-                setGpsLoading(false);
             }
-        }, () => {
-            alert(t.locationDenied);
+        } catch (error) {
+            alert(t.locationDenied || "Standortzugriff konnte nicht abgerufen werden");
+        } finally {
             setGpsLoading(false);
-        });
+        }
     };
     
     // Select location from search results
@@ -4740,6 +4766,31 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
 };
 
 
+// --- Helper function to check and request location permissions ---
+const checkAndRequestLocationPermission = async () => {
+  try {
+    // Check current permission status
+    const permStatus = await Geolocation.checkPermissions();
+    
+    if (permStatus.location === 'granted') {
+      return { granted: true };
+    }
+    
+    // Request permissions if not granted
+    const requestResult = await Geolocation.requestPermissions();
+    
+    if (requestResult.location === 'granted') {
+      return { granted: true };
+    }
+    
+    return { granted: false, error: 'Standortzugriff verweigert. Bitte erlauben Sie den Zugriff in den App-Einstellungen.' };
+  } catch (error) {
+    console.error('Permission check error:', error);
+    return { granted: false, error: 'Fehler beim Überprüfen der Standortberechtigung.' };
+  }
+};
+
+
 // --- 4. MAIN APP COMPONENT ---
 
 export default function WeatherApp() {
@@ -4860,42 +4911,47 @@ export default function WeatherApp() {
         const view = urlParams.get('view');
         if (view) setViewMode(view);
 
-        if (!navigator.geolocation) {
-             setCurrentLoc(homeLoc);
-             setGpsAvailable(false); // No GPS support
-             return;
+        // Check and request permissions first
+        const permissionResult = await checkAndRequestLocationPermission();
+        
+        if (!permissionResult.granted) {
+            setCurrentLoc(homeLoc);
+            setGpsAvailable(false); // Permission not granted
+            return;
         }
 
-        navigator.geolocation.getCurrentPosition(
-            async (pos) => {
-                const lat = pos.coords.latitude;
-                const lon = pos.coords.longitude;
-                
-                // Check distance to Home
-                const dist = getDistanceFromLatLonInKm(lat, lon, homeLoc.lat, homeLoc.lon);
-                if (dist < 2.0) { // If closer than 2km to home
-                    setCurrentLoc(homeLoc);
+        try {
+            const position = await Geolocation.getCurrentPosition({
+                enableHighAccuracy: true,
+                timeout: 15000
+            });
+            
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            // Check distance to Home
+            const dist = getDistanceFromLatLonInKm(lat, lon, homeLoc.lat, homeLoc.lon);
+            if (dist < 2.0) { // If closer than 2km to home
+                setCurrentLoc(homeLoc);
+                setGpsAvailable(true); // GPS is available
+            } else {
+                // Fetch City Name
+                try {
+                    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
+                    const data = await res.json();
+                    const city = data.results?.[0]?.name || t('myLocation');
+                    setCurrentLoc({ name: city, lat, lon, type: 'gps' });
                     setGpsAvailable(true); // GPS is available
-                } else {
-                    // Fetch City Name
-                    try {
-                        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
-                        const data = await res.json();
-                        const city = data.results?.[0]?.name || t('myLocation');
-                        setCurrentLoc({ name: city, lat, lon, type: 'gps' });
-                        setGpsAvailable(true); // GPS is available
-                    } catch (e) {
-                        setCurrentLoc({ name: t('myLocation'), lat, lon, type: 'gps' });
-                        setGpsAvailable(true); // GPS is available
-                    }
+                } catch (e) {
+                    setCurrentLoc({ name: t('myLocation'), lat, lon, type: 'gps' });
+                    setGpsAvailable(true); // GPS is available
                 }
-            },
-            (err) => {
-                console.warn("GPS Access denied or failed", err);
-                setCurrentLoc(homeLoc); // Fallback to Home
-                setGpsAvailable(false); // GPS failed
             }
-        );
+        } catch (err) {
+            console.warn("GPS Access denied or failed", err);
+            setCurrentLoc(homeLoc); // Fallback to Home
+            setGpsAvailable(false); // GPS failed
+        }
     };
 
     initLocation();
@@ -4978,88 +5034,91 @@ export default function WeatherApp() {
     setGpsAvailable(homeLoc && homeLoc.type === 'gps'); // Update GPS availability
   };
   
-  const handleSetCurrent = () => {
+  const handleSetCurrent = async () => {
     setLoading(true);
     setError(null); // Reset Error vor neuem Versuch
     console.log("Starte GPS-Suche..."); 
     
-    if (!navigator.geolocation) { 
-        setError("GPS wird von diesem Browser/Gerät nicht unterstützt."); 
-        setGpsAvailable(false); // GPS is not supported
-        setLoading(false); 
-        return; 
+    // Check and request permissions first
+    const permissionResult = await checkAndRequestLocationPermission();
+    
+    if (!permissionResult.granted) {
+      setError(permissionResult.error);
+      setGpsAvailable(false);
+      setLoading(false);
+      return;
     }
     
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-          const lat = pos.coords.latitude;
-          const lon = pos.coords.longitude;
-          
-          console.log(`GPS Position erfolgreich: ${lat}, ${lon} (Genauigkeit: ${pos.coords.accuracy}m)`);
+    try {
+      // Use Capacitor Geolocation API
+      const position = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 15000
+      });
+      
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      
+      console.log(`GPS Position erfolgreich: ${lat}, ${lon} (Genauigkeit: ${position.coords.accuracy}m)`);
 
-          // 1. Prüfen: Sind wir zu Hause? (Distanz < 2km)
-          if (homeLoc) {
-              const dist = getDistanceFromLatLonInKm(lat, lon, homeLoc.lat, homeLoc.lon);
-              if (dist < 2.0) { 
-                  setCurrentLoc(homeLoc);
-                  setGpsAvailable(true); // GPS data is available (near home)
-                  if (currentLoc && currentLoc.id === homeLoc.id) fetchData();
-                  return;
-              }
-          }
+      // 1. Prüfen: Sind wir zu Hause? (Distanz < 2km)
+      if (homeLoc) {
+        const dist = getDistanceFromLatLonInKm(lat, lon, homeLoc.lat, homeLoc.lon);
+        if (dist < 2.0) { 
+          setCurrentLoc(homeLoc);
+          setGpsAvailable(true); // GPS data is available (near home)
+          if (currentLoc && currentLoc.id === homeLoc.id) fetchData();
+          setLoading(false);
+          return;
+        }
+      }
 
-          // 2. Wir sind woanders -> Echten Ortsnamen + Region ermitteln
-          let cityName = t('myLocation');
-          let regionName = "";
-          let countryName = "";
+      // 2. Wir sind woanders -> Echten Ortsnamen + Region ermitteln
+      let cityName = t('myLocation');
+      let regionName = "";
+      let countryName = "";
 
-          try {
-              const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
-              const data = await res.json();
-              if (data.results && data.results[0]) {
-                  cityName = data.results[0].name;
-                  regionName = data.results[0].admin1 || ""; 
-                  countryName = data.results[0].country || ""; 
-              }
-          } catch (e) {
-              console.warn("Reverse Geocoding failed", e);
-          }
+      try {
+        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
+        const data = await res.json();
+        if (data.results && data.results[0]) {
+          cityName = data.results[0].name;
+          regionName = data.results[0].admin1 || ""; 
+          countryName = data.results[0].country || ""; 
+        }
+      } catch (e) {
+        console.warn("Reverse Geocoding failed", e);
+      }
 
-          setCurrentLoc({ 
-              name: cityName, 
-              lat, 
-              lon, 
-              type: 'gps',
-              region: regionName,
-              country: countryName
-          });
-          setGpsAvailable(true); // GPS data is available
-      },
-      (err) => { 
-          console.error("GPS Fehler:", err);
-          setGpsAvailable(false); // GPS data is not available
-          let msg = "Standort konnte nicht ermittelt werden.";
-          
-          // Detaillierte Fehleranalyse für den User
-          switch(err.code) {
-              case err.PERMISSION_DENIED:
-                  msg = "Standortzugriff verweigert. Bitte erlauben Sie den Zugriff in den Browser- oder App-Einstellungen.";
-                  break;
-              case err.POSITION_UNAVAILABLE:
-                  msg = "Standortinformationen sind zurzeit nicht verfügbar (kein GPS-Signal).";
-                  break;
-              case err.TIMEOUT:
-                  msg = "Zeitüberschreitung bei der Standortsuche. Bitte versuchen Sie es erneut.";
-                  break;
-              default:
-                  msg = `Unbekannter GPS Fehler: ${err.message}`;
-          }
-          
-          setError(msg); 
-          setLoading(false); 
-      },
-      { timeout: 15000, enableHighAccuracy: true } // Timeout auf 15s erhöht
-    );
+      setCurrentLoc({ 
+        name: cityName, 
+        lat, 
+        lon, 
+        type: 'gps',
+        region: regionName,
+        country: countryName
+      });
+      setGpsAvailable(true); // GPS data is available
+      setLoading(false);
+    } catch (err) { 
+      console.error("GPS Fehler:", err);
+      setGpsAvailable(false); // GPS data is not available
+      let msg = "Standort konnte nicht ermittelt werden.";
+      
+      // Detaillierte Fehleranalyse für den User
+      if (err.message && err.message.includes('User denied')) {
+        msg = "Standortzugriff verweigert. Bitte erlauben Sie den Zugriff in den App-Einstellungen.";
+      } else if (err.message && err.message.includes('location unavailable')) {
+        msg = "Standortinformationen sind zurzeit nicht verfügbar (kein GPS-Signal).";
+      } else if (err.message && err.message.includes('timeout')) {
+        msg = "Zeitüberschreitung bei der Standortsuche. Bitte versuchen Sie es erneut.";
+      } else {
+        msg = `GPS Fehler: ${err.message || 'Unbekannter Fehler'}`;
+      }
+      
+      setError(msg); 
+      setLoading(false); 
+    }
   };
   
   const fetchData = async () => {
