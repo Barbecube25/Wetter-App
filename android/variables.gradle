@@ -13,4 +13,9 @@ ext {
     androidxJunitVersion = '1.2.1'
     androidxEspressoCoreVersion = '3.6.1'
     cordovaAndroidVersion = '10.1.1'
+    // Material 3 Compose versions
+    material3Version = '1.4.0'
+    material3WindowSizeVersion = '1.4.0'
+    material3AdaptiveNavVersion = '1.5.0-alpha13'
+    kotlinCompilerExtensionVersion = '1.5.14'
 }

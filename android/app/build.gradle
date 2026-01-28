@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
 
 android {
     namespace "com.barbecubewetterscoutai.app"
@@ -53,6 +54,19 @@ android {
             enableSplit = true
         }
     }
+
+    // Compose configuration for Material 3
+    buildFeatures {
+        compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = rootProject.ext.kotlinCompilerExtensionVersion
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
 
 repositories {
@@ -71,6 +85,11 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
+    
+    // Material 3 Compose dependencies
+    implementation "androidx.compose.material3:material3:$material3Version"
+    implementation "androidx.compose.material3:material3-window-size-class:$material3WindowSizeVersion"
+    implementation "androidx.compose.material3:material3-adaptive-navigation-suite:$material3AdaptiveNavVersion"
 }
 
 apply from: 'capacitor.build.gradle'
