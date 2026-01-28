@@ -2252,6 +2252,12 @@ const generateAIReport = (type, data, lang = 'de') => {
     if (Math.abs(current.appTemp - current.temp) > 2) intro += `, ${t.feelsLike} ${Math.round(current.appTemp)}°.`;
     
     let parts = [intro];
+    
+    // Show forecast for remaining hours of today (after current hour).
+    // This naturally provides time-appropriate forecasts:
+    // - In the morning: forecast covers the whole day ahead
+    // - At midday: forecast covers afternoon and evening
+    // - In the afternoon/evening: forecast covers remaining evening/night hours
     const todayData = data.filter(d => d.time.getDate() === now.getDate() && d.time.getHours() > currentHour);
     const tomorrowDate = new Date(now);
     tomorrowDate.setDate(tomorrowDate.getDate() + 1);
