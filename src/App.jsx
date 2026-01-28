@@ -152,7 +152,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Plane deine Reisen und überprüfe die Wetterwahrscheinlichkeit für deinen Ausflug.",
     tutorialSettingsTitle: "Einstellungen",
     tutorialSettingsDesc: "Hier kannst du die Sprache, Einheiten (°C/°F), das Design (Hell/Dunkel/Auto) und deinen Heimatort anpassen.",
-    tutorialComplete: "Tutorial abgeschlossen! Du kannst jederzeit in den Einstellungen Änderungen vornehmen."
+    tutorialComplete: "Tutorial abgeschlossen! Du kannst jederzeit in den Einstellungen Änderungen vornehmen.",
+    noGpsAvailable: "GPS nicht verfügbar",
+    locationDenied: "Standortzugriff verweigert",
+    changeLocation: "Ort ändern",
+    locFound: "Ort gefunden!",
+    homeLocation: "Zuhause"
   },
   en: {
     home: "Home",
@@ -297,7 +302,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Plan your trips and check weather probability for your excursion.",
     tutorialSettingsTitle: "Settings",
     tutorialSettingsDesc: "Here you can customize language, units (°C/°F), theme (Light/Dark/Auto) and your home location.",
-    tutorialComplete: "Tutorial complete! You can make changes in settings at any time."
+    tutorialComplete: "Tutorial complete! You can make changes in settings at any time.",
+    noGpsAvailable: "GPS not available",
+    locationDenied: "Location access denied",
+    changeLocation: "Change location",
+    locFound: "Location found!",
+    homeLocation: "Home"
   },
   fr: {
     home: "Accueil",
@@ -442,7 +452,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Planifiez vos voyages et vérifiez la probabilité météo pour votre sortie.",
     tutorialSettingsTitle: "Paramètres",
     tutorialSettingsDesc: "Ici vous pouvez personnaliser la langue, les unités (°C/°F), le thème (Clair/Sombre/Auto) et votre lieu principal.",
-    tutorialComplete: "Tutoriel terminé ! Vous pouvez modifier les paramètres à tout moment."
+    tutorialComplete: "Tutoriel terminé ! Vous pouvez modifier les paramètres à tout moment.",
+    noGpsAvailable: "GPS non disponible",
+    locationDenied: "Accès à la localisation refusé",
+    changeLocation: "Changer de lieu",
+    locFound: "Lieu trouvé !",
+    homeLocation: "Maison"
   },
   es: {
     home: "Inicio",
@@ -587,7 +602,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Planifica tus viajes y verifica la probabilidad meteorológica para tu excursión.",
     tutorialSettingsTitle: "Ajustes",
     tutorialSettingsDesc: "Aquí puedes personalizar el idioma, unidades (°C/°F), tema (Claro/Oscuro/Auto) y tu ubicación principal.",
-    tutorialComplete: "¡Tutorial completo! Puedes realizar cambios en los ajustes en cualquier momento."
+    tutorialComplete: "¡Tutorial completo! Puedes realizar cambios en los ajustes en cualquier momento.",
+    noGpsAvailable: "GPS no disponible",
+    locationDenied: "Acceso a ubicación denegado",
+    changeLocation: "Cambiar ubicación",
+    locFound: "¡Ubicación encontrada!",
+    homeLocation: "Casa"
   },
   it: {
     home: "Home",
@@ -732,7 +752,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Pianifica i tuoi viaggi e controlla la probabilità meteo per la tua escursione.",
     tutorialSettingsTitle: "Impostazioni",
     tutorialSettingsDesc: "Qui puoi personalizzare lingua, unità (°C/°F), tema (Chiaro/Scuro/Auto) e il tuo luogo principale.",
-    tutorialComplete: "Tutorial completato! Puoi apportare modifiche nelle impostazioni in qualsiasi momento."
+    tutorialComplete: "Tutorial completato! Puoi apportare modifiche nelle impostazioni in qualsiasi momento.",
+    noGpsAvailable: "GPS non disponibile",
+    locationDenied: "Accesso alla posizione negato",
+    changeLocation: "Cambia posizione",
+    locFound: "Posizione trovata!",
+    homeLocation: "Casa"
   },
   tr: {
     home: "Ana Sayfa",
@@ -877,7 +902,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Seyahatlerinizi planlayın ve geziniz için hava durumu olasılığını kontrol edin.",
     tutorialSettingsTitle: "Ayarlar",
     tutorialSettingsDesc: "Burada dil, birimler (°C/°F), tema (Açık/Koyu/Otomatik) ve ana konumunuzu özelleştirebilirsiniz.",
-    tutorialComplete: "Öğretici tamamlandı! Ayarlarda istediğiniz zaman değişiklik yapabilirsiniz."
+    tutorialComplete: "Öğretici tamamlandı! Ayarlarda istediğiniz zaman değişiklik yapabilirsiniz.",
+    noGpsAvailable: "GPS mevcut değil",
+    locationDenied: "Konum erişimi reddedildi",
+    changeLocation: "Konumu değiştir",
+    locFound: "Konum bulundu!",
+    homeLocation: "Ev"
   },
   pl: {
     home: "Start",
@@ -1022,7 +1052,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Zaplanuj swoje podróże i sprawdź prawdopodobieństwo pogody dla swojej wycieczki.",
     tutorialSettingsTitle: "Ustawienia",
     tutorialSettingsDesc: "Tutaj możesz dostosować język, jednostki (°C/°F), motyw (Jasny/Ciemny/Auto) i swoją lokalizację domową.",
-    tutorialComplete: "Samouczek ukończony! Możesz wprowadzać zmiany w ustawieniach w dowolnym momencie."
+    tutorialComplete: "Samouczek ukończony! Możesz wprowadzać zmiany w ustawieniach w dowolnym momencie.",
+    noGpsAvailable: "GPS niedostępny",
+    locationDenied: "Dostęp do lokalizacji został odrzucony",
+    changeLocation: "Zmień lokalizację",
+    locFound: "Lokalizacja znaleziona!",
+    homeLocation: "Dom"
   },
   nl: {
     home: "Home",
@@ -1167,7 +1202,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Plan uw reizen en controleer de weerskans voor uw excursie.",
     tutorialSettingsTitle: "Instellingen",
     tutorialSettingsDesc: "Hier kunt u de taal, eenheden (°C/°F), thema (Licht/Donker/Auto) en uw thuislocatie aanpassen.",
-    tutorialComplete: "Handleiding voltooid! U kunt op elk moment wijzigingen aanbrengen in de instellingen."
+    tutorialComplete: "Handleiding voltooid! U kunt op elk moment wijzigingen aanbrengen in de instellingen.",
+    noGpsAvailable: "GPS niet beschikbaar",
+    locationDenied: "Toegang tot locatie geweigerd",
+    changeLocation: "Locatie wijzigen",
+    locFound: "Locatie gevonden!",
+    homeLocation: "Thuis"
   },
   hr: {
     home: "Početna",
@@ -1312,7 +1352,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Planirajte svoja putovanja i provjerite vremensku vjerojatnost za vaš izlet.",
     tutorialSettingsTitle: "Postavke",
     tutorialSettingsDesc: "Ovdje možete prilagoditi jezik, jedinice (°C/°F), temu (Svijetla/Tamna/Auto) i svoju osnovnu lokaciju.",
-    tutorialComplete: "Vodič završen! Možete napraviti promjene u postavkama u bilo kojem trenutku."
+    tutorialComplete: "Vodič završen! Možete napraviti promjene u postavkama u bilo kojem trenutku.",
+    noGpsAvailable: "GPS nije dostupan",
+    locationDenied: "Pristup lokaciji odbijen",
+    changeLocation: "Promijenite lokaciju",
+    locFound: "Lokacija pronađena!",
+    homeLocation: "Kuća"
   },
   el: {
     home: "Αρχική",
@@ -1457,7 +1502,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Σχεδιάστε τα ταξίδια σας και ελέγξτε την πιθανότητα καιρού για την εκδρομή σας.",
     tutorialSettingsTitle: "Ρυθμίσεις",
     tutorialSettingsDesc: "Εδώ μπορείτε να προσαρμόσετε τη γλώσσα, τις μονάδες (°C/°F), το θέμα (Φωτεινό/Σκοτεινό/Αυτόματο) και την κύρια τοποθεσία σας.",
-    tutorialComplete: "Το σεμινάριο ολοκληρώθηκε! Μπορείτε να κάνετε αλλαγές στις ρυθμίσεις ανά πάσα στιγμή."
+    tutorialComplete: "Το σεμινάριο ολοκληρώθηκε! Μπορείτε να κάνετε αλλαγές στις ρυθμίσεις ανά πάσα στιγμή.",
+    noGpsAvailable: "Το GPS δεν είναι διαθέσιμο",
+    locationDenied: "Η πρόσβαση στην τοποθεσία απορρίφθηκε",
+    changeLocation: "Αλλαγή τοποθεσίας",
+    locFound: "Η τοποθεσία βρέθηκε!",
+    homeLocation: "Σπίτι"
   },
   da: {
     home: "Hjem",
@@ -1602,7 +1652,12 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Planlæg dine ture og tjek vejrsandsynligheden for din udflugt.",
     tutorialSettingsTitle: "Indstillinger",
     tutorialSettingsDesc: "Her kan du tilpasse sprog, enheder (°C/°F), tema (Lys/Mørk/Auto) og din hjemmeplacering.",
-    tutorialComplete: "Vejledning fuldført! Du kan foretage ændringer i indstillingerne når som helst."
+    tutorialComplete: "Vejledning fuldført! Du kan foretage ændringer i indstillingerne når som helst.",
+    noGpsAvailable: "GPS ikke tilgængelig",
+    locationDenied: "Adgang til placering nægtet",
+    changeLocation: "Skift placering",
+    locFound: "Placering fundet!",
+    homeLocation: "Hjem"
   },
   ru: {
     home: "Главная",
@@ -1747,7 +1802,11 @@ const TRANSLATIONS = {
     tutorialTravelDesc: "Планируйте свои поездки и проверяйте вероятность погоды для вашей экскурсии.",
     tutorialSettingsTitle: "Настройки",
     tutorialSettingsDesc: "Здесь вы можете настроить язык, единицы измерения (°C/°F), тему (Светлая/Темная/Авто) и ваше домашнее местоположение.",
-    tutorialComplete: "Руководство завершено! Вы можете вносить изменения в настройках в любое время."
+    tutorialComplete: "Руководство завершено! Вы можете вносить изменения в настройках в любое время.",
+    noGpsAvailable: "GPS недоступен",
+    locationDenied: "Доступ к местоположению запрещён",
+    changeLocation: "Изменить местоположение",
+    homeLocation: "Дом"
   }
 };
 
@@ -4269,7 +4328,8 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
         if (!searchQuery.trim()) return;
         setIsSearching(true);
         try {
-            const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery.trim())}&count=5&language=de&format=json`);
+            const searchLang = settings?.language || lang || 'de';
+            const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery.trim())}&count=5&language=${searchLang}&format=json`);
             const data = await res.json();
             setSearchResults(data.results || []);
         } catch (e) {
@@ -4283,7 +4343,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
     // GPS handler
     const handleUseGPS = () => {
         if (!navigator.geolocation) {
-            alert(t.noGpsAvailable || "GPS nicht verfügbar");
+            alert(t.noGpsAvailable);
             return;
         }
         setGpsLoading(true);
@@ -4291,7 +4351,8 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
             const lat = pos.coords.latitude;
             const lon = pos.coords.longitude;
             try {
-                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
+                const searchLang = settings?.language || lang || 'de';
+                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=${searchLang}&format=json`);
                 const data = await res.json();
                 const city = data.results?.[0]?.name || t.myLocation;
                 const loc = { name: city, lat, lon, id: 'home_default', type: 'home' };
@@ -4301,13 +4362,13 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
             } catch (e) {
                 const loc = { name: "GPS Standort", lat, lon, id: 'home_default', type: 'home' };
                 setSelectedHomeLoc(loc);
-                setCustomHomeName("Zuhause");
+                setCustomHomeName(t.homeLocation);
                 setHomeLocation(loc);
             } finally {
                 setGpsLoading(false);
             }
         }, () => {
-            alert(t.locationDenied || "Standortzugriff verweigert.");
+            alert(t.locationDenied);
             setGpsLoading(false);
         });
     };
@@ -4533,8 +4594,11 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                                                 className="w-full bg-transparent font-bold text-lg text-slate-800 focus:outline-none border-b-2 border-green-500 pb-1"
                                                 value={customHomeName}
                                                 onChange={(e) => {
-                                                    setCustomHomeName(e.target.value);
-                                                    setHomeLocation({ ...homeLocation, name: e.target.value });
+                                                    const newName = e.target.value;
+                                                    setCustomHomeName(newName);
+                                                    if (newName.trim()) {
+                                                        setHomeLocation({ ...homeLocation, name: newName.trim() });
+                                                    }
                                                 }}
                                             />
                                             <Edit2 size={16} className="text-slate-400"/>
@@ -4625,7 +4689,10 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                     )}
                     <button
                         onClick={handleNext}
-                        className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition flex items-center justify-center gap-2"
+                        disabled={currentStep.content === 'home' && !homeLocation}
+                        className={`flex-1 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition flex items-center justify-center gap-2 ${
+                            currentStep.content === 'home' && !homeLocation ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
                     >
                         {isLastStep ? t.tutorialFinish : t.tutorialNext}
                         {!isLastStep && <ArrowRight size={18} />}
