@@ -2275,6 +2275,16 @@ const generateAIReport = (type, data, lang = 'de') => {
         const snowSumToday = todayData.reduce((acc, c) => acc + parseFloat(c.snow || 0), 0);
         const maxWind = Math.max(...todayData.map(d => d.gust));
         
+        // Calculate snow probability (average of hours with snow > 0.1mm)
+        const hoursWithSnow = todayData.filter(d => parseFloat(d.snow || 0) > 0.1);
+        const snowProbToday = hoursWithSnow.length > 0 
+            ? Math.round(hoursWithSnow.reduce((acc, d) => acc + (d.precipProb || 0), 0) / hoursWithSnow.length)
+            : 0;
+        
+        // Check if snow will stick (dew point < -1°C)
+        const minDewPoint = Math.min(...todayData.map(d => d.dewPoint || 0));
+        const snowWillStick = minDewPoint < -1 && snowSumToday > 0.5;
+        
         // Detect rain/snow periods
         const rainPeriods = [];
         let inRainPeriod = false;
@@ -2285,23 +2295,22 @@ const generateAIReport = (type, data, lang = 'de') => {
         let periodSnow = 0;
         
         todayData.forEach((d, idx) => {
-            const hasRain = d.precip > 0.1 || d.snow > 0.1;
-            const isSnow = d.snow > d.precip;
+            const hasPrecip = parseFloat(d.precip || 0) > 0.1 || parseFloat(d.snow || 0) > 0.1;
             
-            if (hasRain && !inRainPeriod) {
+            if (hasPrecip && !inRainPeriod) {
                 // Start new period
                 inRainPeriod = true;
                 periodStart = d.time;
                 periodAmount = parseFloat(d.precip) + parseFloat(d.snow || 0);
                 periodRain = parseFloat(d.precip || 0);
                 periodSnow = parseFloat(d.snow || 0);
-            } else if (hasRain && inRainPeriod) {
+            } else if (hasPrecip && inRainPeriod) {
                 // Continue period
                 periodEnd = d.time;
                 periodAmount += parseFloat(d.precip) + parseFloat(d.snow || 0);
                 periodRain += parseFloat(d.precip || 0);
                 periodSnow += parseFloat(d.snow || 0);
-            } else if (!hasRain && inRainPeriod) {
+            } else if (!hasPrecip && inRainPeriod) {
                 // End period
                 rainPeriods.push({
                     start: periodStart,
@@ -2309,7 +2318,7 @@ const generateAIReport = (type, data, lang = 'de') => {
                     amount: periodAmount,
                     rain: periodRain,
                     snow: periodSnow,
-                    isSnow: isSnow,
+                    isSnow: periodSnow > periodRain,
                     isMixed: periodRain > 0.1 && periodSnow > 0.1
                 });
                 inRainPeriod = false;
@@ -2329,7 +2338,7 @@ const generateAIReport = (type, data, lang = 'de') => {
                 amount: periodAmount,
                 rain: periodRain,
                 snow: periodSnow,
-                isSnow: snowSumToday > rainSumToday,
+                isSnow: periodSnow > periodRain,
                 isMixed: periodRain > 0.1 && periodSnow > 0.1
             });
         }
@@ -2339,21 +2348,48 @@ const generateAIReport = (type, data, lang = 'de') => {
             ? `Expect temperatures between ${Math.round(minToday)}° and ${Math.round(maxToday)}°. `
             : `Erwarten Sie Temperaturen zwischen ${Math.round(minToday)}° und ${Math.round(maxToday)}°. `;
         
-        // Precipitation text
+        // Precipitation text with snow details
         if (rainSumToday + snowSumToday > 2.0) {
             if (snowSumToday > rainSumToday) {
                 todayText += lang === 'en' 
-                    ? `Snowy day (${(rainSumToday + snowSumToday).toFixed(1)}mm), dress warmly.`
-                    : `Ein schneereicher Tag (${(rainSumToday + snowSumToday).toFixed(1)}mm), kleiden Sie sich warm.`;
+                    ? `Snowy day (${snowSumToday.toFixed(1)}mm snow${rainSumToday > 0.1 ? `, ${rainSumToday.toFixed(1)}mm rain` : ''}), dress warmly.`
+                    : `Ein schneereicher Tag (${snowSumToday.toFixed(1)}mm Schnee${rainSumToday > 0.1 ? `, ${rainSumToday.toFixed(1)}mm Regen` : ''}), kleiden Sie sich warm.`;
+                
+                // Add snow probability and sticking info
+                if (snowProbToday > 0) {
+                    todayText += lang === 'en'
+                        ? ` Snow probability: ${snowProbToday}%.`
+                        : ` Schneewahrscheinlichkeit: ${snowProbToday}%.`;
+                }
+                if (snowWillStick) {
+                    todayText += lang === 'en'
+                        ? ` Snow will likely stick (dew point: ${Math.round(minDewPoint)}°C).`
+                        : ` Der Schnee wird voraussichtlich liegen bleiben (Taupunkt: ${Math.round(minDewPoint)}°C).`;
+                } else if (snowSumToday > 0.5) {
+                    todayText += lang === 'en'
+                        ? ` Snow may not stick (dew point: ${Math.round(minDewPoint)}°C).`
+                        : ` Der Schnee könnte nicht liegen bleiben (Taupunkt: ${Math.round(minDewPoint)}°C).`;
+                }
             } else {
                 todayText += lang === 'en' 
                     ? `Rainy day (${rainSumToday.toFixed(1)}mm), bring an umbrella.`
                     : `Ein regnerischer Tag (${rainSumToday.toFixed(1)}mm), vergessen Sie den Schirm nicht.`;
             }
         } else if (rainSumToday + snowSumToday > 0.1) {
-            todayText += lang === 'en' 
-                ? "Isolated showers possible, mostly dry."
-                : "Vereinzelt sind kurze Schauer möglich, meist bleibt es aber trocken.";
+            if (snowSumToday > 0.1) {
+                todayText += lang === 'en' 
+                    ? `Isolated snow showers possible (${snowSumToday.toFixed(1)}mm), mostly dry.`
+                    : `Vereinzelt sind kurze Schneeschauer möglich (${snowSumToday.toFixed(1)}mm), meist bleibt es aber trocken.`;
+                if (snowWillStick) {
+                    todayText += lang === 'en'
+                        ? ` Snow may stick.`
+                        : ` Der Schnee könnte liegen bleiben.`;
+                }
+            } else {
+                todayText += lang === 'en' 
+                    ? "Isolated showers possible, mostly dry."
+                    : "Vereinzelt sind kurze Schauer möglich, meist bleibt es aber trocken.";
+            }
         } else {
             todayText += lang === 'en' 
                 ? "It will be a nice, dry day."
@@ -2378,6 +2414,8 @@ const generateAIReport = (type, data, lang = 'de') => {
                     precipDetails = lang === 'en' 
                         ? `${period.rain.toFixed(1)}mm rain, ${period.snow.toFixed(1)}mm snow`
                         : `${period.rain.toFixed(1)}mm Regen, ${period.snow.toFixed(1)}mm Schnee`;
+                } else if (period.isSnow && period.snow > 0.1) {
+                    precipDetails = `${period.snow.toFixed(1)}mm`;
                 }
                 
                 if (startTime === endTime) {
@@ -2413,16 +2451,164 @@ const generateAIReport = (type, data, lang = 'de') => {
         const tMax = Math.max(...tomorrowDayData.map(d => d.temp));
         const tMin = Math.min(...tomorrowDayData.map(d => d.temp)); 
         const tRain = tomorrowDayData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
+        const tSnow = tomorrowDayData.reduce((acc, c) => acc + parseFloat(c.snow || 0), 0);
         const tGust = Math.max(...tomorrowDayData.map(d => d.gust));
+        
+        // Calculate snow probability for tomorrow
+        const hoursWithSnowTomorrow = tomorrowDayData.filter(d => parseFloat(d.snow || 0) > 0.1);
+        const snowProbTomorrow = hoursWithSnowTomorrow.length > 0 
+            ? Math.round(hoursWithSnowTomorrow.reduce((acc, d) => acc + (d.precipProb || 0), 0) / hoursWithSnowTomorrow.length)
+            : 0;
+        
+        // Check if snow will stick tomorrow
+        const minDewPointTomorrow = Math.min(...tomorrowDayData.map(d => d.dewPoint || 0));
+        const snowWillStickTomorrow = minDewPointTomorrow < -1 && tSnow > 0.5;
+        
+        // Detect snow/rain periods for tomorrow
+        const precipPeriodsTomorrow = [];
+        let inPrecipPeriod = false;
+        let periodStart = null;
+        let periodEnd = null;
+        let periodAmount = 0;
+        let periodRain = 0;
+        let periodSnow = 0;
+        
+        tomorrowDayData.forEach((d, idx) => {
+            const hasPrecip = d.precip > 0.1 || d.snow > 0.1;
+            const isSnow = parseFloat(d.snow || 0) > parseFloat(d.precip || 0);
+            
+            if (hasPrecip && !inPrecipPeriod) {
+                // Start new period
+                inPrecipPeriod = true;
+                periodStart = d.time;
+                periodAmount = parseFloat(d.precip) + parseFloat(d.snow || 0);
+                periodRain = parseFloat(d.precip || 0);
+                periodSnow = parseFloat(d.snow || 0);
+            } else if (hasPrecip && inPrecipPeriod) {
+                // Continue period
+                periodEnd = d.time;
+                periodAmount += parseFloat(d.precip) + parseFloat(d.snow || 0);
+                periodRain += parseFloat(d.precip || 0);
+                periodSnow += parseFloat(d.snow || 0);
+            } else if (!hasPrecip && inPrecipPeriod) {
+                // End period
+                precipPeriodsTomorrow.push({
+                    start: periodStart,
+                    end: periodEnd || periodStart,
+                    amount: periodAmount,
+                    rain: periodRain,
+                    snow: periodSnow,
+                    isSnow: periodSnow > periodRain,
+                    isMixed: periodRain > 0.1 && periodSnow > 0.1
+                });
+                inPrecipPeriod = false;
+                periodStart = null;
+                periodEnd = null;
+                periodAmount = 0;
+                periodRain = 0;
+                periodSnow = 0;
+            }
+        });
+        
+        // Close last period if still open
+        if (inPrecipPeriod) {
+            precipPeriodsTomorrow.push({
+                start: periodStart,
+                end: periodEnd || periodStart,
+                amount: periodAmount,
+                rain: periodRain,
+                snow: periodSnow,
+                isSnow: periodSnow > periodRain,
+                isMixed: periodRain > 0.1 && periodSnow > 0.1
+            });
+        }
         
         let tomorrowText = `🌅 ${t.outlook} ${t.tomorrow} (${tomorrowDate.toLocaleDateString(locale, {weekday:'long'})}):\n`;
         tomorrowText += lang === 'en'
             ? `Expect temperatures between ${Math.round(tMin)}° in the morning and ${Math.round(tMax)}° in the afternoon. `
             : `Erwarten Sie Temperaturen zwischen ${Math.round(tMin)}° am Morgen und bis zu ${Math.round(tMax)}° am Nachmittag. `;
         
-        if (tRain > 2.0) tomorrowText += lang === 'en' ? `Rainy day (${tRain.toFixed(1)}mm), bring an umbrella.` : `Ein regnerischer Tag (${tRain.toFixed(1)}mm), vergessen Sie den Schirm nicht.`;
-        else if (tRain > 0.1) tomorrowText += lang === 'en' ? "Isolated showers possible, mostly dry." : "Vereinzelt sind kurze Schauer möglich, meist bleibt es aber trocken.";
-        else tomorrowText += lang === 'en' ? "It will be a nice, sunny day." : "Es wird ein schöner, sonniger Tag.";
+        // Precipitation text with snow details
+        if (tRain + tSnow > 2.0) {
+            if (tSnow > tRain) {
+                tomorrowText += lang === 'en' 
+                    ? `Snowy day (${tSnow.toFixed(1)}mm snow${tRain > 0.1 ? `, ${tRain.toFixed(1)}mm rain` : ''}), dress warmly.`
+                    : `Ein schneereicher Tag (${tSnow.toFixed(1)}mm Schnee${tRain > 0.1 ? `, ${tRain.toFixed(1)}mm Regen` : ''}), kleiden Sie sich warm.`;
+                
+                // Add snow probability and sticking info
+                if (snowProbTomorrow > 0) {
+                    tomorrowText += lang === 'en'
+                        ? ` Snow probability: ${snowProbTomorrow}%.`
+                        : ` Schneewahrscheinlichkeit: ${snowProbTomorrow}%.`;
+                }
+                if (snowWillStickTomorrow) {
+                    tomorrowText += lang === 'en'
+                        ? ` Snow will likely stick (dew point: ${Math.round(minDewPointTomorrow)}°C).`
+                        : ` Der Schnee wird voraussichtlich liegen bleiben (Taupunkt: ${Math.round(minDewPointTomorrow)}°C).`;
+                } else if (tSnow > 0.5) {
+                    tomorrowText += lang === 'en'
+                        ? ` Snow may not stick (dew point: ${Math.round(minDewPointTomorrow)}°C).`
+                        : ` Der Schnee könnte nicht liegen bleiben (Taupunkt: ${Math.round(minDewPointTomorrow)}°C).`;
+                }
+            } else {
+                tomorrowText += lang === 'en' 
+                    ? `Rainy day (${tRain.toFixed(1)}mm), bring an umbrella.` 
+                    : `Ein regnerischer Tag (${tRain.toFixed(1)}mm), vergessen Sie den Schirm nicht.`;
+            }
+        } else if (tRain + tSnow > 0.1) {
+            if (tSnow > 0.1) {
+                tomorrowText += lang === 'en' 
+                    ? `Isolated snow showers possible (${tSnow.toFixed(1)}mm), mostly dry.`
+                    : `Vereinzelt sind kurze Schneeschauer möglich (${tSnow.toFixed(1)}mm), meist bleibt es aber trocken.`;
+                if (snowWillStickTomorrow) {
+                    tomorrowText += lang === 'en'
+                        ? ` Snow may stick.`
+                        : ` Der Schnee könnte liegen bleiben.`;
+                }
+            } else {
+                tomorrowText += lang === 'en' 
+                    ? "Isolated showers possible, mostly dry." 
+                    : "Vereinzelt sind kurze Schauer möglich, meist bleibt es aber trocken.";
+            }
+        } else {
+            tomorrowText += lang === 'en' 
+                ? "It will be a nice, sunny day." 
+                : "Es wird ein schöner, sonniger Tag.";
+        }
+        
+        // Add precipitation timing details if present
+        if (precipPeriodsTomorrow.length > 0) {
+            tomorrowText += "\n";
+            precipPeriodsTomorrow.forEach((period, idx) => {
+                const startTime = period.start.toLocaleTimeString(locale, {hour:'2-digit', minute:'2-digit'});
+                const endTime = period.end.toLocaleTimeString(locale, {hour:'2-digit', minute:'2-digit'});
+                let precipType;
+                if (period.isMixed) {
+                    precipType = lang === 'en' ? 'Mixed precipitation' : 'Mischniederschlag';
+                } else {
+                    precipType = period.isSnow ? (lang === 'en' ? 'Snow' : 'Schnee') : (lang === 'en' ? 'Rain' : 'Regen');
+                }
+                
+                let precipDetails = `${period.amount.toFixed(1)}mm`;
+                if (period.isMixed && (period.rain > 0.1 || period.snow > 0.1)) {
+                    precipDetails = lang === 'en' 
+                        ? `${period.rain.toFixed(1)}mm rain, ${period.snow.toFixed(1)}mm snow`
+                        : `${period.rain.toFixed(1)}mm Regen, ${period.snow.toFixed(1)}mm Schnee`;
+                } else if (period.isSnow && period.snow > 0.1) {
+                    precipDetails = `${period.snow.toFixed(1)}mm`;
+                }
+                
+                if (startTime === endTime) {
+                    tomorrowText += lang === 'en'
+                        ? `${precipType} around ${startTime} (${precipDetails}). `
+                        : `${precipType} gegen ${startTime} Uhr (${precipDetails}). `;
+                } else {
+                    tomorrowText += lang === 'en'
+                        ? `${precipType} from ${startTime} to ${endTime} (${precipDetails}). `
+                        : `${precipType} von ${startTime} bis ${endTime} Uhr (${precipDetails}). `;
+                }
+            });
+        }
         
         if (tGust > 50) { 
             tomorrowText += lang === 'en' ? ` Windy with gusts up to ${tGust} km/h.` : ` Es wird windig mit Böen bis ${tGust} km/h.`; 
@@ -2505,30 +2691,56 @@ const generateAIReport = (type, data, lang = 'de') => {
         
         // Precipitation text with details
         if (twRain + twSnow > 10 || twRainDays + twSnowDays >= 3) {
-            // Collect rain/snow days
-            const precipDays = thisWeek
-                .filter(d => parseFloat(d.rain) > 1.0 || parseFloat(d.snow || 0) > 1.0)
-                .map(d => d.dayName)
-                .join(', ');
+            // Collect rain/snow days with amounts
+            const snowDaysDetails = thisWeek
+                .filter(d => parseFloat(d.snow || 0) > 1.0)
+                .map(d => `${d.dayName} (${parseFloat(d.snow).toFixed(0)}mm)`);
+            const rainDaysDetails = thisWeek
+                .filter(d => parseFloat(d.rain) > 1.0)
+                .map(d => d.dayName);
             
-            if (twSnow > twRain) {
+            if (twSnow > twRain && twSnowDays > 0) {
                 twText += lang === 'en' 
-                    ? `Snowy weather expected with snow on approx. ${twSnowDays} days (Total: ${(twRain + twSnow).toFixed(0)}mm).`
-                    : `Es deutet sich eine schneereiche Phase an: Rechnen Sie an ca. ${twSnowDays} Tagen mit Schnee (Gesamt: ${(twRain + twSnow).toFixed(0)}mm).`;
+                    ? `Snowy weather expected with snow on approx. ${twSnowDays} days (Total: ${twSnow.toFixed(0)}mm snow${twRain > 1 ? `, ${twRain.toFixed(0)}mm rain` : ''}).`
+                    : `Es deutet sich eine schneereiche Phase an: Rechnen Sie an ca. ${twSnowDays} Tagen mit Schnee (Gesamt: ${twSnow.toFixed(0)}mm Schnee${twRain > 1 ? `, ${twRain.toFixed(0)}mm Regen` : ''}).`;
+                
+                // Add specific snow days if not too many
+                if (snowDaysDetails.length > 0 && snowDaysDetails.length <= 4) {
+                    twText += lang === 'en' 
+                        ? ` Snowy days: ${snowDaysDetails.join(', ')}.`
+                        : ` Schneetage: ${snowDaysDetails.join(', ')}.`;
+                }
+            } else if (twSnowDays > 0) {
+                twText += lang === 'en' 
+                    ? `Unsettled weather expected with rain on approx. ${twRainDays} days and snow on ${twSnowDays} days (Total: ${twRain.toFixed(0)}mm rain, ${twSnow.toFixed(0)}mm snow).`
+                    : `Es deutet sich eine unbeständige Phase an: Rechnen Sie an ca. ${twRainDays} Tagen mit Regen und an ${twSnowDays} Tagen mit Schnee (Gesamt: ${twRain.toFixed(0)}mm Regen, ${twSnow.toFixed(0)}mm Schnee).`;
+                
+                // Add specific snow days if not too many
+                if (snowDaysDetails.length > 0 && snowDaysDetails.length <= 3) {
+                    twText += lang === 'en' 
+                        ? ` Snow on: ${snowDaysDetails.join(', ')}.`
+                        : ` Schnee am: ${snowDaysDetails.join(', ')}.`;
+                }
             } else {
                 twText += lang === 'en' 
                     ? `Unsettled weather expected with rain on approx. ${twRainDays} days (Total: ${twRain.toFixed(0)}mm).`
                     : `Es deutet sich eine unbeständige Phase an: Rechnen Sie an ca. ${twRainDays} Tagen mit Regen (Gesamt: ${twRain.toFixed(0)}mm).`;
-            }
-            
-            if (precipDays && thisWeek.length <= 5) {
-                twText += lang === 'en' ? ` Wet days: ${precipDays}.` : ` Nasse Tage: ${precipDays}.`;
+                
+                if (rainDaysDetails.length > 0 && thisWeek.length <= 5) {
+                    twText += lang === 'en' ? ` Wet days: ${rainDaysDetails.join(', ')}.` : ` Nasse Tage: ${rainDaysDetails.join(', ')}.`;
+                }
             }
         } else if (twRain + twSnow > 1) {
              const totalPrecipDays = twRainDays + twSnowDays;
-             twText += lang === 'en'
-                ? `Mix of sun and clouds, mostly dry (only ${totalPrecipDays} rainy ${totalPrecipDays === 1 ? 'day' : 'days'}).`
-                : `Ein Mix aus Sonne und Wolken, meist bleibt es trocken (nur ${totalPrecipDays} Regentag${totalPrecipDays === 1 ? '' : 'e'}).`;
+             if (twSnowDays > 0) {
+                 twText += lang === 'en'
+                    ? `Mix of sun and clouds, mostly dry (only ${twSnowDays} snowy ${twSnowDays === 1 ? 'day' : 'days'}${twRainDays > 0 ? `, ${twRainDays} rainy ${twRainDays === 1 ? 'day' : 'days'}` : ''}).`
+                    : `Ein Mix aus Sonne und Wolken, meist bleibt es trocken (nur ${twSnowDays} Schneetag${twSnowDays === 1 ? '' : 'e'}${twRainDays > 0 ? `, ${twRainDays} Regentag${twRainDays === 1 ? '' : 'e'}` : ''}).`;
+             } else {
+                 twText += lang === 'en'
+                    ? `Mix of sun and clouds, mostly dry (only ${totalPrecipDays} rainy ${totalPrecipDays === 1 ? 'day' : 'days'}).`
+                    : `Ein Mix aus Sonne und Wolken, meist bleibt es trocken (nur ${totalPrecipDays} Regentag${totalPrecipDays === 1 ? '' : 'e'}).`;
+             }
         } else {
              if (twSunDays >= thisWeek.length / 2) twText += lang === 'en' ? "High pressure influence likely: Mostly sunny and dry." : "Hochdruckeinfluss ist wahrscheinlich: Überwiegend freundlich und trocken.";
              else twText += lang === 'en' ? "Cloudy but dry conditions expected." : "Meist bewölkt, aber trocken.";
@@ -2547,7 +2759,9 @@ const generateAIReport = (type, data, lang = 'de') => {
         // NEU: Detailliertere Analyse
         const nwAvgMax = Math.round(nextWeek.reduce((a,b)=>a+b.max,0)/nextWeek.length);
         const nwRain = nextWeek.reduce((a,b)=>a+parseFloat(b.rain),0);
+        const nwSnow = nextWeek.reduce((a,b)=>a+parseFloat(b.snow || 0),0);
         const nwRainDays = nextWeek.filter(d=>parseFloat(d.rain)>1.0).length;
+        const nwSnowDays = nextWeek.filter(d=>parseFloat(d.snow || 0)>1.0).length;
         const nwRel = Math.round(nextWeek.reduce((a,b)=>a+b.reliability,0) / nextWeek.length);
         
         // Trend-Ermittlung (Anfang vs Ende der Woche)
@@ -2571,15 +2785,50 @@ const generateAIReport = (type, data, lang = 'de') => {
             ? `Expect daily highs averaging ${nwAvgMax}° (${trendTextEn}). `
             : `Im Schnitt liegen die Höchstwerte bei ${nwAvgMax}° (${trendTextDe}). `;
         
-        // Niederschlags Text
-        if (nwRain > 10 || nwRainDays >= 4) {
-             nwText += lang === 'en' 
-                ? `Unsettled weather expected with rain on approx. ${nwRainDays} days (Total: ${nwRain.toFixed(0)}mm).`
-                : `Es deutet sich eine unbeständige Phase an: Rechnen Sie an ca. ${nwRainDays} Tagen mit Regen (Gesamt: ${nwRain.toFixed(0)}mm).`;
-        } else if (nwRain > 1) {
-             nwText += lang === 'en'
-                ? `Mix of sun and clouds, mostly dry (only ${nwRainDays} rain days).`
-                : `Ein Mix aus Sonne und Wolken, meist bleibt es trocken (nur ${nwRainDays} Regentage).`;
+        // Niederschlags Text mit Schneedetails
+        if (nwRain + nwSnow > 10 || nwRainDays + nwSnowDays >= 4) {
+            // Collect snow days with amounts
+            const snowDaysDetails = nextWeek
+                .filter(d => parseFloat(d.snow || 0) > 1.0)
+                .map(d => `${d.dayName} (${parseFloat(d.snow).toFixed(0)}mm)`);
+            
+            if (nwSnow > nwRain && nwSnowDays > 0) {
+                nwText += lang === 'en' 
+                    ? `Snowy weather expected with snow on approx. ${nwSnowDays} days (Total: ${nwSnow.toFixed(0)}mm snow${nwRain > 1 ? `, ${nwRain.toFixed(0)}mm rain` : ''}).`
+                    : `Es deutet sich eine schneereiche Phase an: Rechnen Sie an ca. ${nwSnowDays} Tagen mit Schnee (Gesamt: ${nwSnow.toFixed(0)}mm Schnee${nwRain > 1 ? `, ${nwRain.toFixed(0)}mm Regen` : ''}).`;
+                
+                // Add specific snow days if not too many
+                if (snowDaysDetails.length > 0 && snowDaysDetails.length <= 4) {
+                    nwText += lang === 'en' 
+                        ? ` Snowy days: ${snowDaysDetails.join(', ')}.`
+                        : ` Schneetage: ${snowDaysDetails.join(', ')}.`;
+                }
+            } else if (nwSnowDays > 0) {
+                nwText += lang === 'en' 
+                    ? `Unsettled weather expected with rain on approx. ${nwRainDays} days and snow on ${nwSnowDays} days (Total: ${nwRain.toFixed(0)}mm rain, ${nwSnow.toFixed(0)}mm snow).`
+                    : `Es deutet sich eine unbeständige Phase an: Rechnen Sie an ca. ${nwRainDays} Tagen mit Regen und an ${nwSnowDays} Tagen mit Schnee (Gesamt: ${nwRain.toFixed(0)}mm Regen, ${nwSnow.toFixed(0)}mm Schnee).`;
+                
+                // Add specific snow days if not too many
+                if (snowDaysDetails.length > 0 && snowDaysDetails.length <= 3) {
+                    nwText += lang === 'en' 
+                        ? ` Snow on: ${snowDaysDetails.join(', ')}.`
+                        : ` Schnee am: ${snowDaysDetails.join(', ')}.`;
+                }
+            } else {
+                nwText += lang === 'en' 
+                    ? `Unsettled weather expected with rain on approx. ${nwRainDays} days (Total: ${nwRain.toFixed(0)}mm).`
+                    : `Es deutet sich eine unbeständige Phase an: Rechnen Sie an ca. ${nwRainDays} Tagen mit Regen (Gesamt: ${nwRain.toFixed(0)}mm).`;
+            }
+        } else if (nwRain + nwSnow > 1) {
+            if (nwSnowDays > 0) {
+                nwText += lang === 'en'
+                    ? `Mix of sun and clouds, mostly dry (only ${nwSnowDays} snowy ${nwSnowDays === 1 ? 'day' : 'days'}${nwRainDays > 0 ? `, ${nwRainDays} rainy ${nwRainDays === 1 ? 'day' : 'days'}` : ''}).`
+                    : `Ein Mix aus Sonne und Wolken, meist bleibt es trocken (nur ${nwSnowDays} Schneetag${nwSnowDays === 1 ? '' : 'e'}${nwRainDays > 0 ? `, ${nwRainDays} Regentag${nwRainDays === 1 ? '' : 'e'}` : ''}).`;
+            } else {
+                nwText += lang === 'en'
+                    ? `Mix of sun and clouds, mostly dry (only ${nwRainDays} rain days).`
+                    : `Ein Mix aus Sonne und Wolken, meist bleibt es trocken (nur ${nwRainDays} Regentage).`;
+            }
         } else {
              nwText += lang === 'en'
                 ? `High pressure influence likely: Mostly sunny and dry.`
