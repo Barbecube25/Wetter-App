@@ -95,6 +95,10 @@ const TRANSLATIONS = {
     rainNow: "Aktueller Niederschlag",
     rainSoon: "Regen beginnt bald",
     noRainExp: "In den nächsten 24h bleibt es trocken.",
+    noPrecipExp: "Aktuell kein Niederschlag zu erwarten",
+    startingNow: "beginnt jetzt",
+    startingSoon: "beginnt bald",
+    inMinutes: "in",
     currentIntensity: "Aktuelle Stärke",
     peakRainAt: "Stärkster Regen um",
     nextHours: "Nächste Stunden",
@@ -248,6 +252,10 @@ const TRANSLATIONS = {
     rainNow: "Current Precipitation",
     rainSoon: "Rain starting soon",
     noRainExp: "It will remain dry for the next 24h.",
+    noPrecipExp: "Currently no precipitation expected",
+    startingNow: "starting now",
+    startingSoon: "starting soon",
+    inMinutes: "in",
     currentIntensity: "Current Intensity",
     peakRainAt: "Peak rain at",
     nextHours: "Next Hours",
@@ -401,6 +409,10 @@ const TRANSLATIONS = {
     rainNow: "Précipitations actuelles",
     rainSoon: "Pluie imminente",
     noRainExp: "Temps sec pour les prochaines 24h.",
+    noPrecipExp: "Aucune précipitation attendue actuellement",
+    startingNow: "commence maintenant",
+    startingSoon: "commence bientôt",
+    inMinutes: "dans",
     currentIntensity: "Intensité actuelle",
     peakRainAt: "Pluie maximale à",
     nextHours: "Prochaines heures",
@@ -554,6 +566,10 @@ const TRANSLATIONS = {
     rainNow: "Precipitación actual",
     rainSoon: "Lluvia inminente",
     noRainExp: "Permanecerá seco durante las próximas 24h.",
+    noPrecipExp: "Actualmente no se esperan precipitaciones",
+    startingNow: "comienza ahora",
+    startingSoon: "comienza pronto",
+    inMinutes: "en",
     currentIntensity: "Intensidad actual",
     peakRainAt: "Lluvia máxima a las",
     nextHours: "Próximas horas",
@@ -707,6 +723,10 @@ const TRANSLATIONS = {
     rainNow: "Precipitazioni attuali",
     rainSoon: "Pioggia imminente",
     noRainExp: "Rimarrà asciutto per le prossime 24h.",
+    noPrecipExp: "Attualmente non sono previste precipitazioni",
+    startingNow: "inizia ora",
+    startingSoon: "inizia presto",
+    inMinutes: "tra",
     currentIntensity: "Intensità attuale",
     peakRainAt: "Pioggia massima alle",
     nextHours: "Prossime ore",
@@ -860,6 +880,10 @@ const TRANSLATIONS = {
     rainNow: "Şu anki yağış",
     rainSoon: "Yağmur yakında başlayacak",
     noRainExp: "Önümüzdeki 24 saat kuru kalacak.",
+    noPrecipExp: "Şu anda yağış beklenmemektedir",
+    startingNow: "şimdi başlıyor",
+    startingSoon: "yakında başlayacak",
+    inMinutes: "içinde",
     currentIntensity: "Mevcut yoğunluk",
     peakRainAt: "En yoğun yağış saati",
     nextHours: "Önümüzdeki saatler",
@@ -1013,6 +1037,10 @@ const TRANSLATIONS = {
     rainNow: "Aktualne opady",
     rainSoon: "Deszcz wkrótce",
     noRainExp: "Przez najbliższe 24h pozostanie sucho.",
+    noPrecipExp: "Obecnie nie oczekuje się opadów",
+    startingNow: "zaczyna się teraz",
+    startingSoon: "zaczyna się wkrótce",
+    inMinutes: "za",
     currentIntensity: "Obecna intensywność",
     peakRainAt: "Najsilniejszy deszcz o",
     nextHours: "Następne godziny",
@@ -1166,6 +1194,10 @@ const TRANSLATIONS = {
     rainNow: "Huidige neerslag",
     rainSoon: "Regen begint binnenkort",
     noRainExp: "Het blijft de komende 24u droog.",
+    noPrecipExp: "Momenteel geen neerslag verwacht",
+    startingNow: "begint nu",
+    startingSoon: "begint binnenkort",
+    inMinutes: "over",
     currentIntensity: "Huidige intensiteit",
     peakRainAt: "Zwaarste regen om",
     nextHours: "Volgende uren",
@@ -1319,6 +1351,10 @@ const TRANSLATIONS = {
     rainNow: "Trenutna oborina",
     rainSoon: "Kiša uskoro počinje",
     noRainExp: "Ostat će suho sljedećih 24h.",
+    noPrecipExp: "Trenutno se ne očekuje oborina",
+    startingNow: "počinje sada",
+    startingSoon: "uskoro počinje",
+    inMinutes: "za",
     currentIntensity: "Trenutni intenzitet",
     peakRainAt: "Najjača kiša u",
     nextHours: "Sljedeći sati",
@@ -1472,6 +1508,10 @@ const TRANSLATIONS = {
     rainNow: "Τρέχοντα κατακρημνίσματα",
     rainSoon: "Η βροχή ξεκινά σύντομα",
     noRainExp: "Θα παραμείνει στεγνό τις επόμενες 24 ώρες.",
+    noPrecipExp: "Δεν αναμένονται επί του παρόντος κατακρημνίσματα",
+    startingNow: "ξεκινά τώρα",
+    startingSoon: "ξεκινά σύντομα",
+    inMinutes: "σε",
     currentIntensity: "Τρέχουσα ένταση",
     peakRainAt: "Μέγιστη βροχή στις",
     nextHours: "Επόμενες ώρες",
@@ -1625,6 +1665,10 @@ const TRANSLATIONS = {
     rainNow: "Nuværende nedbør",
     rainSoon: "Regn starter snart",
     noRainExp: "Det forbliver tørt de næste 24 timer.",
+    noPrecipExp: "I øjeblikket forventes ingen nedbør",
+    startingNow: "starter nu",
+    startingSoon: "starter snart",
+    inMinutes: "om",
     currentIntensity: "Nuværende intensitet",
     peakRainAt: "Kraftigste regn kl.",
     nextHours: "Næste timer",
@@ -1778,6 +1822,10 @@ const TRANSLATIONS = {
     rainNow: "Текущие осадки",
     rainSoon: "Дождь скоро начнётся",
     noRainExp: "В ближайшие 24 часа будет сухо.",
+    noPrecipExp: "В настоящее время осадков не ожидается",
+    startingNow: "начинается сейчас",
+    startingSoon: "скоро начнётся",
+    inMinutes: "через",
     currentIntensity: "Текущая интенсивность",
     peakRainAt: "Максимальный дождь в",
     nextHours: "Следующие часы",
@@ -3523,29 +3571,31 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
   const locale = localeMap[lang] || 'de-DE';
 
   if (type === 'none') {
-      headline = lang === 'en' ? "Currently no rain expected" : "Aktuell kein Regen zu erwarten";
+      headline = t.noPrecipExp;
   } else if (isNow) {
       headline = t.rainNow;
       timeDisplay = t.now;
   } else if (minutelyStart) {
       // Precise start time
       const diffMins = Math.round((minutelyStart - now) / 60000);
+      const precipType = isSnow ? t.snow : t.rain;
       if (diffMins <= 0) {
-           headline = lang === 'en' ? "Rain starting now" : "Regen beginnt jetzt";
+           headline = `${precipType} ${t.startingNow}`;
            timeDisplay = t.now;
       } else {
-           headline = lang === 'en' ? `Rain in ${diffMins} min` : `Regen in ${diffMins} min`;
+           headline = `${precipType} ${t.inMinutes} ${diffMins} min`;
            timeDisplay = minutelyStart.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'});
       }
   } else if (isSoon) {
-      headline = t.rainSoon;
+      const precipType = isSnow ? t.snow : t.rain;
+      headline = `${precipType} ${t.startingSoon}`;
       timeDisplay = startTime ? startTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'}) : "Gleich";
   } else {
       headline = t.nextRain;
       timeDisplay = startTime ? (isTomorrow ? (dayPrefix + " ") : "") + startTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'}) : '--:--';
   }
 
-  // If type is 'none', we just show the "No rain" box
+  // If type is 'none', we just show the "No precipitation" box
   if (type === 'none') {
       return (
         <div className="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between shadow-sm mb-4">
