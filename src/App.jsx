@@ -2162,8 +2162,7 @@ const scheduleNotifications = async (settings, locationName, weatherData) => {
                         repeats: true,
                         every: 'day'
                     },
-                    sound: 'default',
-                    smallIcon: 'ic_stat_icon_config_sample'
+                    sound: 'default'
                 }]
             });
         }
@@ -2200,8 +2199,7 @@ const scheduleNotifications = async (settings, locationName, weatherData) => {
                             repeats: true,
                             every: 'day'
                         },
-                        sound: 'default',
-                        smallIcon: 'ic_stat_icon_config_sample'
+                        sound: 'default'
                     }]
                 });
             }
