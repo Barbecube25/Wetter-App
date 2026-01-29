@@ -3422,7 +3422,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
     );
 };
 
-const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed, lang='de', demoWeather, demoSeason, demoEvent, demoTime, demoWindSpeed }) => {
+const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed, cloudCover = 0, precipitation = 0, snowfall = 0, lang='de', demoWeather, demoSeason, demoEvent, demoTime, demoWindSpeed }) => {
   // Move helper to top of component to use it for initial variables
   const getDecimalHour = (dateInput) => {
     if (!dateInput) return 0;
@@ -3526,6 +3526,38 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const isWindy = windSpeed >= 30;
   const isStormyWind = windSpeed >= 60;
   const isTropicalNight = isNight && temp > 20;
+
+  // --- CLOUD ANIMATION LOGIC (NEW) ---
+  // Calculate number of clouds based on cloudCover percentage
+  // cloudCover is 0-100, we want 0-5 clouds
+  const numClouds = Math.min(5, Math.max(0, Math.round(cloudCover / 20)));
+  
+  // Calculate cloud color based on precipitation
+  // If raining or snowing, clouds should be gray
+  // The more precipitation, the darker the gray
+  const totalPrecipitation = (precipitation || 0) + (snowfall || 0);
+  const hasPrecipitation = totalPrecipitation > 0.1;
+  
+  let cloudColor = "white";
+  let cloudOpacity = 0.8;
+  
+  if (hasPrecipitation) {
+    // Calculate darkness based on precipitation intensity
+    // Light: 0.1-1mm -> lighter gray
+    // Medium: 1-5mm -> medium gray
+    // Heavy: 5+ mm -> dark gray
+    if (totalPrecipitation < 1) {
+      cloudColor = "#cbd5e1"; // Light gray (slate-300)
+    } else if (totalPrecipitation < 5) {
+      cloudColor = "#94a3b8"; // Medium gray (slate-400)
+    } else {
+      cloudColor = "#64748b"; // Dark gray (slate-500)
+    }
+    cloudOpacity = 0.9;
+  } else if (isStorm) {
+    cloudColor = "#475569"; // Storm dark gray (slate-600)
+    cloudOpacity = 0.95;
+  }
 
   // --- SEASON DETECTION ---
   const month = d.getMonth(); // 0-11 (0=Jan, 11=Dec)
@@ -3818,20 +3850,52 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
         </g>
       </g>
 
-      {(isPartlyCloudy) && (
+      {/* DYNAMIC CLOUD RENDERING BASED ON CLOUDINESS */}
+      {numClouds > 0 && (
         <g className="anim-clouds">
-           <path d="M240 40 Q 255 25 270 40 T 300 40 T 320 50 H 240 Z" fill="white" fillOpacity="0.8" transform="translate(20,10)" />
-           <path d="M140 30 Q 155 15 170 30 T 200 30 T 220 40 H 140 Z" fill="white" fillOpacity="0.6" transform="translate(-10,5)" />
-        </g>
-      )}
-
-      {(isOvercast || isRain || isSnow || isStorm || isSleet || isDrizzle) && (
-        <g className="anim-clouds">
-           <path d="M40 50 Q 55 35 70 50 T 100 50 T 120 60 H 40 Z" fill={isStorm ? "#475569" : "white"} fillOpacity={isOvercast ? 0.9 : 0.7} transform="translate(0,0)" />
-           <path d="M240 40 Q 255 25 270 40 T 300 40 T 320 50 H 240 Z" fill={isStorm ? "#334155" : "white"} fillOpacity={isOvercast ? 0.9 : 0.7} transform="translate(20,10)" />
-           <path d="M140 30 Q 155 15 170 30 T 200 30 T 220 40 H 140 Z" fill={isStorm ? "#475569" : "white"} fillOpacity={isOvercast ? 0.9 : 0.7} transform="translate(-10,5)" />
-           
-           {(isStorm || isHeavyRain) && <rect x="-50" y="0" width="460" height="160" fill="black" opacity="0.3" />}
+          {/* Cloud paths - render based on cloudCover percentage */}
+          {/* Cloud 1 (left side) - shows at 20%+ cloudiness */}
+          {numClouds >= 1 && (
+            <path d="M40 50 Q 55 35 70 50 T 100 50 T 120 60 H 40 Z" 
+                  fill={cloudColor} 
+                  fillOpacity={cloudOpacity * 0.85} 
+                  transform="translate(0,0)" />
+          )}
+          
+          {/* Cloud 2 (center-right) - shows at 40%+ cloudiness */}
+          {numClouds >= 2 && (
+            <path d="M240 40 Q 255 25 270 40 T 300 40 T 320 50 H 240 Z" 
+                  fill={cloudColor} 
+                  fillOpacity={cloudOpacity} 
+                  transform="translate(20,10)" />
+          )}
+          
+          {/* Cloud 3 (center-left) - shows at 60%+ cloudiness */}
+          {numClouds >= 3 && (
+            <path d="M140 30 Q 155 15 170 30 T 200 30 T 220 40 H 140 Z" 
+                  fill={cloudColor} 
+                  fillOpacity={cloudOpacity * 0.9} 
+                  transform="translate(-10,5)" />
+          )}
+          
+          {/* Cloud 4 (far right) - shows at 80%+ cloudiness */}
+          {numClouds >= 4 && (
+            <path d="M280 55 Q 295 40 310 55 T 340 55 T 360 65 H 280 Z" 
+                  fill={cloudColor} 
+                  fillOpacity={cloudOpacity * 0.8} 
+                  transform="translate(10,0)" />
+          )}
+          
+          {/* Cloud 5 (upper center) - shows at 100% cloudiness */}
+          {numClouds >= 5 && (
+            <path d="M180 20 Q 195 5 210 20 T 240 20 T 260 30 H 180 Z" 
+                  fill={cloudColor} 
+                  fillOpacity={cloudOpacity * 0.85} 
+                  transform="translate(0,-5)" />
+          )}
+          
+          {/* Dark overlay for storms and heavy rain */}
+          {(isStorm || isHeavyRain) && <rect x="-50" y="0" width="460" height="160" fill="black" opacity="0.3" />}
         </g>
       )}
 
@@ -6024,7 +6088,7 @@ export default function WeatherApp() {
       const { lat, lon } = currentLoc;
       
       const modelsShort = "icon_seamless,gfs_seamless,gem_seamless";
-      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2`;
+      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,cloud_cover&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2`;
       
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
       const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max,sunrise,sunset&models=${modelsLong}&timezone=auto&forecast_days=14`;
@@ -6419,6 +6483,7 @@ export default function WeatherApp() {
         humidity: getVal('relative_humidity_2m'),
         dewPoint: getVal('dewpoint_2m'),
         uvIndex: getVal('uv_index'),
+        cloudCover: getAvg('cloud_cover'),
         reliability: reliability
       });
     }
@@ -6463,7 +6528,7 @@ export default function WeatherApp() {
   }, [longTermData, lang]); // Add lang to deps to refresh names
   
   // LIVE oder DEMO Daten?
-  const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: "0.0", precip: "0.0", wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0 };
+  const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: "0.0", precip: "0.0", wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0, cloudCover: 0 };
   const current = liveCurrent;
 
   // --- NEUE LOGIK: Echter Tag/Nacht Status für das UI ---
@@ -6995,7 +7060,7 @@ export default function WeatherApp() {
         <div className={`${isRealNight ? 'bg-m3-dark-surface-container/90' : 'bg-m3-surface-container'} rounded-m3-3xl p-6 shadow-m3-4 relative overflow-hidden min-h-[280px] border border-m3-outline-variant`}>
           {/* Weather background animation */}
           <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
-            <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} lang={lang} />
+            <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} />
           </div>
           
           <div className="relative z-10">
