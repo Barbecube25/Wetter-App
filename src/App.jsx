@@ -3551,7 +3551,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   // Calculate cloud color based on precipitation
   // If raining or snowing, clouds should be gray
   // The more precipitation, the darker the gray
-  const totalPrecipitation = (precipitation || 0) + (snowfall || 0);
+  const totalPrecipitation = (Number(precipitation) || 0) + (Number(snowfall) || 0);
   const hasPrecipitation = totalPrecipitation > 0.1;
   
   let cloudColor = "white";
@@ -3874,7 +3874,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       {numClouds > 0 && (
         <g className="anim-clouds">
           {/* Cloud paths - render based on cloudCover percentage */}
-          {/* Cloud 1 (left side) - shows at 20%+ cloudiness */}
+          {/* Cloud 1 (left side) - shows at 10%+ cloudiness */}
           {numClouds >= 1 && (
             <path d="M40 50 Q 55 35 70 50 T 100 50 T 120 60 H 40 Z" 
                   fill={cloudColor} 
@@ -3882,7 +3882,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
                   transform="translate(0,0)" />
           )}
           
-          {/* Cloud 2 (center-right) - shows at 40%+ cloudiness */}
+          {/* Cloud 2 (center-right) - shows at 30%+ cloudiness */}
           {numClouds >= 2 && (
             <path d="M240 40 Q 255 25 270 40 T 300 40 T 320 50 H 240 Z" 
                   fill={cloudColor} 
@@ -3890,7 +3890,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
                   transform="translate(20,10)" />
           )}
           
-          {/* Cloud 3 (center-left) - shows at 60%+ cloudiness */}
+          {/* Cloud 3 (center-left) - shows at 50%+ cloudiness */}
           {numClouds >= 3 && (
             <path d="M140 30 Q 155 15 170 30 T 200 30 T 220 40 H 140 Z" 
                   fill={cloudColor} 
@@ -3898,7 +3898,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
                   transform="translate(-10,5)" />
           )}
           
-          {/* Cloud 4 (far right) - shows at 80%+ cloudiness */}
+          {/* Cloud 4 (far right) - shows at 70%+ cloudiness */}
           {numClouds >= 4 && (
             <path d="M280 55 Q 295 40 310 55 T 340 55 T 360 65 H 280 Z" 
                   fill={cloudColor} 
@@ -3906,7 +3906,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
                   transform="translate(10,0)" />
           )}
           
-          {/* Cloud 5 (upper center) - shows at 100% cloudiness */}
+          {/* Cloud 5 (upper center) - shows at 90%+ cloudiness */}
           {numClouds >= 5 && (
             <path d="M180 20 Q 195 5 210 20 T 240 20 T 260 30 H 180 Z" 
                   fill={cloudColor} 
@@ -6548,7 +6548,7 @@ export default function WeatherApp() {
   }, [longTermData, lang]); // Add lang to deps to refresh names
   
   // LIVE oder DEMO Daten?
-  const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: "0.0", precip: "0.0", wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0, cloudCover: 0 };
+  const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: 0, precip: 0, wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0, cloudCover: 0 };
   const current = liveCurrent;
 
   // --- NEUE LOGIK: Echter Tag/Nacht Status für das UI ---
