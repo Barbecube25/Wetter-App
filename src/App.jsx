@@ -4375,6 +4375,8 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
             result.startTime = current.time;
             result.peakTime = current.time;
         } else {
+            // Include current hour in duration count
+            result.duration++;
             // Compare current intensity with future peak intensity
             if (hourlyAmount > result.maxIntensity) {
                 result.maxIntensity = hourlyAmount;
