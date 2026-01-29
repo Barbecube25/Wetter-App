@@ -48,8 +48,8 @@ export default {
           'outline': '#79747E',
           'outline-variant': '#CAC4D0',
           
-          // Inverse colors
-          'inverse-surface': '#322F35',
+          // Inverse colors - Darker for better dark mode
+          'inverse-surface': '#1a1a1a',
           'inverse-on-surface': '#F5EFF7',
           'inverse-primary': '#D0BCFF',
         }
