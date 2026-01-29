@@ -7015,7 +7015,7 @@ export default function WeatherApp() {
               <Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }} /> {t('wind')}
             </div>
             <div className={`text-m3-title-large font-bold ${windColorClass}`}>
-              {current.wind} <span className="text-m3-body-small">km/h</span>
+              {current.wind} <span className={`text-m3-body-small ${tileLabelColor}`}>km/h</span>
             </div>
           </div>
           
