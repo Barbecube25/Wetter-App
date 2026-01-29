@@ -6917,22 +6917,22 @@ export default function WeatherApp() {
             {/* Main Temperature Display */}
             <div className="mb-6">
               <div className="flex items-start justify-between">
-                <div>
-                  <span className="text-m3-display-large font-light text-m3-on-surface">{formatTemp(current.temp)}°</span>
-                  <div className="flex items-center gap-2 mt-2 text-m3-body-large text-m3-on-surface-variant">
+                <div className="bg-black/40 backdrop-blur-sm rounded-m3-2xl p-4 pr-6">
+                  <span className="text-m3-display-large font-light text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">{formatTemp(current.temp)}°</span>
+                  <div className="flex items-center gap-2 mt-2 text-m3-body-large text-white/95 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                     <Thermometer size={20} />
                     <span>{t('feelsLike')} {formatTemp(current.appTemp)}°</span>
                   </div>
-                  <div className="flex items-center gap-3 mt-1 text-m3-title-small text-m3-on-surface-variant">
+                  <div className="flex items-center gap-3 mt-1 text-m3-title-small text-white/90 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                     <span>H: {formatTemp(processedLong[0]?.max)}°</span>
                     <span>•</span>
                     <span>T: {formatTemp(processedLong[0]?.min)}°</span>
                   </div>
-                  <div className="mt-3 text-m3-title-large text-m3-on-surface">{weatherConf.text}</div>
+                  <div className="mt-3 text-m3-title-large text-white font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{weatherConf.text}</div>
                 </div>
                 
                 {/* Weather Icon */}
-                <div className="text-6xl opacity-80">
+                <div className="text-6xl opacity-90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
                   {React.createElement(weatherConf.icon, { size: 64 })}
                 </div>
               </div>
