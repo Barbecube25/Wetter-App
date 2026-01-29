@@ -4951,9 +4951,9 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de' }) =
   
   // Get next 24 hours of data with precipitation info
   const now = new Date();
+  const twentyFourHoursLater = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   const next24Hours = hourlyData
-    .filter(hour => hour.time >= now)
-    .slice(0, 24)
+    .filter(hour => hour.time > now && hour.time <= twentyFourHoursLater)
     .map(hour => {
       const totalPrecip = (hour.precip || 0) + (hour.snow || 0);
       const hasSnow = (hour.snow || 0) > 0.1;
