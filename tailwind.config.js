@@ -48,10 +48,18 @@ export default {
           'outline': '#79747E',
           'outline-variant': '#CAC4D0',
           
-          // Inverse colors - Darker for better dark mode
-          'inverse-surface': '#1a1a1a',
+          // Inverse colors - Optimized for dark mode readability
+          'inverse-surface': '#2d2d2d',
           'inverse-on-surface': '#F5EFF7',
           'inverse-primary': '#D0BCFF',
+          
+          // Dark mode specific surface colors
+          'dark-surface': '#2d2d2d',
+          'dark-surface-container': '#3a3a3a',
+          'dark-surface-container-high': '#454545',
+          'dark-surface-container-highest': '#505050',
+          'dark-on-surface': '#E6E1E5',
+          'dark-on-surface-variant': '#CAC4D0',
         }
       },
       borderRadius: {

@@ -6494,10 +6494,10 @@ export default function WeatherApp() {
   
   // Configuration based on actual status - Material 3 Theme
   const weatherConf = getWeatherConfig(current.code || 0, isRealNight ? 0 : 1, lang);
-  const bgGradient = isRealNight ? 'from-m3-inverse-surface to-m3-inverse-surface' : 'from-m3-surface to-m3-surface-container';
-  const textColor = isRealNight ? 'text-m3-inverse-on-surface' : 'text-m3-on-surface';
-  const cardBg = isRealNight ? 'bg-m3-surface-container/80 border-m3-outline-variant/50 text-m3-on-surface' : 'bg-m3-surface-container/80 border-m3-outline-variant/40 text-m3-on-surface';
-  const tileBg = isRealNight ? 'bg-m3-inverse-surface/70 border-m3-outline-variant/60' : 'bg-m3-surface-container-high border-m3-outline-variant';
+  const bgGradient = isRealNight ? 'from-m3-dark-surface to-m3-dark-surface' : 'from-m3-surface to-m3-surface-container';
+  const textColor = isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface';
+  const cardBg = isRealNight ? 'bg-m3-dark-surface-container/90 border-m3-outline-variant/70 text-m3-dark-on-surface' : 'bg-m3-surface-container/80 border-m3-outline-variant/40 text-m3-on-surface';
+  const tileBg = isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/50 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant';
   const windColorClass = getWindColorClass(current.wind || 0);
 
   // Create a 3-day forecast: rest of today, tomorrow, and day after tomorrow
@@ -6896,11 +6896,11 @@ export default function WeatherApp() {
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <div className="flex-1">
-              <h1 className="text-m3-headline-medium font-bold text-m3-on-surface mb-1">
+              <h1 className={`text-m3-headline-medium font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'} mb-1`}>
                 {currentLoc.name}
                 {currentLoc.type === 'gps' && <span className="text-m3-primary ml-2">📍</span>}
               </h1>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-m3-body-small text-m3-on-surface-variant">
+              <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-m3-body-small ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
                 <div className="flex items-center gap-1">
                   <Clock size={12} /><span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}</span>
                 </div>
@@ -6922,7 +6922,7 @@ export default function WeatherApp() {
               <button 
                 onClick={fetchData} 
                 aria-label={t('refresh') || "Refresh weather data"}
-                className="p-3 rounded-m3-full bg-m3-surface-container-high hover:bg-m3-surface-container-highest text-m3-on-surface transition-all shadow-m3-1 hover:shadow-m3-2"
+                className={`p-3 rounded-m3-full ${isRealNight ? 'bg-m3-dark-surface-container-high hover:bg-m3-dark-surface-container-highest text-m3-dark-on-surface' : 'bg-m3-surface-container-high hover:bg-m3-surface-container-highest text-m3-on-surface'} transition-all shadow-m3-1 hover:shadow-m3-2`}
               >
                 <RefreshCw size={20} />
               </button>
@@ -6945,13 +6945,13 @@ export default function WeatherApp() {
 
           {/* Location Chips */}
           <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-            <button onClick={handleSetHome} className={`px-4 py-2 rounded-m3-full flex items-center gap-2 text-m3-label-large font-medium transition-all whitespace-nowrap ${currentLoc.id === homeLoc.id ? 'bg-m3-primary-container text-m3-on-primary-container shadow-m3-1' : 'bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface'}`}>
+            <button onClick={handleSetHome} className={`px-4 py-2 rounded-m3-full flex items-center gap-2 text-m3-label-large font-medium transition-all whitespace-nowrap ${currentLoc.id === homeLoc.id ? 'bg-m3-primary-container text-m3-on-primary-container shadow-m3-1' : (isRealNight ? 'bg-m3-dark-surface-container hover:bg-m3-dark-surface-container-high text-m3-dark-on-surface' : 'bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface')}`}>
               <Home size={16} /> {t('home')}
             </button>
-            <button onClick={handleSetCurrent} className={`px-4 py-2 rounded-m3-full flex items-center gap-2 text-m3-label-large font-medium transition-all whitespace-nowrap ${currentLoc.type === 'gps' ? 'bg-m3-tertiary-container text-m3-on-tertiary-container shadow-m3-1' : 'bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface'}`}>
+            <button onClick={handleSetCurrent} className={`px-4 py-2 rounded-m3-full flex items-center gap-2 text-m3-label-large font-medium transition-all whitespace-nowrap ${currentLoc.type === 'gps' ? 'bg-m3-tertiary-container text-m3-on-tertiary-container shadow-m3-1' : (isRealNight ? 'bg-m3-dark-surface-container hover:bg-m3-dark-surface-container-high text-m3-dark-on-surface' : 'bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface')}`}>
               <Crosshair size={16} /> {t('gps')}
             </button>
-            <button onClick={() => setShowLocationModal(true)} className={`px-4 py-2 rounded-m3-full flex items-center gap-2 text-m3-label-large font-medium transition-all whitespace-nowrap ${showLocationModal ? 'bg-m3-secondary-container text-m3-on-secondary-container shadow-m3-1' : 'bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface'}`}>
+            <button onClick={() => setShowLocationModal(true)} className={`px-4 py-2 rounded-m3-full flex items-center gap-2 text-m3-label-large font-medium transition-all whitespace-nowrap ${showLocationModal ? 'bg-m3-secondary-container text-m3-on-secondary-container shadow-m3-1' : (isRealNight ? 'bg-m3-dark-surface-container hover:bg-m3-dark-surface-container-high text-m3-dark-on-surface' : 'bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface')}`}>
               <MapIcon size={16} /> {t('places')}
             </button>
           </div>
@@ -6980,7 +6980,7 @@ export default function WeatherApp() {
 
       <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4">
         {/* Modern Weather Card with better elevation */}
-        <div className={`${isRealNight ? 'bg-m3-inverse-surface/50' : 'bg-m3-surface-container'} rounded-m3-3xl p-6 shadow-m3-4 relative overflow-hidden min-h-[280px] border border-m3-outline-variant`}>
+        <div className={`${isRealNight ? 'bg-m3-dark-surface-container/90' : 'bg-m3-surface-container'} rounded-m3-3xl p-6 shadow-m3-4 relative overflow-hidden min-h-[280px] border border-m3-outline-variant`}>
           {/* Weather background animation */}
           <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
             <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} lang={lang} />
@@ -7016,21 +7016,21 @@ export default function WeatherApp() {
         {/* Weather Details Grid - Moved below animation card */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
-            <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
+            <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Sun size={14} /> {t('uv')}
             </div>
             <div className={`text-m3-title-large font-bold ${getUvColorClass(current.uvIndex)}`}>{current.uvIndex}</div>
           </div>
           
           <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
-            <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
+            <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Waves size={14} /> {t('humidity')}
             </div>
-            <div className="text-m3-title-large font-bold text-m3-on-surface">{current.humidity}%</div>
+            <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{current.humidity}%</div>
           </div>
           
           <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
-            <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
+            <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }} /> {t('wind')}
             </div>
             <div className={`text-m3-title-large font-bold ${windColorClass}`}>
@@ -7049,16 +7049,16 @@ export default function WeatherApp() {
             </div>
           ) : (
             <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
-              <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
+              <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                 <Thermometer size={14} /> {t('dewPoint')}
               </div>
-              <div className="text-m3-title-large font-bold text-m3-on-surface">{formatTemp(current.dewPoint)}°</div>
+              <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{formatTemp(current.dewPoint)}°</div>
             </div>
           )}
         </div>
 
         {/* Enhanced Tab Navigation */}
-        <div className={`${isRealNight ? 'bg-m3-inverse-surface/60' : 'bg-m3-surface-container'} rounded-m3-3xl p-2 shadow-m3-2 border border-m3-outline-variant`}>
+        <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl p-2 shadow-m3-2 border border-m3-outline-variant`}>
           <div className="grid grid-cols-5 gap-1">
             {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
               <button 
@@ -7067,7 +7067,7 @@ export default function WeatherApp() {
                 className={`flex flex-col items-center justify-center py-3 px-2 rounded-m3-2xl text-m3-label-medium font-medium transition-all ${
                   activeTab === tab.id 
                     ? 'bg-m3-primary text-m3-on-primary shadow-m3-2' 
-                    : 'text-m3-on-surface-variant hover:bg-m3-surface-container-high hover:text-m3-on-surface'
+                    : (isRealNight ? 'text-m3-dark-on-surface-variant hover:bg-m3-dark-surface-container-high hover:text-m3-dark-on-surface' : 'text-m3-on-surface-variant hover:bg-m3-surface-container-high hover:text-m3-on-surface')
                 }`}
               >
                 <tab.icon size={20} className="mb-1" />
@@ -7078,7 +7078,7 @@ export default function WeatherApp() {
         </div>
 
         {/* Content Card with modern elevation */}
-        <div className={`${isRealNight ? 'bg-m3-inverse-surface/50' : 'bg-m3-surface-container'} rounded-m3-3xl p-6 shadow-m3-3 border border-m3-outline-variant min-h-[450px]`}>
+        <div className={`${isRealNight ? 'bg-m3-dark-surface-container/90' : 'bg-m3-surface-container'} rounded-m3-3xl p-6 shadow-m3-3 border border-m3-outline-variant min-h-[450px]`}>
           
           {activeTab === 'overview' && (
             <div className="space-y-4">
