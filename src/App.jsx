@@ -4039,13 +4039,13 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp }) => {
         <span className="text-m3-label-large font-bold text-m3-on-surface">{t.nextHours}</span>
       </div>
       
-      <div className="overflow-x-auto pb-2 -mx-2 px-2">
+      <div className="overflow-x-auto pb-2 -mx-2 px-2" tabIndex="0">
         <div className="flex gap-3">
-          {hourlyData.map((hour, idx) => {
+          {hourlyData.map((hour) => {
             const WeatherIcon = getWeatherConfig(hour.code, hour.isDay, lang).icon;
             return (
               <div 
-                key={idx} 
+                key={hour.time.toISOString()} 
                 className="flex flex-col items-center bg-m3-surface-container/80 backdrop-blur-sm rounded-m3-xl p-3 min-w-[70px] border border-m3-outline-variant/30 shadow-m3-1 hover:shadow-m3-2 transition-all"
               >
                 <span className="text-m3-label-small text-m3-on-surface-variant mb-1">
