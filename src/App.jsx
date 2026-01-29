@@ -4949,6 +4949,23 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de' }) =
   
   if (!isOpen) return null;
   
+  // Locale mapping for all supported languages
+  const localeMap = {
+    'de': 'de-DE',
+    'en': 'en-US',
+    'fr': 'fr-FR',
+    'es': 'es-ES',
+    'it': 'it-IT',
+    'tr': 'tr-TR',
+    'pl': 'pl-PL',
+    'nl': 'nl-NL',
+    'hr': 'hr-HR',
+    'el': 'el-GR',
+    'da': 'da-DK',
+    'ru': 'ru-RU'
+  };
+  const locale = localeMap[lang] || 'de-DE';
+  
   // Get next 24 hours of data with precipitation info
   const now = new Date();
   const next24Hours = hourlyData
@@ -4961,7 +4978,7 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de' }) =
       
       return {
         time: hour.time,
-        displayTime: hour.time.toLocaleTimeString(lang === 'de' ? 'de-DE' : lang === 'en' ? 'en-US' : lang === 'fr' ? 'fr-FR' : lang === 'es' ? 'es-ES' : lang === 'it' ? 'it-IT' : 'de-DE', { hour: '2-digit', minute: '2-digit' }),
+        displayTime: hour.time.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
         amount: totalPrecip,
         rain: hour.precip || 0,
         snow: hour.snow || 0,
@@ -4973,9 +4990,27 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de' }) =
   
   const totalAmount = next24Hours.reduce((sum, hour) => sum + hour.amount, 0);
 
+  // Handle escape key to close modal
+  React.useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 sticky top-0">
           <h3 className="font-bold text-slate-800 flex items-center gap-2">
@@ -5002,9 +5037,9 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de' }) =
         
         {/* Scrollable hourly list */}
         <div className="overflow-y-auto p-4 space-y-2">
-          {next24Hours.map((hour, idx) => (
+          {next24Hours.map((hour) => (
             <div 
-              key={idx}
+              key={hour.time.getTime()}
               className={`flex justify-between items-center p-3 rounded-xl transition-colors ${
                 hour.hasPrecip 
                   ? 'bg-blue-50 border border-blue-100' 
@@ -7291,6 +7326,15 @@ export default function WeatherApp() {
           {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0) ? (
             <div 
               onClick={() => setShowPrecipModal(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setShowPrecipModal(true);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label={t('precip24h')}
               className="bg-m3-tertiary-container rounded-m3-xl p-3 border border-m3-tertiary shadow-m3-1 cursor-pointer hover:bg-m3-tertiary-container/80 transition-all active:scale-95"
             >
               <div className="flex items-center gap-2 text-m3-on-tertiary-container text-m3-label-small mb-1">
