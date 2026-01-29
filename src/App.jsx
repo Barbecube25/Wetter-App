@@ -34,6 +34,7 @@ const TRANSLATIONS = {
     wind: "Wind",
     gusts: "Böen",
     precip: "Niederschlag",
+    precip24h: "Niederschlag in den nächsten 24 Stunden",
     humidity: "Feuchte",
     dewPoint: "Taupkt.",
     uv: "UV",
@@ -200,6 +201,7 @@ const TRANSLATIONS = {
     wind: "Wind",
     gusts: "Gusts",
     precip: "Precip",
+    precip24h: "Precipitation in the next 24 hours",
     humidity: "Humidity",
     dewPoint: "Dew Pt.",
     uv: "UV",
@@ -366,6 +368,7 @@ const TRANSLATIONS = {
     wind: "Vent",
     gusts: "Rafales",
     precip: "Précip.",
+    precip24h: "Précipitations dans les prochaines 24 heures",
     humidity: "Humidité",
     dewPoint: "Pt. rosée",
     uv: "UV",
@@ -532,6 +535,7 @@ const TRANSLATIONS = {
     wind: "Viento",
     gusts: "Ráfagas",
     precip: "Precip.",
+    precip24h: "Precipitación en las próximas 24 horas",
     humidity: "Humedad",
     dewPoint: "Pto. rocío",
     uv: "UV",
@@ -698,6 +702,7 @@ const TRANSLATIONS = {
     wind: "Vento",
     gusts: "Raffiche",
     precip: "Precip.",
+    precip24h: "Precipitazioni nelle prossime 24 ore",
     humidity: "Umidità",
     dewPoint: "Pto. rugiada",
     uv: "UV",
@@ -864,6 +869,7 @@ const TRANSLATIONS = {
     wind: "Rüzgar",
     gusts: "Rüzgar hızı",
     precip: "Yağış",
+    precip24h: "Önümüzdeki 24 saatte yağış",
     humidity: "Nem",
     dewPoint: "Çiy noktası",
     uv: "UV",
@@ -1030,6 +1036,7 @@ const TRANSLATIONS = {
     wind: "Wiatr",
     gusts: "Porywy",
     precip: "Opady",
+    precip24h: "Opady w ciągu najbliższych 24 godzin",
     humidity: "Wilgotność",
     dewPoint: "Pkt rosy",
     uv: "UV",
@@ -1196,6 +1203,7 @@ const TRANSLATIONS = {
     wind: "Wind",
     gusts: "Windstoten",
     precip: "Neerslag",
+    precip24h: "Neerslag in de komende 24 uur",
     humidity: "Vochtigheid",
     dewPoint: "Dauwpunt",
     uv: "UV",
@@ -1362,6 +1370,7 @@ const TRANSLATIONS = {
     wind: "Vjetar",
     gusts: "Udari",
     precip: "Oborina",
+    precip24h: "Oborina u sljedećih 24 sata",
     humidity: "Vlažnost",
     dewPoint: "Rosište",
     uv: "UV",
@@ -1528,6 +1537,7 @@ const TRANSLATIONS = {
     wind: "Άνεμος",
     gusts: "Ριπές",
     precip: "Βροχή",
+    precip24h: "Κατακρημνίσματα τις επόμενες 24 ώρες",
     humidity: "Υγρασία",
     dewPoint: "Σημείο δρόσου",
     uv: "UV",
@@ -1693,6 +1703,7 @@ const TRANSLATIONS = {
     wind: "Vind",
     gusts: "Vindstød",
     precip: "Nedbør",
+    precip24h: "Nedbør i de næste 24 timer",
     humidity: "Fugtighed",
     dewPoint: "Dugpunkt",
     uv: "UV",
@@ -1859,6 +1870,7 @@ const TRANSLATIONS = {
     wind: "Ветер",
     gusts: "Порывы",
     precip: "Осадки",
+    precip24h: "Осадки в ближайшие 24 часа",
     humidity: "Влажность",
     dewPoint: "Точка росы",
     uv: "УФ",
@@ -7041,7 +7053,7 @@ export default function WeatherApp() {
           {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0) ? (
             <div className="bg-m3-tertiary-container rounded-m3-xl p-3 border border-m3-tertiary shadow-m3-1">
               <div className="flex items-center gap-2 text-m3-on-tertiary-container text-m3-label-small mb-1">
-                {isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip')}
+                {isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
               </div>
               <div className="text-m3-title-large font-bold text-m3-on-tertiary-container">
                 {isSnowing ? dailySnowSum : dailyRainSum} {isSnowing ? 'cm' : 'mm'}
