@@ -6638,7 +6638,7 @@ export default function WeatherApp() {
         precip: getAvg('precipitation'),
         // FIX: Add precipProb field
         precipProb: getVal('precipitation_probability'),
-        snow: getMax('snowfall'),
+        snow: getAvg('snowfall'),
         wind: Math.round(getAvg('windspeed_10m')),
         gust: Math.round(getMax('windgusts_10m')), // Böen immer Max Warnung
         dir: h.winddirection_10m_icon_seamless?.[i] || 0,
