@@ -3626,6 +3626,10 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   return (
     <svg viewBox="0 0 360 160" className="w-full h-full overflow-hidden" preserveAspectRatio="xMidYMax slice">
       <defs>
+        <linearGradient id="daySkyGradient" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor="#3b82f6" />
+          <stop offset="100%" stopColor="#93c5fd" />
+        </linearGradient>
         <linearGradient id="dawnGradient" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.8" />
           <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
@@ -3650,8 +3654,12 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
         </filter>
       </defs>
 
-      {/* Night sky background - black instead of white */}
-      {isNight && <rect x="0" y="0" width="360" height="160" fill="#0a0a0a" />}
+      {/* Sky background - blue gradient for day, black for night */}
+      {isNight ? (
+        <rect x="0" y="0" width="360" height="160" fill="#0a0a0a" />
+      ) : (
+        <rect x="0" y="0" width="360" height="160" fill="url(#daySkyGradient)" />
+      )}
       
       {isDawn && <rect x="-100" y="0" width="600" height="160" fill="url(#dawnGradient)" opacity="0.3" className="anim-glow" />}
       {isDusk && <rect x="-100" y="0" width="600" height="160" fill="url(#duskGradient)" opacity="0.3" className="anim-glow" />}
@@ -3681,7 +3689,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
         </g>
       )}
       
-      {isNight && isClear && (
+      {/* Stars visible at night regardless of weather conditions */}
+      {isNight && (
          <g>
             <circle cx="50" cy="30" r="1" fill="white" className="animate-twinkle-1" style={{animationDelay: '0s'}} />
             <circle cx="300" cy="40" r="1.5" fill="white" className="animate-twinkle-2" style={{animationDelay: '1s'}} />
