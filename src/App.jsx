@@ -2108,7 +2108,7 @@ const scheduleNotifications = async (settings, locationName, weatherData) => {
                 notifications: [{
                     id: 1,
                     title: report.title || "Tägliche Wettervorhersage",
-                    body: report.summary?.substring(0, 200) || "Schaue dir die Wettervorhersage für heute an!",
+                    body: report.summary || "Schaue dir die Wettervorhersage für heute an!",
                     schedule: { 
                         at: dailySchedule,
                         repeats: true,
@@ -2146,7 +2146,7 @@ const scheduleNotifications = async (settings, locationName, weatherData) => {
                     notifications: [{
                         id: 2,
                         title: `${t.outlook} ${t.tomorrow}`,
-                        body: report.summary?.substring(0, 200) || "Schaue dir die Wettervorhersage für morgen an!",
+                        body: report.summary || "Schaue dir die Wettervorhersage für morgen an!",
                         schedule: { 
                             at: nextDaySchedule,
                             repeats: true,
