@@ -6477,6 +6477,8 @@ export default function WeatherApp() {
   const textColor = isRealNight ? 'text-m3-inverse-on-surface' : 'text-m3-on-surface';
   const cardBg = isRealNight ? 'bg-m3-surface-container/80 border-m3-outline-variant/50 text-m3-on-surface' : 'bg-m3-surface-container/80 border-m3-outline-variant/40 text-m3-on-surface';
   const tileBg = isRealNight ? 'bg-m3-inverse-surface/70 border-m3-outline-variant/60' : 'bg-m3-surface-container-high border-m3-outline-variant';
+  const tileLabelColor = isRealNight ? 'text-m3-inverse-on-surface/90' : 'text-m3-on-surface-variant';
+  const tileValueColor = isRealNight ? 'text-m3-inverse-on-surface' : 'text-m3-on-surface';
   const windColorClass = getWindColorClass(current.wind || 0);
 
   // Create a 3-day forecast: rest of today, tomorrow, and day after tomorrow
@@ -6995,25 +6997,25 @@ export default function WeatherApp() {
         {/* Weather Details Grid - Moved below animation card */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
-            <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
+            <div className={`flex items-center gap-2 ${tileLabelColor} text-m3-label-small mb-1`}>
               <Sun size={14} /> {t('uv')}
             </div>
             <div className={`text-m3-title-large font-bold ${getUvColorClass(current.uvIndex)}`}>{current.uvIndex}</div>
           </div>
           
           <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
-            <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
+            <div className={`flex items-center gap-2 ${tileLabelColor} text-m3-label-small mb-1`}>
               <Waves size={14} /> {t('humidity')}
             </div>
-            <div className="text-m3-title-large font-bold text-m3-on-surface">{current.humidity}%</div>
+            <div className={`text-m3-title-large font-bold ${tileValueColor}`}>{current.humidity}%</div>
           </div>
           
           <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
-            <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
+            <div className={`flex items-center gap-2 ${tileLabelColor} text-m3-label-small mb-1`}>
               <Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }} /> {t('wind')}
             </div>
             <div className={`text-m3-title-large font-bold ${windColorClass}`}>
-              {current.wind} <span className="text-m3-body-small">km/h</span>
+              {current.wind} <span className={`text-m3-body-small ${tileLabelColor}`}>km/h</span>
             </div>
           </div>
           
@@ -7028,10 +7030,10 @@ export default function WeatherApp() {
             </div>
           ) : (
             <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
-              <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
+              <div className={`flex items-center gap-2 ${tileLabelColor} text-m3-label-small mb-1`}>
                 <Thermometer size={14} /> {t('dewPoint')}
               </div>
-              <div className="text-m3-title-large font-bold text-m3-on-surface">{formatTemp(current.dewPoint)}°</div>
+              <div className={`text-m3-title-large font-bold ${tileValueColor}`}>{formatTemp(current.dewPoint)}°</div>
             </div>
           )}
         </div>
