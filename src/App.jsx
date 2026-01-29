@@ -3708,14 +3708,14 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
 
       {/* --- HAUS (zuerst gerendert, damit Bäume davor können) --- */}
       <g transform="translate(140, 120)">
-          <rect x="25" y="-10" width="6" height="15" fill="#57534e" />
-          <rect x="5" y="10" width="40" height="30" fill={houseWall} />
-          <path d="M-2 10 L25 -15 L52 10 Z" fill={houseRoof} filter={isSnow ? "brightness(1.1)" : "none"} />
-          <rect x="12" y="18" width="10" height="10" fill={windowColor} stroke={windowStroke} strokeWidth="1"/>
-          <line x1="17" y1="18" x2="17" y2="28" stroke={windowStroke} strokeWidth="1" />
-          <line x1="12" y1="23" x2="22" y2="23" stroke={windowStroke} strokeWidth="1" />
-          <rect x="30" y="22" width="10" height="18" fill="#3f2e22" />
-          {isNight && <circle cx="17" cy="23" r="8" fill="#fbbf24" opacity="0.6" filter="blur(4px)" />}
+          <rect x="45" y="-10" width="6" height="15" fill="#57534e" />
+          <rect x="25" y="10" width="40" height="30" fill={houseWall} />
+          <path d="M18 10 L45 -15 L72 10 Z" fill={houseRoof} filter={isSnow ? "brightness(1.1)" : "none"} />
+          <rect x="32" y="18" width="10" height="10" fill={windowColor} stroke={windowStroke} strokeWidth="1"/>
+          <line x1="37" y1="18" x2="37" y2="28" stroke={windowStroke} strokeWidth="1" />
+          <line x1="32" y1="23" x2="42" y2="23" stroke={windowStroke} strokeWidth="1" />
+          <rect x="50" y="22" width="10" height="18" fill="#3f2e22" />
+          {isNight && <circle cx="37" cy="23" r="8" fill="#fbbf24" opacity="0.6" filter="blur(4px)" />}
       </g>
 
       {/* --- BÄUME --- */}
@@ -6665,7 +6665,8 @@ export default function WeatherApp() {
         )}
         
         <div className="absolute bottom-8 left-0 right-0 text-center text-white pointer-events-none" style={{textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5)'}}>
-            <div className="text-6xl font-bold">{formatTemp(current.temp)}°</div>
+            <div className="text-4xl font-bold">{formatTemp(current.temp)}°</div>
+            <div className="text-sm opacity-70 mb-1">{t('dewPoint')}: {formatTemp(current.dewPoint)}°</div>
             <div className="text-xl mb-2">{weatherConf.text}</div>
             
             {/* NEU: Sonnenaufgang und Untergang */}
