@@ -107,6 +107,9 @@ const TRANSLATIONS = {
     peakRainAt: "Stärkster Regen um",
     nextHours: "Nächste Stunden",
     hourlyForecast: "Stündliche Vorhersage",
+    precipitationDetails: "Niederschlagsdetails",
+    timeLabel: "Uhrzeit",
+    amountLabel: "Menge",
     hours: "Std",
     now: "Jetzt",
     ab: "Ab",
@@ -274,6 +277,9 @@ const TRANSLATIONS = {
     peakRainAt: "Peak rain at",
     nextHours: "Next Hours",
     hourlyForecast: "Hourly Forecast",
+    precipitationDetails: "Precipitation Details",
+    timeLabel: "Time",
+    amountLabel: "Amount",
     hours: "hrs",
     now: "Now",
     ab: "From",
@@ -441,6 +447,9 @@ const TRANSLATIONS = {
     peakRainAt: "Pluie maximale à",
     nextHours: "Prochaines heures",
     hourlyForecast: "Prévisions horaires",
+    precipitationDetails: "Détails des précipitations",
+    timeLabel: "Heure",
+    amountLabel: "Quantité",
     hours: "h",
     now: "Maintenant",
     ab: "À partir de",
@@ -608,6 +617,9 @@ const TRANSLATIONS = {
     peakRainAt: "Lluvia máxima a las",
     nextHours: "Próximas horas",
     hourlyForecast: "Previsión horaria",
+    precipitationDetails: "Detalles de precipitación",
+    timeLabel: "Hora",
+    amountLabel: "Cantidad",
     hours: "h",
     now: "Ahora",
     ab: "Desde",
@@ -775,6 +787,9 @@ const TRANSLATIONS = {
     peakRainAt: "Pioggia massima alle",
     nextHours: "Prossime ore",
     hourlyForecast: "Previsioni orarie",
+    precipitationDetails: "Dettagli precipitazioni",
+    timeLabel: "Ora",
+    amountLabel: "Quantità",
     hours: "ore",
     now: "Adesso",
     ab: "Da",
@@ -942,6 +957,9 @@ const TRANSLATIONS = {
     peakRainAt: "En yoğun yağış saati",
     nextHours: "Önümüzdeki saatler",
     hourlyForecast: "Saatlik tahmin",
+    precipitationDetails: "Yağış detayları",
+    timeLabel: "Saat",
+    amountLabel: "Miktar",
     hours: "saat",
     now: "Şimdi",
     ab: "İtibaren",
@@ -1109,6 +1127,9 @@ const TRANSLATIONS = {
     peakRainAt: "Najsilniejszy deszcz o",
     nextHours: "Następne godziny",
     hourlyForecast: "Prognoza godzinowa",
+    precipitationDetails: "Szczegóły opadów",
+    timeLabel: "Czas",
+    amountLabel: "Ilość",
     hours: "godz",
     now: "Teraz",
     ab: "Od",
@@ -1276,6 +1297,9 @@ const TRANSLATIONS = {
     peakRainAt: "Zwaarste regen om",
     nextHours: "Volgende uren",
     hourlyForecast: "Uurlijkse voorspelling",
+    precipitationDetails: "Neerslagdetails",
+    timeLabel: "Tijd",
+    amountLabel: "Hoeveelheid",
     hours: "uur",
     now: "Nu",
     ab: "Vanaf",
@@ -1443,6 +1467,9 @@ const TRANSLATIONS = {
     peakRainAt: "Najjača kiša u",
     nextHours: "Sljedeći sati",
     hourlyForecast: "Satna prognoza",
+    precipitationDetails: "Detalji o oborinama",
+    timeLabel: "Vrijeme",
+    amountLabel: "Količina",
     hours: "sati",
     now: "Sada",
     ab: "Od",
@@ -1609,6 +1636,9 @@ const TRANSLATIONS = {
     peakRainAt: "Μέγιστη βροχή στις",
     nextHours: "Επόμενες ώρες",
     hourlyForecast: "Ωριαία πρόβλεψη",
+    precipitationDetails: "Λεπτομέρειες κατακρημνισμάτων",
+    timeLabel: "Ώρα",
+    amountLabel: "Ποσότητα",
     hours: "ώρες",
     now: "Τώρα",
     ab: "Από",
@@ -1776,6 +1806,9 @@ const TRANSLATIONS = {
     peakRainAt: "Kraftigste regn kl.",
     nextHours: "Næste timer",
     hourlyForecast: "Timeprognose",
+    precipitationDetails: "Nedbørsdetaljer",
+    timeLabel: "Tid",
+    amountLabel: "Mængde",
     hours: "timer",
     now: "Nu",
     ab: "Fra",
@@ -1943,6 +1976,9 @@ const TRANSLATIONS = {
     peakRainAt: "Максимальный дождь в",
     nextHours: "Следующие часы",
     hourlyForecast: "Почасовой прогноз",
+    precipitationDetails: "Детали осадков",
+    timeLabel: "Время",
+    amountLabel: "Количество",
     hours: "ч",
     now: "Сейчас",
     ab: "С",
@@ -4907,6 +4943,114 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc }) => {
   );
 };
 
+// --- PRECIPITATION DETAILS MODAL ---
+const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de' }) => {
+  const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+  
+  if (!isOpen) return null;
+  
+  // Get next 24 hours of data with precipitation info
+  const now = new Date();
+  const next24Hours = hourlyData
+    .filter(hour => hour.time >= now)
+    .slice(0, 24)
+    .map(hour => {
+      const totalPrecip = (hour.precip || 0) + (hour.snow || 0);
+      const hasSnow = (hour.snow || 0) > 0.1;
+      const hasRain = (hour.precip || 0) > 0.1;
+      
+      return {
+        time: hour.time,
+        displayTime: hour.time.toLocaleTimeString(lang === 'de' ? 'de-DE' : lang === 'en' ? 'en-US' : lang === 'fr' ? 'fr-FR' : lang === 'es' ? 'es-ES' : lang === 'it' ? 'it-IT' : 'de-DE', { hour: '2-digit', minute: '2-digit' }),
+        amount: totalPrecip,
+        rain: hour.precip || 0,
+        snow: hour.snow || 0,
+        hasSnow,
+        hasRain,
+        hasPrecip: totalPrecip > 0.1
+      };
+    });
+  
+  const totalAmount = next24Hours.reduce((sum, hour) => sum + hour.amount, 0);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        {/* Header */}
+        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 sticky top-0">
+          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+            <CloudRain size={18} className="text-blue-500"/> 
+            {t.precipitationDetails}
+          </h3>
+          <button 
+            onClick={onClose} 
+            className="p-2 hover:bg-slate-100 rounded-full transition"
+          >
+            <X size={20} className="text-slate-400" />
+          </button>
+        </div>
+        
+        {/* Summary */}
+        <div className="p-4 bg-blue-50/50 border-b border-blue-100">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-slate-600">{t.precip24h}</span>
+            <span className="text-lg font-bold text-blue-600">
+              {totalAmount.toFixed(1)} mm
+            </span>
+          </div>
+        </div>
+        
+        {/* Scrollable hourly list */}
+        <div className="overflow-y-auto p-4 space-y-2">
+          {next24Hours.map((hour, idx) => (
+            <div 
+              key={idx}
+              className={`flex justify-between items-center p-3 rounded-xl transition-colors ${
+                hour.hasPrecip 
+                  ? 'bg-blue-50 border border-blue-100' 
+                  : 'bg-slate-50/50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                {hour.hasPrecip ? (
+                  hour.hasSnow ? (
+                    <Snowflake size={18} className="text-cyan-500" />
+                  ) : (
+                    <CloudRain size={18} className="text-blue-500" />
+                  )
+                ) : (
+                  <Sun size={18} className="text-slate-300" />
+                )}
+                <span className="font-medium text-slate-700">
+                  {hour.displayTime}
+                </span>
+              </div>
+              <div className="text-right">
+                {hour.hasPrecip ? (
+                  <>
+                    <div className="font-bold text-slate-800">
+                      {hour.amount.toFixed(1)} mm
+                    </div>
+                    {hour.hasRain && hour.hasSnow && (
+                      <div className="text-xs text-slate-500">
+                        <CloudRain className="inline w-3 h-3" /> {hour.rain.toFixed(1)}
+                        {' '}
+                        <Snowflake className="inline w-3 h-3" /> {hour.snow.toFixed(1)}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-sm text-slate-400">{t.noRain}</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- LOCATION MODAL ---
 const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAddCurrentLocation, onDeleteLocation, currentLoc, onRenameLocation, onRenameHome, homeLoc, lang='de' }) => {
     const [searchQuery, setSearchQuery] = useState("");
@@ -5777,6 +5921,7 @@ export default function WeatherApp() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false); // NEU
+  const [showPrecipModal, setShowPrecipModal] = useState(false);
   const [viewMode, setViewMode] = useState(null);
 
   // Demo mode state
@@ -6959,6 +7104,14 @@ export default function WeatherApp() {
       <style>{styles}</style>
       
       {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} currentTemp={current.temp} lang={lang} />}
+      {showPrecipModal && (
+        <PrecipitationDetailsModal 
+          isOpen={showPrecipModal}
+          onClose={() => setShowPrecipModal(false)}
+          hourlyData={processedShort}
+          lang={lang}
+        />
+      )}
       {showSettingsModal && (
           <SettingsModal 
              isOpen={showSettingsModal}
@@ -7136,7 +7289,10 @@ export default function WeatherApp() {
           </div>
           
           {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0) ? (
-            <div className="bg-m3-tertiary-container rounded-m3-xl p-3 border border-m3-tertiary shadow-m3-1">
+            <div 
+              onClick={() => setShowPrecipModal(true)}
+              className="bg-m3-tertiary-container rounded-m3-xl p-3 border border-m3-tertiary shadow-m3-1 cursor-pointer hover:bg-m3-tertiary-container/80 transition-all active:scale-95"
+            >
               <div className="flex items-center gap-2 text-m3-on-tertiary-container text-m3-label-small mb-1">
                 {isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
               </div>
