@@ -2362,14 +2362,31 @@ const formatDateShort = (date, lang = 'de') => {
   try { return new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit' }).format(date); } catch (e) { return ""; }
 };
 
-const getWindColorClass = (speed) => {
+const getWindColorClass = (speed, isDark = false) => {
+  // In dark mode, use brighter colors for better contrast
+  if (isDark) {
+    if (speed >= 60) return "text-red-400 font-extrabold";
+    if (speed >= 40) return "text-cyan-400 font-bold";
+    if (speed >= 20) return "text-blue-400 font-bold";
+    return "text-gray-300 font-medium";
+  }
+  // Light mode colors
   if (speed >= 60) return "text-m3-error font-extrabold";
   if (speed >= 40) return "text-m3-tertiary font-bold";
   if (speed >= 20) return "text-m3-primary font-bold";
   return "text-m3-on-surface-variant font-medium";
 };
 
-const getUvColorClass = (uv) => {
+const getUvColorClass = (uv, isDark = false) => {
+  // In dark mode, use brighter colors for better contrast
+  if (isDark) {
+    if (uv >= 11) return "text-red-400";
+    if (uv >= 8) return "text-orange-400";
+    if (uv >= 6) return "text-cyan-400";
+    if (uv >= 3) return "text-blue-400";
+    return "text-gray-300";
+  }
+  // Light mode colors
   if (uv >= 11) return "text-m3-error";
   if (uv >= 8) return "text-m3-error";
   if (uv >= 6) return "text-m3-tertiary";
@@ -2557,6 +2574,8 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         const rainSumToday = todayData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
         const snowSumToday = todayData.reduce((acc, c) => acc + parseFloat(c.snow || 0), 0);
         const maxWind = Math.max(...todayData.map(d => d.gust));
+        const maxUV = Math.max(...todayData.map(d => d.uvIndex || 0));
+        const hasThunderstorm = todayData.some(d => [95, 96, 99].includes(d.code));
         
         // Calculate snow probability (average of hours with snow > 0.1mm)
         const hoursWithSnow = todayData.filter(d => parseFloat(d.snow || 0) > 0.1);
@@ -2733,6 +2752,34 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
                 : ` Dazu noch windig mit Böen bis ${Math.round(maxWind)} km/h.`; 
         }
         
+        // UV warning
+        if (maxUV >= 8) {
+            todayText += lang === 'en'
+                ? ` ⚠️ High UV index (${maxUV}) - use sun protection!`
+                : ` ⚠️ Hoher UV-Index (${maxUV}) - Sonnenschutz nicht vergessen!`;
+        }
+        
+        // Extreme heat warning
+        if (maxToday > 35) {
+            todayText += lang === 'en'
+                ? ` 🔥 Extreme heat expected - stay hydrated!`
+                : ` 🔥 Große Hitze erwartet - viel trinken!`;
+        }
+        
+        // Extreme cold warning
+        if (minToday < -5) {
+            todayText += lang === 'en'
+                ? ` ❄️ Severe cold - dress warmly!`
+                : ` ❄️ Große Kälte - warm anziehen!`;
+        }
+        
+        // Thunderstorm warning
+        if (hasThunderstorm) {
+            todayText += lang === 'en'
+                ? ` ⚡ Thunderstorms approaching - seek shelter!`
+                : ` ⚡ Gewitter im Anmarsch - Schutz suchen!`;
+        }
+        
         parts.push(todayText);
     }
     if (nightData.length > 0) {
@@ -2749,6 +2796,8 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         const tRain = tomorrowDayData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
         const tSnow = tomorrowDayData.reduce((acc, c) => acc + parseFloat(c.snow || 0), 0);
         const tGust = Math.max(...tomorrowDayData.map(d => d.gust));
+        const tMaxUV = Math.max(...tomorrowDayData.map(d => d.uvIndex || 0));
+        const tHasThunderstorm = tomorrowDayData.some(d => [95, 96, 99].includes(d.code));
         
         // Calculate snow probability for tomorrow
         const hoursWithSnowTomorrow = tomorrowDayData.filter(d => parseFloat(d.snow || 0) > 0.1);
@@ -2919,12 +2968,55 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
             tomorrowText += lang === 'en' ? ` Windy with gusts up to ${tGust} km/h.` : ` Dazu noch windig mit Böen bis ${tGust} km/h.`; 
             warning = lang === 'en' ? "WINDY (Tomorrow)" : "WINDIG (Morgen)"; 
         }
+        
+        // UV warning for tomorrow
+        if (tMaxUV >= 8) {
+            tomorrowText += lang === 'en'
+                ? ` ⚠️ High UV index (${tMaxUV}) - use sun protection!`
+                : ` ⚠️ Hoher UV-Index (${tMaxUV}) - Sonnenschutz nicht vergessen!`;
+            if (!warning) warning = lang === 'en' ? "HIGH UV (Tomorrow)" : "HOHER UV (Morgen)";
+        }
+        
+        // Extreme heat warning for tomorrow
+        if (tMax > 35) {
+            tomorrowText += lang === 'en'
+                ? ` 🔥 Extreme heat expected - stay hydrated!`
+                : ` 🔥 Große Hitze erwartet - viel trinken!`;
+            if (!warning) warning = lang === 'en' ? "EXTREME HEAT (Tomorrow)" : "GROSSE HITZE (Morgen)";
+        }
+        
+        // Extreme cold warning for tomorrow
+        if (tMin < -5) {
+            tomorrowText += lang === 'en'
+                ? ` ❄️ Severe cold - dress warmly!`
+                : ` ❄️ Große Kälte - warm anziehen!`;
+            if (!warning) warning = lang === 'en' ? "SEVERE COLD (Tomorrow)" : "GROSSE KÄLTE (Morgen)";
+        }
+        
+        // Thunderstorm warning for tomorrow
+        if (tHasThunderstorm) {
+            tomorrowText += lang === 'en'
+                ? ` ⚡ Thunderstorms approaching - seek shelter!`
+                : ` ⚡ Gewitter im Anmarsch - Schutz suchen!`;
+            if (!warning) warning = lang === 'en' ? "THUNDERSTORMS (Tomorrow)" : "GEWITTER (Morgen)";
+        }
+        
         parts.push(tomorrowText);
     }
     summary = parts.join("\n\n");
     confidence = 90; 
     const maxGustNow = Math.max(...(todayData.map(d=>d.gust)||[]), 0);
+    const maxUVNow = Math.max(...(todayData.map(d=>d.uvIndex||0)), 0);
+    const maxTempNow = Math.max(...(todayData.map(d=>d.temp)||[]), 0);
+    const minTempNow = Math.min(...(todayData.map(d=>d.temp)||[]), 0);
+    const hasThunderstormNow = todayData.some(d => [95, 96, 99].includes(d.code));
+    
+    // Set warnings based on today's data (prioritized by severity)
     if (maxGustNow > 60) warning = lang === 'en' ? "GALE GUSTS (Today)" : "STURMBÖEN (Heute)";
+    else if (hasThunderstormNow) warning = lang === 'en' ? "THUNDERSTORMS (Today)" : "GEWITTER (Heute)";
+    else if (maxTempNow > 35) warning = lang === 'en' ? "EXTREME HEAT (Today)" : "GROSSE HITZE (Heute)";
+    else if (minTempNow < -5) warning = lang === 'en' ? "SEVERE COLD (Today)" : "GROSSE KÄLTE (Heute)";
+    else if (maxUVNow >= 8) warning = lang === 'en' ? "HIGH UV (Today)" : "HOHER UV (Heute)";
     
     // Add structured details for 3-day forecast if extraData (threeDayForecast) is provided
     if (extraData && Array.isArray(extraData) && extraData.length > 0) {
@@ -4938,7 +5030,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc }) => {
                                                    ) : <span className="text-[10px] text-slate-400 font-medium px-1.5 py-0.5">{t.noRain}</span>}
                                                    
                                                    {item.wind > 20 && (
-                                                       <div className={`flex items-center justify-end gap-1 text-[10px] font-bold ${getWindColorClass(item.wind)}`}>
+                                                       <div className={`flex items-center justify-end gap-1 text-[10px] font-bold ${getWindColorClass(item.wind, false)}`}>
                                                            <Wind size={10}/> {item.wind} km/h
                                                        </div>
                                                    )}
@@ -6789,7 +6881,7 @@ export default function WeatherApp() {
   const textColor = isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface';
   const cardBg = isRealNight ? 'bg-m3-dark-surface-container/90 border-m3-outline-variant/70 text-m3-dark-on-surface' : 'bg-m3-surface-container/80 border-m3-outline-variant/40 text-m3-on-surface';
   const tileBg = isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/50 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant';
-  const windColorClass = getWindColorClass(current.wind || 0);
+  const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
 
   // Create a 3-day forecast: rest of today, tomorrow, and day after tomorrow
   const threeDayForecast = useMemo(() => {
@@ -7330,7 +7422,7 @@ export default function WeatherApp() {
             <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Sun size={14} /> {t('uv')}
             </div>
-            <div className={`text-m3-title-large font-bold ${getUvColorClass(current.uvIndex)}`}>{current.uvIndex}</div>
+            <div className={`text-m3-title-large font-bold ${getUvColorClass(current.uvIndex, isRealNight)}`}>{current.uvIndex}</div>
           </div>
           
           <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
@@ -7347,6 +7439,11 @@ export default function WeatherApp() {
             <div className={`text-m3-title-large font-bold ${windColorClass}`}>
               {current.wind} <span className="text-m3-body-small">km/h</span>
             </div>
+            {current.gust > current.wind && (
+              <div className={`text-xs font-medium ${getWindColorClass(current.gust, isRealNight)} mt-1`}>
+                {t('gusts')} {current.gust} km/h
+              </div>
+            )}
           </div>
           
           {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) ? (
@@ -7514,9 +7611,9 @@ export default function WeatherApp() {
                            <div className="flex flex-col items-center gap-0.5 mb-2 w-full">
                               <div className="flex items-center justify-center gap-1 w-full">
                                  <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
-                                 <span className={`text-sm font-bold ${getWindColorClass(day.wind)}`}>{day.wind}</span>
+                                 <span className={`text-sm font-bold ${getWindColorClass(day.wind, isRealNight)}`}>{day.wind}</span>
                               </div>
-                              <span className={`text-xs font-medium ${getWindColorClass(day.gust)}`}>{t('gusts')} {day.gust}</span>
+                              <span className={`text-xs font-medium ${getWindColorClass(day.gust, isRealNight)}`}>{t('gusts')} {day.gust}</span>
                            </div>
 
                            {/* Reliability Indicator */}
