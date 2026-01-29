@@ -1537,7 +1537,7 @@ const TRANSLATIONS = {
     wind: "Άνεμος",
     gusts: "Ριπές",
     precip: "Βροχή",
-    precip24h: "Βροχή τις επόμενες 24 ώρες",
+    precip24h: "Κατακρημνίσματα τις επόμενες 24 ώρες",
     humidity: "Υγρασία",
     dewPoint: "Σημείο δρόσου",
     uv: "UV",
