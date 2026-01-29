@@ -5044,7 +5044,7 @@ const HomeSetupModal = ({ onSave, lang='de' }) => {
         try {
             const position = await Geolocation.getCurrentPosition({
                 enableHighAccuracy: true,
-                timeout: 15000
+                timeout: 5000
             });
             
             const lat = position.coords.latitude;
@@ -5260,7 +5260,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
         try {
             const position = await Geolocation.getCurrentPosition({
                 enableHighAccuracy: true,
-                timeout: 15000
+                timeout: 5000
             });
             
             const lat = position.coords.latitude;
@@ -5783,7 +5783,7 @@ export default function WeatherApp() {
         try {
             const position = await Geolocation.getCurrentPosition({
                 enableHighAccuracy: true,
-                timeout: 15000
+                timeout: 5000
             });
             
             const lat = position.coords.latitude;
@@ -5816,6 +5816,17 @@ export default function WeatherApp() {
 
     initLocation();
   }, [homeLoc, showTutorial]); // Re-run init if homeLoc or tutorial status changes
+
+  // Safety timeout: Force loading to false if stuck
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn('Loading timeout reached - forcing render');
+        setLoading(false);
+      }
+    }, 5000); // 5 second maximum wait
+    return () => clearTimeout(timeout);
+  }, [loading]);
 
   // Update localStorage when locations change
   useEffect(() => {
@@ -5913,7 +5924,7 @@ export default function WeatherApp() {
       // Use Capacitor Geolocation API
       const position = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
-        timeout: 15000
+        timeout: 5000
       });
       
       const lat = position.coords.latitude;
