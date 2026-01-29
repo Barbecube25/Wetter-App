@@ -6751,6 +6751,7 @@ export default function WeatherApp() {
     if (!processedShort || processedShort.length === 0) {
       return { rain: 0, snow: 0, total: 0 };
     }
+    // Get up to 24 hours of data (may be less if data is limited)
     const next24Hours = processedShort.slice(0, 24);
     let totalRain = 0;
     let totalSnow = 0;
@@ -7328,7 +7329,7 @@ export default function WeatherApp() {
               className="bg-m3-tertiary-container rounded-m3-xl p-3 border border-m3-tertiary shadow-m3-1 cursor-pointer hover:bg-m3-tertiary-container/80 transition-all active:scale-95"
             >
               <div className="flex items-center gap-2 text-m3-on-tertiary-container text-m3-label-small mb-1">
-                {isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
+                {next24HoursPrecip.snow > 0.1 ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
               </div>
               <div className="text-m3-title-large font-bold text-m3-on-tertiary-container">
                 {next24HoursPrecip.total.toFixed(1)} mm
