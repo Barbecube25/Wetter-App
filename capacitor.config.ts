@@ -12,7 +12,10 @@ const config: CapacitorConfig = {
       // Required for Geolocation plugin initialization
     },
     StatusBar: {
-      // Status bar configuration
+      // Enable fullscreen mode - hide status bar
+      style: 'dark',
+      backgroundColor: '#000000',
+      overlaysWebView: true
     }
   }
 };

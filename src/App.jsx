@@ -2162,8 +2162,7 @@ const scheduleNotifications = async (settings, locationName, weatherData) => {
                         repeats: true,
                         every: 'day'
                     },
-                    sound: 'default',
-                    smallIcon: 'ic_stat_icon_config_sample'
+                    sound: 'default'
                 }]
             });
         }
@@ -2200,8 +2199,7 @@ const scheduleNotifications = async (settings, locationName, weatherData) => {
                             repeats: true,
                             every: 'day'
                         },
-                        sound: 'default',
-                        smallIcon: 'ic_stat_icon_config_sample'
+                        sound: 'default'
                     }]
                 });
             }
@@ -5574,7 +5572,18 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
             }
         };
         
+        const initializeNotifications = async () => {
+            try {
+                // Request notification permission on app start
+                const result = await LocalNotifications.requestPermissions();
+                console.log('Notification permission status:', result.display);
+            } catch (e) {
+                console.log('Failed to request notification permission:', e);
+            }
+        };
+        
         hideStatusBar();
+        initializeNotifications();
         
         return () => {
             isMounted = false;
