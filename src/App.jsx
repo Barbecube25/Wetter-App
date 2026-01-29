@@ -863,7 +863,7 @@ const TRANSLATIONS = {
     feelsLike: "Hissedilen",
     wind: "Rüzgar",
     gusts: "Rüzgar hızı",
-    precip: "Yağış (24s)",
+    precip: "Yağış (24sa)",
     humidity: "Nem",
     dewPoint: "Çiy noktası",
     uv: "UV",
