@@ -19,5 +19,5 @@ ext {
     material3AdaptiveNavVersion = '1.5.0-alpha13' // Alpha version as per requirements
     composeUiVersion = '1.7.6'
     activityComposeVersion = '1.9.3'
-    kotlinCompilerExtensionVersion = '1.5.15' // Compatible with Kotlin 2.1.0
+    kotlinCompilerExtensionVersion = '1.5.16' // Compatible with Kotlin 2.1.0
 }
