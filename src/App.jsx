@@ -4950,9 +4950,8 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de' }) =
   if (!isOpen) return null;
   
   // Get next 24 hours of data with precipitation info
-  const now = new Date();
+  // processedShort already filters to start from current interval
   const next24Hours = hourlyData
-    .filter(hour => hour.time >= now)
     .slice(0, 24)
     .map(hour => {
       const totalPrecip = (hour.precip || 0) + (hour.snow || 0);
