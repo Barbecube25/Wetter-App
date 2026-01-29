@@ -3650,6 +3650,9 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
         </filter>
       </defs>
 
+      {/* Night sky background - black instead of white */}
+      {isNight && <rect x="0" y="0" width="360" height="160" fill="#0a0a0a" />}
+      
       {isDawn && <rect x="-100" y="0" width="600" height="160" fill="url(#dawnGradient)" opacity="0.3" className="anim-glow" />}
       {isDusk && <rect x="-100" y="0" width="600" height="160" fill="url(#duskGradient)" opacity="0.3" className="anim-glow" />}
 
@@ -3685,6 +3688,12 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
             <circle cx="200" cy="20" r="1" fill="white" className="animate-twinkle-3" style={{animationDelay: '2s'}} />
             <circle cx="100" cy="50" r="1" fill="white" className="animate-twinkle-2" style={{animationDelay: '1.5s'}} />
             <circle cx="350" cy="25" r="1" fill="white" className="animate-twinkle-1" style={{animationDelay: '0.5s'}} />
+            {/* Additional stars for better visual effect */}
+            <circle cx="150" cy="35" r="0.8" fill="white" className="animate-twinkle-3" style={{animationDelay: '0.8s'}} />
+            <circle cx="250" cy="45" r="1.2" fill="white" className="animate-twinkle-1" style={{animationDelay: '1.2s'}} />
+            <circle cx="320" cy="15" r="0.8" fill="white" className="animate-twinkle-2" style={{animationDelay: '0.3s'}} />
+            <circle cx="80" cy="20" r="1" fill="white" className="animate-twinkle-3" style={{animationDelay: '1.8s'}} />
+            <circle cx="180" cy="55" r="0.9" fill="white" className="animate-twinkle-1" style={{animationDelay: '2.2s'}} />
          </g>
       )}
 
@@ -6467,6 +6476,7 @@ export default function WeatherApp() {
   const bgGradient = isRealNight ? 'from-m3-inverse-surface to-m3-inverse-surface' : 'from-m3-surface to-m3-surface-container';
   const textColor = isRealNight ? 'text-m3-inverse-on-surface' : 'text-m3-on-surface';
   const cardBg = isRealNight ? 'bg-m3-surface-container/80 border-m3-outline-variant/50 text-m3-on-surface' : 'bg-m3-surface-container/80 border-m3-outline-variant/40 text-m3-on-surface';
+  const tileBg = isRealNight ? 'bg-m3-inverse-surface/70 border-m3-outline-variant/60' : 'bg-m3-surface-container-high border-m3-outline-variant';
   const windColorClass = getWindColorClass(current.wind || 0);
 
   // Create a 3-day forecast: rest of today, tomorrow, and day after tomorrow
@@ -6949,7 +6959,7 @@ export default function WeatherApp() {
 
       <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4">
         {/* Modern Weather Card with better elevation */}
-        <div className="bg-m3-surface-container rounded-m3-3xl p-6 shadow-m3-4 relative overflow-hidden min-h-[280px] border border-m3-outline-variant">
+        <div className={`${isRealNight ? 'bg-m3-inverse-surface/50' : 'bg-m3-surface-container'} rounded-m3-3xl p-6 shadow-m3-4 relative overflow-hidden min-h-[280px] border border-m3-outline-variant`}>
           {/* Weather background animation */}
           <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
             <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} lang={lang} />
@@ -6984,21 +6994,21 @@ export default function WeatherApp() {
 
         {/* Weather Details Grid - Moved below animation card */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-m3-surface-container-high rounded-m3-xl p-3 border border-m3-outline-variant shadow-m3-1">
+          <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
             <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
               <Sun size={14} /> {t('uv')}
             </div>
             <div className={`text-m3-title-large font-bold ${getUvColorClass(current.uvIndex)}`}>{current.uvIndex}</div>
           </div>
           
-          <div className="bg-m3-surface-container-high rounded-m3-xl p-3 border border-m3-outline-variant shadow-m3-1">
+          <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
             <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
               <Waves size={14} /> {t('humidity')}
             </div>
             <div className="text-m3-title-large font-bold text-m3-on-surface">{current.humidity}%</div>
           </div>
           
-          <div className="bg-m3-surface-container-high rounded-m3-xl p-3 border border-m3-outline-variant shadow-m3-1">
+          <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
             <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
               <Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }} /> {t('wind')}
             </div>
@@ -7017,7 +7027,7 @@ export default function WeatherApp() {
               </div>
             </div>
           ) : (
-            <div className="bg-m3-surface-container-high rounded-m3-xl p-3 border border-m3-outline-variant shadow-m3-1">
+            <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
               <div className="flex items-center gap-2 text-m3-on-surface-variant text-m3-label-small mb-1">
                 <Thermometer size={14} /> {t('dewPoint')}
               </div>
@@ -7027,7 +7037,7 @@ export default function WeatherApp() {
         </div>
 
         {/* Enhanced Tab Navigation */}
-        <div className="bg-m3-surface-container rounded-m3-3xl p-2 shadow-m3-2 border border-m3-outline-variant">
+        <div className={`${isRealNight ? 'bg-m3-inverse-surface/60' : 'bg-m3-surface-container'} rounded-m3-3xl p-2 shadow-m3-2 border border-m3-outline-variant`}>
           <div className="grid grid-cols-5 gap-1">
             {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
               <button 
@@ -7047,7 +7057,7 @@ export default function WeatherApp() {
         </div>
 
         {/* Content Card with modern elevation */}
-        <div className="bg-m3-surface-container rounded-m3-3xl p-6 shadow-m3-3 border border-m3-outline-variant min-h-[450px]">
+        <div className={`${isRealNight ? 'bg-m3-inverse-surface/50' : 'bg-m3-surface-container'} rounded-m3-3xl p-6 shadow-m3-3 border border-m3-outline-variant min-h-[450px]`}>
           
           {activeTab === 'overview' && (
             <div className="space-y-4">
