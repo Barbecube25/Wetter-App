@@ -6918,18 +6918,18 @@ export default function WeatherApp() {
             {/* Main Temperature Display */}
             <div className="mb-6">
               <div className="flex items-start justify-between">
-                <div className="bg-black/40 backdrop-blur-sm rounded-m3-2xl p-4 pr-6">
-                  <span className="text-m3-display-large font-light text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">{formatTemp(current.temp)}°</span>
-                  <div className="flex items-center gap-2 mt-2 text-m3-body-large text-white/95 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                    <Thermometer size={20} />
+                <div className="p-4 pr-6">
+                  <span className="text-m3-display-large font-light text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">{formatTemp(current.temp)}°</span>
+                  <div className="flex items-center gap-2 mt-2 text-m3-body-large text-white/95 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
+                    <Thermometer size={20} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
                     <span>{t('feelsLike')} {formatTemp(current.appTemp)}°</span>
                   </div>
-                  <div className="flex items-center gap-3 mt-1 text-m3-title-small text-white/90 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                  <div className="flex items-center gap-3 mt-1 text-m3-title-small text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
                     <span>H: {formatTemp(processedLong[0]?.max)}°</span>
                     <span>•</span>
                     <span>T: {formatTemp(processedLong[0]?.min)}°</span>
                   </div>
-                  <div className="mt-3 text-m3-title-large text-white font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{weatherConf.text}</div>
+                  <div className="mt-3 text-m3-title-large text-white font-medium drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">{weatherConf.text}</div>
                 </div>
                 
                 {/* Weather Icon */}
