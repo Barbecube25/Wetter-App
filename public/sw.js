@@ -24,19 +24,23 @@ self.addEventListener('install', (event) => {
 
 // 2. Activate Event: Alte Caches aufräumen
 self.addEventListener('activate', (event) => {
+  console.log('[Service Worker] Aktivierung - Bereinige alte Caches');
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME && key !== DYNAMIC_CACHE) {
+        keys
+          .filter(key => key !== CACHE_NAME && key !== DYNAMIC_CACHE)
+          .map((key) => {
             console.log('[Service Worker] Lösche alten Cache:', key);
             return caches.delete(key);
-          }
-        })
+          })
       );
+    }).then(() => {
+      console.log('[Service Worker] Cache-Bereinigung abgeschlossen');
+      // Force immediate control of all clients (wichtig nach Update)
+      return self.clients.claim();
     })
   );
-  return self.clients.claim();
 });
 
 // 3. Fetch Event: Netzwerkanfragen abfangen
