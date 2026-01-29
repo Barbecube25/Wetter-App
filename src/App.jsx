@@ -4279,10 +4279,11 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
     }
 
     // Calculate total precipitation for next 24 hours (for display on tile)
+    // Include current hour + next 23 hours to match modal behavior
     let total24hPrecip = 0;
     let total24hRain = 0;
     let total24hSnow = 0;
-    const next24Hours = futureData.slice(0, 24);
+    const next24Hours = data.slice(0, 24); // Include current hour (data[0])
     for (let i = 0; i < next24Hours.length; i++) {
         const d = next24Hours[i];
         total24hPrecip += (d.precip || 0) + (d.snow || 0);
@@ -4294,8 +4295,8 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
     let peakIntensity = 0;
     let peakTime = null;
     
-    // Loop um Start und Ende zu finden (Hourly Data)
-    for (let i = 0; i < futureData.length; i++) {
+    // Loop to find start and end (Hourly Data) - limit to 24 hours
+    for (let i = 0; i < Math.min(futureData.length, 24); i++) {
        const d = futureData[i];
        // Only consider precipitation if actual amount >= 0.1mm (no false positives from trace amounts)
        const hasPrecip = d.precip > 0.1 || d.snow > 0.1;
