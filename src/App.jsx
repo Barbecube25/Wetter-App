@@ -6270,10 +6270,17 @@ export default function WeatherApp() {
       const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,cloud_cover&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2`;
       
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
-      const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max,sunrise,sunset&models=${modelsLong}&timezone=auto&forecast_days=14`;
+      const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max&models=${modelsLong}&timezone=auto&forecast_days=14`;
+      // Separate API call for sunrise/sunset without models parameter (astronomical data is location-based, not model-dependent)
+      const urlSunriseSunset = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&timezone=auto&forecast_days=1`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
 
-      const [resShort, resLong, resDwd] = await Promise.all([fetch(urlShort), fetch(urlLong), fetch(urlDwd).catch(() => ({ ok: false }))]);
+      const [resShort, resLong, resSunriseSunset, resDwd] = await Promise.all([
+        fetch(urlShort), 
+        fetch(urlLong), 
+        fetch(urlSunriseSunset),
+        fetch(urlDwd).catch(() => ({ ok: false }))
+      ]);
       
       if (!resShort.ok) {
           const errText = await resShort.text();
@@ -6288,6 +6295,14 @@ export default function WeatherApp() {
       const longData = await resLong.json();
       setLongTermData(longData);
       
+      // Set sunrise/sunset from separate API call
+      if (resSunriseSunset.ok) {
+        const sunData = await resSunriseSunset.json();
+        if (sunData.daily?.sunrise?.[0] && sunData.daily?.sunset?.[0]) {
+          setSunriseSunset({ sunrise: sunData.daily.sunrise[0], sunset: sunData.daily.sunset[0] });
+        }
+      }
+      
       if (resDwd.ok) {
          const dwdJson = await resDwd.json();
          setDwdWarnings(dwdJson.alerts || []);
@@ -6295,7 +6310,6 @@ export default function WeatherApp() {
 
       setLastUpdated(new Date());
       setModelRuns({ icon: getModelRunTime(3, 2.5), gfs: getModelRunTime(6, 4), arome: getModelRunTime(3, 2) });
-      if (longData.daily?.sunrise?.[0]) setSunriseSunset({ sunrise: longData.daily.sunrise[0], sunset: longData.daily.sunset[0] });
 
     } catch (err) { 
         console.error("API Error:", err);
