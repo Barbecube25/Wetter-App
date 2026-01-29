@@ -6278,7 +6278,7 @@ export default function WeatherApp() {
       const [resShort, resLong, resSunriseSunset, resDwd] = await Promise.all([
         fetch(urlShort), 
         fetch(urlLong), 
-        fetch(urlSunriseSunset),
+        fetch(urlSunriseSunset).catch(() => ({ ok: false })),
         fetch(urlDwd).catch(() => ({ ok: false }))
       ]);
       
