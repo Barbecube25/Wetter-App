@@ -7259,13 +7259,13 @@ export default function WeatherApp() {
                       if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
 
                       return (
-                        <div key={i} className="flex flex-col items-center bg-white/5 border border-white/10 rounded-2xl p-3 min-w-[160px] w-[160px] hover:bg-white/10 transition relative group">
+                        <div key={i} className="flex flex-col items-center bg-m3-surface-container/80 backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl p-3 min-w-[160px] w-[160px] shadow-m3-1 hover:shadow-m3-2 transition-all relative group">
                           {/* Day & Date */}
-                          <div className="text-base font-bold mb-0.5" style={{textShadow: '0 1px 3px rgba(0,0,0,0.5)'}}>{day.dayName}</div>
-                          <div className="text-xs mb-2 font-medium" style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{day.dateShort}</div>
+                          <div className="text-base font-bold mb-0.5 text-m3-on-surface">{day.dayName}</div>
+                          <div className="text-xs mb-2 font-medium text-m3-on-surface-variant">{day.dateShort}</div>
                           
                           {/* Icon */}
-                          <DayIcon size={48} className="mb-2" style={{filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))'}} />
+                          <DayIcon size={48} className="mb-2 text-m3-on-surface" />
                           
                           {/* Temp Range */}
                           <div className="flex items-center gap-2 mb-2 w-full justify-center">
@@ -7297,15 +7297,15 @@ export default function WeatherApp() {
                            <div className="flex flex-col items-center gap-0.5 mb-2 w-full">
                               <div className="flex items-center justify-center gap-1 w-full">
                                  <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
-                                 <span className={`text-sm font-bold ${getWindColorClass(day.wind)}`} style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{day.wind}</span>
+                                 <span className={`text-sm font-bold ${getWindColorClass(day.wind)}`}>{day.wind}</span>
                               </div>
-                              <span className={`text-xs font-medium ${getWindColorClass(day.gust)}`} style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{t('gusts')} {day.gust}</span>
+                              <span className={`text-xs font-medium ${getWindColorClass(day.gust)}`}>{t('gusts')} {day.gust}</span>
                            </div>
 
                            {/* Reliability Indicator */}
-                           <div className="mt-1 text-xs flex items-center gap-1 border border-white/10 px-2 py-0.5 rounded-full">
+                           <div className="mt-1 text-xs flex items-center gap-1 border border-m3-outline-variant/30 bg-m3-surface-container-highest/50 px-2 py-0.5 rounded-full">
                               <ShieldCheck size={10} className={confColor} />
-                              <span className={confColor} style={{textShadow: '0 1px 2px rgba(0,0,0,0.4)'}}>{day.reliability}% {t('safe')}</span>
+                              <span className={confColor}>{day.reliability}% {t('safe')}</span>
                            </div>
                            
                         </div>
