@@ -4278,12 +4278,25 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
         }
     }
 
+    // Calculate total precipitation for next 24 hours (for display on tile)
+    // Include current hour + next 23 hours to match modal behavior
+    let total24hPrecip = 0;
+    let total24hRain = 0;
+    let total24hSnow = 0;
+    const next24Hours = data.slice(0, 24); // Include current hour (data[0])
+    for (let i = 0; i < next24Hours.length; i++) {
+        const d = next24Hours[i];
+        total24hPrecip += (d.precip || 0) + (d.snow || 0);
+        total24hRain += (d.precip || 0);
+        total24hSnow += (d.snow || 0);
+    }
+    
     let foundStart = false;
     let peakIntensity = 0;
     let peakTime = null;
     
-    // Loop um Start und Ende zu finden (Hourly Data)
-    for (let i = 0; i < futureData.length; i++) {
+    // Loop to find start and end (Hourly Data) - limit to 24 hours
+    for (let i = 0; i < Math.min(futureData.length, 24); i++) {
        const d = futureData[i];
        // Only consider precipitation if actual amount >= 0.1mm (no false positives from trace amounts)
        const hasPrecip = d.precip > 0.1 || d.snow > 0.1;
@@ -4301,9 +4314,6 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
            const hourlyRain = d.precip > 0 ? d.precip : 0;
            const hourlySnow = d.snow > 0 ? d.snow : 0;
            
-           result.amount += hourlyAmount; 
-           result.rainAmount += hourlyRain;
-           result.snowAmount += hourlySnow;
            result.maxIntensity = Math.max(result.maxIntensity, hourlyAmount);
            result.duration++;
            
@@ -4323,6 +4333,11 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
            }
        }
     }
+    
+    // Use 24h totals for display
+    result.amount = total24hPrecip;
+    result.rainAmount = total24hRain;
+    result.snowAmount = total24hSnow;
     
     result.peakTime = peakTime;
     
@@ -4353,22 +4368,22 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
             result.type = isSnowCode ? 'snow_now' : 'rain_now';
         }
         
-        // If we haven't found future rain, just count current hour
+        // If we haven't found future rain, set duration and peak for current hour
         if (!foundStart) {
             result.duration = 1; 
-            result.amount = hourlyAmount;
-            result.rainAmount = hourlyRain;
-            result.snowAmount = hourlySnow;
             result.maxIntensity = hourlyAmount;
             result.startTime = current.time;
             result.peakTime = current.time;
         } else {
+            // Include current hour in duration count
+            result.duration++;
             // Compare current intensity with future peak intensity
             if (hourlyAmount > result.maxIntensity) {
                 result.maxIntensity = hourlyAmount;
                 result.peakTime = current.time;
             }
         }
+        // Note: result.amount, rainAmount, and snowAmount remain as 24h totals
         // Otherwise, keep the future rain data we already collected
     } else if (foundStart) {
         // Not raining now, but will rain later
