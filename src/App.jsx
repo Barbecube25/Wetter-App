@@ -3528,9 +3528,25 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const isTropicalNight = isNight && temp > 20;
 
   // --- CLOUD ANIMATION LOGIC (NEW) ---
-  // Calculate number of clouds based on cloudCover percentage
+  // Calculate number of clouds based on cloudCover percentage or weather code
   // cloudCover is 0-100, we want 0-5 clouds
-  const numClouds = Math.min(5, Math.max(0, Math.round(cloudCover / 20)));
+  let numClouds;
+  
+  // If cloudCover data is available and > 0, use it
+  if (cloudCover && cloudCover > 0) {
+    numClouds = Math.min(5, Math.max(0, Math.round(cloudCover / 20)));
+  } else {
+    // Fallback: determine cloud count based on weather code
+    if (isClear) {
+      numClouds = 0;
+    } else if (isPartlyCloudy) {
+      numClouds = 2;
+    } else if (isOvercast || isRain || isSnow || isStorm || isSleet || isDrizzle || isFog) {
+      numClouds = 5; // Full cloud coverage for these conditions
+    } else {
+      numClouds = 0;
+    }
+  }
   
   // Calculate cloud color based on precipitation
   // If raining or snowing, clouds should be gray
@@ -3557,6 +3573,10 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   } else if (isStorm) {
     cloudColor = "#475569"; // Storm dark gray (slate-600)
     cloudOpacity = 0.95;
+  } else if (isRain || isSnow || isSleet || isDrizzle) {
+    // If it's raining/snowing but precipitation amount is very low
+    cloudColor = "#cbd5e1"; // Light gray
+    cloudOpacity = 0.85;
   }
 
   // --- SEASON DETECTION ---
