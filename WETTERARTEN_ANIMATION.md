@@ -1,0 +1,170 @@
+# Wetterarten in der Animation
+
+Diese Datei listet alle Wetterarten auf, die in der animierten SVG-Szene der Wetter-App dargestellt werden.
+
+## Niederschlagsarten
+
+### 1. Regen (Rain)
+- **Codes**: 61, 63, 65, 80, 81, 82
+- **Varianten**:
+  - Leichter Regen (Light Rain): Codes 61, 80
+  - Mittlerer Regen (Medium Rain): Codes 63, 81
+  - Starker Regen (Heavy Rain): Codes 65, 82
+- **Animation**: Fallende blaue Regentropfen (`animate-rain-1`, `animate-rain-2`, `animate-rain-3`, `animate-rain-storm`)
+- **Effekt**: 30-60 animierte Regentropfen je nach Intensität mit Splash-Effekt
+
+### 2. Nieselregen (Drizzle)
+- **Codes**: 51, 53, 55
+- **Animation**: 40 kleine, leichte Regentropfen
+- **Effekt**: Sanft fallende, weniger intensive Tropfen
+
+### 3. Schnee (Snow)
+- **Codes**: 71, 73, 75, 77, 85, 86
+- **Varianten**:
+  - Leichter Schnee (Light Snow): Codes 71, 77, 85
+  - Mittlerer Schnee (Medium Snow): Code 73
+  - Starker Schnee (Heavy Snow): Codes 75, 86
+- **Animation**: Fallende weiße Schneeflocken (`animate-snow-slow`, `animate-snow-fast`)
+- **Effekt**: 40-80 rotierende Schneeflocken je nach Intensität, weiße Schneedecke auf Bergen und Boden
+
+### 4. Schneeregen / Graupel (Sleet)
+- **Codes**: 56, 57, 66, 67
+- **Animation**: Kombination aus Regen und Schnee
+- **Effekt**: Graue Regentropfen, weiße Bergspitzen, eisige Bodenoberfläche
+
+### 5. Hagel (Hail)
+- **Codes**: 96, 99
+- **Animation**: Fallende weiße Hagelkörner (`animate-hail`)
+- **Effekt**: 60 rotierende Hagelkörner
+
+## Wetterereignisse
+
+### 6. Gewitter (Storm/Thunderstorm)
+- **Codes**: 95, 96, 99
+- **Animation**: Blitze (`anim-lightning`), starkes Baumschütteln (`anim-tree-storm`)
+- **Effekt**: Gelber Blitz mit Leuchten, dunkle Wolken, weiße Flash-Overlays
+
+### 7. Nebel (Fog)
+- **Codes**: 45, 48
+- **Animation**: Fließende Nebelschichten (`anim-fog-1`, `anim-fog-2`)
+- **Effekt**: Zwei überlagerte, horizontal bewegende Nebelschichten
+
+## Bewölkung
+
+### 8. Klar / Sonnig (Clear/Sunny)
+- **Codes**: 0, 1
+- **Animation**: Pulsierende Sonne (`animate-ray`), rotierende Sonnenstrahlen (`animate-spin-slow`)
+- **Effekt**: Leuchtende Sonne mit 8 rotierenden Strahlen
+
+### 9. Teilweise bewölkt (Partly Cloudy)
+- **Code**: 2
+- **Animation**: Schwebende Wolken (`anim-clouds`)
+- **Effekt**: 1-2 bewegende Wolken
+
+### 10. Bewölkt / Bedeckt (Overcast)
+- **Codes**: 3, 45, 48
+- **Animation**: Schwebende Wolken (`anim-clouds`)
+- **Effekt**: 3-5 bewegende Wolken, je nach Bewölkungsgrad
+
+## Temperaturextreme
+
+### 11. Extreme Hitze (Extreme Heat)
+- **Bedingung**: Temperatur ≥ 30°C
+- **Animation**: Hitzeflirrern (`anim-heat`)
+- **Effekt**: Orangefarbener, wellenförmiger Hitze-Overlay
+
+### 12. Starker Frost (Deep Freeze)
+- **Bedingung**: Temperatur ≤ -5°C
+- **Animation**: Funkelnde Eiskristalle (`anim-sparkle`)
+- **Effekt**: Weiße Schneedecke, funkelnde Eiskristalle auf dem Boden, weiße Bergspitzen
+
+### 13. Gefrierpunkt (Freezing)
+- **Bedingung**: Temperatur ≤ 0°C
+- **Animation**: Bei Regen: Funkelnde Eiskristalle (`anim-sparkle`)
+- **Effekt**: Eisige Bodenoberfläche mit Glitzereffekt
+
+### 14. Tropennacht (Tropical Night)
+- **Bedingung**: Nacht und Temperatur > 20°C
+- **Animation**: Tropischer Schein (`anim-tropical`)
+- **Effekt**: Warmer, goldener Glow über der Szene
+
+## Windverhältnisse
+
+### 15. Windig (Windy)
+- **Bedingung**: Windgeschwindigkeit ≥ 30 km/h
+- **Animation**: Baumschütteln (`anim-tree-windy`)
+- **Effekt**: Mittleres Schütteln der Bäume
+
+### 16. Sturm (Stormy Wind)
+- **Bedingung**: Windgeschwindigkeit ≥ 60 km/h
+- **Animation**: Starkes Baumschütteln (`anim-tree-storm`), schräger Niederschlag
+- **Effekt**: Intensives Schütteln der Bäume, 20° Neigung bei Regen/Schnee
+
+## Tag/Nacht-Effekte
+
+### 17. Nacht (Night)
+- **Bedingung**: `is_day` = 0
+- **Animation**: Funkelnde Sterne (`animate-twinkle-1`, `animate-twinkle-2`, `animate-twinkle-3`)
+- **Effekt**: Mond, 10 twinkelnde Sterne, dunkle Farbpalette
+
+### 18. Tag (Day)
+- **Bedingung**: `is_day` = 1
+- **Animation**: Pulsierende Sonne (`animate-ray`)
+- **Effekt**: Helle Sonne, helle Farbpalette
+
+## Saisonale Effekte (Bonus)
+
+### 19. Frühling (Spring)
+- **Animation**: Statische Blüten auf Bäumen und Boden
+- **Effekt**: Rosa und pinke Blüten
+
+### 20. Herbst (Autumn)
+- **Animation**: Fallende Herbstblätter (`animate-leaves`)
+- **Effekt**: 15 orange, rote und gelbe fallende Blätter
+
+### 21. Winter (Winter)
+- **Animation**: Schnee auf Baumästen
+- **Effekt**: Weiße Schneedecken auf Ästen
+
+## Event-basierte Animationen (Bonus)
+
+### 22. Weihnachten (Christmas)
+- **Animation**: Statische Weihnachtskugeln auf Bäumen
+- **Effekt**: Rote, gelbe und blaue Ornamente
+
+### 23. Ostern (Easter)
+- **Animation**: Statischer Osterhase und versteckte Eier
+- **Effekt**: Hase neben dem Haus, bunte Ostereier
+
+### 24. Halloween (Halloween)
+- **Animation**: Statische Kürbisse
+- **Effekt**: Orange Kürbisse auf dem Boden
+
+### 25. Silvester (New Year)
+- **Animation**: Explodierende Feuerwerke (SVG animate)
+- **Effekt**: 5 mehrfarbige Feuerwerke am Himmel
+
+## Animationstypen
+
+Die App verwendet folgende CSS-Keyframe-Animationen:
+
+- **rain-drop**: Fallende Regentropfen mit Splash-Effekt
+- **snow-fall-slow**: Langsam fallende, rotierende Schneeflocken
+- **snow-fall-fast**: Schnell fallende Schneeflocken
+- **fog-flow**: Horizontal fließende Nebelschichten
+- **heat-shimmer**: Hitzeflirrern-Effekt
+- **ice-sparkle**: Funkelnde Eiskristalle
+- **tree-shake-gentle**: Sanftes Baumschütteln
+- **tree-shake-windy**: Mittleres Baumschütteln bei Wind
+- **tree-shake-storm**: Starkes Baumschütteln bei Sturm
+- **ray-pulse**: Pulsierende Sonnenstrahlen
+- **twinkle**: Funkelnde Sterne
+- **lightning-flash**: Blitz-Effekt
+- **hail-fall**: Fallende Hagelkörner
+- **tropical-glow**: Tropischer Nacht-Schein
+- **float-leaves**: Fallende Herbstblätter
+- **float-clouds**: Horizontal schwebende Wolken
+
+## Zusammenfassung
+
+Insgesamt werden **mindestens 25 verschiedene Wetterarten, Bedingungen und Ereignisse** in der animierten Szene dargestellt, mit über **15 verschiedenen CSS-Keyframe-Animationen**. Die Animationen passen sich dynamisch an die aktuellen Wetterbedingungen, Tageszeit, Jahreszeit und besondere Ereignisse an.
