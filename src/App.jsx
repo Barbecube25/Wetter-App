@@ -5819,12 +5819,13 @@ export default function WeatherApp() {
 
   // Safety timeout: Force loading to false if stuck
   useEffect(() => {
+    if (!loading) return; // Only set timeout when loading is true
+    
     const timeout = setTimeout(() => {
-      if (loading) {
-        console.warn('Loading timeout reached - forcing render');
-        setLoading(false);
-      }
+      console.warn('Loading timeout reached - forcing render');
+      setLoading(false);
     }, 5000); // 5 second maximum wait
+    
     return () => clearTimeout(timeout);
   }, [loading]);
 

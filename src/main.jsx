@@ -5,6 +5,8 @@ import './index.css'
 
 // Erweiterte Service Worker Registrierung
 if ('serviceWorker' in navigator) {
+  let refreshing = false; // Prevent infinite reload loop
+  
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
@@ -18,7 +20,8 @@ if ('serviceWorker' in navigator) {
           const newWorker = registration.installing;
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+              if (newWorker.state === 'activated' && !refreshing) {
+                refreshing = true;
                 console.log('Neuer Service Worker aktiviert - Seite wird neu geladen');
                 // Small delay to ensure cache is cleaned
                 setTimeout(() => {
