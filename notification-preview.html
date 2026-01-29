@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WetterScoutAI - Benachrichtigungs-Vorschau</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        /* Android Notification Style */
+        .notification {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+            overflow: hidden;
+            animation: slideIn 0.4s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .notification-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .app-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .app-name {
+            font-size: 14px;
+            color: #666;
+            flex: 1;
+        }
+        
+        .notification-time {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .notification-content {
+            padding: 16px;
+        }
+        
+        .notification-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #212121;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .notification-body {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        
+        .notification-actions {
+            display: flex;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .notification-action {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            color: #667eea;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .notification-action:hover {
+            background: #f5f5f5;
+        }
+        
+        .notification-action:not(:last-child) {
+            border-right: 1px solid #e0e0e0;
+        }
+        
+        .section-title {
+            color: white;
+            font-size: 20px;
+            margin: 40px 0 20px;
+            font-weight: 500;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .label {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .weather-icon {
+            font-size: 20px;
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌦️ WetterScoutAI</h1>
+            <p>Benachrichtigungs-Vorschau / Notification Preview</p>
+        </div>
+        
+        <div class="section-title">1️⃣ Tägliche Wettervorhersage</div>
+        <div class="label">Beispiel: Sonniger Tag / Sunny Day</div>
+        
+        <!-- Notification 1: Sunny Day (German) -->
+        <div class="notification">
+            <div class="notification-header">
+                <div class="app-icon">☀️</div>
+                <div class="app-name">WetterScoutAI</div>
+                <div class="notification-time">vor 2 Min.</div>
+            </div>
+            <div class="notification-content">
+                <div class="notification-title">📊 Tages-Bericht</div>
+                <div class="notification-body">Jetzt (08:00 Uhr): 18°, gefühlt 17°.
+
+📅 Heute:
+Die Temperatur schwankt heute zwischen 15° und 23°. Ein schöner, trockener Tag – perfekt!
+
+🌙 Nachts geht es runter auf 12°.</div>
+            </div>
+        </div>
+        
+        <!-- Notification 2: Sunny Day (English) -->
+        <div class="notification">
+            <div class="notification-header">
+                <div class="app-icon">☀️</div>
+                <div class="app-name">WetterScoutAI</div>
+                <div class="notification-time">2 min ago</div>
+            </div>
+            <div class="notification-content">
+                <div class="notification-title">📊 Daily Report</div>
+                <div class="notification-body">Now (08:00 AM): 64°F, feels like 63°F.
+
+📅 Today:
+Temperatures will vary between 59°F and 73°F throughout the day. It will be a nice, dry day.
+
+🌙 Night lows around 54°F.</div>
+            </div>
+        </div>
+        
+        <div class="label">Beispiel: Regnerischer Tag / Rainy Day</div>
+        
+        <!-- Notification 3: Rainy Day (German) -->
+        <div class="notification">
+            <div class="notification-header">
+                <div class="app-icon">🌧️</div>
+                <div class="app-name">WetterScoutAI</div>
+                <div class="notification-time">vor 1 Min.</div>
+            </div>
+            <div class="notification-content">
+                <div class="notification-title">📊 Tages-Bericht</div>
+                <div class="notification-body">Jetzt (07:00 Uhr): 14°, gefühlt 12°.
+
+📅 Heute:
+Die Temperatur schwankt heute zwischen 12° und 17°. Wird regnerisch (8.5mm) – Schirm mitnehmen!
+Regen von 10:00 bis 16:00 Uhr (6.2mm).
+Regen gegen 20:00 Uhr (2.3mm).
+
+🌙 Nachts kühlt es auf frische 9° ab (kann am Boden frieren).</div>
+            </div>
+        </div>
+        
+        <div class="label">Beispiel: Schneetag / Snowy Day</div>
+        
+        <!-- Notification 4: Snowy Day (German) -->
+        <div class="notification">
+            <div class="notification-header">
+                <div class="app-icon">❄️</div>
+                <div class="app-name">WetterScoutAI</div>
+                <div class="notification-time">vor 3 Min.</div>
+            </div>
+            <div class="notification-content">
+                <div class="notification-title">📊 Tages-Bericht</div>
+                <div class="notification-body">Jetzt (07:00 Uhr): -2°, gefühlt -6°.
+
+📅 Heute:
+Recht konstante Temperaturen um die -1° (-3° bis 1°). Ein richtig schneereicher Tag (12.5mm Schnee) – zieh dich warm an! Die Schneewahrscheinlichkeit liegt bei 85%. Der Schnee wird wohl liegen bleiben (Taupunkt: -4°C).
+Schnee von 08:00 bis 18:00 Uhr (12.5mm).
+❄️ Große Kälte - warm anziehen!</div>
+            </div>
+        </div>
+        
+        <div class="label">Beispiel: Extremwetter / Extreme Weather</div>
+        
+        <!-- Notification 5: Extreme Weather (German) -->
+        <div class="notification">
+            <div class="notification-header">
+                <div class="app-icon">⚠️</div>
+                <div class="app-name">WetterScoutAI</div>
+                <div class="notification-time">gerade eben</div>
+            </div>
+            <div class="notification-content">
+                <div class="notification-title">📊 Tages-Bericht</div>
+                <div class="notification-body">Jetzt (07:00 Uhr): 26°, gefühlt 28°.
+
+📅 Heute:
+Heute gibt's große Temperaturschwankungen! Los geht's mit 24°, später dann bis zu 37°. Vielleicht ein paar Tropfen, aber größtenteils trocken.
+Dazu noch windig mit Böen bis 65 km/h.
+⚠️ Hoher UV-Index (9) - Sonnenschutz nicht vergessen!
+🔥 Große Hitze erwartet - viel trinken!
+⚡ Gewitter im Anmarsch - Schutz suchen!</div>
+            </div>
+        </div>
+        
+        <div class="section-title">2️⃣ Ausblick auf Morgen</div>
+        <div class="label">Next Day Outlook</div>
+        
+        <!-- Notification 6: Tomorrow Outlook (German) -->
+        <div class="notification">
+            <div class="notification-header">
+                <div class="app-icon">🌅</div>
+                <div class="app-name">WetterScoutAI</div>
+                <div class="notification-time">vor 5 Min.</div>
+            </div>
+            <div class="notification-content">
+                <div class="notification-title">🌅 Ausblick auf Morgen</div>
+                <div class="notification-body">🌅 Ausblick auf Morgen (Samstag):
+Die Temperatur schwankt morgen zwischen 16° und 25°. Ein schöner, trockener Tag – perfekt!
+
+🌙 Nachts geht es runter auf 13°.</div>
+            </div>
+        </div>
+        
+        <!-- Notification 7: Tomorrow Outlook (English) -->
+        <div class="notification">
+            <div class="notification-header">
+                <div class="app-icon">🌅</div>
+                <div class="app-name">WetterScoutAI</div>
+                <div class="notification-time">5 min ago</div>
+            </div>
+            <div class="notification-content">
+                <div class="notification-title">🌅 Outlook for Tomorrow</div>
+                <div class="notification-body">🌅 Outlook for Tomorrow (Saturday):
+Temperatures will vary between 61°F and 77°F throughout the day. It will be a nice, dry day.
+
+🌙 Night lows around 55°F.</div>
+            </div>
+        </div>
+        
+        <div class="label">Rainy Tomorrow / Regnerischer Morgen</div>
+        
+        <!-- Notification 8: Tomorrow Rainy (German) -->
+        <div class="notification">
+            <div class="notification-header">
+                <div class="app-icon">🌧️</div>
+                <div class="app-name">WetterScoutAI</div>
+                <div class="notification-time">vor 2 Min.</div>
+            </div>
+            <div class="notification-content">
+                <div class="notification-title">🌅 Ausblick auf Morgen</div>
+                <div class="notification-body">🌅 Ausblick auf Morgen (Sonntag):
+Die Temperatur schwankt morgen zwischen 10° und 15°. Wird regnerisch (15.2mm) – Schirm mitnehmen!
+Regen von 06:00 bis 20:00 Uhr (15.2mm).
+Dazu noch windig mit Böen bis 72 km/h.
+
+🌙 Nachts kühlt es auf frische 7° ab (kann am Boden frieren).</div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; color: white; margin-top: 60px; padding-bottom: 40px; opacity: 0.8;">
+            <p style="font-size: 14px;">WetterScoutAI v15.0</p>
+            <p style="font-size: 12px; margin-top: 8px;">Öffne diese HTML-Datei im Browser für eine interaktive Vorschau</p>
+        </div>
+    </div>
+</body>
+</html>
