@@ -2966,7 +2966,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         
         if (tGust > 50) { 
             tomorrowText += lang === 'en' ? ` Windy with gusts up to ${tGust} km/h.` : ` Dazu noch windig mit Böen bis ${tGust} km/h.`; 
-            warning = lang === 'en' ? "WINDY (Tomorrow)" : "WINDIG (Morgen)"; 
+            if (!warning) warning = lang === 'en' ? "WINDY (Tomorrow)" : "WINDIG (Morgen)"; 
         }
         
         // UV warning for tomorrow
@@ -2996,8 +2996,8 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         // Thunderstorm warning for tomorrow
         if (tHasThunderstorm) {
             tomorrowText += lang === 'en'
-                ? ` ⚡ Thunderstorms approaching - seek shelter!`
-                : ` ⚡ Gewitter im Anmarsch - Schutz suchen!`;
+                ? ` ⚡ Thunderstorms expected - be prepared!`
+                : ` ⚡ Gewitter erwartet - vorbereitet sein!`;
             if (!warning) warning = lang === 'en' ? "THUNDERSTORMS (Tomorrow)" : "GEWITTER (Morgen)";
         }
         
@@ -3008,7 +3008,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     const maxGustNow = Math.max(...(todayData.map(d=>d.gust)||[]), 0);
     const maxUVNow = Math.max(...(todayData.map(d=>d.uvIndex||0)), 0);
     const maxTempNow = Math.max(...(todayData.map(d=>d.temp)||[]), 0);
-    const minTempNow = Math.min(...(todayData.map(d=>d.temp)||[]), 0);
+    const minTempNow = Math.min(...(todayData.map(d=>d.temp)||[]), 0) || 0;
     const hasThunderstormNow = todayData.some(d => [95, 96, 99].includes(d.code));
     
     // Set warnings based on today's data (prioritized by severity)
