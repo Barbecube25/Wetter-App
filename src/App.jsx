@@ -4023,6 +4023,47 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   );
 };
 
+// --- NEU: HOURLY TEMPERATURE TILES (Horizontal tiles with next hours temps) ---
+const HourlyTemperatureTiles = ({ data, lang='de', formatTemp }) => {
+  const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+  
+  if (!data || data.length === 0) return null;
+  
+  // Take next 12 hours
+  const hourlyData = data.slice(0, 12);
+  
+  return (
+    <div className="bg-m3-surface-container-high/60 backdrop-blur-sm rounded-m3-2xl p-4 border border-m3-outline-variant/40 shadow-m3-2">
+      <div className="flex items-center gap-2 mb-3">
+        <Clock size={18} className="text-m3-on-surface-variant" />
+        <span className="text-m3-label-large font-bold text-m3-on-surface">{t.nextHours}</span>
+      </div>
+      
+      <div className="overflow-x-auto pb-2 -mx-2 px-2" tabIndex="0">
+        <div className="flex gap-3">
+          {hourlyData.map((hour) => {
+            const WeatherIcon = getWeatherConfig(hour.code, hour.isDay, lang).icon;
+            return (
+              <div 
+                key={hour.time.toISOString()} 
+                className="flex flex-col items-center bg-m3-surface-container/80 backdrop-blur-sm rounded-m3-xl p-3 min-w-[70px] border border-m3-outline-variant/30 shadow-m3-1 hover:shadow-m3-2 transition-all"
+              >
+                <span className="text-m3-label-small text-m3-on-surface-variant mb-1">
+                  {hour.displayTime}
+                </span>
+                <WeatherIcon size={24} className="text-m3-on-surface mb-2" />
+                <span className="text-m3-title-medium font-bold text-m3-on-surface">
+                  {formatTemp(hour.temp)}°
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- NEU: PRECIPITATION TILE (Wann, Wie lang, Wie viel) ---
 const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
@@ -7011,6 +7052,7 @@ export default function WeatherApp() {
           {activeTab === 'overview' && (
             <div className="space-y-4">
                <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} />
+               <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} />
                <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} lang={lang} />
             </div>
           )}
