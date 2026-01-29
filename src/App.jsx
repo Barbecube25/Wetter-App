@@ -6745,6 +6745,26 @@ export default function WeatherApp() {
 
   const dailyRainSum = processedLong.length > 0 ? processedLong[0].rain : "0.0";
   const dailySnowSum = processedLong.length > 0 ? processedLong[0].snow : "0.0";
+  
+  // Calculate 24-hour precipitation total (same as in modal)
+  const next24HoursPrecip = useMemo(() => {
+    if (!processedShort || processedShort.length === 0) {
+      return { rain: 0, snow: 0, total: 0 };
+    }
+    const next24Hours = processedShort.slice(0, 24);
+    let totalRain = 0;
+    let totalSnow = 0;
+    for (let i = 0; i < next24Hours.length; i++) {
+      totalRain += (next24Hours[i].precip || 0);
+      totalSnow += (next24Hours[i].snow || 0);
+    }
+    return {
+      rain: totalRain,
+      snow: totalSnow,
+      total: totalRain + totalSnow
+    };
+  }, [processedShort]);
+  
   // Snow should be treated like rain - only show if weather code explicitly indicates snow, not based on temperature
   const isSnowing = current.code && SNOW_WEATHER_CODES.includes(current.code);
   
@@ -7302,7 +7322,7 @@ export default function WeatherApp() {
             </div>
           </div>
           
-          {(parseFloat(dailyRainSum) > 0 || parseFloat(dailySnowSum) > 0) ? (
+          {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) ? (
             <div 
               onClick={() => setShowPrecipModal(true)}
               className="bg-m3-tertiary-container rounded-m3-xl p-3 border border-m3-tertiary shadow-m3-1 cursor-pointer hover:bg-m3-tertiary-container/80 transition-all active:scale-95"
@@ -7311,7 +7331,7 @@ export default function WeatherApp() {
                 {isSnowing ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
               </div>
               <div className="text-m3-title-large font-bold text-m3-on-tertiary-container">
-                {isSnowing ? dailySnowSum : dailyRainSum} {isSnowing ? 'cm' : 'mm'}
+                {next24HoursPrecip.total.toFixed(1)} mm
               </div>
             </div>
           ) : (
