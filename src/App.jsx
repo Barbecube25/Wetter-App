@@ -2327,40 +2327,40 @@ const formatDateShort = (date, lang = 'de') => {
 };
 
 const getWindColorClass = (speed) => {
-  if (speed >= 60) return "text-red-600 font-extrabold";
-  if (speed >= 40) return "text-orange-500 font-bold";
-  if (speed >= 20) return "text-blue-500 font-bold";
-  return "text-slate-600 font-medium";
+  if (speed >= 60) return "text-m3-error font-extrabold";
+  if (speed >= 40) return "text-m3-tertiary font-bold";
+  if (speed >= 20) return "text-m3-primary font-bold";
+  return "text-m3-on-surface-variant font-medium";
 };
 
 const getUvColorClass = (uv) => {
-  if (uv >= 11) return "text-purple-600";
-  if (uv >= 8) return "text-red-600";
-  if (uv >= 6) return "text-orange-500";
-  if (uv >= 3) return "text-yellow-600";
-  return "text-green-600";
+  if (uv >= 11) return "text-m3-error";
+  if (uv >= 8) return "text-m3-error";
+  if (uv >= 6) return "text-m3-tertiary";
+  if (uv >= 3) return "text-m3-primary";
+  return "text-m3-secondary";
 };
 
 const getUvBadgeClass = (uv) => {
-  if (uv >= 11) return "bg-purple-100 text-purple-800 border-purple-300";
-  if (uv >= 8) return "bg-red-100 text-red-800 border-red-300";
-  if (uv >= 6) return "bg-orange-100 text-orange-800 border-orange-300";
-  if (uv >= 3) return "bg-yellow-100 text-yellow-800 border-yellow-300";
-  return "bg-green-100 text-green-800 border-green-300";
+  if (uv >= 11) return "bg-m3-error-container text-m3-on-error-container border-m3-error";
+  if (uv >= 8) return "bg-m3-error-container text-m3-on-error-container border-m3-error";
+  if (uv >= 6) return "bg-m3-tertiary-container text-m3-on-tertiary-container border-m3-tertiary";
+  if (uv >= 3) return "bg-m3-primary-container text-m3-on-primary-container border-m3-primary";
+  return "bg-m3-secondary-container text-m3-on-secondary-container border-m3-secondary";
 };
 
 const getConfidenceColor = (percent) => {
-  if (percent >= 80) return "text-green-600";
-  if (percent >= 50) return "text-yellow-600";
-  return "text-red-600";
+  if (percent >= 80) return "text-m3-secondary";
+  if (percent >= 50) return "text-m3-primary";
+  return "text-m3-error";
 };
 
 const getDwdColorClass = (severity) => {
   const sev = severity ? severity.toLowerCase() : 'minor';
-  if (sev === 'extreme') return "bg-purple-100 border-purple-600 text-purple-900";
-  if (sev === 'severe') return "bg-red-100 border-red-600 text-red-900";
-  if (sev === 'moderate') return "bg-orange-100 border-orange-500 text-orange-900";
-  return "bg-yellow-100 border-yellow-500 text-yellow-900";
+  if (sev === 'extreme') return "bg-m3-error-container border-m3-error text-m3-on-error-container";
+  if (sev === 'severe') return "bg-m3-tertiary-container border-m3-tertiary text-m3-on-tertiary-container";
+  if (sev === 'moderate') return "bg-m3-primary-container border-m3-primary text-m3-on-primary-container";
+  return "bg-m3-secondary-container border-m3-secondary text-m3-on-secondary-container";
 };
 
 const getModelRunTime = (intervalHours, processingDelayHours) => {
@@ -4442,10 +4442,10 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
       return (
         <div className="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between shadow-sm mb-4">
             <div className="flex items-center gap-3">
-                <div className="p-3 bg-emerald-100 rounded-full text-emerald-600"><Sun size={28} /></div>
+                <div className="p-3 bg-m3-secondary-container rounded-full text-m3-on-secondary-container"><Sun size={28} /></div>
                 <div>
-                    <div className="font-bold text-slate-700 text-lg">{headline}</div>
-                    <div className="text-base text-slate-500 font-medium">{t.noRainExp}</div>
+                    <div className="font-bold text-m3-on-surface text-m3-title-large">{headline}</div>
+                    <div className="text-m3-body-large text-m3-on-surface-variant font-medium">{t.noRainExp}</div>
                 </div>
             </div>
         </div>
@@ -4453,76 +4453,76 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
   }
 
   const Icon = isMixedPrecip ? CloudSnow : (isSnow ? Snowflake : CloudRain);
-  const colorClass = isMixedPrecip ? "text-purple-600 bg-purple-100 border-purple-200" : (isSnow ? "text-cyan-600 bg-cyan-100 border-cyan-200" : "text-blue-600 bg-blue-100 border-blue-200");
-  const bgClass = isMixedPrecip ? "bg-purple-50/80" : (isSnow ? "bg-cyan-50/80" : "bg-blue-50/80");
+  const colorClass = isMixedPrecip ? "text-m3-tertiary bg-m3-tertiary-container border-m3-tertiary" : (isSnow ? "text-m3-secondary bg-m3-secondary-container border-m3-secondary" : "text-m3-primary bg-m3-primary-container border-m3-primary");
+  const bgClass = isMixedPrecip ? "bg-m3-tertiary-container/30" : (isSnow ? "bg-m3-secondary-container/30" : "bg-m3-primary-container/30");
 
   // Intensitäts-Logik
   const getIntensityInfo = (rate) => {
       // Basic translation mapping for intensity
       if (rate < 0.5) {
-          if (isMixedPrecip) return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: 'bg-purple-300' };
-          if (isSnow) return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: 'bg-cyan-300' };
-          return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: 'bg-blue-300' };
+          if (isMixedPrecip) return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: 'bg-m3-tertiary' };
+          if (isSnow) return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: 'bg-m3-secondary' };
+          return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: 'bg-m3-primary' };
       }
       if (rate < 1.0) {
-          if (isMixedPrecip) return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: 'bg-purple-400' };
-          if (isSnow) return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: 'bg-cyan-400' };
-          return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: 'bg-blue-400' };
+          if (isMixedPrecip) return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: 'bg-m3-tertiary' };
+          if (isSnow) return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: 'bg-m3-secondary' };
+          return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: 'bg-m3-primary' };
       }
       if (rate < 4.0) {
-          if (isMixedPrecip) return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: 'bg-purple-500' };
-          if (isSnow) return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: 'bg-cyan-500' };
-          return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: 'bg-blue-600' };
+          if (isMixedPrecip) return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: 'bg-m3-tertiary' };
+          if (isSnow) return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: 'bg-m3-secondary' };
+          return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: 'bg-m3-primary' };
       }
-      if (isMixedPrecip) return { label: lang === 'en' ? 'Very Heavy' : 'Sehr Stark', percent: 100, color: 'bg-purple-700' };
-      if (isSnow) return { label: lang === 'en' ? 'Very Heavy' : 'Sehr Stark', percent: 100, color: 'bg-cyan-700' };
-      return { label: lang === 'en' ? 'Very Heavy' : 'Sehr Stark', percent: 100, color: 'bg-blue-800' };
+      if (isMixedPrecip) return { label: lang === 'en' ? 'Very Heavy' : 'Sehr Stark', percent: 100, color: 'bg-m3-error' };
+      if (isSnow) return { label: lang === 'en' ? 'Very Heavy' : 'Sehr Stark', percent: 100, color: 'bg-m3-error' };
+      return { label: lang === 'en' ? 'Very Heavy' : 'Sehr Stark', percent: 100, color: 'bg-m3-error' };
   };
 
   const intensity = getIntensityInfo(maxIntensity);
 
   return (
-    <div className={`${bgClass} border ${isMixedPrecip ? 'border-purple-100' : (isSnow ? 'border-cyan-100' : 'border-blue-100')} rounded-2xl p-4 shadow-sm mb-4 relative overflow-hidden`}>
+    <div className={`${bgClass} border ${isMixedPrecip ? 'border-m3-tertiary' : (isSnow ? 'border-m3-secondary' : 'border-m3-primary')} rounded-2xl p-4 shadow-sm mb-4 relative overflow-hidden`}>
         <div className="flex justify-between items-center z-10 relative">
             <div className="flex items-center gap-4">
                 <div className={`p-3 rounded-lg ${colorClass} bg-opacity-30`}>
                     <Icon size={32} strokeWidth={2.5} />
                 </div>
                 <div>
-                    <div className="font-bold text-slate-700 text-lg uppercase tracking-wide opacity-80 mb-0.5">
+                    <div className="font-bold text-m3-on-surface text-m3-title-large uppercase tracking-wide opacity-80 mb-0.5">
                         {headline}
                     </div>
                     <div className="flex items-center gap-2">
                         {/* Time Display Logic */}
-                        {!isNow && isLaterThan2h && !minutelyStart && <span className="text-base font-bold text-slate-600">{t.ab}</span>}
-                        <span className="text-4xl font-black text-slate-800 tracking-tight leading-none">
+                        {!isNow && isLaterThan2h && !minutelyStart && <span className="text-m3-body-large font-bold text-m3-on-surface-variant">{t.ab}</span>}
+                        <span className="text-m3-display-small font-black text-m3-on-surface tracking-tight leading-none">
                             {timeDisplay}
                         </span>
-                        {!isNow && !isSoon && !minutelyStart && <span className="text-sm font-bold text-slate-500 uppercase">{t.oclock}</span>}
+                        {!isNow && !isSoon && !minutelyStart && <span className="text-m3-label-large font-bold text-m3-on-surface-variant uppercase">{t.oclock}</span>}
                         
                         {/* Ping Animation if Raining Now or very soon */}
                         {(isNow || (minutelyStart && (minutelyStart - now) < 300000)) && (
                             <span className="flex h-4 w-4 relative">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-4 w-4 bg-blue-500"></span>
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-m3-primary opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-4 w-4 bg-m3-primary"></span>
                             </span>
                         )}
                     </div>
-                    <div className="text-sm font-bold uppercase text-slate-500 tracking-wide mt-1">
+                    <div className="text-m3-label-large font-bold uppercase text-m3-on-surface-variant tracking-wide mt-1">
                         {isMixedPrecip ? (lang === 'en' ? 'Mixed Precipitation' : 'Mischniederschlag') : (isSnow ? t.snow : t.rain)} • {intensity.label}
                     </div>
                 </div>
             </div>
 
             <div className="text-right">
-                <div className="text-xl font-bold text-slate-700 leading-tight">{amount.toFixed(1)}<span className="text-sm text-slate-500 font-normal ml-0.5">mm</span></div>
+                <div className="text-m3-title-large font-bold text-m3-on-surface leading-tight">{amount.toFixed(1)}<span className="text-m3-label-large text-m3-on-surface-variant font-normal ml-0.5">mm</span></div>
                 {isMixedPrecip && (rainAmount > 0.1 || snowAmount > 0.1) && (
-                    <div className="text-xs text-slate-500 mt-1">
+                    <div className="text-m3-label-small text-m3-on-surface-variant mt-1">
                         {rainAmount > 0.1 && <span className="flex items-center justify-end gap-1"><CloudRain size={12}/>{rainAmount.toFixed(1)}mm</span>}
                         {snowAmount > 0.1 && <span className="flex items-center justify-end gap-1"><Snowflake size={12}/>{snowAmount.toFixed(1)}mm</span>}
                     </div>
                 )}
-                <div className="text-lg font-medium text-slate-500 leading-tight">{duration} <span className="text-sm">{t.hours}</span></div>
+                <div className="text-m3-title-medium font-medium text-m3-on-surface-variant leading-tight">{duration} <span className="text-m3-label-large">{t.hours}</span></div>
             </div>
         </div>
 
@@ -4537,12 +4537,12 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
         <div className="mt-4 space-y-3">
             {/* Current Intensity (only when raining now) */}
             {isNow && currentIntensity > 0 && (
-                <div className="flex items-center justify-between bg-white/30 rounded-xl p-3">
+                <div className="flex items-center justify-between bg-m3-surface-container/50 rounded-xl p-3">
                     <div className="flex items-center gap-2">
-                        <Droplets size={18} className="text-blue-600" />
-                        <span className="text-sm font-bold text-slate-700">{t.currentIntensity}</span>
+                        <Droplets size={18} className="text-m3-primary" />
+                        <span className="text-m3-label-large font-bold text-m3-on-surface">{t.currentIntensity}</span>
                     </div>
-                    <span className="text-base font-bold text-slate-800">{currentIntensity.toFixed(1)} mm/h</span>
+                    <span className="text-m3-body-large font-bold text-m3-on-surface">{currentIntensity.toFixed(1)} mm/h</span>
                 </div>
             )}
             
@@ -6418,8 +6418,8 @@ export default function WeatherApp() {
           fetchPreview();
       }, [trip]);
 
-      if (loading) return <div className="w-8 h-8 rounded-full bg-slate-100 animate-pulse"></div>;
-      if (!weather) return <div className="text-[10px] text-slate-400">--</div>;
+      if (loading) return <div className="w-8 h-8 rounded-full bg-m3-surface-container animate-pulse"></div>;
+      if (!weather) return <div className="text-[10px] text-m3-on-surface-variant">--</div>;
 
       const Icon = getWeatherConfig(weather.code, 1, lang).icon;
       return (
@@ -6668,7 +6668,7 @@ export default function WeatherApp() {
 
   // --- WIDGET VIEWS ---
   if (viewMode === 'animation') {
-    if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-900 text-white">{t('loading')}</div>;
+    if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-m3-dark-surface text-m3-dark-on-surface">{t('loading')}</div>;
     return (
       <div className={`h-screen w-screen overflow-hidden relative bg-gradient-to-br ${bgGradient}`}>
         <style>{styles}</style>
@@ -6860,9 +6860,9 @@ export default function WeatherApp() {
   }
 
   if (viewMode === 'report') {
-     if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-50">{t('loading')}</div>;
+     if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-m3-surface">{t('loading')}</div>;
      return (
-        <div className="min-h-screen bg-slate-100 px-4 pb-4 pt-14">
+        <div className="min-h-screen bg-m3-surface px-4 pb-4 pt-14">
             <div className="mb-4">
                 <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
             </div>
@@ -6879,7 +6879,7 @@ export default function WeatherApp() {
   if (viewMode === 'precip') {
     if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-50">{t('loading')}</div>;
     return (
-       <div className="min-h-screen bg-slate-100 p-4 flex flex-col justify-center">
+       <div className="min-h-screen bg-m3-surface p-4 flex flex-col justify-center">
            <div className="absolute top-12 left-4">
                <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
            </div>
