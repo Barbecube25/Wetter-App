@@ -7287,6 +7287,18 @@ export default function WeatherApp() {
                     <span>T: {formatTemp(processedLong[0]?.min)}°</span>
                   </div>
                   <div className="mt-3 text-m3-title-large text-white font-medium drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">{weatherConf.text}</div>
+                  
+                  {/* Sunrise and Sunset Times */}
+                  <div className="flex items-center gap-4 mt-3 text-m3-body-medium text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
+                    <div className="flex items-center gap-1.5">
+                      <Sunrise size={18} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                      <span>{formatTime(sunriseSunset.sunrise)}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Sunset size={18} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                      <span>{formatTime(sunriseSunset.sunset)}</span>
+                    </div>
+                  </div>
                 </div>
                 
                 {/* Weather Icon */}
