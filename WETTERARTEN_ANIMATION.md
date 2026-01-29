@@ -29,8 +29,13 @@ Diese Datei listet alle Wetterarten auf, die in der animierten SVG-Szene der Wet
 
 ### 4. Schneeregen / Graupel (Sleet)
 - **Codes**: 56, 57, 66, 67
+- **Details**:
+  - 56: Leichter gefrierender Nieselregen
+  - 57: Dichter gefrierender Nieselregen  
+  - 66: Leichter gefrierender Regen (Freezing Rain)
+  - 67: Starker gefrierender Regen (Freezing Rain)
 - **Animation**: Kombination aus Regen und Schnee
-- **Effekt**: Graue Regentropfen, weiße Bergspitzen, eisige Bodenoberfläche
+- **Effekt**: Graue Regentropfen, weiße Bergspitzen, eisige Bodenoberfläche mit Glitzereffekt
 
 ### 5. Hagel (Hail)
 - **Codes**: 96, 99
@@ -165,6 +170,59 @@ Die App verwendet folgende CSS-Keyframe-Animationen:
 - **float-leaves**: Fallende Herbstblätter
 - **float-clouds**: Horizontal schwebende Wolken
 
+## Astronomische Effekte
+
+Die App berechnet und berücksichtigt auch astronomische Daten:
+
+### 26. Mondphasen (Moon Phases)
+- **Funktion**: `getMoonPhase()` berechnet 8 Mondphasen
+- **Phasen**: Neumond, zunehmende Sichel, erstes Viertel, zunehmender Mond, Vollmond, abnehmender Mond, letztes Viertel, abnehmende Sichel
+- **Effekt**: Der Mond wird bei Nacht entsprechend der aktuellen Phase dargestellt
+
+## Kombinierte Wetterphänomene
+
+Die folgenden Phänomene entstehen durch Kombination mehrerer Bedingungen:
+
+### 27. Blizzard (Schneesturm)
+- **Bedingungen**: `isHeavySnow` + `isStormyWind` (Starker Schnee + Windgeschwindigkeit ≥ 60 km/h)
+- **Effekt**: Maximale Schneeintensität (80+ Flocken) mit 20° Neigung und extremem Baumschütteln
+
+### 28. Gefrierender Regen (Freezing Rain)
+- **Codes**: 66, 67 (in der App als Sleet/Schneeregen klassifiziert)
+- **Bedingungen**: Niederschlag bei `isFreezing` (≤ 0°C)
+- **Effekt**: Regentropfen mit eisiger Bodenoberfläche und funkelnden Eiskristallen
+
+### 29. Eisregen bei Minusgraden
+- **Bedingungen**: `isRain` + `isFreezing` (Regen + Temperatur ≤ 0°C)
+- **Effekt**: Eisige, bläuliche Bodenoberfläche mit Glitzereffekt
+
+## Zukünftige Erweiterungsmöglichkeiten
+
+Die folgenden Wetterarten sind in der aktuellen Version noch nicht implementiert, könnten aber in Zukunft hinzugefügt werden:
+
+### Atmosphärische Phänomene (WMO-Erweiterung)
+- **Dunst/Haze** (WMO Codes 4, 5): Trockener Trübungszustand durch Staub/Rauch
+- **Trockenes Gewitter** (Code 17): Blitze ohne Niederschlag
+- **Sandsturm/Staubsturm** (Codes 30-35): Für internationale Regionen
+- **Tornado/Windhose** (Code 19): Extremwetterereignis
+
+### Astronomische Zusatzeffekte
+- **Sternenklare Nacht**: Intensivere Sternenanzeige bei Code 0 + Nacht
+- **Polarlichter (Aurora)**: Für nördliche Breitengrade bei klarem Himmel
+- **Regenbogen**: Bei `isRain` + `isClear`/`isPartlyCloudy` (Sonne scheint)
+
+### Erweiterte Temperaturlogik
+- **Schwül/Drückend**: Temperatur > 25°C + hohe Luftfeuchtigkeit (>70%)
+- **Bodenfrost**: Lufttemperatur knapp über 0°C, aber Bodentemperatur unter 0°C
+
+### Kombinierte Wetterevents
+- **Gewitterböen (Squalls)**: Plötzliche Windstöße vor Gewittern
+- **Raureif**: Eisablagerungen bei Nebel und Frost
+
+**Hinweis**: Diese Erweiterungen würden zusätzliche API-Daten (Luftfeuchtigkeit, Sichtweite, Bodentemperatur) oder erweiterte WMO-Wettercodes erfordern. Die Open-Meteo API unterstützt aktuell hauptsächlich die Codes 0-99.
+
 ## Zusammenfassung
 
-Insgesamt werden **mindestens 25 verschiedene Wetterarten, Bedingungen und Ereignisse** in der animierten Szene dargestellt, mit über **15 verschiedenen CSS-Keyframe-Animationen**. Die Animationen passen sich dynamisch an die aktuellen Wetterbedingungen, Tageszeit, Jahreszeit und besondere Ereignisse an.
+Insgesamt werden **derzeit 29 verschiedene Wetterarten, Bedingungen und Ereignisse** in der animierten Szene dargestellt (inklusive Mondphasen und kombinierter Phänomene), mit über **15 verschiedenen CSS-Keyframe-Animationen**. Die Animationen passen sich dynamisch an die aktuellen Wetterbedingungen, Tageszeit, Jahreszeit und besondere Ereignisse an.
+
+Die App nutzt die **Open-Meteo API** mit WMO-Wettercodes 0-99 und kombiniert diese mit berechneten Schwellenwerten für Temperatur, Wind und Niederschlag, um ein umfassendes Bild der Wetterlage zu vermitteln.
