@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Eye, Activity } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
 import { StatusBar } from '@capacitor/status-bar';
 
@@ -37,6 +37,14 @@ const TRANSLATIONS = {
     humidity: "Feuchte",
     dewPoint: "Taupkt.",
     uv: "UV",
+    pressure: "Luftdruck",
+    visibility: "Sicht",
+    airQuality: "Luftqualität",
+    aqiGood: "Gut",
+    aqiModerate: "Mittel",
+    aqiUnhealthy: "Ungesund",
+    aqiVeryUnhealthy: "Sehr ungesund",
+    aqiHazardous: "Gefährlich",
     overview: "Verlauf",
     longterm: "14 Tage",
     radar: "Radar",
@@ -200,6 +208,14 @@ const TRANSLATIONS = {
     humidity: "Humidity",
     dewPoint: "Dew Pt.",
     uv: "UV",
+    pressure: "Pressure",
+    visibility: "Visibility",
+    airQuality: "Air Quality",
+    aqiGood: "Good",
+    aqiModerate: "Moderate",
+    aqiUnhealthy: "Unhealthy",
+    aqiVeryUnhealthy: "Very Unhealthy",
+    aqiHazardous: "Hazardous",
     overview: "Overview",
     longterm: "14 Days",
     radar: "Radar",
@@ -363,6 +379,14 @@ const TRANSLATIONS = {
     humidity: "Humidité",
     dewPoint: "Pt. rosée",
     uv: "UV",
+    pressure: "Pression",
+    visibility: "Visibilité",
+    airQuality: "Qualité de l'air",
+    aqiGood: "Bonne",
+    aqiModerate: "Moyenne",
+    aqiUnhealthy: "Mauvaise",
+    aqiVeryUnhealthy: "Très mauvaise",
+    aqiHazardous: "Dangereuse",
     overview: "Historique",
     longterm: "14 jours",
     radar: "Radar",
@@ -526,6 +550,14 @@ const TRANSLATIONS = {
     humidity: "Humedad",
     dewPoint: "Pto. rocío",
     uv: "UV",
+    pressure: "Presión",
+    visibility: "Visibilidad",
+    airQuality: "Calidad del aire",
+    aqiGood: "Buena",
+    aqiModerate: "Moderada",
+    aqiUnhealthy: "Mala",
+    aqiVeryUnhealthy: "Muy mala",
+    aqiHazardous: "Peligrosa",
     overview: "Historial",
     longterm: "14 días",
     radar: "Radar",
@@ -689,6 +721,14 @@ const TRANSLATIONS = {
     humidity: "Umidità",
     dewPoint: "Pto. rugiada",
     uv: "UV",
+    pressure: "Pressione",
+    visibility: "Visibilità",
+    airQuality: "Qualità dell'aria",
+    aqiGood: "Buona",
+    aqiModerate: "Moderata",
+    aqiUnhealthy: "Malsana",
+    aqiVeryUnhealthy: "Molto malsana",
+    aqiHazardous: "Pericolosa",
     overview: "Storico",
     longterm: "14 giorni",
     radar: "Radar",
@@ -852,6 +892,14 @@ const TRANSLATIONS = {
     humidity: "Nem",
     dewPoint: "Çiy noktası",
     uv: "UV",
+    pressure: "Basınç",
+    visibility: "Görüş",
+    airQuality: "Hava Kalitesi",
+    aqiGood: "İyi",
+    aqiModerate: "Orta",
+    aqiUnhealthy: "Sağlıksız",
+    aqiVeryUnhealthy: "Çok sağlıksız",
+    aqiHazardous: "Tehlikeli",
     overview: "Geçmiş",
     longterm: "14 Gün",
     radar: "Radar",
@@ -1015,6 +1063,14 @@ const TRANSLATIONS = {
     humidity: "Wilgotność",
     dewPoint: "Pkt rosy",
     uv: "UV",
+    pressure: "Ciśnienie",
+    visibility: "Widoczność",
+    airQuality: "Jakość powietrza",
+    aqiGood: "Dobra",
+    aqiModerate: "Umiarkowana",
+    aqiUnhealthy: "Niezdrowa",
+    aqiVeryUnhealthy: "Bardzo niezdrowa",
+    aqiHazardous: "Niebezpieczna",
     overview: "Historia",
     longterm: "14 dni",
     radar: "Radar",
@@ -1178,6 +1234,14 @@ const TRANSLATIONS = {
     humidity: "Vochtigheid",
     dewPoint: "Dauwpunt",
     uv: "UV",
+    pressure: "Druk",
+    visibility: "Zicht",
+    airQuality: "Luchtkwaliteit",
+    aqiGood: "Goed",
+    aqiModerate: "Matig",
+    aqiUnhealthy: "Ongezond",
+    aqiVeryUnhealthy: "Zeer ongezond",
+    aqiHazardous: "Gevaarlijk",
     overview: "Verloop",
     longterm: "14 dagen",
     radar: "Radar",
@@ -1341,6 +1405,14 @@ const TRANSLATIONS = {
     humidity: "Vlažnost",
     dewPoint: "Rosište",
     uv: "UV",
+    pressure: "Tlak",
+    visibility: "Vidljivost",
+    airQuality: "Kvaliteta zraka",
+    aqiGood: "Dobra",
+    aqiModerate: "Umjerena",
+    aqiUnhealthy: "Nezdravo",
+    aqiVeryUnhealthy: "Vrlo nezdravo",
+    aqiHazardous: "Opasno",
     overview: "Pregled",
     longterm: "14 dana",
     radar: "Radar",
@@ -1504,6 +1576,14 @@ const TRANSLATIONS = {
     humidity: "Υγρασία",
     dewPoint: "Σημείο δρόσου",
     uv: "UV",
+    pressure: "Πίεση",
+    visibility: "Ορατότητα",
+    airQuality: "Ποιότητα αέρα",
+    aqiGood: "Καλή",
+    aqiModerate: "Μέτρια",
+    aqiUnhealthy: "Ανθυγιεινή",
+    aqiVeryUnhealthy: "Πολύ ανθυγιεινή",
+    aqiHazardous: "Επικίνδυνη",
     overview: "Ιστορικό",
     longterm: "14 ημέρες",
     radar: "Radar",
@@ -1666,6 +1746,14 @@ const TRANSLATIONS = {
     humidity: "Fugtighed",
     dewPoint: "Dugpunkt",
     uv: "UV",
+    pressure: "Tryk",
+    visibility: "Sigtbarhed",
+    airQuality: "Luftkvalitet",
+    aqiGood: "God",
+    aqiModerate: "Moderat",
+    aqiUnhealthy: "Usund",
+    aqiVeryUnhealthy: "Meget usund",
+    aqiHazardous: "Farlig",
     overview: "Oversigt",
     longterm: "14 dage",
     radar: "Radar",
@@ -1829,6 +1917,14 @@ const TRANSLATIONS = {
     humidity: "Влажность",
     dewPoint: "Точка росы",
     uv: "УФ",
+    pressure: "Давление",
+    visibility: "Видимость",
+    airQuality: "Качество воздуха",
+    aqiGood: "Хорошее",
+    aqiModerate: "Умеренное",
+    aqiUnhealthy: "Вредное",
+    aqiVeryUnhealthy: "Очень вредное",
+    aqiHazardous: "Опасное",
     overview: "История",
     longterm: "14 дней",
     radar: "Радар",
@@ -5834,11 +5930,13 @@ export default function WeatherApp() {
 
   const [shortTermData, setShortTermData] = useState(null);
   const [longTermData, setLongTermData] = useState(null);
+  const [airQualityData, setAirQualityData] = useState(null);
   const [dwdWarnings, setDwdWarnings] = useState([]);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [chartView, setChartView] = useState('hourly');
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [isUsingCache, setIsUsingCache] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showAllHours, setShowAllHours] = useState(false); 
   const [sunriseSunset, setSunriseSunset] = useState({ sunrise: null, sunset: null });
@@ -5947,6 +6045,57 @@ export default function WeatherApp() {
       if (!dateStr) return "--:--";
       const d = new Date(dateStr);
       return d.toLocaleTimeString(lang === 'en' ? 'en-US' : 'de-DE', {hour: '2-digit', minute:'2-digit'});
+  };
+  
+  const getCacheAgeText = () => {
+    if (!isUsingCache || !lastUpdated) return '';
+    const ageMs = Date.now() - lastUpdated.getTime();
+    const ageMinutes = Math.floor(ageMs / 60000);
+    
+    if (ageMinutes < 1) {
+      return lang === 'en' ? ' (just now)' : ' (gerade eben)';
+    } else if (ageMinutes < 60) {
+      return lang === 'en' ? ` (${ageMinutes}m ago)` : ` (vor ${ageMinutes}m)`;
+    } else {
+      const ageHours = Math.floor(ageMinutes / 60);
+      return lang === 'en' ? ` (${ageHours}h ago)` : ` (vor ${ageHours}h)`;
+    }
+  };
+  
+  const getAQILevel = (aqi) => {
+    if (!aqi) return null;
+    if (aqi <= 20) return 'good';
+    if (aqi <= 40) return 'moderate';
+    if (aqi <= 60) return 'unhealthy';
+    if (aqi <= 80) return 'veryUnhealthy';
+    return 'hazardous';
+  };
+  
+  const getAQILabel = (aqi) => {
+    const level = getAQILevel(aqi);
+    if (!level) return '';
+    const labels = {
+      good: t('aqiGood'),
+      moderate: t('aqiModerate'),
+      unhealthy: t('aqiUnhealthy'),
+      veryUnhealthy: t('aqiVeryUnhealthy'),
+      hazardous: t('aqiHazardous')
+    };
+    return labels[level];
+  };
+  
+  const getAQIColor = (aqi, isNight = false) => {
+    const level = getAQILevel(aqi);
+    if (!level) return isNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface';
+    
+    const colors = {
+      good: 'text-green-600',
+      moderate: 'text-yellow-600',
+      unhealthy: 'text-orange-600',
+      veryUnhealthy: 'text-red-600',
+      hazardous: 'text-purple-700'
+    };
+    return colors[level];
   };
 
 
@@ -6205,29 +6354,99 @@ export default function WeatherApp() {
     }
   };
   
+  // --- CACHE HELPER FUNCTIONS ---
+  const CACHE_KEY_SHORT = 'weather_cache_short';
+  const CACHE_KEY_LONG = 'weather_cache_long';
+  const CACHE_KEY_TIMESTAMP = 'weather_cache_timestamp';
+  const CACHE_KEY_LOCATION = 'weather_cache_location';
+  const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
+  
+  const saveWeatherCache = (shortData, longData, location) => {
+    try {
+      localStorage.setItem(CACHE_KEY_SHORT, JSON.stringify(shortData));
+      localStorage.setItem(CACHE_KEY_LONG, JSON.stringify(longData));
+      localStorage.setItem(CACHE_KEY_TIMESTAMP, Date.now().toString());
+      localStorage.setItem(CACHE_KEY_LOCATION, JSON.stringify(location));
+    } catch (e) {
+      console.warn('Failed to cache weather data:', e);
+    }
+  };
+  
+  const loadWeatherCache = () => {
+    try {
+      const cachedShort = localStorage.getItem(CACHE_KEY_SHORT);
+      const cachedLong = localStorage.getItem(CACHE_KEY_LONG);
+      const cachedTimestamp = localStorage.getItem(CACHE_KEY_TIMESTAMP);
+      const cachedLocation = localStorage.getItem(CACHE_KEY_LOCATION);
+      
+      if (!cachedShort || !cachedLong || !cachedTimestamp || !cachedLocation) {
+        return null;
+      }
+      
+      const timestamp = parseInt(cachedTimestamp, 10);
+      const age = Date.now() - timestamp;
+      
+      // Check if cache is expired
+      if (age > CACHE_EXPIRY_MS) {
+        return null;
+      }
+      
+      const location = JSON.parse(cachedLocation);
+      
+      // Note: Location comparison will be done in fetchData where currentLoc is available
+      
+      return {
+        shortData: JSON.parse(cachedShort),
+        longData: JSON.parse(cachedLong),
+        timestamp,
+        age,
+        location
+      };
+    } catch (e) {
+      console.warn('Failed to load weather cache:', e);
+      return null;
+    }
+  };
+  
   const fetchData = async () => {
     if (!currentLoc) return; // Nicht fetchen wenn kein Ort da ist
 
-    setLoading(true);
+    // Try to load from cache first
+    const cached = loadWeatherCache();
+    // Validate cache is for current location
+    if (cached && cached.location.lat === currentLoc.lat && cached.location.lon === currentLoc.lon) {
+      setShortTermData(cached.shortData);
+      setLongTermData(cached.longData);
+      setLastUpdated(new Date(cached.timestamp));
+      setIsUsingCache(true);
+      setLoading(false);
+      // Continue fetching in background to update cache
+    } else {
+      setIsUsingCache(false);
+      setLoading(true);
+    }
+    
     setError(null);
     setDwdWarnings([]);
     try {
       const { lat, lon } = currentLoc;
       
       const modelsShort = "icon_seamless,gfs_seamless,gem_seamless";
-      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,cloud_cover&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2`;
+      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,cloud_cover,pressure_msl,visibility&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2`;
       
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
       const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max&models=${modelsLong}&timezone=auto&forecast_days=14`;
       // Separate API call for sunrise/sunset without models parameter (astronomical data is location-based, not model-dependent)
       const urlSunriseSunset = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&timezone=auto&forecast_days=1`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
+      const urlAirQuality = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi,pm10,pm2_5&timezone=auto`;
 
-      const [resShort, resLong, resSunriseSunset, resDwd] = await Promise.all([
+      const [resShort, resLong, resSunriseSunset, resDwd, resAirQuality] = await Promise.all([
         fetch(urlShort), 
         fetch(urlLong), 
         fetch(urlSunriseSunset).catch(() => ({ ok: false })),
-        fetch(urlDwd).catch(() => ({ ok: false }))
+        fetch(urlDwd).catch(() => ({ ok: false })),
+        fetch(urlAirQuality).catch(() => ({ ok: false }))
       ]);
       
       if (!resShort.ok) {
@@ -6239,9 +6458,15 @@ export default function WeatherApp() {
           throw new Error(`Fehler (Long): ${errText}`);
       }
       
-      setShortTermData(await resShort.json());
+      const shortData = await resShort.json();
       const longData = await resLong.json();
+      
+      setShortTermData(shortData);
       setLongTermData(longData);
+      
+      // Save to cache
+      saveWeatherCache(shortData, longData, currentLoc);
+      setIsUsingCache(false);
       
       // Set sunrise/sunset from separate API call
       if (resSunriseSunset.ok) {
@@ -6255,13 +6480,24 @@ export default function WeatherApp() {
          const dwdJson = await resDwd.json();
          setDwdWarnings(dwdJson.alerts || []);
       }
+      
+      if (resAirQuality.ok) {
+        const aqJson = await resAirQuality.json();
+        setAirQualityData(aqJson.current);
+      }
 
       setLastUpdated(new Date());
       setModelRuns({ icon: getModelRunTime(3, 2.5), gfs: getModelRunTime(6, 4), arome: getModelRunTime(3, 2) });
 
     } catch (err) { 
         console.error("API Error:", err);
-        setError(err.message); 
+        // If we have cached data and fetch failed, don't show error
+        if (!cached) {
+          setError(err.message);
+        } else {
+          // Maintain cached state on fetch failure
+          setIsUsingCache(true);
+        }
     } finally { setLoading(false); }
   };
 
@@ -6625,6 +6861,8 @@ export default function WeatherApp() {
         dewPoint: getVal('dewpoint_2m'),
         uvIndex: getVal('uv_index'),
         cloudCover: getAvg('cloud_cover'),
+        pressure: getVal('pressure_msl'),
+        visibility: getVal('visibility'),
         reliability: reliability
       });
     }
@@ -6669,7 +6907,7 @@ export default function WeatherApp() {
   }, [longTermData, lang]); // Add lang to deps to refresh names
   
   // LIVE oder DEMO Daten?
-  const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: 0, precip: 0, wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0, cloudCover: 0 };
+  const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: 0, precip: 0, wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0, cloudCover: 0, pressure: null, visibility: null };
   const current = liveCurrent;
 
   // --- NEUE LOGIK: Echter Tag/Nacht Status für das UI ---
@@ -7151,7 +7389,7 @@ export default function WeatherApp() {
               </h1>
               <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-m3-body-small ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
                 <div className="flex items-center gap-1">
-                  <Clock size={12} /><span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}</span>
+                  <Clock size={12} /><span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}{getCacheAgeText()}</span>
                 </div>
                 {(currentLoc.region || currentLoc.country) && (
                   <div className="flex items-center gap-1">
@@ -7322,6 +7560,47 @@ export default function WeatherApp() {
                 <Thermometer size={14} /> {t('dewPoint')}
               </div>
               <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{formatTemp(current.dewPoint)}{getTempUnitSymbol()}</div>
+            </div>
+          )}
+        </div>
+        
+        {/* Additional Weather Details Grid - Second row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {current.pressure !== null && current.pressure !== undefined && (
+            <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
+              <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                <Gauge size={14} /> {t('pressure')}
+              </div>
+              <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
+                {Math.round(current.pressure)} <span className="text-m3-body-small">hPa</span>
+              </div>
+            </div>
+          )}
+          
+          {current.visibility !== null && current.visibility !== undefined && current.visibility > 0 && (
+            <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
+              <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                <Eye size={14} /> {t('visibility')}
+              </div>
+              <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
+                {settings.units === 'imperial' 
+                  ? `${(current.visibility / 1609.34).toFixed(1)} mi` 
+                  : `${(current.visibility / 1000).toFixed(1)} km`}
+              </div>
+            </div>
+          )}
+          
+          {airQualityData && airQualityData.european_aqi !== undefined && (
+            <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
+              <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                <Activity size={14} /> {t('airQuality')}
+              </div>
+              <div className={`text-m3-title-large font-bold ${getAQIColor(airQualityData.european_aqi, isRealNight)}`}>
+                {Math.round(airQualityData.european_aqi)}
+              </div>
+              <div className={`text-xs font-medium ${getAQIColor(airQualityData.european_aqi, isRealNight)} mt-1`}>
+                {getAQILabel(airQualityData.european_aqi)}
+              </div>
             </div>
           )}
         </div>
