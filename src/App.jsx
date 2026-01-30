@@ -5863,6 +5863,7 @@ export default function WeatherApp() {
   const [activeTab, setActiveTab] = useState('overview');
   const [chartView, setChartView] = useState('hourly');
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [isUsingCache, setIsUsingCache] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showAllHours, setShowAllHours] = useState(false); 
   const [sunriseSunset, setSunriseSunset] = useState({ sunrise: null, sunset: null });
@@ -5971,6 +5972,21 @@ export default function WeatherApp() {
       if (!dateStr) return "--:--";
       const d = new Date(dateStr);
       return d.toLocaleTimeString(lang === 'en' ? 'en-US' : 'de-DE', {hour: '2-digit', minute:'2-digit'});
+  };
+  
+  const getCacheAgeText = () => {
+    if (!isUsingCache || !lastUpdated) return '';
+    const ageMs = Date.now() - lastUpdated.getTime();
+    const ageMinutes = Math.floor(ageMs / 60000);
+    
+    if (ageMinutes < 1) {
+      return lang === 'en' ? ' (just now)' : ' (gerade eben)';
+    } else if (ageMinutes < 60) {
+      return lang === 'en' ? ` (${ageMinutes}m ago)` : ` (vor ${ageMinutes}m)`;
+    } else {
+      const ageHours = Math.floor(ageMinutes / 60);
+      return lang === 'en' ? ` (${ageHours}h ago)` : ` (vor ${ageHours}h)`;
+    }
   };
 
 
@@ -6229,10 +6245,79 @@ export default function WeatherApp() {
     }
   };
   
+  // --- CACHE HELPER FUNCTIONS ---
+  const CACHE_KEY_SHORT = 'weather_cache_short';
+  const CACHE_KEY_LONG = 'weather_cache_long';
+  const CACHE_KEY_TIMESTAMP = 'weather_cache_timestamp';
+  const CACHE_KEY_LOCATION = 'weather_cache_location';
+  const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
+  
+  const saveWeatherCache = (shortData, longData, location) => {
+    try {
+      localStorage.setItem(CACHE_KEY_SHORT, JSON.stringify(shortData));
+      localStorage.setItem(CACHE_KEY_LONG, JSON.stringify(longData));
+      localStorage.setItem(CACHE_KEY_TIMESTAMP, Date.now().toString());
+      localStorage.setItem(CACHE_KEY_LOCATION, JSON.stringify(location));
+    } catch (e) {
+      console.warn('Failed to cache weather data:', e);
+    }
+  };
+  
+  const loadWeatherCache = () => {
+    try {
+      const cachedShort = localStorage.getItem(CACHE_KEY_SHORT);
+      const cachedLong = localStorage.getItem(CACHE_KEY_LONG);
+      const cachedTimestamp = localStorage.getItem(CACHE_KEY_TIMESTAMP);
+      const cachedLocation = localStorage.getItem(CACHE_KEY_LOCATION);
+      
+      if (!cachedShort || !cachedLong || !cachedTimestamp || !cachedLocation) {
+        return null;
+      }
+      
+      const timestamp = parseInt(cachedTimestamp, 10);
+      const age = Date.now() - timestamp;
+      
+      // Check if cache is expired
+      if (age > CACHE_EXPIRY_MS) {
+        return null;
+      }
+      
+      const location = JSON.parse(cachedLocation);
+      
+      // Check if cache is for the current location
+      if (!currentLoc || location.lat !== currentLoc.lat || location.lon !== currentLoc.lon) {
+        return null;
+      }
+      
+      return {
+        shortData: JSON.parse(cachedShort),
+        longData: JSON.parse(cachedLong),
+        timestamp,
+        age
+      };
+    } catch (e) {
+      console.warn('Failed to load weather cache:', e);
+      return null;
+    }
+  };
+  
   const fetchData = async () => {
     if (!currentLoc) return; // Nicht fetchen wenn kein Ort da ist
 
-    setLoading(true);
+    // Try to load from cache first
+    const cached = loadWeatherCache();
+    if (cached) {
+      setShortTermData(cached.shortData);
+      setLongTermData(cached.longData);
+      setLastUpdated(new Date(cached.timestamp));
+      setIsUsingCache(true);
+      setLoading(false);
+      // Continue fetching in background to update cache
+    } else {
+      setIsUsingCache(false);
+      setLoading(true);
+    }
+    
     setError(null);
     setDwdWarnings([]);
     try {
@@ -6263,9 +6348,15 @@ export default function WeatherApp() {
           throw new Error(`Fehler (Long): ${errText}`);
       }
       
-      setShortTermData(await resShort.json());
+      const shortData = await resShort.json();
       const longData = await resLong.json();
+      
+      setShortTermData(shortData);
       setLongTermData(longData);
+      
+      // Save to cache
+      saveWeatherCache(shortData, longData, currentLoc);
+      setIsUsingCache(false);
       
       // Set sunrise/sunset from separate API call
       if (resSunriseSunset.ok) {
@@ -6285,7 +6376,10 @@ export default function WeatherApp() {
 
     } catch (err) { 
         console.error("API Error:", err);
-        setError(err.message); 
+        // If we have cached data and fetch failed, don't show error
+        if (!cached) {
+          setError(err.message);
+        }
     } finally { setLoading(false); }
   };
 
@@ -7177,7 +7271,7 @@ export default function WeatherApp() {
               </h1>
               <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-m3-body-small ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
                 <div className="flex items-center gap-1">
-                  <Clock size={12} /><span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}</span>
+                  <Clock size={12} /><span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}{getCacheAgeText()}</span>
                 </div>
                 {(currentLoc.region || currentLoc.country) && (
                   <div className="flex items-center gap-1">
