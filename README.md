@@ -120,12 +120,24 @@ Siehe [DATENSCHUTZ.md](./DATENSCHUTZ.md) für Details zur Datenverarbeitung und 
 ├── src/                    # React Quellcode
 ├── public/                 # Statische Assets
 ├── android/                # Native Android Projekt (Capacitor)
+├── play-store-screenshots/ # 🆕 Google Play Store Screenshots & Dokumentation
 ├── dist/                   # Build-Ausgabe (wird ignoriert)
 ├── capacitor.config.ts     # Capacitor Konfiguration
 ├── vite.config.js          # Vite Konfiguration
 ├── tailwind.config.js      # Tailwind CSS Konfiguration
 └── package.json            # NPM Dependencies und Scripte
 ```
+
+## Google Play Store Screenshots
+
+Professionelle Screenshots für den Play Store sind verfügbar in [`play-store-screenshots/`](./play-store-screenshots/):
+- ✅ 9 hochwertige Screenshots (412x915px)
+- ✅ Zeigt alle Hauptfunktionen der App
+- ✅ Umfassende Dokumentation (DE/EN)
+- ✅ Schritt-für-Schritt Upload-Anleitung
+- ✅ Priorisierung und Empfehlungen
+
+Siehe [play-store-screenshots/README.md](./play-store-screenshots/README.md) für Details.
 
 ## Veröffentlichung
 
@@ -134,7 +146,11 @@ Siehe [DATENSCHUTZ.md](./DATENSCHUTZ.md) für Details zur Datenverarbeitung und 
 1. App Bundle erstellen (siehe BUILD_AAB_ANLEITUNG.md)
 2. Zur [Google Play Console](https://play.google.com/console) gehen
 3. Neues Release erstellen und .aab Datei hochladen
-4. Release Notes ausfüllen und veröffentlichen
+4. **Screenshots hochladen** (siehe [play-store-screenshots/](./play-store-screenshots/))
+   - 9 professionelle Screenshots verfügbar
+   - Umfassende Dokumentation und Upload-Anleitung enthalten
+   - Optimiert für Android-Geräte (412x915px)
+5. Release Notes ausfüllen und veröffentlichen
 
 ### Web (PWA)
 
