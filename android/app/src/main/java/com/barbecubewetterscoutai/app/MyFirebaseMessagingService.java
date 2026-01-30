@@ -30,6 +30,15 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         if (remoteMessage.getNotification() != null) {
             String title = remoteMessage.getNotification().getTitle();
             String body = remoteMessage.getNotification().getBody();
+            
+            // Use default values if title or body are null
+            if (title == null || title.isEmpty()) {
+                title = "WetterScoutAI";
+            }
+            if (body == null || body.isEmpty()) {
+                body = "You have a new notification";
+            }
+            
             Log.d(TAG, "Message Notification Title: " + title);
             Log.d(TAG, "Message Notification Body: " + body);
             sendNotification(title, body);
@@ -84,8 +93,11 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             this, 
             0, 
             intent,
-            PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_IMMUTABLE
         );
+
+        // Use timestamp to ensure unique notification ID
+        int notificationId = (int) System.currentTimeMillis();
 
         NotificationCompat.Builder notificationBuilder =
             new NotificationCompat.Builder(this, DEFAULT_CHANNEL_ID)
@@ -100,7 +112,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         if (notificationManager != null) {
-            notificationManager.notify(0, notificationBuilder.build());
+            notificationManager.notify(notificationId, notificationBuilder.build());
             Log.d(TAG, "Notification sent: " + title);
         }
     }
