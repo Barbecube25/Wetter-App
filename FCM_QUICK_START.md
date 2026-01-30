@@ -1,5 +1,7 @@
 # 🚀 Quick Start: Android Push Notifications Setup
 
+Hinweis: **Lokale Benachrichtigungen benötigen kein Firebase/FCM**. Firebase/FCM wird **nur** für Push Notifications (Server → Gerät) benötigt.
+
 ## Was wurde implementiert? / What was implemented?
 
 ✅ **Notification Channel** für Android 8.0+ (API 26+)  
@@ -137,6 +139,8 @@ Firebase Console → Projekteinstellungen → Cloud Messaging → Server-Schlüs
 
 ### Benachrichtigungen kommen nicht an / Notifications not arriving?
 
+> Gilt für **Push Notifications** (FCM). Lokale Benachrichtigungen funktionieren ohne Firebase.
+
 1. **Überprüfe LogCat** / **Check LogCat**:
    ```bash
    adb logcat | grep -E "FCMService|MainActivity"
@@ -146,15 +150,18 @@ Firebase Console → Projekteinstellungen → Cloud Messaging → Server-Schlüs
    - Einstellungen → Apps → WetterScoutAI → Benachrichtigungen
    - Settings → Apps → WetterScoutAI → Notifications
 
-3. **Google Play Services** aktuell? / **up to date?**
+3. **Benachrichtigungsberechtigung** / **Notification permission** (Android 13+):
+   - `POST_NOTIFICATIONS` erlaubt?
+
+4. **Google Play Services** aktuell? / **up to date?**
    - Einstellungen → Apps → Google Play Services
    - Settings → Apps → Google Play Services
 
-4. **Energiesparmodus** / **Battery saver**:
+5. **Energiesparmodus** / **Battery saver**:
    - Einstellungen → Apps → WetterScoutAI → Akku
    - Setze auf "Keine Einschränkungen" / Set to "No restrictions"
 
-5. **Test im Vordergrund** / **Test in foreground**:
+6. **Test im Vordergrund** / **Test in foreground**:
    - Öffne die App / Open the app
    - Sende Test-Nachricht / Send test message
    - Funktioniert es jetzt? → Energiespareinstellungen prüfen

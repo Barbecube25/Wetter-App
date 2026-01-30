@@ -105,11 +105,17 @@ Die App unterstützt jetzt lokale Benachrichtigungen für:
 - **Tägliche Wettervorhersage**: Erhalte eine Zusammenfassung wie der Tag wird
 - **Ausblick auf morgen**: Erhalte eine Vorschau auf den nächsten Tag
 
+Lokale Benachrichtigungen funktionieren **ohne** Firebase/FCM. Firebase wird nur für **Push Notifications** benötigt.
+
 Benachrichtigungen können in den Einstellungen konfiguriert werden:
 1. Öffne die Einstellungen (⚙️ Symbol)
 2. Scrolle zu "Benachrichtigungen"
 3. Aktiviere die gewünschten Benachrichtigungstypen
 4. Wähle die Uhrzeit für deine Benachrichtigungen
+
+Kurze Fehlerhilfe:
+- Stelle sicher, dass die Benachrichtigungsberechtigung erteilt wurde (Android 13+: `POST_NOTIFICATIONS`).
+- Prüfe die System-Einstellungen → Apps → WetterScoutAI → Benachrichtigungen (aktiv, nicht im Nicht-Stören-Modus).
 
 ### Verbesserter KI-Bericht
 
