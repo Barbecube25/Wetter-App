@@ -2220,7 +2220,7 @@ const styles = `
 
   /* --- SONSTIGES --- */
   @keyframes ray-pulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
-  @keyframes twinkle { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
+  @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
   @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
   @keyframes lightning-flash { 0%, 92%, 100% { opacity: 0; } 93%, 95% { opacity: 1; background: white; } }
   @keyframes sunrise-glow { 0% { opacity: 0.4; } 50% { opacity: 0.8; } 100% { opacity: 0.4; } }
