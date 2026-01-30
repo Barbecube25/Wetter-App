@@ -38,5 +38,9 @@ android/*.iml
 android/keystore.properties
 keystore.properties
 
+# Firebase configuration - NEVER commit the actual file with real credentials!
+# Use google-services.json.template instead
+android/app/google-services.json
+
 # Capacitor
 android/app/src/main/assets/public/
