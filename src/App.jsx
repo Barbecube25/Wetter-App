@@ -1999,10 +1999,11 @@ const getSavedSettings = () => {
         };
         if (!saved) return defaults;
         const parsed = JSON.parse(saved);
-        if (!parsed || !['celsius', 'fahrenheit', 'kelvin'].includes(parsed.unit)) {
-            return { ...defaults, ...parsed, unit: 'celsius' };
+        const merged = { ...defaults, ...(parsed && typeof parsed === 'object' ? parsed : {}) };
+        if (!['celsius', 'fahrenheit', 'kelvin'].includes(merged.unit)) {
+            merged.unit = 'celsius';
         }
-        return { ...defaults, ...parsed };
+        return merged;
     } catch (e) { 
         return { 
             language: 'de', 
@@ -3274,19 +3275,19 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
                      <div className="flex flex-wrap gap-2 bg-m3-surface-container p-1 rounded-m3-md">
                          <button 
                              onClick={() => setLocalSettings({...localSettings, unit: 'celsius'})}
-                             className={`flex-1 py-2 rounded-m3-sm text-sm font-bold transition ${localSettings.unit === 'celsius' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                             className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.unit === 'celsius' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              °C (Celsius)
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, unit: 'fahrenheit'})}
-                             className={`flex-1 py-2 rounded-m3-sm text-sm font-bold transition ${localSettings.unit === 'fahrenheit' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                             className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.unit === 'fahrenheit' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              °F (Fahrenheit)
                          </button>
                          <button 
                              onClick={() => setLocalSettings({...localSettings, unit: 'kelvin'})}
-                             className={`flex-1 py-2 rounded-m3-sm text-sm font-bold transition ${localSettings.unit === 'kelvin' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                             className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.unit === 'kelvin' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              K (Kelvin)
                          </button>
@@ -4024,7 +4025,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
 };
 
 // --- NEU: HOURLY TEMPERATURE TILES (Horizontal tiles with next hours temps) ---
-const HourlyTemperatureTiles = ({ data, lang='de', formatTemp }) => {
+const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
   
   if (!data || data.length === 0) return null;
@@ -4053,7 +4054,7 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp }) => {
                 </span>
                 <WeatherIcon size={24} className="text-m3-on-surface mb-2" />
                 <span className="text-m3-title-medium font-bold text-m3-on-surface">
-                  {formatTemp(hour.temp)}°
+                  {formatTemp(hour.temp)}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}
                 </span>
               </div>
             );
@@ -5830,6 +5831,11 @@ export default function WeatherApp() {
   const t = (key) => TRANSLATIONS[settings.language]?.[key] || TRANSLATIONS['de'][key] || key;
   const lang = settings.language;
   
+  const getTempUnitSymbol = useCallback(() => {
+      if (settings.unit === 'kelvin') return 'K';
+      return '°';
+  }, [settings.unit]);
+
   const formatTemp = useCallback((val) => {
       if (val === null || val === undefined) return "--";
       if (settings.unit === 'fahrenheit') {
@@ -6444,7 +6450,7 @@ export default function WeatherApp() {
       return (
           <div className="flex items-center gap-2 bg-blue-50 px-2 py-1 rounded-lg">
               <Icon size={16} className="text-blue-600"/>
-              <span className="font-bold text-slate-700 text-xs">{formatTemp(weather.max)}°</span>
+              <span className="font-bold text-slate-700 text-xs">{formatTemp(weather.max)}{getTempUnitSymbol()}</span>
           </div>
       );
   };
@@ -6874,8 +6880,8 @@ export default function WeatherApp() {
         )}
         
         <div className="absolute bottom-8 left-0 right-0 text-center text-white pointer-events-none" style={{textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5)'}}>
-            <div className="text-4xl font-bold">{formatTemp(current.temp)}°</div>
-            <div className="text-sm opacity-70 mb-1">{t('dewPoint')}: {formatTemp(current.dewPoint)}°</div>
+            <div className="text-4xl font-bold">{formatTemp(current.temp)}{getTempUnitSymbol()}</div>
+            <div className="text-sm opacity-70 mb-1">{t('dewPoint')}: {formatTemp(current.dewPoint)}{getTempUnitSymbol()}</div>
             <div className="text-xl mb-2">{weatherConf.text}</div>
             
             {/* NEU: Sonnenaufgang und Untergang */}
@@ -7136,15 +7142,15 @@ export default function WeatherApp() {
             <div className="mb-6">
               <div className="flex items-start justify-between">
                 <div className="p-4 pr-6">
-                  <span className="text-m3-display-large font-light text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">{formatTemp(current.temp)}°</span>
+                  <span className="text-m3-display-large font-light text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">{formatTemp(current.temp)}{getTempUnitSymbol()}</span>
                   <div className="flex items-center gap-2 mt-2 text-m3-body-large text-white/95 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
                     <Thermometer size={20} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
-                    <span>{t('feelsLike')} {formatTemp(current.appTemp)}°</span>
+                    <span>{t('feelsLike')} {formatTemp(current.appTemp)}{getTempUnitSymbol()}</span>
                   </div>
                   <div className="flex items-center gap-3 mt-1 text-m3-title-small text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
-                    <span>H: {formatTemp(processedLong[0]?.max)}°</span>
+                    <span>H: {formatTemp(processedLong[0]?.max)}{getTempUnitSymbol()}</span>
                     <span>•</span>
-                    <span>T: {formatTemp(processedLong[0]?.min)}°</span>
+                    <span>T: {formatTemp(processedLong[0]?.min)}{getTempUnitSymbol()}</span>
                   </div>
                   <div className="mt-3 text-m3-title-large text-white font-medium drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">{weatherConf.text}</div>
                   
@@ -7217,7 +7223,7 @@ export default function WeatherApp() {
               <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                 <Thermometer size={14} /> {t('dewPoint')}
               </div>
-              <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{formatTemp(current.dewPoint)}°</div>
+              <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{formatTemp(current.dewPoint)}{getTempUnitSymbol()}</div>
             </div>
           )}
         </div>
@@ -7248,7 +7254,7 @@ export default function WeatherApp() {
           {activeTab === 'overview' && (
             <div className="space-y-4">
                <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} />
-               <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} />
+               <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} />
                <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} lang={lang} />
             </div>
           )}
@@ -7337,11 +7343,11 @@ export default function WeatherApp() {
                           
                           {/* Temp Range */}
                           <div className="flex items-center gap-2 mb-2 w-full justify-center">
-                            <span className="text-2xl font-bold text-blue-400">{formatTemp(day.min)}°</span>
+                            <span className="text-2xl font-bold text-blue-400">{formatTemp(day.min)}{getTempUnitSymbol()}</span>
                             <div className="h-1 w-6 bg-white/10 rounded-full overflow-hidden">
                                <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
                             </div>
-                            <span className="text-2xl font-bold text-red-400">{formatTemp(day.max)}°</span>
+                            <span className="text-2xl font-bold text-red-400">{formatTemp(day.max)}{getTempUnitSymbol()}</span>
                          </div>
                           
                            <div className="mb-1 min-h-[16px] flex flex-col items-center justify-center w-full gap-0.5">
