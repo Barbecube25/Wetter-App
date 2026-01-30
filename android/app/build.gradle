@@ -97,19 +97,6 @@ dependencies {
     implementation "androidx.compose.material3:material3-window-size-class:$material3WindowSizeVersion"
     implementation "androidx.compose.material3:material3-adaptive-navigation-suite:$material3AdaptiveNavVersion"
     
-    // Firebase Cloud Messaging for push notifications
-    implementation platform('com.google.firebase:firebase-bom:33.7.0')
-    implementation 'com.google.firebase:firebase-messaging'
-    implementation 'com.google.firebase:firebase-analytics'
 }
 
 apply from: 'capacitor.build.gradle'
-
-try {
-    def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
-        apply plugin: 'com.google.gms.google-services'
-    }
-} catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
-}
