@@ -1995,7 +1995,9 @@ const getSavedSettings = () => {
         const defaults = { 
             language: 'de', 
             unit: 'celsius', 
-            theme: 'auto'
+            theme: 'auto',
+            windUnit: 'kmh',
+            precipUnit: 'mm'
         };
         if (!saved) return defaults;
         const parsed = JSON.parse(saved);
@@ -2003,12 +2005,20 @@ const getSavedSettings = () => {
         if (!['celsius', 'fahrenheit', 'kelvin'].includes(merged.unit)) {
             merged.unit = 'celsius';
         }
+        if (!['kmh', 'ms', 'mph'].includes(merged.windUnit)) {
+            merged.windUnit = 'kmh';
+        }
+        if (!['mm', 'in'].includes(merged.precipUnit)) {
+            merged.precipUnit = 'mm';
+        }
         return merged;
     } catch (e) { 
         return { 
             language: 'de', 
             unit: 'celsius', 
-            theme: 'auto'
+            theme: 'auto',
+            windUnit: 'kmh',
+            precipUnit: 'mm'
         }; 
     }
 };
@@ -3267,32 +3277,80 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
                      </div>
                  </div>
 
-                 {/* UNITS */}
-                 <div className="mb-8">
-                     <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
-                        <Thermometer size={16}/> {t.units}
-                     </label>
-                     <div className="flex flex-wrap gap-2 bg-m3-surface-container p-1 rounded-m3-md">
-                         <button 
-                             onClick={() => setLocalSettings({...localSettings, unit: 'celsius'})}
-                             className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.unit === 'celsius' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
-                         >
-                             °C (Celsius)
-                         </button>
-                         <button 
-                             onClick={() => setLocalSettings({...localSettings, unit: 'fahrenheit'})}
-                             className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.unit === 'fahrenheit' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
-                         >
-                             °F (Fahrenheit)
-                         </button>
-                         <button 
-                             onClick={() => setLocalSettings({...localSettings, unit: 'kelvin'})}
-                             className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.unit === 'kelvin' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
-                         >
-                             K (Kelvin)
-                         </button>
-                     </div>
-                 </div>
+                  {/* UNITS */}
+                  <div className="mb-6">
+                      <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
+                         <Thermometer size={16}/> {t.units}
+                      </label>
+                      <div className="flex flex-wrap gap-2 bg-m3-surface-container p-1 rounded-m3-md">
+                          <button 
+                              onClick={() => setLocalSettings({...localSettings, unit: 'celsius'})}
+                              className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.unit === 'celsius' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                          >
+                              °C (Celsius)
+                          </button>
+                          <button 
+                              onClick={() => setLocalSettings({...localSettings, unit: 'fahrenheit'})}
+                              className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.unit === 'fahrenheit' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                          >
+                              °F (Fahrenheit)
+                          </button>
+                          <button 
+                              onClick={() => setLocalSettings({...localSettings, unit: 'kelvin'})}
+                              className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.unit === 'kelvin' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                          >
+                              K (Kelvin)
+                          </button>
+                      </div>
+                  </div>
+
+                  {/* WIND */}
+                  <div className="mb-6">
+                      <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
+                         <Wind size={16}/> {t.wind}
+                      </label>
+                      <div className="flex gap-2 bg-m3-surface-container p-1 rounded-m3-md">
+                          <button 
+                              onClick={() => setLocalSettings({...localSettings, windUnit: 'kmh'})}
+                              className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.windUnit === 'kmh' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                          >
+                              km/h
+                          </button>
+                          <button 
+                              onClick={() => setLocalSettings({...localSettings, windUnit: 'ms'})}
+                              className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.windUnit === 'ms' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                          >
+                              m/s
+                          </button>
+                          <button 
+                              onClick={() => setLocalSettings({...localSettings, windUnit: 'mph'})}
+                              className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.windUnit === 'mph' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                          >
+                              mph
+                          </button>
+                      </div>
+                  </div>
+
+                  {/* PRECIP */}
+                  <div className="mb-8">
+                      <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
+                         <Droplets size={16}/> {t.precip}
+                      </label>
+                      <div className="flex gap-2 bg-m3-surface-container p-1 rounded-m3-md">
+                          <button 
+                              onClick={() => setLocalSettings({...localSettings, precipUnit: 'mm'})}
+                              className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.precipUnit === 'mm' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                          >
+                              mm
+                          </button>
+                          <button 
+                              onClick={() => setLocalSettings({...localSettings, precipUnit: 'in'})}
+                              className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.precipUnit === 'in' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                          >
+                              in
+                          </button>
+                      </div>
+                  </div>
 
                  </div>
 
@@ -4066,7 +4124,7 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
 };
 
 // --- NEU: PRECIPITATION TILE (Wann, Wie lang, Wie viel) ---
-const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
+const PrecipitationTile = ({ data, minutelyData, lang='de', formatPrecip, getPrecipUnitLabel }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
 
   // Analyse der nächsten 24h
@@ -4411,17 +4469,17 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
                         )}
                     </div>
                     <div className="text-m3-label-large font-bold uppercase text-m3-on-surface-variant tracking-wide mt-1">
-                        {isMixedPrecip ? (lang === 'en' ? 'Mixed Precipitation' : 'Mischniederschlag') : (isSnow ? t.snow : t.rain)} • {intensity.label}
-                    </div>
-                </div>
+                {isMixedPrecip ? (lang === 'en' ? 'Mixed Precipitation' : 'Mischniederschlag') : (isSnow ? t.snow : t.rain)} • {intensity.label}
+              </div>
             </div>
+          </div>
 
-            <div className="text-right">
-                <div className="text-m3-title-large font-bold text-m3-on-surface leading-tight">{amount.toFixed(1)}<span className="text-m3-label-large text-m3-on-surface-variant font-normal ml-0.5">mm</span></div>
+          <div className="text-right">
+                <div className="text-m3-title-large font-bold text-m3-on-surface leading-tight">{formatPrecip ? formatPrecip(amount) : amount.toFixed(1)}<span className="text-m3-label-large text-m3-on-surface-variant font-normal ml-0.5">{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}</span></div>
                 {isMixedPrecip && (rainAmount > 0.1 || snowAmount > 0.1) && (
                     <div className="text-m3-label-small text-m3-on-surface-variant mt-1">
-                        {rainAmount > 0.1 && <span className="flex items-center justify-end gap-1"><CloudRain size={12}/>{rainAmount.toFixed(1)}mm</span>}
-                        {snowAmount > 0.1 && <span className="flex items-center justify-end gap-1"><Snowflake size={12}/>{snowAmount.toFixed(1)}mm</span>}
+                        {rainAmount > 0.1 && <span className="flex items-center justify-end gap-1"><CloudRain size={12}/>{formatPrecip ? formatPrecip(rainAmount) : rainAmount.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}</span>}
+                        {snowAmount > 0.1 && <span className="flex items-center justify-end gap-1"><Snowflake size={12}/>{formatPrecip ? formatPrecip(snowAmount) : snowAmount.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}</span>}
                     </div>
                 )}
                 <div className="text-m3-title-medium font-medium text-m3-on-surface-variant leading-tight">{duration} <span className="text-m3-label-large">{t.hours}</span></div>
@@ -4444,7 +4502,7 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
                         <Droplets size={18} className="text-m3-primary" />
                         <span className="text-m3-label-large font-bold text-m3-on-surface">{t.currentIntensity}</span>
                     </div>
-                    <span className="text-m3-body-large font-bold text-m3-on-surface">{currentIntensity.toFixed(1)} mm/h</span>
+                    <span className="text-m3-body-large font-bold text-m3-on-surface">{formatPrecip ? formatPrecip(currentIntensity) : currentIntensity.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}/h</span>
                 </div>
             )}
             
@@ -4456,7 +4514,7 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
                         <span className="text-sm font-bold text-slate-700">{t.peakRainAt}</span>
                     </div>
                     <span className="text-base font-bold text-slate-800">
-                        {peakTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})} ({maxIntensity.toFixed(1)} mm/h)
+                        {peakTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})} ({formatPrecip ? formatPrecip(maxIntensity) : maxIntensity.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}/h)
                     </span>
                 </div>
             )}
@@ -4479,15 +4537,15 @@ const PrecipitationTile = ({ data, minutelyData, lang='de' }) => {
                                     {hasMixedInHour ? (
                                         <div className="text-xs font-bold mt-1">
                                             <div className="flex items-center gap-1 text-blue-600">
-                                                <CloudRain size={10}/>{forecast.rain.toFixed(1)}mm
+                                                <CloudRain size={10}/>{formatPrecip ? formatPrecip(forecast.rain) : forecast.rain.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                                             </div>
                                             <div className="flex items-center gap-1 text-cyan-600">
-                                                <Snowflake size={10}/>{forecast.snow.toFixed(1)}mm
+                                                <Snowflake size={10}/>{formatPrecip ? formatPrecip(forecast.snow) : forecast.snow.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                                             </div>
                                         </div>
                                     ) : (
                                         <span className={`text-sm font-bold mt-1 ${forecast.snow > 0.1 ? 'text-cyan-600' : 'text-blue-600'}`}>
-                                            {forecast.amount.toFixed(1)} mm
+                                            {formatPrecip ? formatPrecip(forecast.amount) : forecast.amount.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                                         </span>
                                     )}
                                 </div>
@@ -4646,13 +4704,17 @@ const DwdAlertItem = ({ alert, lang='de' }) => {
   );
 };
 
-const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc }) => {
+const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, getWindUnitLabel, formatPrecip, getPrecipUnitLabel, getTempUnitSymbol }) => {
   const [expanded, setExpanded] = useState(false);
   if (!report) return null;
   const { title, summary, details, warning: localWarning, confidence, structuredDetails } = report;
   
   const hasDwd = dwdWarnings && dwdWarnings.length > 0;
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+  const getWindUnitLabelSafe = getWindUnitLabel || (() => 'km/h');
+  const formatWindSafe = formatWind || ((val) => (val ?? '--'));
+  const getPrecipUnitLabelSafe = getPrecipUnitLabel || (() => 'mm');
+  const formatPrecipSafe = formatPrecip || ((val) => (val ?? '--'));
   
   let maxSeverityLevel = 0; 
   if (hasDwd) {
@@ -4774,25 +4836,25 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc }) => {
                                                    </div>
                                                </div>
                                                
-                                               {/* Temp */}
-                                               <div className="flex items-center gap-1 flex-1 justify-center">
-                                                    <span className="font-bold text-slate-800 text-base">{tempFunc(item.max)}°</span>
-                                                    <span className="text-slate-400 text-xs font-medium">/ {tempFunc(item.min)}°</span>
-                                               </div>
+                                                {/* Temp */}
+                                                <div className="flex items-center gap-1 flex-1 justify-center">
+                                                    <span className="font-bold text-slate-800 text-base">{tempFunc(item.max)}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}</span>
+                                                    <span className="text-slate-400 text-xs font-medium">/ {tempFunc(item.min)}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}</span>
+                                                </div>
 
                                                {/* Rain/Wind */}
                                                <div className="text-right min-w-[80px] flex flex-col items-end gap-0.5">
-                                                   {item.rain > 0.1 ? (
-                                                       <div className="flex items-center justify-end gap-1 text-blue-600 font-bold text-xs bg-blue-50 px-1.5 py-0.5 rounded-md w-max">
-                                                           <Droplets size={10}/> {item.rain.toFixed(1)}mm
-                                                       </div>
-                                                   ) : <span className="text-[10px] text-slate-400 font-medium px-1.5 py-0.5">{t.noRain}</span>}
+                                                    {item.rain > 0.1 ? (
+                                                        <div className="flex items-center justify-end gap-1 text-blue-600 font-bold text-xs bg-blue-50 px-1.5 py-0.5 rounded-md w-max">
+                                                            <Droplets size={10}/> {formatPrecipSafe(item.rain)}{getPrecipUnitLabelSafe()}
+                                                        </div>
+                                                    ) : <span className="text-[10px] text-slate-400 font-medium px-1.5 py-0.5">{t.noRain}</span>}
                                                    
-                                                   {item.wind > 20 && (
-                                                       <div className={`flex items-center justify-end gap-1 text-[10px] font-bold ${getWindColorClass(item.wind, false)}`}>
-                                                           <Wind size={10}/> {item.wind} km/h
-                                                       </div>
-                                                   )}
+                                                    {item.wind > 20 && (
+                                                        <div className={`flex items-center justify-end gap-1 text-[10px] font-bold ${getWindColorClass(item.wind, false)}`}>
+                                                            <Wind size={10}/> {formatWindSafe(item.wind)} {getWindUnitLabelSafe()}
+                                                        </div>
+                                                    )}
                                                </div>
                                            </div>
                                        );
@@ -4810,7 +4872,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc }) => {
 };
 
 // --- PRECIPITATION DETAILS MODAL ---
-const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de' }) => {
+const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', formatPrecip, getPrecipUnitLabel }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
   
   if (!isOpen) return null;
@@ -4860,7 +4922,7 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de' }) =
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-slate-600">{t.precip24h}</span>
             <span className="text-lg font-bold text-blue-600">
-              {totalAmount.toFixed(1)} mm
+              {formatPrecip ? formatPrecip(totalAmount) : totalAmount.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
             </span>
           </div>
         </div>
@@ -4894,13 +4956,13 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de' }) =
                 {hour.hasPrecip ? (
                   <>
                     <div className="font-bold text-slate-800">
-                      {hour.amount.toFixed(1)} mm
+                      {formatPrecip ? formatPrecip(hour.amount) : hour.amount.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                     </div>
                     {hour.hasRain && hour.hasSnow && (
                       <div className="text-xs text-slate-500">
-                        <CloudRain className="inline w-3 h-3" /> {hour.rain.toFixed(1)}
+                        <CloudRain className="inline w-3 h-3" /> {formatPrecip ? formatPrecip(hour.rain) : hour.rain.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                         {' '}
-                        <Snowflake className="inline w-3 h-3" /> {hour.snow.toFixed(1)}
+                        <Snowflake className="inline w-3 h-3" /> {formatPrecip ? formatPrecip(hour.snow) : hour.snow.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                       </div>
                     )}
                   </>
@@ -5674,7 +5736,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                                     <Thermometer size={20} className="text-m3-error" />
                                     <span className="font-bold text-m3-on-surface">{t.units}</span>
                                 </div>
-                                <p className="text-xs text-m3-on-surface-variant ml-8">°C / °F / K</p>
+                                <p className="text-xs text-m3-on-surface-variant ml-8">°C / °F / K • km/h / m/s / mph • mm / in</p>
                             </div>
                             
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
@@ -5846,6 +5908,40 @@ export default function WeatherApp() {
       }
       return Math.round(val);
   }, [settings.unit]);
+
+  const getWindUnitLabel = useCallback(() => {
+      if (settings.windUnit === 'ms') return 'm/s';
+      if (settings.windUnit === 'mph') return 'mph';
+      return 'km/h';
+  }, [settings.windUnit]);
+
+  const formatWind = useCallback((val) => {
+      if (val === null || val === undefined) return "--";
+      const numeric = Number(val);
+      if (Number.isNaN(numeric)) return "--";
+      if (settings.windUnit === 'ms') {
+          return Math.round(numeric / 3.6);
+      }
+      if (settings.windUnit === 'mph') {
+          return Math.round(numeric * 0.621371);
+      }
+      return Math.round(numeric);
+  }, [settings.windUnit]);
+
+  const getPrecipUnitLabel = useCallback(() => {
+      if (settings.precipUnit === 'in') return 'in';
+      return 'mm';
+  }, [settings.precipUnit]);
+
+  const formatPrecip = useCallback((val, digits = 1) => {
+      if (val === null || val === undefined) return "--";
+      const numeric = Number(val);
+      if (Number.isNaN(numeric)) return "--";
+      if (settings.precipUnit === 'in') {
+          return (numeric / 25.4).toFixed(digits);
+      }
+      return numeric.toFixed(digits);
+  }, [settings.precipUnit]);
 
   const formatTime = (dateStr) => {
       if (!dateStr) return "--:--";
@@ -6913,10 +7009,10 @@ export default function WeatherApp() {
                 <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
             </div>
             <h2 className="text-2xl font-bold mb-4 text-slate-800">{t('dailyReport')}</h2>
-            <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} />
+             <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
             <div className="mt-8">
                  <h2 className="text-2xl font-bold mb-4 text-slate-800">{t('trend')}</h2>
-                 <AIReportBox report={longtermReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} />
+                 <AIReportBox report={longtermReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
             </div>
         </div>
      );
@@ -6930,7 +7026,7 @@ export default function WeatherApp() {
                <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
            </div>
            <h2 className="text-2xl font-bold mb-6 text-slate-800 text-center">{t('precipRadar')}</h2>
-           <PrecipitationTile data={processedShort} lang={lang} />
+            <PrecipitationTile data={processedShort} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} />
        </div>
     );
  }
@@ -7011,6 +7107,8 @@ export default function WeatherApp() {
           onClose={() => setShowPrecipModal(false)}
           hourlyData={processedShort}
           lang={lang}
+          formatPrecip={formatPrecip}
+          getPrecipUnitLabel={getPrecipUnitLabel}
         />
       )}
       {showSettingsModal && (
@@ -7197,11 +7295,11 @@ export default function WeatherApp() {
               <Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }} /> {t('wind')}
             </div>
             <div className={`text-m3-title-large font-bold ${windColorClass}`}>
-              {current.wind} <span className="text-m3-body-small">km/h</span>
+              {formatWind(current.wind)} <span className="text-m3-body-small">{getWindUnitLabel()}</span>
             </div>
             {current.gust > current.wind && (
               <div className={`text-xs font-medium ${getWindColorClass(current.gust, isRealNight)} mt-1`}>
-                {t('gusts')} {current.gust} km/h
+                {t('gusts')} {formatWind(current.gust)} {getWindUnitLabel()}
               </div>
             )}
           </div>
@@ -7215,7 +7313,7 @@ export default function WeatherApp() {
                 {next24HoursPrecip.snow > 0.1 ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
               </div>
               <div className="text-m3-title-large font-bold text-m3-on-tertiary-container">
-                {next24HoursPrecip.total.toFixed(1)} mm
+                {formatPrecip(next24HoursPrecip.total)} {getPrecipUnitLabel()}
               </div>
             </div>
           ) : (
@@ -7253,9 +7351,9 @@ export default function WeatherApp() {
           
           {activeTab === 'overview' && (
             <div className="space-y-4">
-               <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} />
+               <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
                <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} />
-               <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} lang={lang} />
+               <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} />
             </div>
           )}
 
@@ -7321,7 +7419,7 @@ export default function WeatherApp() {
 
           {activeTab === 'longterm' && (
              <div className="space-y-4">
-               <AIReportBox report={longtermReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} />
+               <AIReportBox report={longtermReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
                <h3 className="text-sm font-bold uppercase tracking-wide opacity-90 ml-2">{t('longtermList')}</h3>
                <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide"> 
                   <div className="flex gap-3 w-max">
@@ -7351,29 +7449,29 @@ export default function WeatherApp() {
                          </div>
                           
                            <div className="mb-1 min-h-[16px] flex flex-col items-center justify-center w-full gap-0.5">
-                             {parseFloat(day.rain) > 0.1 && parseFloat(day.snow) > 0.1 ? (
-                               // Mixed precipitation - show both
-                               <>
-                                 <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><CloudRain size={10}/> {day.rain}mm</span>
-                                 <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {day.snow}cm</span>
-                               </>
-                             ) : isDaySnow ? (
-                               parseFloat(day.snow) > 0 || parseFloat(day.rain) > 0.1 ? (
-                                 <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {(parseFloat(day.snow) > 0 ? parseFloat(day.snow) : (parseFloat(day.rain) / 10)).toFixed(1)}cm</span>
-                               ) : ( <span className="opacity-20 text-xs">-</span> )
-                             ) : parseFloat(day.rain) > 0.1 ? (
-                               <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {day.rain}mm</span>
-                             ) : ( <span className="opacity-20 text-xs">-</span> )}
+                              {parseFloat(day.rain) > 0.1 && parseFloat(day.snow) > 0.1 ? (
+                                // Mixed precipitation - show both
+                                <>
+                                  <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><CloudRain size={10}/> {formatPrecip(day.rain)}{getPrecipUnitLabel()}</span>
+                                  <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {formatPrecip(day.snow)}{getPrecipUnitLabel()}</span>
+                                </>
+                              ) : isDaySnow ? (
+                                parseFloat(day.snow) > 0 || parseFloat(day.rain) > 0.1 ? (
+                                  <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {formatPrecip(parseFloat(day.snow) > 0 ? parseFloat(day.snow) : (parseFloat(day.rain) / 10))}{getPrecipUnitLabel()}</span>
+                                ) : ( <span className="opacity-20 text-xs">-</span> )
+                              ) : parseFloat(day.rain) > 0.1 ? (
+                                <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {formatPrecip(day.rain)}{getPrecipUnitLabel()}</span>
+                              ) : ( <span className="opacity-20 text-xs">-</span> )}
                            </div>
                            <div className={`text-xs mb-2 ${probColor} h-3`}>{day.prob > 0 ? `${day.prob}% ${t('probability')}` : ''}</div>
                            
                            {/* Wind */}
                            <div className="flex flex-col items-center gap-0.5 mb-2 w-full">
-                              <div className="flex items-center justify-center gap-1 w-full">
-                                 <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
-                                 <span className={`text-sm font-bold ${getWindColorClass(day.wind, isRealNight)}`}>{day.wind}</span>
-                              </div>
-                              <span className={`text-xs font-medium ${getWindColorClass(day.gust, isRealNight)}`}>{t('gusts')} {day.gust}</span>
+                               <div className="flex items-center justify-center gap-1 w-full">
+                                  <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
+                                  <span className={`text-sm font-bold ${getWindColorClass(day.wind, isRealNight)}`}>{formatWind(day.wind)} {getWindUnitLabel()}</span>
+                               </div>
+                               <span className={`text-xs font-medium ${getWindColorClass(day.gust, isRealNight)}`}>{t('gusts')} {formatWind(day.gust)} {getWindUnitLabel()}</span>
                            </div>
 
                            {/* Reliability Indicator */}
@@ -7517,7 +7615,7 @@ export default function WeatherApp() {
                 {/* Result Area */}
                 {travelResult && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                       <AIReportBox report={tripReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} />
+                      <AIReportBox report={tripReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
                        
                        <button 
                           onClick={handleSaveTrip}
