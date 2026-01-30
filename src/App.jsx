@@ -170,7 +170,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Reiseplaner",
     tutorialTravelDesc: "Plane deine Reisen und überprüfe die Wetterwahrscheinlichkeit für deinen Ausflug.",
     tutorialSettingsTitle: "Einstellungen",
-    tutorialSettingsDesc: "Hier kannst du die Sprache, Einheiten (°C/°F/K), das Design (Hell/Dunkel/Auto) und deinen Heimatort anpassen.",
+    tutorialSettingsDesc: "Hier kannst du die Sprache, Einheiten (Temperatur: °C/°F/K, Wind: km/h/m/s/mph/Beaufort, Niederschlag: mm/in), das Design (Hell/Dunkel/Auto) und deinen Heimatort anpassen.",
     tutorialComplete: "Tutorial abgeschlossen! Du kannst jederzeit in den Einstellungen Änderungen vornehmen.",
     noGpsAvailable: "GPS nicht verfügbar",
     locationDenied: "Standortzugriff verweigert",
@@ -341,7 +341,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Travel Planner",
     tutorialTravelDesc: "Plan your trips and check weather probability for your excursion.",
     tutorialSettingsTitle: "Settings",
-    tutorialSettingsDesc: "Here you can customize language, units (°C/°F/K), theme (Light/Dark/Auto) and your home location.",
+    tutorialSettingsDesc: "Here you can customize language, units (Temperature: °C/°F/K, Wind: km/h/m/s/mph/Beaufort, Precipitation: mm/in), theme (Light/Dark/Auto) and your home location.",
     tutorialComplete: "Tutorial complete! You can make changes in settings at any time.",
     noGpsAvailable: "GPS not available",
     locationDenied: "Location access denied",
@@ -512,7 +512,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Planificateur de voyage",
     tutorialTravelDesc: "Planifiez vos voyages et vérifiez la probabilité météo pour votre sortie.",
     tutorialSettingsTitle: "Paramètres",
-    tutorialSettingsDesc: "Ici vous pouvez personnaliser la langue, les unités (°C/°F/K), le thème (Clair/Sombre/Auto) et votre lieu principal.",
+    tutorialSettingsDesc: "Ici vous pouvez personnaliser la langue, les unités (Température: °C/°F/K, Vent: km/h/m/s/mph/Beaufort, Précipitations: mm/in), le thème (Clair/Sombre/Auto) et votre lieu principal.",
     tutorialComplete: "Tutoriel terminé ! Vous pouvez modifier les paramètres à tout moment.",
     noGpsAvailable: "GPS non disponible",
     locationDenied: "Accès à la localisation refusé",
@@ -683,7 +683,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Planificador de viajes",
     tutorialTravelDesc: "Planifica tus viajes y verifica la probabilidad meteorológica para tu excursión.",
     tutorialSettingsTitle: "Ajustes",
-    tutorialSettingsDesc: "Aquí puedes personalizar el idioma, unidades (°C/°F/K), tema (Claro/Oscuro/Auto) y tu ubicación principal.",
+    tutorialSettingsDesc: "Aquí puedes personalizar el idioma, unidades (Temperatura: °C/°F/K, Viento: km/h/m/s/mph/Beaufort, Precipitación: mm/in), tema (Claro/Oscuro/Auto) y tu ubicación principal.",
     tutorialComplete: "¡Tutorial completo! Puedes realizar cambios en los ajustes en cualquier momento.",
     noGpsAvailable: "GPS no disponible",
     locationDenied: "Acceso a ubicación denegado",
@@ -854,7 +854,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Pianificatore di viaggio",
     tutorialTravelDesc: "Pianifica i tuoi viaggi e controlla la probabilità meteo per la tua escursione.",
     tutorialSettingsTitle: "Impostazioni",
-    tutorialSettingsDesc: "Qui puoi personalizzare lingua, unità (°C/°F/K), tema (Chiaro/Scuro/Auto) e il tuo luogo principale.",
+    tutorialSettingsDesc: "Qui puoi personalizzare lingua, unità (Temperatura: °C/°F/K, Vento: km/h/m/s/mph/Beaufort, Precipitazioni: mm/in), tema (Chiaro/Scuro/Auto) e il tuo luogo principale.",
     tutorialComplete: "Tutorial completato! Puoi apportare modifiche nelle impostazioni in qualsiasi momento.",
     noGpsAvailable: "GPS non disponibile",
     locationDenied: "Accesso alla posizione negato",
@@ -1025,7 +1025,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Seyahat Planlayıcı",
     tutorialTravelDesc: "Seyahatlerinizi planlayın ve geziniz için hava durumu olasılığını kontrol edin.",
     tutorialSettingsTitle: "Ayarlar",
-    tutorialSettingsDesc: "Burada dil, birimler (°C/°F/K), tema (Açık/Koyu/Otomatik) ve ana konumunuzu özelleştirebilirsiniz.",
+    tutorialSettingsDesc: "Burada dil, birimler (Sıcaklık: °C/°F/K, Rüzgar: km/h/m/s/mph/Beaufort, Yağış: mm/in), tema (Açık/Koyu/Otomatik) ve ana konumunuzu özelleştirebilirsiniz.",
     tutorialComplete: "Öğretici tamamlandı! Ayarlarda istediğiniz zaman değişiklik yapabilirsiniz.",
     noGpsAvailable: "GPS mevcut değil",
     locationDenied: "Konum erişimi reddedildi",
@@ -1196,7 +1196,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Planowanie podróży",
     tutorialTravelDesc: "Zaplanuj swoje podróże i sprawdź prawdopodobieństwo pogody dla swojej wycieczki.",
     tutorialSettingsTitle: "Ustawienia",
-    tutorialSettingsDesc: "Tutaj możesz dostosować język, jednostki (°C/°F/K), motyw (Jasny/Ciemny/Auto) i swoją lokalizację domową.",
+    tutorialSettingsDesc: "Tutaj możesz dostosować język, jednostki (Temperatura: °C/°F/K, Wiatr: km/h/m/s/mph/Beaufort, Opady: mm/in), motyw (Jasny/Ciemny/Auto) i swoją lokalizację domową.",
     tutorialComplete: "Samouczek ukończony! Możesz wprowadzać zmiany w ustawieniach w dowolnym momencie.",
     noGpsAvailable: "GPS niedostępny",
     locationDenied: "Dostęp do lokalizacji został odrzucony",
@@ -1367,7 +1367,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Reisplanner",
     tutorialTravelDesc: "Plan uw reizen en controleer de weerskans voor uw excursie.",
     tutorialSettingsTitle: "Instellingen",
-    tutorialSettingsDesc: "Hier kunt u de taal, eenheden (°C/°F/K), thema (Licht/Donker/Auto) en uw thuislocatie aanpassen.",
+    tutorialSettingsDesc: "Hier kunt u de taal, eenheden (Temperatuur: °C/°F/K, Wind: km/h/m/s/mph/Beaufort, Neerslag: mm/in), thema (Licht/Donker/Auto) en uw thuislocatie aanpassen.",
     tutorialComplete: "Handleiding voltooid! U kunt op elk moment wijzigingen aanbrengen in de instellingen.",
     noGpsAvailable: "GPS niet beschikbaar",
     locationDenied: "Toegang tot locatie geweigerd",
@@ -1538,7 +1538,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Planer putovanja",
     tutorialTravelDesc: "Planirajte svoja putovanja i provjerite vremensku vjerojatnost za vaš izlet.",
     tutorialSettingsTitle: "Postavke",
-    tutorialSettingsDesc: "Ovdje možete prilagoditi jezik, jedinice (°C/°F/K), temu (Svijetla/Tamna/Auto) i svoju osnovnu lokaciju.",
+    tutorialSettingsDesc: "Ovdje možete prilagoditi jezik, jedinice (Temperatura: °C/°F/K, Vjetar: km/h/m/s/mph/Beaufort, Oborine: mm/in), temu (Svijetla/Tamna/Auto) i svoju osnovnu lokaciju.",
     tutorialComplete: "Vodič završen! Možete napraviti promjene u postavkama u bilo kojem trenutku.",
     noGpsAvailable: "GPS nije dostupan",
     locationDenied: "Pristup lokaciji odbijen",
@@ -1708,7 +1708,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Σχεδιαστής ταξιδιού",
     tutorialTravelDesc: "Σχεδιάστε τα ταξίδια σας και ελέγξτε την πιθανότητα καιρού για την εκδρομή σας.",
     tutorialSettingsTitle: "Ρυθμίσεις",
-    tutorialSettingsDesc: "Εδώ μπορείτε να προσαρμόσετε τη γλώσσα, τις μονάδες (°C/°F/K), το θέμα (Φωτεινό/Σκοτεινό/Αυτόματο) και την κύρια τοποθεσία σας.",
+    tutorialSettingsDesc: "Εδώ μπορείτε να προσαρμόσετε τη γλώσσα, τις μονάδες (Θερμοκρασία: °C/°F/K, Άνεμος: km/h/m/s/mph/Beaufort, Βροχόπτωση: mm/in), το θέμα (Φωτεινό/Σκοτεινό/Αυτόματο) και την κύρια τοποθεσία σας.",
     tutorialComplete: "Το σεμινάριο ολοκληρώθηκε! Μπορείτε να κάνετε αλλαγές στις ρυθμίσεις ανά πάσα στιγμή.",
     noGpsAvailable: "Το GPS δεν είναι διαθέσιμο",
     locationDenied: "Η πρόσβαση στην τοποθεσία απορρίφθηκε",
@@ -1879,7 +1879,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Rejseplanlægger",
     tutorialTravelDesc: "Planlæg dine ture og tjek vejrsandsynligheden for din udflugt.",
     tutorialSettingsTitle: "Indstillinger",
-    tutorialSettingsDesc: "Her kan du tilpasse sprog, enheder (°C/°F/K), tema (Lys/Mørk/Auto) og din hjemmeplacering.",
+    tutorialSettingsDesc: "Her kan du tilpasse sprog, enheder (Temperatur: °C/°F/K, Vind: km/h/m/s/mph/Beaufort, Nedbør: mm/in), tema (Lys/Mørk/Auto) og din hjemmeplacering.",
     tutorialComplete: "Vejledning fuldført! Du kan foretage ændringer i indstillingerne når som helst.",
     noGpsAvailable: "GPS ikke tilgængelig",
     locationDenied: "Adgang til placering nægtet",
@@ -2050,7 +2050,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Планировщик путешествий",
     tutorialTravelDesc: "Планируйте свои поездки и проверяйте вероятность погоды для вашей экскурсии.",
     tutorialSettingsTitle: "Настройки",
-    tutorialSettingsDesc: "Здесь вы можете настроить язык, единицы измерения (°C/°F/K), тему (Светлая/Темная/Авто) и ваше домашнее местоположение.",
+    tutorialSettingsDesc: "Здесь вы можете настроить язык, единицы измерения (Температура: °C/°F/K, Ветер: км/ч/м/с/миль/ч/Бофорт, Осадки: мм/дюймы), тему (Светлая/Темная/Авто) и ваше домашнее местоположение.",
     tutorialComplete: "Руководство завершено! Вы можете вносить изменения в настройках в любое время.",
     noGpsAvailable: "GPS недоступен",
     locationDenied: "Доступ к местоположению запрещён",
@@ -2101,7 +2101,7 @@ const getSavedSettings = () => {
         if (!['celsius', 'fahrenheit', 'kelvin'].includes(merged.unit)) {
             merged.unit = 'celsius';
         }
-        if (!['kmh', 'ms', 'mph'].includes(merged.windUnit)) {
+        if (!['kmh', 'ms', 'mph', 'beaufort'].includes(merged.windUnit)) {
             merged.windUnit = 'kmh';
         }
         if (!['mm', 'in'].includes(merged.precipUnit)) {
@@ -3405,24 +3405,30 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
                       <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
                          <Wind size={16}/> {t.wind}
                       </label>
-                      <div className="flex gap-2 bg-m3-surface-container p-1 rounded-m3-md">
+                      <div className="grid grid-cols-2 gap-2 bg-m3-surface-container p-1 rounded-m3-md">
                           <button 
                               onClick={() => setLocalSettings({...localSettings, windUnit: 'kmh'})}
-                              className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.windUnit === 'kmh' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                              className={`py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.windUnit === 'kmh' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                           >
                               km/h
                           </button>
                           <button 
                               onClick={() => setLocalSettings({...localSettings, windUnit: 'ms'})}
-                              className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.windUnit === 'ms' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                              className={`py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.windUnit === 'ms' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                           >
                               m/s
                           </button>
                           <button 
                               onClick={() => setLocalSettings({...localSettings, windUnit: 'mph'})}
-                              className={`flex-1 py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.windUnit === 'mph' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                              className={`py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.windUnit === 'mph' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                           >
                               mph
+                          </button>
+                          <button 
+                              onClick={() => setLocalSettings({...localSettings, windUnit: 'beaufort'})}
+                              className={`py-2 rounded-m3-sm text-xs sm:text-sm font-bold transition ${localSettings.windUnit === 'beaufort' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                          >
+                              Beaufort
                           </button>
                       </div>
                   </div>
@@ -5832,7 +5838,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                                     <Thermometer size={20} className="text-m3-error" />
                                     <span className="font-bold text-m3-on-surface">{t.units}</span>
                                 </div>
-                                <p className="text-xs text-m3-on-surface-variant ml-8">°C / °F / K • km/h / m/s / mph • mm / in</p>
+                                <p className="text-xs text-m3-on-surface-variant ml-8">°C / °F / K • km/h / m/s / mph / Beaufort • mm / in</p>
                             </div>
                             
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
@@ -6010,6 +6016,7 @@ export default function WeatherApp() {
   const getWindUnitLabel = useCallback(() => {
       if (settings.windUnit === 'ms') return 'm/s';
       if (settings.windUnit === 'mph') return 'mph';
+      if (settings.windUnit === 'beaufort') return 'Bft';
       return 'km/h';
   }, [settings.windUnit]);
 
@@ -6022,6 +6029,22 @@ export default function WeatherApp() {
       }
       if (settings.windUnit === 'mph') {
           return Math.round(numeric * 0.621371);
+      }
+      if (settings.windUnit === 'beaufort') {
+          // Convert km/h to Beaufort scale (0-12)
+          if (numeric < 1) return 0;
+          if (numeric < 6) return 1;
+          if (numeric < 12) return 2;
+          if (numeric < 20) return 3;
+          if (numeric < 29) return 4;
+          if (numeric < 39) return 5;
+          if (numeric < 50) return 6;
+          if (numeric < 62) return 7;
+          if (numeric < 75) return 8;
+          if (numeric < 89) return 9;
+          if (numeric < 103) return 10;
+          if (numeric < 118) return 11;
+          return 12;
       }
       return Math.round(numeric);
   }, [settings.windUnit]);
