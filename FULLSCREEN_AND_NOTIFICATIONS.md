@@ -1,18 +1,14 @@
-# Vollbildmodus und Benachrichtigungen - Implementierung
+# Vollbildmodus - Implementierung
 
 ## Übersicht
 
-Diese Dokumentation beschreibt die Implementierung des Vollbildmodus und die Behebung der Benachrichtigungsprobleme für die Wetter-App.
+Diese Dokumentation beschreibt die Implementierung des Vollbildmodus für die Wetter-App.
 
 ## Probleme behoben
 
 ### 1. ✅ Vollbildmodus implementiert
 **Problem:** Statusleiste oben war im Weg  
 **Lösung:** Echter Vollbildmodus mit immersive sticky mode
-
-### 2. ✅ Benachrichtigungen funktionieren nicht
-**Problem:** App erhielt keine Benachrichtigungen  
-**Lösung:** Automatische Anforderung der Benachrichtigungsberechtigung beim App-Start
 
 ## Änderungen im Detail
 
@@ -63,42 +59,12 @@ StatusBar: {
   style: 'dark',
   backgroundColor: '#000000',
   overlaysWebView: true
-},
-LocalNotifications: {
-  smallIcon: 'ic_stat_icon_config_sample',
-  iconColor: '#488AFF',
-  sound: 'default'
 }
 ```
 
 Konfiguriert:
 - StatusBar Overlay-Modus
-- Benachrichtigungseinstellungen (Icon, Farbe, Sound)
-
-### 4. App.jsx
-**Datei:** `src/App.jsx`
-
-**Was wurde geändert:**
-- Hinzugefügt: `initializeNotifications()` Funktion im useEffect Hook
-- Fordert automatisch Benachrichtigungsberechtigung beim App-Start an
-- Läuft parallel zur StatusBar-Konfiguration
-
-```javascript
-const initializeNotifications = async () => {
-    try {
-        const result = await LocalNotifications.requestPermissions();
-        console.log('Notification permission status:', result.display);
-    } catch (e) {
-        console.log('Failed to request notification permission:', e);
-    }
-};
-```
-
-## AndroidManifest.xml
-**Keine Änderungen erforderlich** - Die Berechtigung `POST_NOTIFICATIONS` ist bereits vorhanden:
-```xml
-<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-```
+- Keine Benachrichtigungs-Plugins
 
 ## Wie es funktioniert
 
@@ -108,14 +74,7 @@ const initializeNotifications = async () => {
 3. Prüfung der Android-Version:
    - **Android 11+**: Verwendet `WindowInsetsController`
    - **Android 10-**: Verwendet Legacy System UI Flags
-4. Bei Fokuswechsel (z.B. nach Benachrichtigung) wird Vollbildmodus automatisch wiederhergestellt
-
-### Benachrichtigungen
-1. App startet und React-Komponente mountet
-2. `initializeNotifications()` wird automatisch aufgerufen
-3. System zeigt Dialog zur Berechtigung (falls noch nicht erteilt)
-4. Nutzer kann Benachrichtigungen erlauben oder ablehnen
-5. Wenn erlaubt: Geplante Benachrichtigungen werden wie gewohnt zugestellt
+4. Bei Fokuswechsel wird Vollbildmodus automatisch wiederhergestellt
 
 ## Testen
 
@@ -123,15 +82,7 @@ const initializeNotifications = async () => {
 1. App starten
 2. Statusleiste und Navigationsleiste sollten verschwinden
 3. Von oben/unten wischen → Leisten erscheinen kurz und verschwinden wieder automatisch
-4. Benachrichtigung erhalten und darauf tippen → App öffnet sich wieder im Vollbildmodus
-
-### Benachrichtigungen testen:
-1. App installieren und starten
-2. Berechtigungsdialog sollte erscheinen
-3. "Erlauben" wählen
-4. In den App-Einstellungen Benachrichtigungen aktivieren
-5. Zeit einstellen und warten (oder System-Zeit vorspulen zum Testen)
-6. Benachrichtigung sollte zur eingestellten Zeit erscheinen
+4. App erneut fokussieren → Vollbildmodus wird wiederhergestellt
 
 ## Build-Prozess
 
@@ -156,13 +107,9 @@ Die AAB-Datei befindet sich dann unter:
 
 ## Wichtige Hinweise
 
-1. **Android 13+ (API 33+)**: Benachrichtigungen erfordern die Runtime-Berechtigung `POST_NOTIFICATIONS`. Diese wird jetzt automatisch angefordert.
+1. **Immersive Sticky Mode**: Die Systemleisten können vom Nutzer durch Wischen eingeblendet werden, verschwinden aber automatisch wieder. Das ist das gewünschte Verhalten für eine Wetter-App.
 
-2. **Immersive Sticky Mode**: Die Systemleisten können vom Nutzer durch Wischen eingeblendet werden, verschwinden aber automatisch wieder. Das ist das gewünschte Verhalten für eine Wetter-App.
-
-3. **Battery Optimization**: Benachrichtigungen funktionieren am besten, wenn die App von der Batterieoptimierung ausgenommen ist. Das wird im Play Store nicht automatisch gemacht.
-
-4. **Testing**: Teste die App auf verschiedenen Android-Versionen (mindestens Android 10, 11, 12, 13 und 14), um sicherzustellen, dass Vollbildmodus und Benachrichtigungen überall funktionieren.
+2. **Testing**: Teste die App auf verschiedenen Android-Versionen (mindestens Android 10, 11, 12, 13 und 14), um sicherzustellen, dass Vollbildmodus überall funktioniert.
 
 ## Nächste Schritte
 
@@ -175,6 +122,5 @@ Die AAB-Datei befindet sich dann unter:
 ## Support
 
 Falls Probleme auftreten:
-- Logcat-Output prüfen: `adb logcat | grep -i "notification\|statusbar"`
+- Logcat-Output prüfen: `adb logcat | grep -i "statusbar"`
 - App-Berechtigungen in Android-Einstellungen prüfen
-- Sicherstellen, dass die App nicht im Batteriesparmodus eingeschränkt ist

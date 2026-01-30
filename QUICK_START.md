@@ -1,4 +1,4 @@
-# Quick Start Guide - Vollbildmodus und Benachrichtigungen
+# Quick Start Guide - Vollbildmodus
 
 ## ✅ Was wurde implementiert?
 
@@ -6,10 +6,6 @@
 - Die Statusleiste (oben) und Navigationsleiste (unten) werden automatisch ausgeblendet
 - **Immersive Sticky Mode:** Wenn der Nutzer wischt, erscheinen die Leisten kurz und verschwinden automatisch wieder
 - Funktioniert auf allen Android-Versionen (10+)
-
-### 2. Benachrichtigungen
-- Die App fordert jetzt automatisch die Benachrichtigungsberechtigung beim ersten Start an
-- Funktioniert auf Android 13+ mit der neuen POST_NOTIFICATIONS Berechtigung
 
 ## 🚀 Nächste Schritte zum Testen
 
@@ -31,20 +27,10 @@ AAB-Datei: `android/app/build/outputs/bundle/release/app-release.aab`
 
 1. **Installiere die App** auf deinem Android-Gerät
 
-2. **Erster Start:**
-   - Dialog erscheint: "WetterScoutAI möchte Benachrichtigungen senden"
-   - Tippe auf "Erlauben"
-
-3. **Vollbildmodus überprüfen:**
+2. **Vollbildmodus überprüfen:**
    - App sollte ohne Statusleiste starten
    - Von oben oder unten wischen → Leisten erscheinen kurz
    - Leisten verschwinden nach ca. 3 Sekunden automatisch wieder
-
-4. **Benachrichtigungen testen:**
-   - Öffne App-Einstellungen (⚙️)
-   - Aktiviere "Tägliche Wettervorhersage" oder "Ausblick auf morgen"
-   - Stelle eine Zeit ein (z.B. in 2 Minuten)
-   - Warte ab → Benachrichtigung sollte zur eingestellten Zeit erscheinen
 
 ## 🔍 Fehlerbehebung
 
@@ -53,24 +39,8 @@ AAB-Datei: `android/app/build/outputs/bundle/release/app-release.aab`
 - Neustart der App versuchen
 - Cache leeren: Einstellungen → Apps → WetterScoutAI → Speicher → Cache leeren
 
-### Benachrichtigungen kommen nicht an
-1. **Berechtigung prüfen:**
-   - Einstellungen → Apps → WetterScoutAI → Benachrichtigungen
-   - Stelle sicher, dass "Benachrichtigungen" aktiviert ist
-
-2. **Batterieoptimierung deaktivieren:**
-   - Einstellungen → Akku → Batterienutzung
-   - WetterScoutAI auswählen → "Nicht optimieren"
-
-3. **Benachrichtigungskanäle prüfen:**
-   - Einstellungen → Apps → WetterScoutAI → Benachrichtigungen
-   - Alle Kanäle sollten aktiviert sein
-
 ### Logcat-Debugging
 ```bash
-# Benachrichtigungen debuggen
-adb logcat | grep -i "notification"
-
 # Vollbildmodus debuggen
 adb logcat | grep -i "statusbar\|windowinsets"
 ```
@@ -80,9 +50,8 @@ adb logcat | grep -i "statusbar\|windowinsets"
 Falls du die Änderungen verstehen oder anpassen möchtest:
 
 1. **MainActivity.java** - Vollbildmodus-Implementierung
-2. **App.jsx** - Benachrichtigungsberechtigungen
-3. **styles.xml** - Theme-Anpassungen
-4. **capacitor.config.ts** - StatusBar-Konfiguration
+2. **styles.xml** - Theme-Anpassungen
+3. **capacitor.config.ts** - StatusBar-Konfiguration
 
 Vollständige Dokumentation: `FULLSCREEN_AND_NOTIFICATIONS.md`
 
@@ -110,13 +79,11 @@ Wenn alles funktioniert:
    - Upload AAB
    - Release Notes erwähnen:
      * "Vollbildmodus für bessere Nutzererfahrung"
-     * "Verbesserte Benachrichtigungen"
 
 ## ✨ Das war's!
 
 Die Implementierung ist abgeschlossen. Die App sollte jetzt:
 - ✅ Im Vollbildmodus laufen (keine störende Statusleiste)
-- ✅ Benachrichtigungen zuverlässig anzeigen
 - ✅ Bereit für den Play Store Upload sein
 
 Bei Fragen oder Problemen, siehe die vollständige Dokumentation in `FULLSCREEN_AND_NOTIFICATIONS.md`.
