@@ -7542,26 +7542,12 @@ export default function WeatherApp() {
             )}
           </div>
           
-          {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) ? (
-            <div 
-              onClick={() => setShowPrecipModal(true)}
-              className="bg-m3-tertiary-container rounded-m3-xl p-3 border border-m3-tertiary shadow-m3-1 cursor-pointer hover:bg-m3-tertiary-container/80 transition-all active:scale-95"
-            >
-              <div className="flex items-center gap-2 text-m3-on-tertiary-container text-m3-label-small mb-1">
-                {next24HoursPrecip.snow > 0.1 ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
-              </div>
-              <div className="text-m3-title-large font-bold text-m3-on-tertiary-container">
-                {formatPrecip(next24HoursPrecip.total)} {getPrecipUnitLabel()}
-              </div>
+          <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
+            <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+              <Thermometer size={14} /> {t('dewPoint')}
             </div>
-          ) : (
-            <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
-              <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
-                <Thermometer size={14} /> {t('dewPoint')}
-              </div>
-              <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{formatTemp(current.dewPoint)}{getTempUnitSymbol()}</div>
-            </div>
-          )}
+            <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{formatTemp(current.dewPoint)}{getTempUnitSymbol()}</div>
+          </div>
         </div>
         
         {/* Additional Weather Details Grid - Second row */}
@@ -7600,6 +7586,20 @@ export default function WeatherApp() {
               </div>
               <div className={`text-xs font-medium ${getAQIColor(airQualityData.european_aqi, isRealNight)} mt-1`}>
                 {getAQILabel(airQualityData.european_aqi)}
+              </div>
+            </div>
+          )}
+          
+          {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) && (
+            <div 
+              onClick={() => setShowPrecipModal(true)}
+              className="bg-m3-tertiary-container rounded-m3-xl p-3 border border-m3-tertiary shadow-m3-1 cursor-pointer hover:bg-m3-tertiary-container/80 transition-all active:scale-95"
+            >
+              <div className="flex items-center gap-2 text-m3-on-tertiary-container text-m3-label-small mb-1">
+                {next24HoursPrecip.snow > 0.1 ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
+              </div>
+              <div className="text-m3-title-large font-bold text-m3-on-tertiary-container">
+                {formatPrecip(next24HoursPrecip.total)} {getPrecipUnitLabel()}
               </div>
             </div>
           )}
