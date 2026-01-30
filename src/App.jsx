@@ -2162,7 +2162,8 @@ const scheduleNotifications = async (settings, locationName, weatherData) => {
                         repeats: true,
                         every: 'day'
                     },
-                    sound: 'default'
+                    sound: 'default',
+                    channelId: 'default_channel'
                 }]
             });
         }
@@ -2199,7 +2200,8 @@ const scheduleNotifications = async (settings, locationName, weatherData) => {
                             repeats: true,
                             every: 'day'
                         },
-                        sound: 'default'
+                        sound: 'default',
+                        channelId: 'default_channel'
                     }]
                 });
             }
