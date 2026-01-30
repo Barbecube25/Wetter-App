@@ -6393,16 +6393,14 @@ export default function WeatherApp() {
       
       const location = JSON.parse(cachedLocation);
       
-      // Check if cache is for the current location
-      if (!currentLoc || location.lat !== currentLoc.lat || location.lon !== currentLoc.lon) {
-        return null;
-      }
+      // Note: Location comparison will be done in fetchData where currentLoc is available
       
       return {
         shortData: JSON.parse(cachedShort),
         longData: JSON.parse(cachedLong),
         timestamp,
-        age
+        age,
+        location
       };
     } catch (e) {
       console.warn('Failed to load weather cache:', e);
@@ -6415,7 +6413,8 @@ export default function WeatherApp() {
 
     // Try to load from cache first
     const cached = loadWeatherCache();
-    if (cached) {
+    // Validate cache is for current location
+    if (cached && cached.location.lat === currentLoc.lat && cached.location.lon === currentLoc.lon) {
       setShortTermData(cached.shortData);
       setLongTermData(cached.longData);
       setLastUpdated(new Date(cached.timestamp));
@@ -6495,6 +6494,9 @@ export default function WeatherApp() {
         // If we have cached data and fetch failed, don't show error
         if (!cached) {
           setError(err.message);
+        } else {
+          // Maintain cached state on fetch failure
+          setIsUsingCache(true);
         }
     } finally { setLoading(false); }
   };
@@ -6905,7 +6907,7 @@ export default function WeatherApp() {
   }, [longTermData, lang]); // Add lang to deps to refresh names
   
   // LIVE oder DEMO Daten?
-  const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: 0, precip: 0, wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0, cloudCover: 0, pressure: 0, visibility: 0 };
+  const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: 0, precip: 0, wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0, cloudCover: 0, pressure: null, visibility: null };
   const current = liveCurrent;
 
   // --- NEUE LOGIK: Echter Tag/Nacht Status für das UI ---
@@ -7564,25 +7566,29 @@ export default function WeatherApp() {
         
         {/* Additional Weather Details Grid - Second row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
-            <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
-              <Gauge size={14} /> {t('pressure')}
+          {current.pressure !== null && current.pressure !== undefined && (
+            <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
+              <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                <Gauge size={14} /> {t('pressure')}
+              </div>
+              <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
+                {Math.round(current.pressure)} <span className="text-m3-body-small">hPa</span>
+              </div>
             </div>
-            <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
-              {Math.round(current.pressure)} <span className="text-m3-body-small">hPa</span>
-            </div>
-          </div>
+          )}
           
-          <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
-            <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
-              <Eye size={14} /> {t('visibility')}
+          {current.visibility !== null && current.visibility !== undefined && current.visibility > 0 && (
+            <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
+              <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                <Eye size={14} /> {t('visibility')}
+              </div>
+              <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
+                {settings.units === 'imperial' 
+                  ? `${(current.visibility / 1609.34).toFixed(1)} mi` 
+                  : `${(current.visibility / 1000).toFixed(1)} km`}
+              </div>
             </div>
-            <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
-              {settings.units === 'imperial' 
-                ? `${(current.visibility / 1609.34).toFixed(1)} mi` 
-                : `${(current.visibility / 1000).toFixed(1)} km`}
-            </div>
-          </div>
+          )}
           
           {airQualityData && airQualityData.european_aqi !== undefined && (
             <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
