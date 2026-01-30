@@ -17,7 +17,7 @@ const TRANSLATIONS = {
     places: "Orte",
     settings: "Einstellungen",
     language: "Sprache",
-    units: "Einheit",
+    units: "Einheiten",
     theme: "Design",
     themeAuto: "Automatisch",
     themeLight: "Hell",
@@ -162,7 +162,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Reiseplaner",
     tutorialTravelDesc: "Plane deine Reisen und überprüfe die Wetterwahrscheinlichkeit für deinen Ausflug.",
     tutorialSettingsTitle: "Einstellungen",
-    tutorialSettingsDesc: "Hier kannst du die Sprache, Einheiten (°C/°F), das Design (Hell/Dunkel/Auto) und deinen Heimatort anpassen.",
+    tutorialSettingsDesc: "Hier kannst du die Sprache, Einheiten (°C/°F/K), das Design (Hell/Dunkel/Auto) und deinen Heimatort anpassen.",
     tutorialComplete: "Tutorial abgeschlossen! Du kannst jederzeit in den Einstellungen Änderungen vornehmen.",
     noGpsAvailable: "GPS nicht verfügbar",
     locationDenied: "Standortzugriff verweigert",
@@ -325,7 +325,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Travel Planner",
     tutorialTravelDesc: "Plan your trips and check weather probability for your excursion.",
     tutorialSettingsTitle: "Settings",
-    tutorialSettingsDesc: "Here you can customize language, units (°C/°F), theme (Light/Dark/Auto) and your home location.",
+    tutorialSettingsDesc: "Here you can customize language, units (°C/°F/K), theme (Light/Dark/Auto) and your home location.",
     tutorialComplete: "Tutorial complete! You can make changes in settings at any time.",
     noGpsAvailable: "GPS not available",
     locationDenied: "Location access denied",
@@ -488,7 +488,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Planificateur de voyage",
     tutorialTravelDesc: "Planifiez vos voyages et vérifiez la probabilité météo pour votre sortie.",
     tutorialSettingsTitle: "Paramètres",
-    tutorialSettingsDesc: "Ici vous pouvez personnaliser la langue, les unités (°C/°F), le thème (Clair/Sombre/Auto) et votre lieu principal.",
+    tutorialSettingsDesc: "Ici vous pouvez personnaliser la langue, les unités (°C/°F/K), le thème (Clair/Sombre/Auto) et votre lieu principal.",
     tutorialComplete: "Tutoriel terminé ! Vous pouvez modifier les paramètres à tout moment.",
     noGpsAvailable: "GPS non disponible",
     locationDenied: "Accès à la localisation refusé",
@@ -651,7 +651,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Planificador de viajes",
     tutorialTravelDesc: "Planifica tus viajes y verifica la probabilidad meteorológica para tu excursión.",
     tutorialSettingsTitle: "Ajustes",
-    tutorialSettingsDesc: "Aquí puedes personalizar el idioma, unidades (°C/°F), tema (Claro/Oscuro/Auto) y tu ubicación principal.",
+    tutorialSettingsDesc: "Aquí puedes personalizar el idioma, unidades (°C/°F/K), tema (Claro/Oscuro/Auto) y tu ubicación principal.",
     tutorialComplete: "¡Tutorial completo! Puedes realizar cambios en los ajustes en cualquier momento.",
     noGpsAvailable: "GPS no disponible",
     locationDenied: "Acceso a ubicación denegado",
@@ -814,7 +814,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Pianificatore di viaggio",
     tutorialTravelDesc: "Pianifica i tuoi viaggi e controlla la probabilità meteo per la tua escursione.",
     tutorialSettingsTitle: "Impostazioni",
-    tutorialSettingsDesc: "Qui puoi personalizzare lingua, unità (°C/°F), tema (Chiaro/Scuro/Auto) e il tuo luogo principale.",
+    tutorialSettingsDesc: "Qui puoi personalizzare lingua, unità (°C/°F/K), tema (Chiaro/Scuro/Auto) e il tuo luogo principale.",
     tutorialComplete: "Tutorial completato! Puoi apportare modifiche nelle impostazioni in qualsiasi momento.",
     noGpsAvailable: "GPS non disponibile",
     locationDenied: "Accesso alla posizione negato",
@@ -977,7 +977,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Seyahat Planlayıcı",
     tutorialTravelDesc: "Seyahatlerinizi planlayın ve geziniz için hava durumu olasılığını kontrol edin.",
     tutorialSettingsTitle: "Ayarlar",
-    tutorialSettingsDesc: "Burada dil, birimler (°C/°F), tema (Açık/Koyu/Otomatik) ve ana konumunuzu özelleştirebilirsiniz.",
+    tutorialSettingsDesc: "Burada dil, birimler (°C/°F/K), tema (Açık/Koyu/Otomatik) ve ana konumunuzu özelleştirebilirsiniz.",
     tutorialComplete: "Öğretici tamamlandı! Ayarlarda istediğiniz zaman değişiklik yapabilirsiniz.",
     noGpsAvailable: "GPS mevcut değil",
     locationDenied: "Konum erişimi reddedildi",
@@ -1140,7 +1140,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Planowanie podróży",
     tutorialTravelDesc: "Zaplanuj swoje podróże i sprawdź prawdopodobieństwo pogody dla swojej wycieczki.",
     tutorialSettingsTitle: "Ustawienia",
-    tutorialSettingsDesc: "Tutaj możesz dostosować język, jednostki (°C/°F), motyw (Jasny/Ciemny/Auto) i swoją lokalizację domową.",
+    tutorialSettingsDesc: "Tutaj możesz dostosować język, jednostki (°C/°F/K), motyw (Jasny/Ciemny/Auto) i swoją lokalizację domową.",
     tutorialComplete: "Samouczek ukończony! Możesz wprowadzać zmiany w ustawieniach w dowolnym momencie.",
     noGpsAvailable: "GPS niedostępny",
     locationDenied: "Dostęp do lokalizacji został odrzucony",
@@ -1303,7 +1303,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Reisplanner",
     tutorialTravelDesc: "Plan uw reizen en controleer de weerskans voor uw excursie.",
     tutorialSettingsTitle: "Instellingen",
-    tutorialSettingsDesc: "Hier kunt u de taal, eenheden (°C/°F), thema (Licht/Donker/Auto) en uw thuislocatie aanpassen.",
+    tutorialSettingsDesc: "Hier kunt u de taal, eenheden (°C/°F/K), thema (Licht/Donker/Auto) en uw thuislocatie aanpassen.",
     tutorialComplete: "Handleiding voltooid! U kunt op elk moment wijzigingen aanbrengen in de instellingen.",
     noGpsAvailable: "GPS niet beschikbaar",
     locationDenied: "Toegang tot locatie geweigerd",
@@ -1466,7 +1466,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Planer putovanja",
     tutorialTravelDesc: "Planirajte svoja putovanja i provjerite vremensku vjerojatnost za vaš izlet.",
     tutorialSettingsTitle: "Postavke",
-    tutorialSettingsDesc: "Ovdje možete prilagoditi jezik, jedinice (°C/°F), temu (Svijetla/Tamna/Auto) i svoju osnovnu lokaciju.",
+    tutorialSettingsDesc: "Ovdje možete prilagoditi jezik, jedinice (°C/°F/K), temu (Svijetla/Tamna/Auto) i svoju osnovnu lokaciju.",
     tutorialComplete: "Vodič završen! Možete napraviti promjene u postavkama u bilo kojem trenutku.",
     noGpsAvailable: "GPS nije dostupan",
     locationDenied: "Pristup lokaciji odbijen",
@@ -1628,7 +1628,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Σχεδιαστής ταξιδιού",
     tutorialTravelDesc: "Σχεδιάστε τα ταξίδια σας και ελέγξτε την πιθανότητα καιρού για την εκδρομή σας.",
     tutorialSettingsTitle: "Ρυθμίσεις",
-    tutorialSettingsDesc: "Εδώ μπορείτε να προσαρμόσετε τη γλώσσα, τις μονάδες (°C/°F), το θέμα (Φωτεινό/Σκοτεινό/Αυτόματο) και την κύρια τοποθεσία σας.",
+    tutorialSettingsDesc: "Εδώ μπορείτε να προσαρμόσετε τη γλώσσα, τις μονάδες (°C/°F/K), το θέμα (Φωτεινό/Σκοτεινό/Αυτόματο) και την κύρια τοποθεσία σας.",
     tutorialComplete: "Το σεμινάριο ολοκληρώθηκε! Μπορείτε να κάνετε αλλαγές στις ρυθμίσεις ανά πάσα στιγμή.",
     noGpsAvailable: "Το GPS δεν είναι διαθέσιμο",
     locationDenied: "Η πρόσβαση στην τοποθεσία απορρίφθηκε",
@@ -1791,7 +1791,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Rejseplanlægger",
     tutorialTravelDesc: "Planlæg dine ture og tjek vejrsandsynligheden for din udflugt.",
     tutorialSettingsTitle: "Indstillinger",
-    tutorialSettingsDesc: "Her kan du tilpasse sprog, enheder (°C/°F), tema (Lys/Mørk/Auto) og din hjemmeplacering.",
+    tutorialSettingsDesc: "Her kan du tilpasse sprog, enheder (°C/°F/K), tema (Lys/Mørk/Auto) og din hjemmeplacering.",
     tutorialComplete: "Vejledning fuldført! Du kan foretage ændringer i indstillingerne når som helst.",
     noGpsAvailable: "GPS ikke tilgængelig",
     locationDenied: "Adgang til placering nægtet",
@@ -1954,7 +1954,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Планировщик путешествий",
     tutorialTravelDesc: "Планируйте свои поездки и проверяйте вероятность погоды для вашей экскурсии.",
     tutorialSettingsTitle: "Настройки",
-    tutorialSettingsDesc: "Здесь вы можете настроить язык, единицы измерения (°C/°F), тему (Светлая/Темная/Авто) и ваше домашнее местоположение.",
+    tutorialSettingsDesc: "Здесь вы можете настроить язык, единицы измерения (°C/°F/K), тему (Светлая/Темная/Авто) и ваше домашнее местоположение.",
     tutorialComplete: "Руководство завершено! Вы можете вносить изменения в настройках в любое время.",
     noGpsAvailable: "GPS недоступен",
     locationDenied: "Доступ к местоположению запрещён",
@@ -1992,11 +1992,17 @@ const getSavedSettings = () => {
     try {
         const saved = localStorage.getItem('weather_settings');
         // Default Settings erweitert um theme: 'auto'
-        return saved ? JSON.parse(saved) : { 
+        const defaults = { 
             language: 'de', 
             unit: 'celsius', 
             theme: 'auto'
         };
+        if (!saved) return defaults;
+        const parsed = JSON.parse(saved);
+        if (!parsed || !['celsius', 'fahrenheit', 'kelvin'].includes(parsed.unit)) {
+            return { ...defaults, ...parsed, unit: 'celsius' };
+        }
+        return { ...defaults, ...parsed };
     } catch (e) { 
         return { 
             language: 'de', 
@@ -3265,7 +3271,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
                      <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
                         <Thermometer size={16}/> {t.units}
                      </label>
-                     <div className="flex gap-2 bg-m3-surface-container p-1 rounded-m3-md">
+                     <div className="flex flex-wrap gap-2 bg-m3-surface-container p-1 rounded-m3-md">
                          <button 
                              onClick={() => setLocalSettings({...localSettings, unit: 'celsius'})}
                              className={`flex-1 py-2 rounded-m3-sm text-sm font-bold transition ${localSettings.unit === 'celsius' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
@@ -3277,6 +3283,12 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
                              className={`flex-1 py-2 rounded-m3-sm text-sm font-bold transition ${localSettings.unit === 'fahrenheit' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                          >
                              °F (Fahrenheit)
+                         </button>
+                         <button 
+                             onClick={() => setLocalSettings({...localSettings, unit: 'kelvin'})}
+                             className={`flex-1 py-2 rounded-m3-sm text-sm font-bold transition ${localSettings.unit === 'kelvin' ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                         >
+                             K (Kelvin)
                          </button>
                      </div>
                  </div>
@@ -5661,7 +5673,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                                     <Thermometer size={20} className="text-m3-error" />
                                     <span className="font-bold text-m3-on-surface">{t.units}</span>
                                 </div>
-                                <p className="text-xs text-m3-on-surface-variant ml-8">°C / °F</p>
+                                <p className="text-xs text-m3-on-surface-variant ml-8">°C / °F / K</p>
                             </div>
                             
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
@@ -5822,6 +5834,9 @@ export default function WeatherApp() {
       if (val === null || val === undefined) return "--";
       if (settings.unit === 'fahrenheit') {
           return Math.round(val * 9/5 + 32);
+      }
+      if (settings.unit === 'kelvin') {
+          return Math.round(val + 273.15);
       }
       return Math.round(val);
   }, [settings.unit]);
