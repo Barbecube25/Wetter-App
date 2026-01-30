@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Eye } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
 import { StatusBar } from '@capacitor/status-bar';
 
@@ -37,6 +37,8 @@ const TRANSLATIONS = {
     humidity: "Feuchte",
     dewPoint: "Taupkt.",
     uv: "UV",
+    pressure: "Luftdruck",
+    visibility: "Sicht",
     overview: "Verlauf",
     longterm: "14 Tage",
     radar: "Radar",
@@ -200,6 +202,8 @@ const TRANSLATIONS = {
     humidity: "Humidity",
     dewPoint: "Dew Pt.",
     uv: "UV",
+    pressure: "Pressure",
+    visibility: "Visibility",
     overview: "Overview",
     longterm: "14 Days",
     radar: "Radar",
@@ -363,6 +367,8 @@ const TRANSLATIONS = {
     humidity: "Humidité",
     dewPoint: "Pt. rosée",
     uv: "UV",
+    pressure: "Pression",
+    visibility: "Visibilité",
     overview: "Historique",
     longterm: "14 jours",
     radar: "Radar",
@@ -526,6 +532,8 @@ const TRANSLATIONS = {
     humidity: "Humedad",
     dewPoint: "Pto. rocío",
     uv: "UV",
+    pressure: "Presión",
+    visibility: "Visibilidad",
     overview: "Historial",
     longterm: "14 días",
     radar: "Radar",
@@ -689,6 +697,8 @@ const TRANSLATIONS = {
     humidity: "Umidità",
     dewPoint: "Pto. rugiada",
     uv: "UV",
+    pressure: "Pressione",
+    visibility: "Visibilità",
     overview: "Storico",
     longterm: "14 giorni",
     radar: "Radar",
@@ -852,6 +862,8 @@ const TRANSLATIONS = {
     humidity: "Nem",
     dewPoint: "Çiy noktası",
     uv: "UV",
+    pressure: "Basınç",
+    visibility: "Görüş",
     overview: "Geçmiş",
     longterm: "14 Gün",
     radar: "Radar",
@@ -1015,6 +1027,8 @@ const TRANSLATIONS = {
     humidity: "Wilgotność",
     dewPoint: "Pkt rosy",
     uv: "UV",
+    pressure: "Ciśnienie",
+    visibility: "Widoczność",
     overview: "Historia",
     longterm: "14 dni",
     radar: "Radar",
@@ -1178,6 +1192,8 @@ const TRANSLATIONS = {
     humidity: "Vochtigheid",
     dewPoint: "Dauwpunt",
     uv: "UV",
+    pressure: "Druk",
+    visibility: "Zicht",
     overview: "Verloop",
     longterm: "14 dagen",
     radar: "Radar",
@@ -1341,6 +1357,8 @@ const TRANSLATIONS = {
     humidity: "Vlažnost",
     dewPoint: "Rosište",
     uv: "UV",
+    pressure: "Tlak",
+    visibility: "Vidljivost",
     overview: "Pregled",
     longterm: "14 dana",
     radar: "Radar",
@@ -1504,6 +1522,8 @@ const TRANSLATIONS = {
     humidity: "Υγρασία",
     dewPoint: "Σημείο δρόσου",
     uv: "UV",
+    pressure: "Πίεση",
+    visibility: "Ορατότητα",
     overview: "Ιστορικό",
     longterm: "14 ημέρες",
     radar: "Radar",
@@ -1666,6 +1686,8 @@ const TRANSLATIONS = {
     humidity: "Fugtighed",
     dewPoint: "Dugpunkt",
     uv: "UV",
+    pressure: "Tryk",
+    visibility: "Sigtbarhed",
     overview: "Oversigt",
     longterm: "14 dage",
     radar: "Radar",
@@ -1829,6 +1851,8 @@ const TRANSLATIONS = {
     humidity: "Влажность",
     dewPoint: "Точка росы",
     uv: "УФ",
+    pressure: "Давление",
+    visibility: "Видимость",
     overview: "История",
     longterm: "14 дней",
     radar: "Радар",
@@ -6215,7 +6239,7 @@ export default function WeatherApp() {
       const { lat, lon } = currentLoc;
       
       const modelsShort = "icon_seamless,gfs_seamless,gem_seamless";
-      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,cloud_cover&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2`;
+      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,cloud_cover,pressure_msl,visibility&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2`;
       
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
       const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max&models=${modelsLong}&timezone=auto&forecast_days=14`;
@@ -6625,6 +6649,8 @@ export default function WeatherApp() {
         dewPoint: getVal('dewpoint_2m'),
         uvIndex: getVal('uv_index'),
         cloudCover: getAvg('cloud_cover'),
+        pressure: getVal('pressure_msl'),
+        visibility: getVal('visibility'),
         reliability: reliability
       });
     }
@@ -6669,7 +6695,7 @@ export default function WeatherApp() {
   }, [longTermData, lang]); // Add lang to deps to refresh names
   
   // LIVE oder DEMO Daten?
-  const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: 0, precip: 0, wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0, cloudCover: 0 };
+  const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: 0, precip: 0, wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0, cloudCover: 0, pressure: 0, visibility: 0 };
   const current = liveCurrent;
 
   // --- NEUE LOGIK: Echter Tag/Nacht Status für das UI ---
@@ -7324,6 +7350,29 @@ export default function WeatherApp() {
               <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{formatTemp(current.dewPoint)}{getTempUnitSymbol()}</div>
             </div>
           )}
+        </div>
+        
+        {/* Additional Weather Details Grid - Second row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
+            <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+              <Gauge size={14} /> {t('pressure')}
+            </div>
+            <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
+              {Math.round(current.pressure)} <span className="text-m3-body-small">hPa</span>
+            </div>
+          </div>
+          
+          <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
+            <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+              <Eye size={14} /> {t('visibility')}
+            </div>
+            <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
+              {settings.units === 'imperial' 
+                ? `${(current.visibility / 1609.34).toFixed(1)} mi` 
+                : `${(current.visibility / 1000).toFixed(1)} km`}
+            </div>
+          </div>
         </div>
 
         {/* Enhanced Tab Navigation */}
