@@ -6694,7 +6694,7 @@ export default function WeatherApp() {
                     const maxT = getSafeValue(daily, i, 'temperature_2m_max') ?? 0;
                     const minT = getSafeValue(daily, i, 'temperature_2m_min') ?? 0;
                     const code = getSafeValue(daily, i, 'weathercode', false) ?? 0;
-                    const prob = getSafeValue(daily, i, 'precipitation_probability_max') ?? 0;
+                    const prob = getSafeValue(daily, i, 'precipitation_probability_max', false) ?? 0;
                     const sum = getSafeValue(daily, i, 'precipitation_sum') ?? 0;
                     const gust = getSafeValue(daily, i, 'windgusts_10m_max') ?? 0;
 
@@ -6755,7 +6755,7 @@ export default function WeatherApp() {
                         const precip = getSafeValue(hourly, i, 'precipitation');
                         const wind = getSafeValue(hourly, i, 'windspeed_10m');
                         const code = getSafeValue(hourly, i, 'weathercode', false);
-                        const prob = getSafeValue(hourly, i, 'precipitation_probability');
+                        const prob = getSafeValue(hourly, i, 'precipitation_probability', false);
 
                         if (temp !== null) temps.push(temp);
                         if (precip !== null) precips.push(precip);
@@ -6906,16 +6906,8 @@ export default function WeatherApp() {
         return h[key]?.[i] ?? 0;
       };
       
-      // Neue Modelle auslesen (wenn vorhanden)
-      const temp_icon = h.temperature_2m_icon_seamless?.[i] ?? null;
-      const temp_gfs = h.temperature_2m_gfs_seamless?.[i] ?? null;
-      // Optional: Weitere Modelle, falls vorhanden, aber Fokus auf Global
-      const temp_arome = h.temperature_2m_arome_seamless?.[i] ?? null; 
-      const temp_gem = h.temperature_2m_gem_seamless?.[i] ?? null;
-      
-      // Mittelwert jetzt aus verfügbaren Modellen
-      const t_vals = [temp_icon, temp_gfs, temp_arome, temp_gem].filter(v => v !== null && v !== undefined);
-      const temp = t_vals.length > 0 ? t_vals.reduce((a,b)=>a+b,0) / t_vals.length : 0;
+      // Use getVal helper for consistent multi-model averaging
+      const temp = getVal('temperature_2m');
       
       // Auch bei Regen/Schnee/Wind alle Modelle einbeziehen
       const getAvg = (key) => {
@@ -6937,14 +6929,19 @@ export default function WeatherApp() {
       };
 
       // Zuverlässigkeit
-      const t_spread = t_vals.length > 1 ? Math.max(...t_vals) - Math.min(...t_vals) : 0;
+      const tempVals = [
+        h.temperature_2m_icon_seamless?.[i],
+        h.temperature_2m_gfs_seamless?.[i],
+        h.temperature_2m_arome_seamless?.[i],
+        h.temperature_2m_gem_seamless?.[i]
+      ].filter(v => v !== null && v !== undefined);
+      const t_spread = tempVals.length > 1 ? Math.max(...tempVals) - Math.min(...tempVals) : 0;
       const reliability = Math.round(Math.max(0, 100 - (t_spread * 15)));
 
       res.push({
         time: t,
         displayTime: t.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}),
         temp: temp,
-        temp_icon, temp_gfs, temp_arome, temp_gem,
         precip: getAvg('precipitation'),
         // FIX: Add precipProb field
         precipProb: getVal('precipitation_probability'),
@@ -7028,8 +7025,9 @@ export default function WeatherApp() {
         code: d.weathercode_icon_seamless?.[i] || 0,
         reliability: (() => {
           const relVals = [maxIcon, maxGfs, maxArome, maxGem].filter((val) => val !== null && val !== undefined);
+          // Adjusted for 4-model ensemble: reduce penalty from 15 to 10 to account for natural spread with more models
           const spread = relVals.length > 1 ? Math.max(...relVals) - Math.min(...relVals) : 0;
-          return Math.round(Math.max(10, 100 - (spread * 15) - (i * 2)));
+          return Math.round(Math.max(10, 100 - (spread * 10) - (i * 2)));
         })(),
         prob: (() => {
           const probVals = [
