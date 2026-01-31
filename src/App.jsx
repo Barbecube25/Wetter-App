@@ -6462,7 +6462,7 @@ export default function WeatherApp() {
     try {
       const { lat, lon } = currentLoc;
       
-      const modelsShort = "icon_seamless,gfs_seamless,gem_seamless";
+      const modelsShort = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless";
       const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,cloud_cover,pressure_msl,visibility&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2`;
       
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
@@ -6612,7 +6612,7 @@ export default function WeatherApp() {
         const lat = loc.latitude || loc.lat;
         const lon = loc.longitude || loc.lon;
         // Fetch comparing data to calculate reliability
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,windspeed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,precipitation_sum,windgusts_10m_max&models=icon_seamless,gfs_seamless&timezone=auto&forecast_days=16`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,windspeed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,precipitation_sum,windgusts_10m_max&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&forecast_days=16`;
         
         const wRes = await fetch(url);
         if(!wRes.ok) throw new Error("Wetterdaten konnten nicht geladen werden.");
@@ -6648,17 +6648,22 @@ export default function WeatherApp() {
         };
 
         // HELPER: Safely get value from potentially model-suffixed response
-        const getSafeValue = (sourceObj, index, baseKey) => {
+        const getSafeValue = (sourceObj, index, baseKey, average = true) => {
             if (!sourceObj) return null;
-            // 1. Try base key directly (e.g. temperature_2m)
-            if (sourceObj[baseKey] && sourceObj[baseKey][index] !== undefined) return sourceObj[baseKey][index];
-            
-            // 2. Try common model suffixes
-            const models = ['icon_seamless', 'gfs_seamless', 'gem_seamless', 'arome_seamless'];
-            for (const m of models) {
-                const key = `${baseKey}_${m}`;
-                if (sourceObj[key] && sourceObj[key][index] !== undefined) return sourceObj[key][index];
+            // 1. Try common model suffixes (average if multiple are available)
+            const models = ['icon_seamless', 'gfs_seamless', 'arome_seamless', 'gem_seamless'];
+            const modelVals = models
+                .map((m) => sourceObj[`${baseKey}_${m}`]?.[index])
+                .filter((val) => val !== undefined && val !== null);
+
+            if (modelVals.length > 0) {
+                if (!average) return modelVals[0];
+                return modelVals.reduce((a, b) => a + b, 0) / modelVals.length;
             }
+
+            // 2. Try base key directly (e.g. temperature_2m)
+            if (sourceObj[baseKey] && sourceObj[baseKey][index] !== undefined) return sourceObj[baseKey][index];
+
             return null;
         };
 
@@ -6688,7 +6693,7 @@ export default function WeatherApp() {
                     
                     const maxT = getSafeValue(daily, i, 'temperature_2m_max') ?? 0;
                     const minT = getSafeValue(daily, i, 'temperature_2m_min') ?? 0;
-                    const code = getSafeValue(daily, i, 'weathercode') ?? 0;
+                    const code = getSafeValue(daily, i, 'weathercode', false) ?? 0;
                     const prob = getSafeValue(daily, i, 'precipitation_probability_max') ?? 0;
                     const sum = getSafeValue(daily, i, 'precipitation_sum') ?? 0;
                     const gust = getSafeValue(daily, i, 'windgusts_10m_max') ?? 0;
@@ -6749,7 +6754,7 @@ export default function WeatherApp() {
                         const temp = getSafeValue(hourly, i, 'temperature_2m');
                         const precip = getSafeValue(hourly, i, 'precipitation');
                         const wind = getSafeValue(hourly, i, 'windspeed_10m');
-                        const code = getSafeValue(hourly, i, 'weathercode');
+                        const code = getSafeValue(hourly, i, 'weathercode', false);
                         const prob = getSafeValue(hourly, i, 'precipitation_probability');
 
                         if (temp !== null) temps.push(temp);
@@ -6835,7 +6840,7 @@ export default function WeatherApp() {
       useEffect(() => {
           const fetchPreview = async () => {
               try {
-                  const url = `https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max&models=icon_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${trip.startDate}`;
+                  const url = `https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${trip.startDate}`;
                   const res = await fetch(url);
                   const data = await res.json();
                   if (data.daily && data.daily.time.length > 0) {
@@ -6886,7 +6891,20 @@ export default function WeatherApp() {
       }
 
       // FIX: Verwendung der globalen Seamless-Keys
-      const getVal = (key) => h[key]?.[i] ?? h[`${key}_icon_seamless`]?.[i] ?? h[`${key}_gfs_seamless`]?.[i] ?? 0;
+      const getVal = (key) => {
+        const modelVals = [
+          h[`${key}_icon_seamless`]?.[i],
+          h[`${key}_gfs_seamless`]?.[i],
+          h[`${key}_arome_seamless`]?.[i],
+          h[`${key}_gem_seamless`]?.[i]
+        ].filter((val) => val !== undefined && val !== null);
+
+        if (modelVals.length > 0) {
+          return modelVals.reduce((a, b) => a + b, 0) / modelVals.length;
+        }
+
+        return h[key]?.[i] ?? 0;
+      };
       
       // Neue Modelle auslesen (wenn vorhanden)
       const temp_icon = h.temperature_2m_icon_seamless?.[i] ?? null;
@@ -6896,23 +6914,25 @@ export default function WeatherApp() {
       const temp_gem = h.temperature_2m_gem_seamless?.[i] ?? null;
       
       // Mittelwert jetzt aus verfügbaren Modellen
-      const t_vals = [temp_icon, temp_gfs, temp_gem].filter(v => v !== null && v !== undefined);
+      const t_vals = [temp_icon, temp_gfs, temp_arome, temp_gem].filter(v => v !== null && v !== undefined);
       const temp = t_vals.length > 0 ? t_vals.reduce((a,b)=>a+b,0) / t_vals.length : 0;
       
       // Auch bei Regen/Schnee/Wind alle Modelle einbeziehen
       const getAvg = (key) => {
          const v1 = h[`${key}_icon_seamless`]?.[i];
          const v2 = h[`${key}_gfs_seamless`]?.[i];
-         const v3 = h[`${key}_gem_seamless`]?.[i];
-         const vals = [v1, v2, v3].filter(v => v !== undefined && v !== null);
+         const v3 = h[`${key}_arome_seamless`]?.[i];
+         const v4 = h[`${key}_gem_seamless`]?.[i];
+         const vals = [v1, v2, v3, v4].filter(v => v !== undefined && v !== null);
          return vals.length > 0 ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
       };
 
       const getMax = (key) => {
          const v1 = h[`${key}_icon_seamless`]?.[i];
          const v2 = h[`${key}_gfs_seamless`]?.[i];
-         const v3 = h[`${key}_gem_seamless`]?.[i];
-         const vals = [v1, v2, v3].filter(v => v !== undefined && v !== null);
+         const v3 = h[`${key}_arome_seamless`]?.[i];
+         const v4 = h[`${key}_gem_seamless`]?.[i];
+         const vals = [v1, v2, v3, v4].filter(v => v !== undefined && v !== null);
          return vals.length > 0 ? Math.max(...vals) : 0;
       };
 
@@ -6961,7 +6981,7 @@ export default function WeatherApp() {
       const maxGem = d.temperature_2m_max_gem_seamless?.[i] ?? null;
       
       // Mittelwert robuster
-      const maxVals = [maxIcon, maxGfs, maxGem].filter(v => v !== null && v !== undefined);
+      const maxVals = [maxIcon, maxGfs, maxArome, maxGem].filter(v => v !== null && v !== undefined);
       
       return {
         date,
@@ -6969,17 +6989,58 @@ export default function WeatherApp() {
         dayNameFull: new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date),
         dateShort: formatDateShort(date, lang),
         max: maxVals.length > 0 ? maxVals.reduce((a,b)=>a+b,0)/maxVals.length : maxIcon,
-        min: ((d.temperature_2m_min_icon_seamless?.[i]??0) + (d.temperature_2m_min_gfs_seamless?.[i]??0)) / 2,
+        min: (() => {
+          const minVals = [
+            d.temperature_2m_min_icon_seamless?.[i],
+            d.temperature_2m_min_gfs_seamless?.[i],
+            d.temperature_2m_min_arome_seamless?.[i],
+            d.temperature_2m_min_gem_seamless?.[i]
+          ].filter((val) => val !== undefined && val !== null);
+          return minVals.length > 0 ? minVals.reduce((a, b) => a + b, 0) / minVals.length : 0;
+        })(),
         max_icon: maxIcon, max_gfs: maxGfs, max_arome: maxArome, max_gem: maxGem,
         // Auch hier GEM mit einbeziehen
-        rain: Math.max(d.precipitation_sum_icon_seamless?.[i]||0, d.precipitation_sum_gfs_seamless?.[i]||0, d.precipitation_sum_gem_seamless?.[i]||0).toFixed(1),
-        snow: Math.max(d.snowfall_sum_icon_seamless?.[i]||0, d.snowfall_sum_gfs_seamless?.[i]||0, d.snowfall_sum_gem_seamless?.[i]||0).toFixed(1),
-        wind: Math.round(Math.max(d.windspeed_10m_max_icon_seamless?.[i]||0, d.windspeed_10m_max_gfs_seamless?.[i]||0, d.windspeed_10m_max_gem_seamless?.[i]||0)),
-        gust: Math.round(Math.max(d.windgusts_10m_max_icon_seamless?.[i]||0, d.windgusts_10m_max_gfs_seamless?.[i]||0, d.windgusts_10m_max_gem_seamless?.[i]||0)),
+        rain: Math.max(
+          d.precipitation_sum_icon_seamless?.[i] || 0,
+          d.precipitation_sum_gfs_seamless?.[i] || 0,
+          d.precipitation_sum_arome_seamless?.[i] || 0,
+          d.precipitation_sum_gem_seamless?.[i] || 0
+        ).toFixed(1),
+        snow: Math.max(
+          d.snowfall_sum_icon_seamless?.[i] || 0,
+          d.snowfall_sum_gfs_seamless?.[i] || 0,
+          d.snowfall_sum_arome_seamless?.[i] || 0,
+          d.snowfall_sum_gem_seamless?.[i] || 0
+        ).toFixed(1),
+        wind: Math.round(Math.max(
+          d.windspeed_10m_max_icon_seamless?.[i] || 0,
+          d.windspeed_10m_max_gfs_seamless?.[i] || 0,
+          d.windspeed_10m_max_arome_seamless?.[i] || 0,
+          d.windspeed_10m_max_gem_seamless?.[i] || 0
+        )),
+        gust: Math.round(Math.max(
+          d.windgusts_10m_max_icon_seamless?.[i] || 0,
+          d.windgusts_10m_max_gfs_seamless?.[i] || 0,
+          d.windgusts_10m_max_arome_seamless?.[i] || 0,
+          d.windgusts_10m_max_gem_seamless?.[i] || 0
+        )),
         dir: d.winddirection_10m_dominant_icon_seamless?.[i] || 0,
         code: d.weathercode_icon_seamless?.[i] || 0,
-        reliability: Math.round(Math.max(10, 100 - (Math.abs(maxIcon - maxGfs) * 15) - (i * 2))),
-        prob: Math.round(((d.precipitation_probability_max_icon_seamless?.[i]||0) + (d.precipitation_probability_max_gfs_seamless?.[i]||0))/2)
+        reliability: (() => {
+          const relVals = [maxIcon, maxGfs, maxArome, maxGem].filter((val) => val !== null && val !== undefined);
+          const spread = relVals.length > 1 ? Math.max(...relVals) - Math.min(...relVals) : 0;
+          return Math.round(Math.max(10, 100 - (spread * 15) - (i * 2)));
+        })(),
+        prob: (() => {
+          const probVals = [
+            d.precipitation_probability_max_icon_seamless?.[i],
+            d.precipitation_probability_max_gfs_seamless?.[i],
+            d.precipitation_probability_max_arome_seamless?.[i],
+            d.precipitation_probability_max_gem_seamless?.[i]
+          ].filter((val) => val !== undefined && val !== null);
+          if (probVals.length === 0) return 0;
+          return Math.round(probVals.reduce((a, b) => a + b, 0) / probVals.length);
+        })()
       };
     });
   }, [longTermData, lang]); // Add lang to deps to refresh names
