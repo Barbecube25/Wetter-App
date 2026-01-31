@@ -7677,6 +7677,26 @@ export default function WeatherApp() {
           </div>
         </div>
 
+        {/* Enhanced Tab Navigation - Sticky positioned below animation card */}
+        <div className={`sticky top-0 z-20 ${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl p-2 shadow-m3-2 border border-m3-outline-variant`}>
+          <div className="grid grid-cols-5 gap-1">
+            {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
+              <button 
+                key={tab.id} 
+                onClick={() => setActiveTab(tab.id)} 
+                className={`flex flex-col items-center justify-center py-3 px-2 rounded-m3-2xl text-m3-label-medium font-medium transition-all ${
+                  activeTab === tab.id 
+                    ? 'bg-m3-primary text-m3-on-primary shadow-m3-2' 
+                    : (isRealNight ? 'text-m3-dark-on-surface-variant hover:bg-m3-dark-surface-container-high hover:text-m3-dark-on-surface' : 'text-m3-on-surface-variant hover:bg-m3-surface-container-high hover:text-m3-on-surface')
+                }`}
+              >
+                <tab.icon size={20} className="mb-1" />
+                <span className="text-[10px] sm:text-xs">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Weather Details Grid - Moved below animation card */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
@@ -7768,26 +7788,6 @@ export default function WeatherApp() {
               </div>
             </div>
           )}
-        </div>
-
-        {/* Enhanced Tab Navigation */}
-        <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl p-2 shadow-m3-2 border border-m3-outline-variant`}>
-          <div className="grid grid-cols-5 gap-1">
-            {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
-              <button 
-                key={tab.id} 
-                onClick={() => setActiveTab(tab.id)} 
-                className={`flex flex-col items-center justify-center py-3 px-2 rounded-m3-2xl text-m3-label-medium font-medium transition-all ${
-                  activeTab === tab.id 
-                    ? 'bg-m3-primary text-m3-on-primary shadow-m3-2' 
-                    : (isRealNight ? 'text-m3-dark-on-surface-variant hover:bg-m3-dark-surface-container-high hover:text-m3-dark-on-surface' : 'text-m3-on-surface-variant hover:bg-m3-surface-container-high hover:text-m3-on-surface')
-                }`}
-              >
-                <tab.icon size={20} className="mb-1" />
-                <span className="text-[10px] sm:text-xs">{tab.label}</span>
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Content Card with modern elevation */}
