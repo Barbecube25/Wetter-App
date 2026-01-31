@@ -5963,6 +5963,12 @@ export default function WeatherApp() {
   const [demoTime, setDemoTime] = useState(null); // Time override for demo mode (HH:MM format)
   const [demoWindSpeed, setDemoWindSpeed] = useState(null); // Wind speed override for demo mode
 
+  // Pull-to-refresh state
+  const [pullStartY, setPullStartY] = useState(0);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   // WICHTIG: Echtzeit-State für die Animation (NEU)
   const [now, setNow] = useState(new Date());
 
@@ -6525,6 +6531,50 @@ export default function WeatherApp() {
   };
 
   useEffect(() => { fetchData(); }, [currentLoc]);
+
+  // --- PULL-TO-REFRESH HANDLERS ---
+  const handleTouchStart = (e) => {
+    // Only activate pull-to-refresh if we're at the top of the page
+    if (window.scrollY === 0 && !isRefreshing) {
+      setPullStartY(e.touches[0].clientY);
+      setIsPulling(true);
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isPulling || isRefreshing) return;
+    
+    const currentY = e.touches[0].clientY;
+    const distance = currentY - pullStartY;
+    
+    // Only allow pulling down (positive distance) and limit to max 100px
+    if (distance > 0 && window.scrollY === 0) {
+      setPullDistance(Math.min(distance, 100));
+      // Prevent default scroll behavior when pulling
+      if (distance > 10) {
+        e.preventDefault();
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isPulling || isRefreshing) return;
+    
+    setIsPulling(false);
+    
+    // Trigger refresh if pulled down more than 60px
+    if (pullDistance > 60) {
+      setIsRefreshing(true);
+      fetchData().finally(() => {
+        setTimeout(() => {
+          setIsRefreshing(false);
+          setPullDistance(0);
+        }, 500);
+      });
+    } else {
+      setPullDistance(0);
+    }
+  };
 
   // --- TRAVEL SEARCH LOGIC ---
   const handleTravelSearch = async (overrideQuery = null, overrideData = null) => {
@@ -7358,8 +7408,33 @@ export default function WeatherApp() {
   if (error) return <div className="min-h-screen flex items-center justify-center p-8 bg-m3-error-container text-m3-on-error-container font-bold">{error} <button onClick={() => setCurrentLoc(homeLoc)} className="ml-4 underline">Reset</button></div>;
 
   return (
-    <div className={`min-h-screen transition-all duration-1000 bg-gradient-to-br ${bgGradient} font-sans pb-20 overflow-hidden relative`}>
+    <div 
+      className={`min-h-screen transition-all duration-1000 bg-gradient-to-br ${bgGradient} font-sans pb-20 overflow-hidden relative`}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={{ transform: `translateY(${pullDistance * 0.5}px)` }}
+    >
       <style>{styles}</style>
+      
+      {/* Pull-to-refresh indicator */}
+      {(isPulling || isRefreshing) && (
+        <div 
+          className="fixed top-0 left-0 right-0 flex justify-center items-center z-50 transition-opacity"
+          style={{ 
+            height: `${Math.min(pullDistance, 60)}px`,
+            opacity: Math.min(pullDistance / 60, 1)
+          }}
+        >
+          <div className={`${isRefreshing ? 'animate-spin' : ''}`}>
+            <RefreshCw 
+              size={24} 
+              className={isRealNight ? 'text-m3-dark-primary' : 'text-m3-primary'}
+              style={{ transform: `rotate(${pullDistance * 3}deg)` }}
+            />
+          </div>
+        </div>
+      )}
       
       {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} currentTemp={current.temp} lang={lang} />}
       {showPrecipModal && (
