@@ -6550,10 +6550,6 @@ export default function WeatherApp() {
     // Only allow pulling down (positive distance) and limit to max 100px
     if (distance > 0 && window.scrollY === 0) {
       setPullDistance(Math.min(distance, 100));
-      // Prevent default scroll behavior when pulling
-      if (distance > 10) {
-        e.preventDefault();
-      }
     }
   };
 
@@ -6565,11 +6561,18 @@ export default function WeatherApp() {
     // Trigger refresh if pulled down more than 60px
     if (pullDistance > 60) {
       setIsRefreshing(true);
+      // Minimum display time for refresh indicator
+      const minDisplayTime = 300;
+      const startTime = Date.now();
+      
       fetchData().finally(() => {
+        const elapsed = Date.now() - startTime;
+        const remainingTime = Math.max(0, minDisplayTime - elapsed);
+        
         setTimeout(() => {
           setIsRefreshing(false);
           setPullDistance(0);
-        }, 500);
+        }, remainingTime);
       });
     } else {
       setPullDistance(0);
@@ -7413,7 +7416,10 @@ export default function WeatherApp() {
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      style={{ transform: `translateY(${pullDistance * 0.5}px)` }}
+      style={{ 
+        transform: `translateY(${pullDistance * 0.5}px)`,
+        touchAction: 'pan-y'
+      }}
     >
       <style>{styles}</style>
       
@@ -7430,7 +7436,7 @@ export default function WeatherApp() {
             <RefreshCw 
               size={24} 
               className={isRealNight ? 'text-m3-dark-primary' : 'text-m3-primary'}
-              style={{ transform: `rotate(${pullDistance * 3}deg)` }}
+              style={!isRefreshing ? { transform: `rotate(${pullDistance * 3}deg)` } : {}}
             />
           </div>
         </div>
