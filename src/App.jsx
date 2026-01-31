@@ -9,6 +9,9 @@ import { StatusBar } from '@capacitor/status-bar';
 // ÄNDERUNG: Standard ist jetzt null (leer), damit der User es einrichten muss
 const DEFAULT_LOC = null; 
 
+// Header height constant for consistent spacing
+const HEADER_HEIGHT = '180px'; 
+
 // TEXT RESSOURCEN
 const TRANSLATIONS = {
   de: {
@@ -7630,7 +7633,7 @@ export default function WeatherApp() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 pb-4 pt-[180px] z-10 relative space-y-4">
+      <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: HEADER_HEIGHT }}>
         {/* Modern Weather Card with better elevation */}
         <div className={`${isRealNight ? 'bg-m3-dark-surface-container/90' : 'bg-m3-surface-container'} rounded-m3-3xl p-6 shadow-m3-4 relative overflow-hidden min-h-[280px] border border-m3-outline-variant`}>
           {/* Weather background animation */}
