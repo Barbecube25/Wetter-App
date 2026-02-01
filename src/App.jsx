@@ -12,8 +12,11 @@ const DEFAULT_LOC = null;
 // Header height constant for consistent spacing (reduced for simpler header)
 const HEADER_HEIGHT = '70px'; 
 
+// Status bar height constant (for update time and refresh button)
+const STATUS_BAR_HEIGHT = '48px';
+
 // Animation card height constant for fixed positioning and spacing calculations
-const ANIMATION_CARD_HEIGHT = '240px'; 
+const ANIMATION_CARD_HEIGHT = '200px'; 
 
 // Navigation bar height constant for spacing calculations
 const NAV_BAR_HEIGHT = '68px'; 
@@ -7607,32 +7610,38 @@ export default function WeatherApp() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: `calc(${HEADER_HEIGHT} + ${ANIMATION_CARD_HEIGHT} + ${NAV_BAR_HEIGHT} + ${FIXED_ELEMENTS_GAP})` }}>
+      {/* Status Bar with Update Time and Refresh Button - Fixed above animation card */}
+      <div className="fixed left-0 right-0 z-40 px-4" style={{ top: HEADER_HEIGHT }}>
+        <div className="max-w-4xl mx-auto">
+          <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} backdrop-blur-md rounded-m3-2xl p-3 shadow-m3-2 border border-m3-outline-variant`}>
+            <div className="flex justify-between items-center">
+              <div className={`flex items-center gap-2 text-m3-label-small ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
+                <Clock size={12} />
+                <span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}{getCacheAgeText()}</span>
+              </div>
+              <button 
+                onClick={fetchData} 
+                aria-label={t('refresh') || "Refresh weather data"}
+                className={`p-2 rounded-m3-full ${isRealNight ? 'bg-m3-dark-surface-container-high hover:bg-m3-dark-surface-container-highest' : 'bg-m3-surface-container-high hover:bg-m3-surface-container-highest'} ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'} transition-all shadow-m3-1 ${isRefreshing ? 'animate-spin' : ''}`}
+              >
+                <RefreshCw size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: `calc(${HEADER_HEIGHT} + ${STATUS_BAR_HEIGHT} + ${ANIMATION_CARD_HEIGHT} + ${NAV_BAR_HEIGHT} + ${FIXED_ELEMENTS_GAP})` }}>
         {/* Fixed Animation Card Container - Matches main content width */}
-        <div className="fixed left-0 right-0 z-30 px-4" style={{ top: HEADER_HEIGHT }}>
+        <div className="fixed left-0 right-0 z-30 px-4" style={{ top: `calc(${HEADER_HEIGHT} + ${STATUS_BAR_HEIGHT})` }}>
           <div className="max-w-4xl mx-auto">
-            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-t-m3-3xl p-4 shadow-m3-4 relative overflow-hidden min-h-[220px] border border-m3-outline-variant border-b-0 backdrop-blur-md`}>
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-t-m3-3xl p-4 shadow-m3-4 relative overflow-hidden min-h-[200px] border border-m3-outline-variant border-b-0 backdrop-blur-md`}>
               {/* Weather background animation */}
               <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
                 <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} />
               </div>
               
               <div className="relative z-10">
-                {/* Top bar with refresh button and last update time */}
-                <div className="flex justify-between items-start mb-2">
-                  <div className={`flex items-center gap-2 text-m3-label-small text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]`}>
-                    <Clock size={12} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
-                    <span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}{getCacheAgeText()}</span>
-                  </div>
-                  <button 
-                    onClick={fetchData} 
-                    aria-label={t('refresh') || "Refresh weather data"}
-                    className={`p-2 rounded-m3-full bg-white/10 hover:bg-white/20 text-white transition-all shadow-lg backdrop-blur-sm ${isRefreshing ? 'animate-spin' : ''}`}
-                  >
-                    <RefreshCw size={16} />
-                  </button>
-                </div>
-
                 {/* Main Temperature Display */}
                 <div>
                   <div className="flex items-start justify-between">
@@ -7674,7 +7683,7 @@ export default function WeatherApp() {
         </div>
 
         {/* Enhanced Tab Navigation - Fixed positioned below fixed animation card */}
-        <div className="fixed left-0 right-0 z-20 px-4" style={{ top: `calc(${HEADER_HEIGHT} + ${ANIMATION_CARD_HEIGHT})` }}>
+        <div className="fixed left-0 right-0 z-20 px-4" style={{ top: `calc(${HEADER_HEIGHT} + ${STATUS_BAR_HEIGHT} + ${ANIMATION_CARD_HEIGHT})` }}>
           <div className="max-w-4xl mx-auto">
             <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-b-m3-3xl p-2 shadow-m3-2 border border-m3-outline-variant border-t-0`}>
           <div className="grid grid-cols-5 gap-1">
