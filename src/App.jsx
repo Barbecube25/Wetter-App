@@ -6999,19 +6999,25 @@ export default function WeatherApp() {
           return minVals.length > 0 ? minVals.reduce((a, b) => a + b, 0) / minVals.length : 0;
         })(),
         max_icon: maxIcon, max_gfs: maxGfs, max_arome: maxArome, max_gem: maxGem,
-        // Auch hier GEM mit einbeziehen
-        rain: Math.max(
-          d.precipitation_sum_icon_seamless?.[i] || 0,
-          d.precipitation_sum_gfs_seamless?.[i] || 0,
-          d.precipitation_sum_arome_seamless?.[i] || 0,
-          d.precipitation_sum_gem_seamless?.[i] || 0
-        ).toFixed(1),
-        snow: Math.max(
-          d.snowfall_sum_icon_seamless?.[i] || 0,
-          d.snowfall_sum_gfs_seamless?.[i] || 0,
-          d.snowfall_sum_arome_seamless?.[i] || 0,
-          d.snowfall_sum_gem_seamless?.[i] || 0
-        ).toFixed(1),
+        // Use averaging (consistent with hourly data) instead of Math.max
+        rain: (() => {
+          const vals = [
+            d.precipitation_sum_icon_seamless?.[i],
+            d.precipitation_sum_gfs_seamless?.[i],
+            d.precipitation_sum_arome_seamless?.[i],
+            d.precipitation_sum_gem_seamless?.[i]
+          ].filter(v => v !== undefined && v !== null);
+          return vals.length > 0 ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : '0.0';
+        })(),
+        snow: (() => {
+          const vals = [
+            d.snowfall_sum_icon_seamless?.[i],
+            d.snowfall_sum_gfs_seamless?.[i],
+            d.snowfall_sum_arome_seamless?.[i],
+            d.snowfall_sum_gem_seamless?.[i]
+          ].filter(v => v !== undefined && v !== null);
+          return vals.length > 0 ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : '0.0';
+        })(),
         wind: Math.round(Math.max(
           d.windspeed_10m_max_icon_seamless?.[i] || 0,
           d.windspeed_10m_max_gfs_seamless?.[i] || 0,
