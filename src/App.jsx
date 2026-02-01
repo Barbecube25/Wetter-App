@@ -7598,10 +7598,10 @@ export default function WeatherApp() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: HEADER_HEIGHT }}>
-        {/* Sticky Animation Card at top with refresh button and last update time */}
+      <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: `calc(${HEADER_HEIGHT} + 300px)` }}>
+        {/* Fixed Animation Card at top with refresh button and last update time - Always visible */}
         <div 
-          className={`sticky z-30 ${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl p-6 shadow-m3-4 relative overflow-hidden min-h-[280px] border border-m3-outline-variant backdrop-blur-md`}
+          className={`fixed left-4 right-4 mx-auto max-w-4xl z-30 ${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl p-6 shadow-m3-4 overflow-hidden min-h-[280px] border border-m3-outline-variant backdrop-blur-md`}
           style={{ top: HEADER_HEIGHT }}
         >
           {/* Weather background animation */}
@@ -7663,8 +7663,8 @@ export default function WeatherApp() {
           </div>
         </div>
 
-        {/* Enhanced Tab Navigation - Sticky positioned below animation card */}
-        <div className={`sticky top-0 z-20 ${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl p-2 shadow-m3-2 border border-m3-outline-variant`}>
+        {/* Enhanced Tab Navigation - Sticky positioned below fixed animation card */}
+        <div className={`sticky z-20 ${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl p-2 shadow-m3-2 border border-m3-outline-variant`} style={{ top: `calc(${HEADER_HEIGHT} + 300px)` }}>
           <div className="grid grid-cols-5 gap-1">
             {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
               <button 
