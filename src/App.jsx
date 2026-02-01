@@ -7635,7 +7635,7 @@ export default function WeatherApp() {
         {/* Fixed Animation Card Container - Matches main content width */}
         <div className="fixed left-0 right-0 z-30 px-4" style={{ top: `calc(${HEADER_HEIGHT} + ${STATUS_BAR_HEIGHT})` }}>
           <div className="max-w-4xl mx-auto">
-            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-t-m3-3xl p-4 shadow-m3-4 relative overflow-hidden min-h-[180px] border border-m3-outline-variant border-b-0 backdrop-blur-md`}>
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-t-m3-3xl p-4 shadow-m3-4 relative overflow-hidden min-h-[200px] border border-m3-outline-variant border-b-0 backdrop-blur-md`}>
               {/* Weather background animation */}
               <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
                 <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} />
