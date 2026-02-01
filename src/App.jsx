@@ -21,8 +21,8 @@ const ANIMATION_CARD_HEIGHT = '200px';
 // Navigation bar height constant for spacing calculations
 const NAV_BAR_HEIGHT = '68px'; 
 
-// Gap between fixed elements for consistent spacing (0px to connect animation card with navigation bar)
-const FIXED_ELEMENTS_GAP = '0px'; 
+// Gap between fixed elements for consistent spacing (16px to prevent tiles from overlapping with navigation bar)
+const FIXED_ELEMENTS_GAP = '16px'; 
 
 // TEXT RESSOURCEN
 const TRANSLATIONS = {
