@@ -7602,64 +7602,65 @@ export default function WeatherApp() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: `calc(${HEADER_HEIGHT} + ${ANIMATION_CARD_HEIGHT})` }}>
-        {/* Fixed Animation Card at top with refresh button and last update time - Always visible */}
-        <div 
-          className={`fixed left-4 right-4 mx-auto max-w-4xl z-30 ${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl p-6 shadow-m3-4 relative overflow-hidden min-h-[280px] border border-m3-outline-variant backdrop-blur-md`}
-          style={{ top: HEADER_HEIGHT }}
-        >
-          {/* Weather background animation */}
-          <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
-            <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} />
-          </div>
-          
-          <div className="relative z-10">
-            {/* Top bar with refresh button and last update time */}
-            <div className="flex justify-between items-start mb-4">
-              <div className={`flex items-center gap-2 text-m3-body-small text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]`}>
-                <Clock size={14} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
-                <span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}{getCacheAgeText()}</span>
+        {/* Fixed Animation Card Container - Matches main content width */}
+        <div className="fixed left-0 right-0 z-30 px-4" style={{ top: HEADER_HEIGHT }}>
+          <div className="max-w-4xl mx-auto">
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl p-6 shadow-m3-4 relative overflow-hidden min-h-[280px] border border-m3-outline-variant backdrop-blur-md`}>
+              {/* Weather background animation */}
+              <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
+                <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} />
               </div>
-              <button 
-                onClick={fetchData} 
-                aria-label={t('refresh') || "Refresh weather data"}
-                className={`p-2.5 rounded-m3-full bg-white/10 hover:bg-white/20 text-white transition-all shadow-lg backdrop-blur-sm ${isRefreshing ? 'animate-spin' : ''}`}
-              >
-                <RefreshCw size={18} />
-              </button>
-            </div>
-
-            {/* Main Temperature Display */}
-            <div>
-              <div className="flex items-start justify-between">
-                <div className="p-4 pr-6">
-                  <span className="text-m3-display-large font-light text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">{formatTemp(current.temp)}{getTempUnitSymbol()}</span>
-                  <div className="flex items-center gap-2 mt-2 text-m3-body-large text-white/95 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
-                    <Thermometer size={20} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
-                    <span>{t('feelsLike')} {formatTemp(current.appTemp)}{getTempUnitSymbol()}</span>
+              
+              <div className="relative z-10">
+                {/* Top bar with refresh button and last update time */}
+                <div className="flex justify-between items-start mb-4">
+                  <div className={`flex items-center gap-2 text-m3-body-small text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]`}>
+                    <Clock size={14} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                    <span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}{getCacheAgeText()}</span>
                   </div>
-                  <div className="flex items-center gap-3 mt-1 text-m3-title-small text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
-                    <span>H: {formatTemp(processedLong[0]?.max)}{getTempUnitSymbol()}</span>
-                    <span>•</span>
-                    <span>T: {formatTemp(processedLong[0]?.min)}{getTempUnitSymbol()}</span>
-                  </div>
-                  <div className="mt-3 text-m3-title-large text-white font-medium drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">{weatherConf.text}</div>
-                  
-                  {/* Sunrise and Sunset Times */}
-                  <div className="flex items-center gap-4 mt-3 text-m3-body-medium text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
-                    <div className="flex items-center gap-1.5">
-                      <Sunrise size={18} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
-                      <span>{formatTime(sunriseSunset.sunrise)}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Sunset size={18} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
-                      <span>{formatTime(sunriseSunset.sunset)}</span>
-                    </div>
-                  </div>
+                  <button 
+                    onClick={fetchData} 
+                    aria-label={t('refresh') || "Refresh weather data"}
+                    className={`p-2.5 rounded-m3-full bg-white/10 hover:bg-white/20 text-white transition-all shadow-lg backdrop-blur-sm ${isRefreshing ? 'animate-spin' : ''}`}
+                  >
+                    <RefreshCw size={18} />
+                  </button>
                 </div>
-                
-                {/* Weather Icon */}
-                <div className="text-6xl opacity-90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
-                  {React.createElement(weatherConf.icon, { size: 64 })}
+
+                {/* Main Temperature Display */}
+                <div>
+                  <div className="flex items-start justify-between">
+                    <div className="p-4 pr-6">
+                      <span className="text-m3-display-large font-light text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">{formatTemp(current.temp)}{getTempUnitSymbol()}</span>
+                      <div className="flex items-center gap-2 mt-2 text-m3-body-large text-white/95 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
+                        <Thermometer size={20} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                        <span>{t('feelsLike')} {formatTemp(current.appTemp)}{getTempUnitSymbol()}</span>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1 text-m3-title-small text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
+                        <span>H: {formatTemp(processedLong[0]?.max)}{getTempUnitSymbol()}</span>
+                        <span>•</span>
+                        <span>T: {formatTemp(processedLong[0]?.min)}{getTempUnitSymbol()}</span>
+                      </div>
+                      <div className="mt-3 text-m3-title-large text-white font-medium drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">{weatherConf.text}</div>
+                      
+                      {/* Sunrise and Sunset Times */}
+                      <div className="flex items-center gap-4 mt-3 text-m3-body-medium text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
+                        <div className="flex items-center gap-1.5">
+                          <Sunrise size={18} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                          <span>{formatTime(sunriseSunset.sunrise)}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Sunset size={18} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                          <span>{formatTime(sunriseSunset.sunset)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Weather Icon */}
+                    <div className="text-6xl opacity-90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+                      {React.createElement(weatherConf.icon, { size: 64 })}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
