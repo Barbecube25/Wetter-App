@@ -7007,7 +7007,7 @@ export default function WeatherApp() {
             d.precipitation_sum_arome_seamless?.[i],
             d.precipitation_sum_gem_seamless?.[i]
           ].filter(v => v !== undefined && v !== null);
-          return vals.length > 0 ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : '0.0';
+          return vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : '0.0';
         })(),
         snow: (() => {
           const vals = [
@@ -7016,7 +7016,7 @@ export default function WeatherApp() {
             d.snowfall_sum_arome_seamless?.[i],
             d.snowfall_sum_gem_seamless?.[i]
           ].filter(v => v !== undefined && v !== null);
-          return vals.length > 0 ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : '0.0';
+          return vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : '0.0';
         })(),
         wind: Math.round(Math.max(
           d.windspeed_10m_max_icon_seamless?.[i] || 0,
