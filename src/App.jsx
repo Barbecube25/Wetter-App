@@ -18,8 +18,8 @@ const ANIMATION_CARD_HEIGHT = '240px';
 // Navigation bar height constant for spacing calculations
 const NAV_BAR_HEIGHT = '68px'; 
 
-// Gap between fixed elements for consistent spacing
-const FIXED_ELEMENTS_GAP = '16px'; 
+// Gap between fixed elements for consistent spacing (0px to connect animation card with navigation bar)
+const FIXED_ELEMENTS_GAP = '0px'; 
 
 // TEXT RESSOURCEN
 const TRANSLATIONS = {
@@ -7611,7 +7611,7 @@ export default function WeatherApp() {
         {/* Fixed Animation Card Container - Matches main content width */}
         <div className="fixed left-0 right-0 z-30 px-4" style={{ top: HEADER_HEIGHT }}>
           <div className="max-w-4xl mx-auto">
-            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl p-4 shadow-m3-4 relative overflow-hidden min-h-[220px] border border-m3-outline-variant backdrop-blur-md`}>
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-t-m3-3xl p-4 shadow-m3-4 relative overflow-hidden min-h-[220px] border border-m3-outline-variant border-b-0 backdrop-blur-md`}>
               {/* Weather background animation */}
               <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
                 <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} />
@@ -7676,7 +7676,7 @@ export default function WeatherApp() {
         {/* Enhanced Tab Navigation - Fixed positioned below fixed animation card */}
         <div className="fixed left-0 right-0 z-20 px-4" style={{ top: `calc(${HEADER_HEIGHT} + ${ANIMATION_CARD_HEIGHT})` }}>
           <div className="max-w-4xl mx-auto">
-            <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl p-2 shadow-m3-2 border border-m3-outline-variant`}>
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-b-m3-3xl p-2 shadow-m3-2 border border-m3-outline-variant border-t-0`}>
           <div className="grid grid-cols-5 gap-1">
             {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
               <button 
