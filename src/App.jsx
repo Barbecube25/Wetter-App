@@ -7589,7 +7589,8 @@ export default function WeatherApp() {
             <button 
               onClick={handleInstallClick} 
               aria-label={t('installTitle') || "Install application"}
-              className="fixed bottom-32 right-4 z-40 p-4 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-4 hover:shadow-m3-5 transition-all animate-m3-scale-in"
+              className="fixed right-4 z-40 p-4 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-4 hover:shadow-m3-5 transition-all animate-m3-scale-in"
+              style={{ bottom: 'calc(6rem + 80px)' }}
             >
               <Download size={24} />
             </button>
@@ -7599,7 +7600,10 @@ export default function WeatherApp() {
 
       <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: HEADER_HEIGHT }}>
         {/* Sticky Animation Card at top with refresh button and last update time */}
-        <div className={`sticky top-[70px] z-30 ${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl p-6 shadow-m3-4 relative overflow-hidden min-h-[280px] border border-m3-outline-variant backdrop-blur-md`}>
+        <div 
+          className={`sticky z-30 ${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl p-6 shadow-m3-4 relative overflow-hidden min-h-[280px] border border-m3-outline-variant backdrop-blur-md`}
+          style={{ top: HEADER_HEIGHT }}
+        >
           {/* Weather background animation */}
           <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
             <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} />
@@ -8096,6 +8100,14 @@ export default function WeatherApp() {
           <div 
             className="fixed inset-0 -z-10"
             onClick={() => setShowFabMenu(false)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setShowFabMenu(false);
+              }
+            }}
+            role="button"
+            tabIndex={0}
+            aria-label="Close menu"
           />
         )}
 
@@ -8158,7 +8170,7 @@ export default function WeatherApp() {
         {/* Main FAB Button */}
         <button
           onClick={() => setShowFabMenu(!showFabMenu)}
-          aria-label="Open menu"
+          aria-label={showFabMenu ? "Close menu" : "Open menu"}
           className={`p-4 rounded-m3-full bg-m3-primary text-m3-on-primary shadow-m3-4 hover:shadow-m3-5 transition-all ${showFabMenu ? 'rotate-45' : ''}`}
         >
           <Plus size={28} />
