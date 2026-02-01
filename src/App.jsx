@@ -15,6 +15,9 @@ const HEADER_HEIGHT = '70px';
 // Animation card height constant for fixed positioning and spacing calculations
 const ANIMATION_CARD_HEIGHT = '240px'; 
 
+// Navigation bar height constant for spacing calculations
+const NAV_BAR_HEIGHT = '68px'; 
+
 // TEXT RESSOURCEN
 const TRANSLATIONS = {
   de: {
@@ -7601,7 +7604,7 @@ export default function WeatherApp() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: `calc(${HEADER_HEIGHT} + ${ANIMATION_CARD_HEIGHT})` }}>
+      <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: `calc(${HEADER_HEIGHT} + ${ANIMATION_CARD_HEIGHT} + ${NAV_BAR_HEIGHT} + 16px)` }}>
         {/* Fixed Animation Card Container - Matches main content width */}
         <div className="fixed left-0 right-0 z-30 px-4" style={{ top: HEADER_HEIGHT }}>
           <div className="max-w-4xl mx-auto">
@@ -7667,8 +7670,10 @@ export default function WeatherApp() {
           </div>
         </div>
 
-        {/* Enhanced Tab Navigation - Sticky positioned below fixed animation card */}
-        <div className={`sticky z-20 ${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl p-2 shadow-m3-2 border border-m3-outline-variant`} style={{ top: `calc(${HEADER_HEIGHT} + ${ANIMATION_CARD_HEIGHT})` }}>
+        {/* Enhanced Tab Navigation - Fixed positioned below fixed animation card */}
+        <div className="fixed left-0 right-0 z-20 px-4" style={{ top: `calc(${HEADER_HEIGHT} + ${ANIMATION_CARD_HEIGHT})` }}>
+          <div className="max-w-4xl mx-auto">
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl p-2 shadow-m3-2 border border-m3-outline-variant`}>
           <div className="grid grid-cols-5 gap-1">
             {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
               <button 
@@ -7684,6 +7689,8 @@ export default function WeatherApp() {
                 <span className="text-[10px] sm:text-xs">{tab.label}</span>
               </button>
             ))}
+          </div>
+            </div>
           </div>
         </div>
 
