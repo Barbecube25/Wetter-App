@@ -18,6 +18,9 @@ const ANIMATION_CARD_HEIGHT = '240px';
 // Navigation bar height constant for spacing calculations
 const NAV_BAR_HEIGHT = '68px'; 
 
+// Gap between fixed elements for consistent spacing
+const FIXED_ELEMENTS_GAP = '16px'; 
+
 // TEXT RESSOURCEN
 const TRANSLATIONS = {
   de: {
@@ -7604,7 +7607,7 @@ export default function WeatherApp() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: `calc(${HEADER_HEIGHT} + ${ANIMATION_CARD_HEIGHT} + ${NAV_BAR_HEIGHT} + 16px)` }}>
+      <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: `calc(${HEADER_HEIGHT} + ${ANIMATION_CARD_HEIGHT} + ${NAV_BAR_HEIGHT} + ${FIXED_ELEMENTS_GAP})` }}>
         {/* Fixed Animation Card Container - Matches main content width */}
         <div className="fixed left-0 right-0 z-30 px-4" style={{ top: HEADER_HEIGHT }}>
           <div className="max-w-4xl mx-auto">
