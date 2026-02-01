@@ -9,8 +9,8 @@ import { StatusBar } from '@capacitor/status-bar';
 // ÄNDERUNG: Standard ist jetzt null (leer), damit der User es einrichten muss
 const DEFAULT_LOC = null; 
 
-// Header height constant for consistent spacing
-const HEADER_HEIGHT = '180px'; 
+// Header height constant for consistent spacing (reduced for simpler header)
+const HEADER_HEIGHT = '70px'; 
 
 // TEXT RESSOURCEN
 const TRANSLATIONS = {
@@ -5959,6 +5959,7 @@ export default function WeatherApp() {
   const [showSettingsModal, setShowSettingsModal] = useState(false); // NEU
   const [showPrecipModal, setShowPrecipModal] = useState(false);
   const [viewMode, setViewMode] = useState(null);
+  const [showFabMenu, setShowFabMenu] = useState(false); // FAB menu state
 
   // Demo mode state
   const [showDemoPanel, setShowDemoPanel] = useState(false);
@@ -7552,74 +7553,31 @@ export default function WeatherApp() {
           />
       )}
 
-      <header className={`pt-6 px-4 pb-4 z-50 fixed top-0 left-0 right-0 backdrop-blur-md ${isRealNight ? 'bg-m3-dark-surface/95' : 'bg-m3-surface/95'}`}>
-        {/* Modern Material 3 Top App Bar */}
+      <header className={`pt-4 px-4 pb-3 z-50 fixed top-0 left-0 right-0 backdrop-blur-md ${isRealNight ? 'bg-m3-dark-surface/95' : 'bg-m3-surface/95'}`}>
+        {/* Simplified header with just location name */}
         <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center">
             <div className="flex-1">
-              <h1 className={`text-m3-headline-medium font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'} mb-1`}>
+              <h1 className={`text-m3-headline-small font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
                 {currentLoc.name}
                 {currentLoc.type === 'gps' && <span className="text-m3-primary ml-2">📍</span>}
               </h1>
-              <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-m3-body-small ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
-                <div className="flex items-center gap-1">
-                  <Clock size={12} /><span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}{getCacheAgeText()}</span>
+              {(currentLoc.region || currentLoc.country) && (
+                <div className={`flex items-center gap-1 text-m3-body-small ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mt-0.5`}>
+                  <MapPin size={12} />
+                  <span>
+                    {currentLoc.region}
+                    {currentLoc.region && currentLoc.country ? ', ' : ''}
+                    {currentLoc.country}
+                  </span>
                 </div>
-                {(currentLoc.region || currentLoc.country) && (
-                  <div className="flex items-center gap-1">
-                    <MapPin size={12} />
-                    <span>
-                      {currentLoc.region}
-                      {currentLoc.region && currentLoc.country ? ', ' : ''}
-                      {currentLoc.country}
-                    </span>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
-            
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              <button 
-                onClick={fetchData} 
-                aria-label={t('refresh') || "Refresh weather data"}
-                className={`p-3 rounded-m3-full ${isRealNight ? 'bg-m3-dark-surface-container-high hover:bg-m3-dark-surface-container-highest text-m3-dark-on-surface' : 'bg-m3-surface-container-high hover:bg-m3-surface-container-highest text-m3-on-surface'} transition-all shadow-m3-1 hover:shadow-m3-2`}
-              >
-                <RefreshCw size={20} />
-              </button>
-              <button 
-                onClick={() => setShowFeedback(true)} 
-                aria-label={t('feedback') || "Send feedback"}
-                className="p-3 rounded-m3-full bg-m3-secondary-container hover:bg-m3-secondary text-m3-on-secondary-container hover:text-m3-on-secondary transition-all shadow-m3-1 hover:shadow-m3-2"
-              >
-                <MessageSquarePlus size={20} />
-              </button>
-              <button 
-                onClick={() => setShowSettingsModal(true)} 
-                aria-label={t('settings') || "Settings"}
-                className="p-3 rounded-m3-full bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary transition-all shadow-m3-2 hover:shadow-m3-3"
-              >
-                <Settings size={20} />
-              </button>
-            </div>
-          </div>
-
-          {/* Location Chips */}
-          <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-            <button onClick={handleSetHome} className={`px-4 py-2 rounded-m3-full flex items-center gap-2 text-m3-label-large font-medium transition-all whitespace-nowrap ${currentLoc.id === homeLoc.id ? 'bg-m3-primary-container text-m3-on-primary-container shadow-m3-1' : (isRealNight ? 'bg-m3-dark-surface-container hover:bg-m3-dark-surface-container-high text-m3-dark-on-surface' : 'bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface')}`}>
-              <Home size={16} /> {t('home')}
-            </button>
-            <button onClick={handleSetCurrent} className={`px-4 py-2 rounded-m3-full flex items-center gap-2 text-m3-label-large font-medium transition-all whitespace-nowrap ${currentLoc.type === 'gps' ? 'bg-m3-tertiary-container text-m3-on-tertiary-container shadow-m3-1' : (isRealNight ? 'bg-m3-dark-surface-container hover:bg-m3-dark-surface-container-high text-m3-dark-on-surface' : 'bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface')}`}>
-              <Crosshair size={16} /> {t('gps')}
-            </button>
-            <button onClick={() => setShowLocationModal(true)} className={`px-4 py-2 rounded-m3-full flex items-center gap-2 text-m3-label-large font-medium transition-all whitespace-nowrap ${showLocationModal ? 'bg-m3-secondary-container text-m3-on-secondary-container shadow-m3-1' : (isRealNight ? 'bg-m3-dark-surface-container hover:bg-m3-dark-surface-container-high text-m3-dark-on-surface' : 'bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface')}`}>
-              <MapIcon size={16} /> {t('places')}
-            </button>
           </div>
 
           {/* iOS Install Tip */}
           {showIosInstall && (
-            <div className="bg-m3-surface-container p-4 rounded-m3-2xl shadow-m3-3 text-m3-on-surface max-w-sm mb-4 relative animate-m3-slide-up">
+            <div className="bg-m3-surface-container p-4 rounded-m3-2xl shadow-m3-3 text-m3-on-surface max-w-sm mb-4 relative animate-m3-slide-up mt-4">
               <button onClick={() => setShowIosInstall(false)} className="absolute top-2 right-2 text-m3-on-surface-variant hover:text-m3-on-surface"><X size={18}/></button>
               <div className="font-bold text-m3-title-medium mb-2 flex items-center gap-2"><Share size={18} /> {t('installTitle')}</div>
               <p className="text-m3-body-small text-m3-on-surface-variant">{t('installDesc')}</p>
@@ -7631,7 +7589,7 @@ export default function WeatherApp() {
             <button 
               onClick={handleInstallClick} 
               aria-label={t('installTitle') || "Install application"}
-              className="fixed bottom-20 right-4 z-50 p-4 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-4 hover:shadow-m3-5 transition-all animate-m3-scale-in"
+              className="fixed bottom-32 right-4 z-40 p-4 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-4 hover:shadow-m3-5 transition-all animate-m3-scale-in"
             >
               <Download size={24} />
             </button>
@@ -7640,16 +7598,31 @@ export default function WeatherApp() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: HEADER_HEIGHT }}>
-        {/* Modern Weather Card with better elevation */}
-        <div className={`${isRealNight ? 'bg-m3-dark-surface-container/90' : 'bg-m3-surface-container'} rounded-m3-3xl p-6 shadow-m3-4 relative overflow-hidden min-h-[280px] border border-m3-outline-variant`}>
+        {/* Sticky Animation Card at top with refresh button and last update time */}
+        <div className={`sticky top-[70px] z-30 ${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl p-6 shadow-m3-4 relative overflow-hidden min-h-[280px] border border-m3-outline-variant backdrop-blur-md`}>
           {/* Weather background animation */}
           <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
             <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} />
           </div>
           
           <div className="relative z-10">
+            {/* Top bar with refresh button and last update time */}
+            <div className="flex justify-between items-start mb-4">
+              <div className={`flex items-center gap-2 text-m3-body-small text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]`}>
+                <Clock size={14} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                <span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}{getCacheAgeText()}</span>
+              </div>
+              <button 
+                onClick={fetchData} 
+                aria-label={t('refresh') || "Refresh weather data"}
+                className={`p-2.5 rounded-m3-full bg-white/10 hover:bg-white/20 text-white transition-all shadow-lg backdrop-blur-sm ${isRefreshing ? 'animate-spin' : ''}`}
+              >
+                <RefreshCw size={18} />
+              </button>
+            </div>
+
             {/* Main Temperature Display */}
-            <div className="mb-6">
+            <div>
               <div className="flex items-start justify-between">
                 <div className="p-4 pr-6">
                   <span className="text-m3-display-large font-light text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">{formatTemp(current.temp)}{getTempUnitSymbol()}</span>
@@ -8115,6 +8088,68 @@ export default function WeatherApp() {
 
         </div>
       </main>
+
+      {/* Floating Action Button with menu at bottom right */}
+      <div className="fixed bottom-6 right-6 z-50">
+        {/* FAB Menu Items - appear when menu is open */}
+        {showFabMenu && (
+          <div className="absolute bottom-20 right-0 flex flex-col gap-3 animate-m3-scale-in">
+            <button
+              onClick={() => {
+                setShowLocationModal(true);
+                setShowFabMenu(false);
+              }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-m3-2xl ${isRealNight ? 'bg-m3-dark-surface-container text-m3-dark-on-surface' : 'bg-m3-surface-container text-m3-on-surface'} shadow-m3-3 hover:shadow-m3-4 transition-all whitespace-nowrap`}
+            >
+              <MapIcon size={20} />
+              <span className="text-m3-body-medium font-medium">{t('places')}</span>
+            </button>
+            <button
+              onClick={handleSetHome}
+              className={`flex items-center gap-3 px-4 py-3 rounded-m3-2xl ${isRealNight ? 'bg-m3-dark-surface-container text-m3-dark-on-surface' : 'bg-m3-surface-container text-m3-on-surface'} shadow-m3-3 hover:shadow-m3-4 transition-all whitespace-nowrap`}
+            >
+              <Home size={20} />
+              <span className="text-m3-body-medium font-medium">{t('home')}</span>
+            </button>
+            <button
+              onClick={handleSetCurrent}
+              className={`flex items-center gap-3 px-4 py-3 rounded-m3-2xl ${isRealNight ? 'bg-m3-dark-surface-container text-m3-dark-on-surface' : 'bg-m3-surface-container text-m3-on-surface'} shadow-m3-3 hover:shadow-m3-4 transition-all whitespace-nowrap`}
+            >
+              <Crosshair size={20} />
+              <span className="text-m3-body-medium font-medium">{t('gps')}</span>
+            </button>
+            <button
+              onClick={() => {
+                setShowFeedback(true);
+                setShowFabMenu(false);
+              }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-m3-2xl ${isRealNight ? 'bg-m3-dark-surface-container text-m3-dark-on-surface' : 'bg-m3-surface-container text-m3-on-surface'} shadow-m3-3 hover:shadow-m3-4 transition-all whitespace-nowrap`}
+            >
+              <MessageSquarePlus size={20} />
+              <span className="text-m3-body-medium font-medium">{t('feedback')}</span>
+            </button>
+            <button
+              onClick={() => {
+                setShowSettingsModal(true);
+                setShowFabMenu(false);
+              }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-m3-2xl ${isRealNight ? 'bg-m3-dark-surface-container text-m3-dark-on-surface' : 'bg-m3-surface-container text-m3-on-surface'} shadow-m3-3 hover:shadow-m3-4 transition-all whitespace-nowrap`}
+            >
+              <Settings size={20} />
+              <span className="text-m3-body-medium font-medium">{t('settings')}</span>
+            </button>
+          </div>
+        )}
+
+        {/* Main FAB Button */}
+        <button
+          onClick={() => setShowFabMenu(!showFabMenu)}
+          aria-label="Open menu"
+          className={`p-4 rounded-m3-full bg-m3-primary text-m3-on-primary shadow-m3-4 hover:shadow-m3-5 transition-all ${showFabMenu ? 'rotate-45' : ''}`}
+        >
+          <Plus size={28} />
+        </button>
+      </div>
     </div>
   );
 }
