@@ -8091,6 +8091,14 @@ export default function WeatherApp() {
 
       {/* Floating Action Button with menu at bottom right */}
       <div className="fixed bottom-6 right-6 z-50">
+        {/* Backdrop to close menu when clicking outside */}
+        {showFabMenu && (
+          <div 
+            className="fixed inset-0 -z-10"
+            onClick={() => setShowFabMenu(false)}
+          />
+        )}
+
         {/* FAB Menu Items - appear when menu is open */}
         {showFabMenu && (
           <div className="absolute bottom-20 right-0 flex flex-col gap-3 animate-m3-scale-in">
@@ -8105,14 +8113,20 @@ export default function WeatherApp() {
               <span className="text-m3-body-medium font-medium">{t('places')}</span>
             </button>
             <button
-              onClick={handleSetHome}
+              onClick={() => {
+                handleSetHome();
+                setShowFabMenu(false);
+              }}
               className={`flex items-center gap-3 px-4 py-3 rounded-m3-2xl ${isRealNight ? 'bg-m3-dark-surface-container text-m3-dark-on-surface' : 'bg-m3-surface-container text-m3-on-surface'} shadow-m3-3 hover:shadow-m3-4 transition-all whitespace-nowrap`}
             >
               <Home size={20} />
               <span className="text-m3-body-medium font-medium">{t('home')}</span>
             </button>
             <button
-              onClick={handleSetCurrent}
+              onClick={() => {
+                handleSetCurrent();
+                setShowFabMenu(false);
+              }}
               className={`flex items-center gap-3 px-4 py-3 rounded-m3-2xl ${isRealNight ? 'bg-m3-dark-surface-container text-m3-dark-on-surface' : 'bg-m3-surface-container text-m3-on-surface'} shadow-m3-3 hover:shadow-m3-4 transition-all whitespace-nowrap`}
             >
               <Crosshair size={20} />
