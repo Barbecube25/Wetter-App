@@ -7546,7 +7546,7 @@ export default function WeatherApp() {
           />
       )}
 
-      <header className={`pt-6 px-4 pb-4 z-30 fixed top-0 left-0 right-0 backdrop-blur-md ${isRealNight ? 'bg-m3-dark-surface/95' : 'bg-m3-surface/95'}`}>
+      <header className={`pt-6 px-4 pb-4 z-50 fixed top-0 left-0 right-0 backdrop-blur-md ${isRealNight ? 'bg-m3-dark-surface/95' : 'bg-m3-surface/95'}`}>
         {/* Modern Material 3 Top App Bar */}
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-6">
