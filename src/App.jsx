@@ -21,8 +21,8 @@ const ANIMATION_CARD_HEIGHT = '200px';
 // Navigation bar height constant for spacing calculations
 const NAV_BAR_HEIGHT = '68px'; 
 
-// Gap between fixed elements for consistent spacing (16px to prevent tiles from overlapping with navigation bar)
-const FIXED_ELEMENTS_GAP = '16px'; 
+// Gap between fixed elements for consistent spacing (24px to prevent tiles from overlapping with navigation bar)
+const FIXED_ELEMENTS_GAP = '24px'; 
 
 // TEXT RESSOURCEN
 const TRANSLATIONS = {
@@ -7622,7 +7622,7 @@ export default function WeatherApp() {
               <button 
                 onClick={fetchData} 
                 aria-label={t('refresh') || "Refresh weather data"}
-                className={`p-2 rounded-m3-full ${isRealNight ? 'bg-m3-dark-surface-container-high hover:bg-m3-dark-surface-container-highest' : 'bg-m3-surface-container-high hover:bg-m3-surface-container-highest'} ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'} transition-all shadow-m3-1 ${isRefreshing ? 'animate-spin' : ''}`}
+                className={`p-2 rounded-m3-full bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary transition-all shadow-m3-2 ${isRefreshing ? 'animate-spin' : ''}`}
               >
                 <RefreshCw size={16} />
               </button>
@@ -8142,7 +8142,7 @@ export default function WeatherApp() {
                 setShowLocationModal(true);
                 setShowFabMenu(false);
               }}
-              className={`flex items-center gap-3 px-4 py-3 rounded-m3-2xl ${isRealNight ? 'bg-m3-dark-surface-container text-m3-dark-on-surface' : 'bg-m3-surface-container text-m3-on-surface'} shadow-m3-3 hover:shadow-m3-4 transition-all whitespace-nowrap`}
+              className="flex items-center gap-3 px-4 py-3 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-3 hover:shadow-m3-4 hover:bg-m3-primary/90 transition-all whitespace-nowrap"
             >
               <MapIcon size={20} />
               <span className="text-m3-body-medium font-medium">{t('places')}</span>
@@ -8152,7 +8152,7 @@ export default function WeatherApp() {
                 handleSetHome();
                 setShowFabMenu(false);
               }}
-              className={`flex items-center gap-3 px-4 py-3 rounded-m3-2xl ${isRealNight ? 'bg-m3-dark-surface-container text-m3-dark-on-surface' : 'bg-m3-surface-container text-m3-on-surface'} shadow-m3-3 hover:shadow-m3-4 transition-all whitespace-nowrap`}
+              className="flex items-center gap-3 px-4 py-3 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-3 hover:shadow-m3-4 hover:bg-m3-primary/90 transition-all whitespace-nowrap"
             >
               <Home size={20} />
               <span className="text-m3-body-medium font-medium">{t('home')}</span>
@@ -8162,7 +8162,7 @@ export default function WeatherApp() {
                 handleSetCurrent();
                 setShowFabMenu(false);
               }}
-              className={`flex items-center gap-3 px-4 py-3 rounded-m3-2xl ${isRealNight ? 'bg-m3-dark-surface-container text-m3-dark-on-surface' : 'bg-m3-surface-container text-m3-on-surface'} shadow-m3-3 hover:shadow-m3-4 transition-all whitespace-nowrap`}
+              className="flex items-center gap-3 px-4 py-3 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-3 hover:shadow-m3-4 hover:bg-m3-primary/90 transition-all whitespace-nowrap"
             >
               <Crosshair size={20} />
               <span className="text-m3-body-medium font-medium">{t('gps')}</span>
@@ -8172,7 +8172,7 @@ export default function WeatherApp() {
                 setShowFeedback(true);
                 setShowFabMenu(false);
               }}
-              className={`flex items-center gap-3 px-4 py-3 rounded-m3-2xl ${isRealNight ? 'bg-m3-dark-surface-container text-m3-dark-on-surface' : 'bg-m3-surface-container text-m3-on-surface'} shadow-m3-3 hover:shadow-m3-4 transition-all whitespace-nowrap`}
+              className="flex items-center gap-3 px-4 py-3 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-3 hover:shadow-m3-4 hover:bg-m3-primary/90 transition-all whitespace-nowrap"
             >
               <MessageSquarePlus size={20} />
               <span className="text-m3-body-medium font-medium">{t('feedback')}</span>
@@ -8182,7 +8182,7 @@ export default function WeatherApp() {
                 setShowSettingsModal(true);
                 setShowFabMenu(false);
               }}
-              className={`flex items-center gap-3 px-4 py-3 rounded-m3-2xl ${isRealNight ? 'bg-m3-dark-surface-container text-m3-dark-on-surface' : 'bg-m3-surface-container text-m3-on-surface'} shadow-m3-3 hover:shadow-m3-4 transition-all whitespace-nowrap`}
+              className="flex items-center gap-3 px-4 py-3 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-3 hover:shadow-m3-4 hover:bg-m3-primary/90 transition-all whitespace-nowrap"
             >
               <Settings size={20} />
               <span className="text-m3-body-medium font-medium">{t('settings')}</span>
