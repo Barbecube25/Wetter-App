@@ -7030,7 +7030,7 @@ export default function WeatherApp() {
         code: h.weathercode_icon_seamless?.[i] || h.weathercode?.[i] || 0,
         isDay: isDayArray?.[i] ?? (t.getHours() >= 6 && t.getHours() <= 21 ? 1 : 0),
         appTemp: getVal('apparent_temperature'),
-        humidity: getVal('relative_humidity_2m'),
+        humidity: Math.round(getVal('relative_humidity_2m')),
         dewPoint: getVal('dewpoint_2m'),
         uvIndex: getVal('uv_index'),
         cloudCover: getAvg('cloud_cover'),
