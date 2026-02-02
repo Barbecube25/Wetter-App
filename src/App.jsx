@@ -3,6 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Eye, Activity } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
 import { StatusBar } from '@capacitor/status-bar';
+import packageJson from '../package.json';
 
 // --- 1. KONSTANTEN & CONFIG & ÜBERSETZUNGEN ---
 
@@ -6948,11 +6949,22 @@ export default function WeatherApp() {
   };
   
   // --- CACHE HELPER FUNCTIONS ---
+  const APP_VERSION = packageJson.version; // Use version from package.json
   const CACHE_KEY_SHORT = 'weather_cache_short';
   const CACHE_KEY_LONG = 'weather_cache_long';
   const CACHE_KEY_TIMESTAMP = 'weather_cache_timestamp';
   const CACHE_KEY_LOCATION = 'weather_cache_location';
+  const CACHE_KEY_VERSION = 'weather_cache_version';
   const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
+  
+  // Helper function to clear all weather cache
+  const clearWeatherCache = () => {
+    localStorage.removeItem(CACHE_KEY_SHORT);
+    localStorage.removeItem(CACHE_KEY_LONG);
+    localStorage.removeItem(CACHE_KEY_TIMESTAMP);
+    localStorage.removeItem(CACHE_KEY_LOCATION);
+    localStorage.removeItem(CACHE_KEY_VERSION);
+  };
   
   const saveWeatherCache = (shortData, longData, location) => {
     try {
@@ -6960,6 +6972,7 @@ export default function WeatherApp() {
       localStorage.setItem(CACHE_KEY_LONG, JSON.stringify(longData));
       localStorage.setItem(CACHE_KEY_TIMESTAMP, Date.now().toString());
       localStorage.setItem(CACHE_KEY_LOCATION, JSON.stringify(location));
+      localStorage.setItem(CACHE_KEY_VERSION, APP_VERSION);
     } catch (e) {
       console.warn('Failed to cache weather data:', e);
     }
@@ -6967,6 +6980,15 @@ export default function WeatherApp() {
   
   const loadWeatherCache = () => {
     try {
+      const cachedVersion = localStorage.getItem(CACHE_KEY_VERSION);
+      
+      // Invalidate cache if version mismatch
+      if (cachedVersion !== APP_VERSION) {
+        console.log('Cache version mismatch, clearing cache');
+        clearWeatherCache();
+        return null;
+      }
+      
       const cachedShort = localStorage.getItem(CACHE_KEY_SHORT);
       const cachedLong = localStorage.getItem(CACHE_KEY_LONG);
       const cachedTimestamp = localStorage.getItem(CACHE_KEY_TIMESTAMP);
@@ -6997,6 +7019,8 @@ export default function WeatherApp() {
       };
     } catch (e) {
       console.warn('Failed to load weather cache:', e);
+      // Clear cache on parse error to prevent white screen
+      clearWeatherCache();
       return null;
     }
   };
@@ -7504,6 +7528,11 @@ export default function WeatherApp() {
         time: t,
         displayTime: t.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}),
         temp: temp,
+        // Individual model temperatures for chart display
+        temp_icon: h.temperature_2m_icon_seamless?.[i],
+        temp_gfs: h.temperature_2m_gfs_seamless?.[i],
+        temp_arome: h.temperature_2m_arome_seamless?.[i],
+        temp_gem: h.temperature_2m_gem_seamless?.[i],
         precip: getAvg('precipitation'),
         // FIX: Add precipProb field
         precipProb: getVal('precipitation_probability'),
@@ -8411,9 +8440,9 @@ export default function WeatherApp() {
                           <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={2} dot={false} name="ICON" />
                           <Line type="monotone" dataKey="temp_gfs" stroke="#d8b4fe" strokeWidth={2} dot={false} name="GFS" />
                           <Line type="monotone" dataKey="temp_arome" stroke="#86efac" strokeWidth={2} dot={false} name="AROME" />
-                          {/* KNMI ist besonders wichtig, daher in markantem Orange */}
-                          <Line type="monotone" dataKey="temp_knmi" stroke="#fb923c" strokeWidth={2} dot={false} name="KNMI (NL)" />
-                          <Line type="monotone" dataKey="temp" stroke="#2563eb" strokeWidth={4} dot={{r:0}} name="Mittel (5)" />
+                          {/* GEM (Canadian model) displayed in orange */}
+                          <Line type="monotone" dataKey="temp_gem" stroke="#fb923c" strokeWidth={2} dot={false} name="GEM" />
+                          <Line type="monotone" dataKey="temp" stroke="#2563eb" strokeWidth={4} dot={{r:0}} name="Mittel (4)" />
                         </LineChart>
                       ) : (
                         <LineChart data={processedLong.slice(0, 6)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
