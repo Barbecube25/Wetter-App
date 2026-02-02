@@ -2261,6 +2261,13 @@ const styles = `
   .animate-spin-slow { animation: spin-slow 12s linear infinite; }
   .anim-waves { animation: waves 4s ease-in-out infinite; }
   
+  /* Respect user's motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    .anim-waves {
+      animation: none;
+    }
+  }
+  
   .animate-rain-1 { animation: rain-drop 0.8s infinite linear; animation-delay: 0.1s; }
   .animate-rain-2 { animation: rain-drop 0.7s infinite linear; animation-delay: 0.3s; }
   .animate-rain-3 { animation: rain-drop 0.6s infinite linear; animation-delay: 0.5s; }
