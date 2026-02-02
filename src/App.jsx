@@ -2593,7 +2593,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
             const eveningTemp = eveningData.length > 0 ? Math.round(Math.min(...eveningData.map(d => d.temp))) : null;
             
             if (noonTemp !== null && afternoonTemp !== null && eveningTemp !== null) {
-                tempDesc = `Bis mittags haben wir ${noonTemp}°, nachmittags steigt's auf ${afternoonTemp}°, abends pendelt sich's bei ${eveningTemp}° ein. `;
+                tempDesc = `Bis mittags haben wir ${noonTemp}°, nachmittags steigt's auf ${afternoonTemp}°, abends pendelt es sich bei ${eveningTemp}° ein. `;
             } else if (tempRange > 15) {
                 tempDesc = `Heute gibt's große Temperaturunterschiede! Morgens noch ${Math.round(minToday)}°, im Laufe des Tages dann bis zu ${Math.round(maxToday)}°. `;
             } else {
@@ -2622,7 +2622,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
             if (eveningTemp !== null) {
                 tempDesc = `Heute Abend sind's noch ${eveningTemp}°. `;
                 if (tonightTemp !== null) {
-                    tempDesc += `In der Nacht kühlt's auf ${tonightTemp}° ab. `;
+                    tempDesc += `In der Nacht kühlt es auf ${tonightTemp}° ab. `;
                 }
             } else if (tempRange > 8) {
                 tempDesc = `Wir haben heute noch zwischen ${Math.round(minToday)}° und ${Math.round(maxToday)}°. `;
@@ -2699,7 +2699,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
             } else {
                 todayText += lang === 'en' 
                     ? "Isolated showers possible, mostly dry."
-                    : "Ab und zu könnte's mal ein paar Tropfen geben, bleibt aber größtenteils trocken.";
+                    : "Ab und zu könnte es mal ein paar Tropfen geben, bleibt aber größtenteils trocken.";
             }
         } else {
             todayText += lang === 'en' 
