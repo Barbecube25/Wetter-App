@@ -8201,7 +8201,7 @@ export default function WeatherApp() {
               >
                 <Home size={16} />
               </button>
-              {/* GPS Button - Green when GPS location taken, red otherwise */}
+              {/* GPS Button - Green when GPS data is available, red when unavailable */}
               <button 
                 onClick={handleSetCurrent} 
                 aria-label={t('gps') || "Use GPS location"}
