@@ -3562,7 +3562,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
     );
 };
 
-const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed, cloudCover = 0, precipitation = 0, snowfall = 0, lang='de', demoWeather, demoSeason, demoEvent, demoTime, demoWindSpeed, demoTerrain, elevation = 0 }) => {
+const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed, cloudCover = 0, precipitation = 0, snowfall = 0, lang='de', demoWeather, demoSeason, demoEvent, demoTime, demoWindSpeed, demoTerrain, elevation = 0, latitude = null, longitude = null }) => {
   // Move helper to top of component to use it for initial variables
   const getDecimalHour = (dateInput) => {
     if (!dateInput) return 0;
@@ -3668,8 +3668,81 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const isTropicalNight = isNight && temp > 20;
 
   // --- TERRAIN TYPE LOGIC (EXTENDED) ---
-  // Determine terrain type based on elevation, temperature, and other factors
+  // Determine terrain type based on elevation, geographic position, temperature, and other factors
   // Use deterministic logic to avoid flickering between renders
+  
+  // Threshold for very low elevations that typically indicate coastal or sea-level locations
+  // Locations at or below this elevation are likely at sea level or in coastal deltas
+  const VERY_LOW_ELEVATION_THRESHOLD = 5;
+  
+  // Helper function: Check if coordinates are near a coastline
+  // This uses simple geographic boundaries for major seas and oceans worldwide
+  const isNearCoast = (latitude, longitude, elevation) => {
+    // Explicit null/undefined check to allow valid 0 coordinates (equator, prime meridian)
+    if (latitude === null || latitude === undefined || longitude === null || longitude === undefined) return false;
+    
+    // EUROPE
+    // North Sea coast (Netherlands, Germany, Denmark): Northern Europe coastal areas
+    if (latitude >= 51 && latitude <= 58 && longitude >= 3 && longitude <= 9 && elevation < 20) return true;
+    
+    // Baltic Sea coast: Northern Europe
+    if (latitude >= 53 && latitude <= 60 && longitude >= 10 && longitude <= 30 && elevation < 20) return true;
+    
+    // Atlantic coast (Portugal, Spain, France, UK, Ireland)
+    // Note: Wide latitude range is intentional to cover entire western European coast
+    // The elevation check (<30m) helps avoid false positives for inland areas
+    if (longitude >= -10 && longitude <= 0 && latitude >= 36 && latitude <= 60 && elevation < 30) return true;
+    
+    // Mediterranean coast (Spain, France, Italy, Greece, Croatia)
+    if (latitude >= 36 && latitude <= 45 && longitude >= -5 && longitude <= 28 && elevation < 30) return true;
+    
+    // Adriatic coast (Italy, Croatia, Albania)
+    if (latitude >= 40 && latitude <= 46 && longitude >= 12 && longitude <= 20 && elevation < 30) return true;
+    
+    // Norwegian coast
+    if (latitude >= 58 && latitude <= 71 && longitude >= 4 && longitude <= 31 && elevation < 50) return true;
+    
+    // NORTH AMERICA
+    // US East Coast (Atlantic)
+    if (latitude >= 25 && latitude <= 45 && longitude >= -81 && longitude <= -70 && elevation < 30) return true;
+    
+    // US West Coast (Pacific)
+    if (latitude >= 32 && latitude <= 48 && longitude >= -125 && longitude <= -117 && elevation < 30) return true;
+    
+    // US Gulf Coast
+    if (latitude >= 25 && latitude <= 31 && longitude >= -98 && longitude <= -80 && elevation < 20) return true;
+    
+    // ASIA
+    // Japan (Pacific coast)
+    if (latitude >= 30 && latitude <= 45 && longitude >= 130 && longitude <= 145 && elevation < 30) return true;
+    
+    // Southeast Asia coastal areas (Thailand, Vietnam, Philippines)
+    if (latitude >= 5 && latitude <= 25 && longitude >= 95 && longitude <= 125 && elevation < 20) return true;
+    
+    // AUSTRALIA
+    // Australian coast (major cities)
+    if (latitude >= -38 && latitude <= -12 && longitude >= 115 && longitude <= 154 && elevation < 30) return true;
+    
+    // AFRICA
+    // North African coast (Morocco, Algeria, Tunisia, Libya, Egypt)
+    if (latitude >= 30 && latitude <= 37 && longitude >= -8 && longitude <= 35 && elevation < 20) return true;
+    
+    // South African coast
+    if (latitude >= -35 && latitude <= -22 && longitude >= 15 && longitude <= 35 && elevation < 30) return true;
+    
+    // SOUTH AMERICA
+    // Brazilian coast
+    if (latitude >= -30 && latitude <= 5 && longitude >= -50 && longitude <= -35 && elevation < 20) return true;
+    
+    // Fallback: Very low elevation locations are typically at or below sea level
+    // This catches most coastal areas but may also include some inland below-sea-level areas
+    // (e.g., parts of Netherlands, Dead Sea region). This is acceptable as a general heuristic
+    // since most <5m locations worldwide are indeed coastal.
+    if (elevation < VERY_LOW_ELEVATION_THRESHOLD) return true;
+    
+    return false;
+  };
+  
   let terrainType = 'hills'; // default
   
   // Mountains: elevation >= 800m (Alps, high mountains)
@@ -3696,9 +3769,15 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   else if (elevation >= 50 && elevation < 100) {
     terrainType = 'lakeside';
   }
-  // Sea: elevation < 50m (coastal areas, near sea level)
+  // Low elevation (< 50m): Check if actually coastal or just flat inland
   else if (elevation < 50) {
-    terrainType = 'sea';
+    // Use geographic position to determine if this is actually near the sea
+    if (latitude !== null && longitude !== null && isNearCoast(latitude, longitude, elevation)) {
+      terrainType = 'sea';
+    } else {
+      // Low elevation but not coastal = flatland (cities like Berlin, Amsterdam)
+      terrainType = 'flatland';
+    }
   }
   
   // Desert override: based on extreme heat (temperature > 35°C)
@@ -7699,6 +7778,8 @@ export default function WeatherApp() {
               demoWindSpeed={demoWindSpeed}
               demoTerrain={demoTerrain}
               elevation={currentLoc?.elevation || 0}
+              latitude={currentLoc?.lat}
+              longitude={currentLoc?.lon}
             />
         </div>
         
@@ -8121,7 +8202,7 @@ export default function WeatherApp() {
             <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-t-m3-3xl p-4 shadow-m3-4 relative overflow-hidden min-h-[200px] border border-m3-outline-variant border-b-0 backdrop-blur-md`}>
               {/* Weather background animation */}
               <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
-                <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} demoTerrain={demoTerrain} elevation={currentLoc?.elevation || 0} />
+                <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} demoTerrain={demoTerrain} elevation={currentLoc?.elevation || 0} latitude={currentLoc?.lat} longitude={currentLoc?.lon} />
               </div>
               
               <div className="relative z-10">
