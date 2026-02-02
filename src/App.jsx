@@ -8797,9 +8797,11 @@ export default function WeatherApp() {
         {/* Save Location Button - only shown when current location is not saved */}
         {(() => {
           // Check if current location is already saved or is home
-          const isHomeLoc = homeLoc && currentLoc && currentLoc.id === homeLoc.id;
+          if (!currentLoc) return null;
+          
+          const isHomeLoc = homeLoc && currentLoc.id === homeLoc.id;
           const isSaved = locations.some(l => l.lat === currentLoc.lat && l.lon === currentLoc.lon);
-          const shouldShowSave = !isHomeLoc && !isSaved && currentLoc.type !== 'saved';
+          const shouldShowSave = !isHomeLoc && !isSaved;
           
           return shouldShowSave ? (
             <button
