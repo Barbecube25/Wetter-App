@@ -29,6 +29,7 @@ const TRANSLATIONS = {
     gps: "GPS",
     places: "Orte",
     settings: "Einstellungen",
+    savePlace: "Ort speichern",
     language: "Sprache",
     units: "Einheiten",
     theme: "Design",
@@ -200,6 +201,7 @@ const TRANSLATIONS = {
     gps: "GPS",
     places: "Places",
     settings: "Settings",
+    savePlace: "Save place",
     language: "Language",
     units: "Units",
     theme: "Theme",
@@ -371,6 +373,7 @@ const TRANSLATIONS = {
     gps: "GPS",
     places: "Lieux",
     settings: "Paramètres",
+    savePlace: "Enregistrer le lieu",
     language: "Langue",
     units: "Unités",
     theme: "Thème",
@@ -542,6 +545,7 @@ const TRANSLATIONS = {
     gps: "GPS",
     places: "Lugares",
     settings: "Ajustes",
+    savePlace: "Guardar lugar",
     language: "Idioma",
     units: "Unidades",
     theme: "Tema",
@@ -713,6 +717,7 @@ const TRANSLATIONS = {
     gps: "GPS",
     places: "Luoghi",
     settings: "Impostazioni",
+    savePlace: "Salva luogo",
     language: "Lingua",
     units: "Unità",
     theme: "Tema",
@@ -884,6 +889,7 @@ const TRANSLATIONS = {
     gps: "GPS",
     places: "Yerler",
     settings: "Ayarlar",
+    savePlace: "Yeri kaydet",
     language: "Dil",
     units: "Birim",
     theme: "Tema",
@@ -1055,6 +1061,7 @@ const TRANSLATIONS = {
     gps: "GPS",
     places: "Miejsca",
     settings: "Ustawienia",
+    savePlace: "Zapisz miejsce",
     language: "Język",
     units: "Jednostki",
     theme: "Motyw",
@@ -1226,6 +1233,7 @@ const TRANSLATIONS = {
     gps: "GPS",
     places: "Plaatsen",
     settings: "Instellingen",
+    savePlace: "Plaats opslaan",
     language: "Taal",
     units: "Eenheden",
     theme: "Thema",
@@ -1397,6 +1405,7 @@ const TRANSLATIONS = {
     gps: "GPS",
     places: "Mjesta",
     settings: "Postavke",
+    savePlace: "Spremi mjesto",
     language: "Jezik",
     units: "Jedinice",
     theme: "Tema",
@@ -1568,6 +1577,7 @@ const TRANSLATIONS = {
     gps: "GPS",
     places: "Τοποθεσίες",
     settings: "Ρυθμίσεις",
+    savePlace: "Αποθήκευση τοποθεσίας",
     language: "Γλώσσα",
     units: "Μονάδες",
     theme: "Θέμα",
@@ -1738,6 +1748,7 @@ const TRANSLATIONS = {
     gps: "GPS",
     places: "Steder",
     settings: "Indstillinger",
+    savePlace: "Gem sted",
     language: "Sprog",
     units: "Enheder",
     theme: "Tema",
@@ -1909,6 +1920,7 @@ const TRANSLATIONS = {
     gps: "GPS",
     places: "Места",
     settings: "Настройки",
+    savePlace: "Сохранить место",
     language: "Язык",
     units: "Единицы",
     theme: "Тема",
@@ -5667,7 +5679,7 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
     };
 
     const handleAddFoundLocation = (loc) => {
-        const newLoc = { name: loc.name, lat: loc.latitude, lon: loc.longitude, elevation: loc.elevation || 0, type: 'saved', id: crypto.randomUUID() };
+        const newLoc = { name: loc.name, lat: loc.latitude, lon: loc.longitude, elevation: loc.elevation || 0, type: 'unsaved', id: crypto.randomUUID() };
         onSelectLocation(newLoc); 
         onClose();
     };
@@ -8193,6 +8205,22 @@ export default function WeatherApp() {
             </div>
             {/* Action Buttons: Home, GPS, and Refresh */}
             <div className="flex items-center gap-2">
+              {/* Places Button */}
+              <button 
+                onClick={() => setShowLocationModal(true)} 
+                aria-label={t('places') || "Manage places"}
+                className="p-2 rounded-m3-full bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary transition-all shadow-m3-2"
+              >
+                <MapIcon size={16} />
+              </button>
+              {/* Weather Report Button */}
+              <button 
+                onClick={() => setShowFeedback(true)} 
+                aria-label={t('feedback') || "Report weather"}
+                className="p-2 rounded-m3-full bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary transition-all shadow-m3-2"
+              >
+                <MessageSquarePlus size={16} />
+              </button>
               {/* Home Button */}
               <button 
                 onClick={handleSetHome} 
@@ -8764,67 +8792,35 @@ export default function WeatherApp() {
         </div>
       </main>
 
-      {/* Floating Action Button with menu at bottom right */}
-      <div className="fixed bottom-6 right-6 z-50">
-        {/* Backdrop to close menu when clicking outside */}
-        {showFabMenu && (
-          <div 
-            className="fixed inset-0 -z-10"
-            onClick={() => setShowFabMenu(false)}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                setShowFabMenu(false);
-              }
-            }}
-            role="button"
-            tabIndex={0}
-            aria-label="Close menu"
-          />
-        )}
-
-        {/* FAB Menu Items - appear when menu is open */}
-        {showFabMenu && (
-          <div className="absolute bottom-20 right-0 flex flex-col gap-3 animate-m3-scale-in">
+      {/* Floating Action Buttons at bottom right */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+        {/* Save Location Button - only shown when current location is not saved */}
+        {(() => {
+          // Check if current location is already saved or is home
+          if (!currentLoc) return null;
+          
+          const isHomeLoc = homeLoc && currentLoc.id === homeLoc.id;
+          const isSaved = locations.some(l => l.lat === currentLoc.lat && l.lon === currentLoc.lon);
+          const shouldShowSave = !isHomeLoc && !isSaved;
+          
+          return shouldShowSave ? (
             <button
-              onClick={() => {
-                setShowLocationModal(true);
-                setShowFabMenu(false);
-              }}
-              className="flex items-center gap-3 px-4 py-3 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-3 hover:shadow-m3-4 hover:bg-m3-primary/90 transition-all whitespace-nowrap"
+              onClick={handleAddLocation}
+              aria-label={t('savePlace') || "Save location"}
+              className="p-4 rounded-m3-full bg-m3-secondary text-m3-on-secondary shadow-m3-4 hover:shadow-m3-5 transition-all animate-m3-scale-in"
             >
-              <MapIcon size={20} />
-              <span className="text-m3-body-medium font-medium">{t('places')}</span>
+              <Save size={24} />
             </button>
-            <button
-              onClick={() => {
-                setShowFeedback(true);
-                setShowFabMenu(false);
-              }}
-              className="flex items-center gap-3 px-4 py-3 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-3 hover:shadow-m3-4 hover:bg-m3-primary/90 transition-all whitespace-nowrap"
-            >
-              <MessageSquarePlus size={20} />
-              <span className="text-m3-body-medium font-medium">{t('feedback')}</span>
-            </button>
-            <button
-              onClick={() => {
-                setShowSettingsModal(true);
-                setShowFabMenu(false);
-              }}
-              className="flex items-center gap-3 px-4 py-3 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-3 hover:shadow-m3-4 hover:bg-m3-primary/90 transition-all whitespace-nowrap"
-            >
-              <Settings size={20} />
-              <span className="text-m3-body-medium font-medium">{t('settings')}</span>
-            </button>
-          </div>
-        )}
-
-        {/* Main FAB Button */}
+          ) : null;
+        })()}
+        
+        {/* Settings Button */}
         <button
-          onClick={() => setShowFabMenu(!showFabMenu)}
-          aria-label={showFabMenu ? "Close menu" : "Open menu"}
-          className={`p-4 rounded-m3-full bg-m3-primary text-m3-on-primary shadow-m3-4 hover:shadow-m3-5 transition-all ${showFabMenu ? 'rotate-45' : ''}`}
+          onClick={() => setShowSettingsModal(true)}
+          aria-label={t('settings') || "Settings"}
+          className="p-4 rounded-m3-full bg-m3-primary text-m3-on-primary shadow-m3-4 hover:shadow-m3-5 transition-all"
         >
-          <Plus size={28} />
+          <Settings size={24} />
         </button>
       </div>
     </div>
