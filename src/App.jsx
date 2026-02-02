@@ -3673,62 +3673,64 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   
   // Helper function: Check if coordinates are near a coastline
   // This uses simple geographic boundaries for major seas and oceans worldwide
-  const isNearCoast = (lat, lon, elev) => {
-    if (!lat || !lon) return false;
+  const isNearCoast = (latitude, longitude, elevation) => {
+    if (!latitude || !longitude) return false;
     
     // EUROPE
     // North Sea coast (Netherlands, Germany, Denmark): Northern Europe coastal areas
-    if (lat >= 51 && lat <= 58 && lon >= 3 && lon <= 9 && elev < 20) return true;
+    if (latitude >= 51 && latitude <= 58 && longitude >= 3 && longitude <= 9 && elevation < 20) return true;
     
     // Baltic Sea coast: Northern Europe
-    if (lat >= 53 && lat <= 60 && lon >= 10 && lon <= 30 && elev < 20) return true;
+    if (latitude >= 53 && latitude <= 60 && longitude >= 10 && longitude <= 30 && elevation < 20) return true;
     
     // Atlantic coast (Portugal, Spain, France, UK, Ireland)
-    if (lon >= -10 && lon <= 0 && lat >= 36 && lat <= 60 && elev < 30) return true;
+    if (longitude >= -10 && longitude <= 0 && latitude >= 36 && latitude <= 60 && elevation < 30) return true;
     
     // Mediterranean coast (Spain, France, Italy, Greece, Croatia)
-    if (lat >= 36 && lat <= 45 && ((lon >= -5 && lon <= 20) || (lon >= 12 && lon <= 28)) && elev < 30) return true;
+    if (latitude >= 36 && latitude <= 45 && ((longitude >= -5 && longitude <= 20) || (longitude >= 12 && longitude <= 28)) && elevation < 30) return true;
     
     // Adriatic coast (Italy, Croatia, Albania)
-    if (lat >= 40 && lat <= 46 && lon >= 12 && lon <= 20 && elev < 30) return true;
+    if (latitude >= 40 && latitude <= 46 && longitude >= 12 && longitude <= 20 && elevation < 30) return true;
     
     // Norwegian coast
-    if (lat >= 58 && lat <= 71 && lon >= 4 && lon <= 31 && elev < 50) return true;
+    if (latitude >= 58 && latitude <= 71 && longitude >= 4 && longitude <= 31 && elevation < 50) return true;
     
     // NORTH AMERICA
     // US East Coast (Atlantic)
-    if (lat >= 25 && lat <= 45 && lon >= -81 && lon <= -70 && elev < 30) return true;
+    if (latitude >= 25 && latitude <= 45 && longitude >= -81 && longitude <= -70 && elevation < 30) return true;
     
     // US West Coast (Pacific)
-    if (lat >= 32 && lat <= 48 && lon >= -125 && lon <= -117 && elev < 30) return true;
+    if (latitude >= 32 && latitude <= 48 && longitude >= -125 && longitude <= -117 && elevation < 30) return true;
     
     // US Gulf Coast
-    if (lat >= 25 && lat <= 31 && lon >= -98 && lon <= -80 && elev < 20) return true;
+    if (latitude >= 25 && latitude <= 31 && longitude >= -98 && longitude <= -80 && elevation < 20) return true;
     
     // ASIA
     // Japan (Pacific coast)
-    if (lat >= 30 && lat <= 45 && lon >= 130 && lon <= 145 && elev < 30) return true;
+    if (latitude >= 30 && latitude <= 45 && longitude >= 130 && longitude <= 145 && elevation < 30) return true;
     
     // Southeast Asia coastal areas (Thailand, Vietnam, Philippines)
-    if (lat >= 5 && lat <= 25 && lon >= 95 && lon <= 125 && elev < 20) return true;
+    if (latitude >= 5 && latitude <= 25 && longitude >= 95 && longitude <= 125 && elevation < 20) return true;
     
     // AUSTRALIA
     // Australian coast (major cities)
-    if (lat >= -38 && lat <= -12 && ((lon >= 115 && lon <= 154) && elev < 30)) return true;
+    if (latitude >= -38 && latitude <= -12 && longitude >= 115 && longitude <= 154 && elevation < 30) return true;
     
     // AFRICA
     // North African coast (Morocco, Algeria, Tunisia, Libya, Egypt)
-    if (lat >= 30 && lat <= 37 && lon >= -8 && lon <= 35 && elev < 20) return true;
+    if (latitude >= 30 && latitude <= 37 && longitude >= -8 && longitude <= 35 && elevation < 20) return true;
     
     // South African coast
-    if (lat >= -35 && lat <= -22 && ((lon >= 15 && lon <= 35) && elev < 30)) return true;
+    if (latitude >= -35 && latitude <= -22 && longitude >= 15 && longitude <= 35 && elevation < 30) return true;
     
     // SOUTH AMERICA
     // Brazilian coast
-    if (lat >= -30 && lat <= 5 && lon >= -50 && lon <= -35 && elev < 20) return true;
+    if (latitude >= -30 && latitude <= 5 && longitude >= -50 && longitude <= -35 && elevation < 20) return true;
     
-    // If none of the specific regions match, but elevation is very low (<5m), likely coastal
-    if (elev < 5) return true;
+    // Fallback: Very low elevation (<5m) locations are typically at or below sea level, 
+    // indicating they are likely coastal or in river deltas near the sea
+    const VERY_LOW_ELEVATION_THRESHOLD = 5;
+    if (elevation < VERY_LOW_ELEVATION_THRESHOLD) return true;
     
     return false;
   };
