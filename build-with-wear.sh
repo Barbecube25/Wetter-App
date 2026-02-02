@@ -3,6 +3,7 @@
 # This script builds an Android App Bundle that includes both the mobile app and Wear OS module
 
 set -e
+set -u
 
 echo "🏗️  Building Wetter Scout AI with Wear OS support..."
 echo ""
