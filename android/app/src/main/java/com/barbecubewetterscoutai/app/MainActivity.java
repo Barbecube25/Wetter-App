@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
+import androidx.activity.EdgeToEdge;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
@@ -18,6 +19,10 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Enable edge-to-edge display for Android 15 (SDK 35) compatibility
+        // This ensures backward compatibility with earlier Android versions
+        EdgeToEdge.enable(this);
         
         // Enable fullscreen/immersive mode
         enableFullscreenMode();
