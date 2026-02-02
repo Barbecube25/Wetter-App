@@ -2249,10 +2249,24 @@ const styles = `
     50% { transform: translateY(80px) translateX(15px) rotate(180deg); }
     100% { transform: translateY(160px) translateX(-20px) rotate(360deg); opacity: 0; } 
   }
+  @keyframes waves { 
+    0%, 100% { transform: translateX(0px) translateY(0px); } 
+    25% { transform: translateX(-5px) translateY(-1px); } 
+    50% { transform: translateX(0px) translateY(-2px); } 
+    75% { transform: translateX(5px) translateY(-1px); } 
+  }
   
   .animate-float { animation: float 6s ease-in-out infinite; }
   .anim-clouds { animation: float-clouds 20s ease-in-out infinite; }
   .animate-spin-slow { animation: spin-slow 12s linear infinite; }
+  .anim-waves { animation: waves 4s ease-in-out infinite; }
+  
+  /* Respect user's motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    .anim-waves {
+      animation: none;
+    }
+  }
   
   .animate-rain-1 { animation: rain-drop 0.8s infinite linear; animation-delay: 0.1s; }
   .animate-rain-2 { animation: rain-drop 0.7s infinite linear; animation-delay: 0.3s; }
@@ -3548,7 +3562,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
     );
 };
 
-const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed, cloudCover = 0, precipitation = 0, snowfall = 0, lang='de', demoWeather, demoSeason, demoEvent, demoTime, demoWindSpeed }) => {
+const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed, cloudCover = 0, precipitation = 0, snowfall = 0, lang='de', demoWeather, demoSeason, demoEvent, demoTime, demoWindSpeed, elevation = 0 }) => {
   // Move helper to top of component to use it for initial variables
   const getDecimalHour = (dateInput) => {
     if (!dateInput) return 0;
@@ -3652,6 +3666,18 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const isWindy = windSpeed >= 30;
   const isStormyWind = windSpeed >= 60;
   const isTropicalNight = isNight && temp > 20;
+
+  // --- TERRAIN TYPE LOGIC (NEW) ---
+  // Determine terrain type based on elevation
+  // Mountains: elevation > 800m (Alps, high mountains)
+  // Sea: elevation < 50m (coastal areas, near sea level)
+  // Hills/Default: 50m <= elevation <= 800m (everything in between)
+  let terrainType = 'hills'; // default
+  if (elevation > 800) {
+    terrainType = 'mountains';
+  } else if (elevation < 50) {
+    terrainType = 'sea';
+  }
 
   // --- CLOUD ANIMATION LOGIC (NEW) ---
   // Calculate number of clouds based on cloudCover percentage or weather code
@@ -3896,10 +3922,38 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
          </g>
       )}
 
-      <path d="M-50 160 L120 40 L280 160 Z" fill={mountainColor} />
-      <path d="M200 160 L320 70 L460 160 Z" fill={mountainColor} opacity="0.8" />
-      {(isSnow || isDeepFreeze || isSleet) && <path d="M120 40 L150 70 L90 70 Z" fill="white" />} 
-      {(isSnow || isDeepFreeze || isSleet) && <path d="M320 70 L340 90 L300 90 Z" fill="white" />}
+
+      {/* TERRAIN RENDERING BASED ON ELEVATION */}
+      {terrainType === 'mountains' && (
+        <>
+          {/* Large mountains for high elevation areas */}
+          <path d="M-50 160 L120 20 L280 160 Z" fill={mountainColor} />
+          <path d="M200 160 L320 40 L460 160 Z" fill={mountainColor} opacity="0.8" />
+          <path d="M80 160 L180 60 L250 160 Z" fill={mountainColor} opacity="0.6" />
+          {(isSnow || isDeepFreeze || isSleet) && <path d="M120 20 L150 55 L90 55 Z" fill="white" />}
+          {(isSnow || isDeepFreeze || isSleet) && <path d="M320 40 L345 70 L295 70 Z" fill="white" />}
+          {(isSnow || isDeepFreeze || isSleet) && <path d="M180 60 L200 85 L160 85 Z" fill="white" />}
+        </>
+      )}
+      
+      {terrainType === 'sea' && (
+        <>
+          {/* Waves for coastal/sea level areas */}
+          <path d="M-50 145 Q 0 135 50 145 T 150 145 T 250 145 T 350 145 T 450 145 V 160 H -50 Z" fill={isNight ? "#0c4a6e" : "#0369a1"} opacity="0.7" />
+          <path d="M-50 150 Q 20 143 90 150 T 230 150 T 370 150 T 510 150 V 160 H -50 Z" fill={isNight ? "#075985" : "#0284c7"} opacity="0.8" />
+          <path d="M-50 155 Q 40 150 120 155 T 280 155 T 440 155 V 160 H -50 Z" fill={isNight ? "#0e7490" : "#06b6d4"} opacity="0.6" className="anim-waves" />
+        </>
+      )}
+      
+      {terrainType === 'hills' && (
+        <>
+          {/* Smaller mountains/hills for medium elevation areas */}
+          <path d="M-50 160 L120 80 L280 160 Z" fill={mountainColor} opacity="0.7" />
+          <path d="M200 160 L320 100 L460 160 Z" fill={mountainColor} opacity="0.6" />
+          {(isSnow || isDeepFreeze || isSleet) && <path d="M120 80 L145 100 L95 100 Z" fill="white" opacity="0.8" />}
+          {(isSnow || isDeepFreeze || isSleet) && <path d="M320 100 L340 115 L300 115 Z" fill="white" opacity="0.8" />}
+        </>
+      )}
 
       <path d="M-50 140 Q 50 130 150 145 T 450 135 V 170 H -50 Z" fill={groundColor} />
       
@@ -5226,7 +5280,7 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
     };
 
     const handleAddFoundLocation = (loc) => {
-        const newLoc = { name: loc.name, lat: loc.latitude, lon: loc.longitude, type: 'saved', id: crypto.randomUUID() };
+        const newLoc = { name: loc.name, lat: loc.latitude, lon: loc.longitude, elevation: loc.elevation || 0, type: 'saved', id: crypto.randomUUID() };
         onSelectLocation(newLoc); 
         onClose();
     };
@@ -5666,12 +5720,13 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
                 const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=${searchLang}&format=json`);
                 const data = await res.json();
                 const city = data.results?.[0]?.name || t.myLocation;
-                const loc = { name: city, lat, lon, id: 'home_default', type: 'home' };
+                const elevation = data.results?.[0]?.elevation || 0;
+                const loc = { name: city, lat, lon, elevation, id: 'home_default', type: 'home' };
                 setSelectedHomeLoc(loc);
                 setCustomHomeName(city);
                 setHomeLocation(loc);
             } catch (e) {
-                const loc = { name: "GPS Standort", lat, lon, id: 'home_default', type: 'home' };
+                const loc = { name: "GPS Standort", lat, lon, elevation: 0, id: 'home_default', type: 'home' };
                 setSelectedHomeLoc(loc);
                 setCustomHomeName(t.homeLocation);
                 setHomeLocation(loc);
@@ -5689,6 +5744,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
             name: result.name, 
             lat: result.latitude, 
             lon: result.longitude, 
+            elevation: result.elevation || 0,
             id: 'home_default', 
             type: 'home' 
         };
@@ -6458,6 +6514,7 @@ export default function WeatherApp() {
       let regionName = "";
       let countryName = "";
 
+      let elevation = 0;
       try {
         const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
         const data = await res.json();
@@ -6465,6 +6522,7 @@ export default function WeatherApp() {
           cityName = data.results[0].name;
           regionName = data.results[0].admin1 || ""; 
           countryName = data.results[0].country || ""; 
+          elevation = data.results[0].elevation || 0;
         }
       } catch (e) {
         console.warn("Reverse Geocoding failed", e);
@@ -6476,7 +6534,8 @@ export default function WeatherApp() {
         lon, 
         type: 'gps',
         region: regionName,
-        country: countryName
+        country: countryName,
+        elevation: elevation
       });
       setGpsAvailable(true); // GPS data is available
       setLoading(false);
@@ -7731,7 +7790,7 @@ export default function WeatherApp() {
             <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-t-m3-3xl p-4 shadow-m3-4 relative overflow-hidden min-h-[200px] border border-m3-outline-variant border-b-0 backdrop-blur-md`}>
               {/* Weather background animation */}
               <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
-                <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} />
+                <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} elevation={currentLoc?.elevation || 0} />
               </div>
               
               <div className="relative z-10">
