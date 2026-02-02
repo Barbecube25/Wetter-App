@@ -10,7 +10,7 @@ import { StatusBar } from '@capacitor/status-bar';
 const DEFAULT_LOC = null; 
 
 // Header height constant for consistent spacing (reduced for simpler header)
-const HEADER_HEIGHT = '70px';
+const HEADER_HEIGHT = '100px';
 
 // Animation card height constant for fixed positioning and spacing calculations
 const ANIMATION_CARD_HEIGHT = '200px'; 
