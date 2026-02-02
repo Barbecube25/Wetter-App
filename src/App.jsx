@@ -3689,6 +3689,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
     if (latitude >= 53 && latitude <= 60 && longitude >= 10 && longitude <= 30 && elevation < 20) return true;
     
     // Atlantic coast (Portugal, Spain, France, UK, Ireland)
+    // Note: Wide latitude range is intentional to cover entire western European coast
+    // The elevation check (<30m) helps avoid false positives for inland areas
     if (longitude >= -10 && longitude <= 0 && latitude >= 36 && latitude <= 60 && elevation < 30) return true;
     
     // Mediterranean coast (Spain, France, Italy, Greece, Croatia)
@@ -3732,8 +3734,10 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
     // Brazilian coast
     if (latitude >= -30 && latitude <= 5 && longitude >= -50 && longitude <= -35 && elevation < 20) return true;
     
-    // Fallback: Very low elevation locations are typically at or below sea level, 
-    // indicating they are likely coastal or in river deltas near the sea
+    // Fallback: Very low elevation locations are typically at or below sea level
+    // This catches most coastal areas but may also include some inland below-sea-level areas
+    // (e.g., parts of Netherlands, Dead Sea region). This is acceptable as a general heuristic
+    // since most <5m locations worldwide are indeed coastal.
     if (elevation < VERY_LOW_ELEVATION_THRESHOLD) return true;
     
     return false;
