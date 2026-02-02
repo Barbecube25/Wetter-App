@@ -5179,13 +5179,13 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
         
         {/* Footer with Radar link */}
         {setActiveTab && (
-          <div className="p-4 border-t border-slate-100 bg-slate-50/50 sticky bottom-0">
+          <div className="p-4 border-t border-m3-outline-variant bg-m3-surface-container/50 sticky bottom-0">
             <button 
               onClick={() => {
                 setActiveTab('radar');
                 onClose();
               }}
-              className="w-full bg-blue-500 hover:bg-blue-600 active:scale-95 transition-all rounded-xl p-3 flex items-center justify-center gap-2 text-white font-bold shadow-lg"
+              className="w-full bg-m3-primary hover:bg-m3-primary/90 active:scale-95 transition-all rounded-xl p-3 flex items-center justify-center gap-2 text-m3-on-primary font-bold shadow-lg"
             >
               <MapIcon size={20} />
               <span>{lang === 'en' ? 'View on Radar' : 'Im Radar ansehen'}</span>
