@@ -3562,7 +3562,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
     );
 };
 
-const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed, cloudCover = 0, precipitation = 0, snowfall = 0, lang='de', demoWeather, demoSeason, demoEvent, demoTime, demoWindSpeed, elevation = 0 }) => {
+const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed, cloudCover = 0, precipitation = 0, snowfall = 0, lang='de', demoWeather, demoSeason, demoEvent, demoTime, demoWindSpeed, demoTerrain, elevation = 0 }) => {
   // Move helper to top of component to use it for initial variables
   const getDecimalHour = (dateInput) => {
     if (!dateInput) return 0;
@@ -3667,17 +3667,56 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const isStormyWind = windSpeed >= 60;
   const isTropicalNight = isNight && temp > 20;
 
-  // --- TERRAIN TYPE LOGIC (NEW) ---
-  // Determine terrain type based on elevation
-  // Mountains: elevation > 800m (Alps, high mountains)
-  // Sea: elevation < 50m (coastal areas, near sea level)
-  // Hills/Default: 50m <= elevation <= 800m (everything in between)
+  // --- TERRAIN TYPE LOGIC (EXTENDED) ---
+  // Determine terrain type based on elevation, temperature, and other factors
+  // Use deterministic logic to avoid flickering between renders
   let terrainType = 'hills'; // default
-  if (elevation > 800) {
+  
+  // Mountains: elevation >= 800m (Alps, high mountains)
+  if (elevation >= 800) {
     terrainType = 'mountains';
-  } else if (elevation < 50) {
+  } 
+  // Valley: elevation 600-799m (pre-alpine areas)
+  else if (elevation >= 600 && elevation < 800) {
+    terrainType = 'valley';
+  }
+  // Forest: elevation 400-599m (forested hills)
+  else if (elevation >= 400 && elevation < 600) {
+    terrainType = 'forest';
+  }
+  // Hills: elevation 200-399m (standard rolling hills)
+  else if (elevation >= 200 && elevation < 400) {
+    terrainType = 'hills';
+  }
+  // Flatland/Agriculture: elevation 100-199m, not at sea level
+  else if (elevation >= 100 && elevation < 200) {
+    terrainType = 'flatland';
+  }
+  // Lakeside: elevation 50-99m (near water bodies but not sea)
+  else if (elevation >= 50 && elevation < 100) {
+    terrainType = 'lakeside';
+  }
+  // Sea: elevation < 50m (coastal areas, near sea level)
+  else if (elevation < 50) {
     terrainType = 'sea';
   }
+  
+  // Desert override: based on extreme heat (temperature > 35°C)
+  // Only override if not already a water-based or agricultural terrain
+  if (temp > 35 && elevation < 600 && !['lakeside', 'flatland', 'sea'].includes(terrainType)) {
+    terrainType = 'desert';
+  }
+  
+  // Demo terrain override (for testing/demonstration purposes)
+  if (demoTerrain) {
+    terrainType = demoTerrain;
+  }
+  
+  // City/Urban: Can be enabled in future with location detection or settings
+  // For now, users would need to have this added via settings
+  // else if (elevation < 600 && isUrbanArea) {
+  //   terrainType = 'city';
+  // }
 
   // --- CLOUD ANIMATION LOGIC (NEW) ---
   // Calculate number of clouds based on cloudCover percentage or weather code
@@ -3955,7 +3994,125 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
         </>
       )}
 
-      <path d="M-50 140 Q 50 130 150 145 T 450 135 V 170 H -50 Z" fill={groundColor} />
+      {terrainType === 'valley' && (
+        <>
+          {/* Valley: Large mountain flanks on left and right forming a V-shape */}
+          {/* Left mountain flank */}
+          <path d="M-50 160 L-50 40 L140 160 Z" fill={mountainColor} opacity="0.8" />
+          {/* Right mountain flank */}
+          <path d="M460 160 L460 50 L220 160 Z" fill={mountainColor} opacity="0.75" />
+          {/* Smaller center mountains in distance */}
+          <path d="M120 160 L180 110 L240 160 Z" fill={mountainColor} opacity="0.5" />
+          {/* Snow caps on mountains if cold */}
+          {(isSnow || isDeepFreeze || isSleet) && (
+            <>
+              <path d="M-50 40 L-30 65 L-50 70 Z" fill="white" opacity="0.9" />
+              <path d="M460 50 L440 70 L460 75 Z" fill="white" opacity="0.9" />
+              <path d="M180 110 L200 125 L160 125 Z" fill="white" opacity="0.8" />
+            </>
+          )}
+        </>
+      )}
+
+      {terrainType === 'lakeside' && (
+        <>
+          {/* Lakeside: Calm water with mountains in background */}
+          {/* Background mountains */}
+          <path d="M-50 160 L80 90 L200 160 Z" fill={mountainColor} opacity="0.5" />
+          <path d="M150 160 L280 95 L450 160 Z" fill={mountainColor} opacity="0.45" />
+          {/* Calm water - less wavy than sea */}
+          <path d="M-50 145 Q 50 142 150 145 T 350 145 T 550 145 V 160 H -50 Z" fill={isNight ? "#0c4a6e" : "#0369a1"} opacity="0.6" />
+          <path d="M-50 150 Q 80 148 180 150 T 380 150 T 580 150 V 160 H -50 Z" fill={isNight ? "#075985" : "#0284c7"} opacity="0.7" />
+          <path d="M-50 155 Q 100 153 200 155 T 400 155 V 160 H -50 Z" fill={isNight ? "#0e7490" : "#06b6d4"} opacity="0.5" />
+        </>
+      )}
+
+      {terrainType === 'flatland' && (
+        <>
+          {/* Flatland/Agriculture: Very flat horizon with patchwork fields */}
+          {/* Flat horizon line */}
+          <path d="M-50 130 L 500 130 L 500 160 L -50 160 Z" fill={isNight ? "#1e293b" : "#84cc16"} opacity="0.7" />
+          {/* Patchwork fields - perspective trapezoids */}
+          {/* Yellow wheat field */}
+          <path d="M-50 135 L 100 130 L 100 160 L -50 160 Z" fill={isNight ? "#4a4a2a" : "#fbbf24"} opacity="0.6" />
+          {/* Brown field */}
+          <path d="M100 130 L 220 128 L 220 160 L 100 160 Z" fill={isNight ? "#3a2a1a" : "#92400e"} opacity="0.6" />
+          {/* Green grass */}
+          <path d="M220 128 L 340 130 L 340 160 L 220 160 Z" fill={isNight ? "#1a3a1a" : "#22c55e"} opacity="0.6" />
+          {/* Another yellow field */}
+          <path d="M340 130 L 500 132 L 500 160 L 340 160 Z" fill={isNight ? "#4a4a2a" : "#eab308"} opacity="0.6" />
+        </>
+      )}
+
+      {terrainType === 'forest' && (
+        <>
+          {/* Forest: Dense layers of trees for depth */}
+          {/* No mountains, just tree layers with different shades */}
+          {/* Back layer - darkest */}
+          <ellipse cx="80" cy="120" rx="50" ry="40" fill={isNight ? "#0f3a1f" : "#15803d"} opacity="0.5" />
+          <ellipse cx="200" cy="115" rx="60" ry="45" fill={isNight ? "#0f3a1f" : "#15803d"} opacity="0.5" />
+          <ellipse cx="320" cy="118" rx="55" ry="42" fill={isNight ? "#0f3a1f" : "#15803d"} opacity="0.5" />
+          {/* Middle layer */}
+          <ellipse cx="50" cy="130" rx="45" ry="38" fill={isNight ? "#15803d" : "#16a34a"} opacity="0.65" />
+          <ellipse cx="170" cy="128" rx="50" ry="40" fill={isNight ? "#15803d" : "#16a34a"} opacity="0.65" />
+          <ellipse cx="280" cy="132" rx="48" ry="39" fill={isNight ? "#15803d" : "#16a34a"} opacity="0.65" />
+          <ellipse cx="350" cy="130" rx="45" ry="37" fill={isNight ? "#15803d" : "#16a34a"} opacity="0.65" />
+          {/* Front layer - lightest */}
+          <ellipse cx="30" cy="140" rx="40" ry="35" fill={isNight ? "#16a34a" : "#22c55e"} opacity="0.8" />
+          <ellipse cx="140" cy="142" rx="42" ry="36" fill={isNight ? "#16a34a" : "#22c55e"} opacity="0.8" />
+          <ellipse cx="240" cy="145" rx="40" ry="34" fill={isNight ? "#16a34a" : "#22c55e"} opacity="0.8" />
+          <ellipse cx="330" cy="143" rx="38" ry="33" fill={isNight ? "#16a34a" : "#22c55e"} opacity="0.8" />
+        </>
+      )}
+
+      {terrainType === 'desert' && (
+        <>
+          {/* Desert: Sand dunes with warm colors */}
+          {/* Back dune */}
+          <path d="M-50 120 Q 100 90 250 120 T 550 120 V 160 H -50 Z" fill={isNight ? "#92400e" : "#f59e0b"} opacity="0.6" />
+          {/* Middle dune */}
+          <path d="M-50 135 Q 150 110 300 135 T 600 135 V 160 H -50 Z" fill={isNight ? "#a16207" : "#fbbf24"} opacity="0.75" />
+          {/* Front dune */}
+          <path d="M-50 145 Q 200 125 350 145 T 650 145 V 160 H -50 Z" fill={isNight ? "#ca8a04" : "#fcd34d"} opacity="0.9" />
+        </>
+      )}
+
+      {terrainType === 'city' && (
+        <>
+          {/* City: Urban skyline silhouettes */}
+          {/* Background buildings - darker/further */}
+          <rect x="40" y="90" width="35" height="70" fill={isNight ? "#1e293b" : "#64748b"} opacity="0.6" />
+          <rect x="80" y="70" width="40" height="90" fill={isNight ? "#1e293b" : "#64748b"} opacity="0.65" />
+          <rect x="125" y="85" width="30" height="75" fill={isNight ? "#1e293b" : "#64748b"} opacity="0.6" />
+          <rect x="160" y="75" width="45" height="85" fill={isNight ? "#1e293b" : "#64748b"} opacity="0.65" />
+          <rect x="210" y="80" width="35" height="80" fill={isNight ? "#1e293b" : "#64748b"} opacity="0.6" />
+          <rect x="250" y="65" width="40" height="95" fill={isNight ? "#1e293b" : "#64748b"} opacity="0.65" />
+          <rect x="295" y="90" width="30" height="70" fill={isNight ? "#1e293b" : "#64748b"} opacity="0.6" />
+          {/* Windows on buildings */}
+          {isNight && (
+            <>
+              <rect x="48" y="95" width="4" height="6" fill="#fbbf24" opacity="0.8" />
+              <rect x="55" y="95" width="4" height="6" fill="#fbbf24" opacity="0.8" />
+              <rect x="48" y="105" width="4" height="6" fill="#fbbf24" opacity="0.8" />
+              <rect x="55" y="105" width="4" height="6" fill="#fbbf24" opacity="0.8" />
+              <rect x="90" y="80" width="5" height="7" fill="#fbbf24" opacity="0.8" />
+              <rect x="100" y="80" width="5" height="7" fill="#fbbf24" opacity="0.8" />
+              <rect x="90" y="95" width="5" height="7" fill="#fbbf24" opacity="0.8" />
+              <rect x="100" y="95" width="5" height="7" fill="#fbbf24" opacity="0.8" />
+              <rect x="175" y="85" width="5" height="7" fill="#fbbf24" opacity="0.8" />
+              <rect x="185" y="85" width="5" height="7" fill="#fbbf24" opacity="0.8" />
+              <rect x="175" y="100" width="5" height="7" fill="#fbbf24" opacity="0.8" />
+              <rect x="185" y="100" width="5" height="7" fill="#fbbf24" opacity="0.8" />
+              <rect x="265" y="75" width="5" height="7" fill="#fbbf24" opacity="0.8" />
+              <rect x="275" y="75" width="5" height="7" fill="#fbbf24" opacity="0.8" />
+              <rect x="265" y="90" width="5" height="7" fill="#fbbf24" opacity="0.8" />
+              <rect x="275" y="90" width="5" height="7" fill="#fbbf24" opacity="0.8" />
+            </>
+          )}
+        </>
+      )}
+
+      <path d="M-50 140 Q 50 130 150 145 T 450 135 V 170 H -50 Z" fill={terrainType === 'desert' ? (isNight ? "#92400e" : "#f59e0b") : terrainType === 'city' ? (isNight ? "#334155" : "#94a3b8") : groundColor} />
       
       {(isSleet || (isRain && isFreezing) || isDeepFreeze) && (
         <path d="M-50 142 Q 50 132 150 147 T 450 137 V 170 H -50 Z" fill="#bae6fd" opacity="0.4" />
@@ -3968,87 +4125,237 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
           </g>
       )}
 
-      {/* --- HAUS (zuerst gerendert, damit Bäume davor können) --- */}
-      <g transform="translate(140, 120)">
-          <rect x="45" y="-10" width="6" height="15" fill="#57534e" />
-          <rect x="25" y="10" width="40" height="30" fill={houseWall} />
-          <path d="M18 10 L45 -15 L72 10 Z" fill={houseRoof} filter={isSnow ? "brightness(1.1)" : "none"} />
-          <rect x="32" y="18" width="10" height="10" fill={windowColor} stroke={windowStroke} strokeWidth="1"/>
-          <line x1="37" y1="18" x2="37" y2="28" stroke={windowStroke} strokeWidth="1" />
-          <line x1="32" y1="23" x2="42" y2="23" stroke={windowStroke} strokeWidth="1" />
-          <rect x="50" y="22" width="10" height="18" fill="#3f2e22" />
-          {isNight && <circle cx="37" cy="23" r="8" fill="#fbbf24" opacity="0.6" filter="blur(4px)" />}
-      </g>
+      {/* --- TERRAIN-SPECIFIC ELEMENTS --- */}
+      
+      {/* Lakeside: Wooden dock */}
+      {terrainType === 'lakeside' && (
+        <g>
+          {/* Dock extending into water */}
+          <rect x="280" y="148" width="6" height="12" fill={isNight ? "#4a3830" : "#78350f"} />
+          <rect x="250" y="151" width="50" height="4" fill={isNight ? "#57534e" : "#92400e"} />
+          {/* Dock posts */}
+          <rect x="255" y="151" width="2" height="8" fill={isNight ? "#4a3830" : "#78350f"} />
+          <rect x="293" y="151" width="2" height="8" fill={isNight ? "#4a3830" : "#78350f"} />
+          {/* Reeds at shore */}
+          <line x1="310" y1="145" x2="310" y2="158" stroke={isNight ? "#15803d" : "#16a34a"} strokeWidth="1.5" />
+          <line x1="315" y1="147" x2="315" y2="158" stroke={isNight ? "#15803d" : "#16a34a"} strokeWidth="1.5" />
+          <line x1="318" y1="146" x2="318" y2="158" stroke={isNight ? "#15803d" : "#16a34a"} strokeWidth="1.5" />
+          <line x1="323" y1="148" x2="323" y2="158" stroke={isNight ? "#15803d" : "#16a34a"} strokeWidth="1.5" />
+          <line x1="50" y1="146" x2="50" y2="158" stroke={isNight ? "#15803d" : "#16a34a"} strokeWidth="1.5" />
+          <line x1="55" y1="148" x2="55" y2="158" stroke={isNight ? "#15803d" : "#16a34a"} strokeWidth="1.5" />
+          <line x1="60" y1="147" x2="60" y2="158" stroke={isNight ? "#15803d" : "#16a34a"} strokeWidth="1.5" />
+        </g>
+      )}
+
+      {/* Valley: River flowing through center */}
+      {terrainType === 'valley' && (
+        <g>
+          {/* River - gets narrower toward the back (perspective) */}
+          <path d="M140 160 Q 150 145 160 160 Z" fill={isNight ? "#0c4a6e" : "#0369a1"} opacity="0.6" />
+          <path d="M160 160 Q 170 140 180 160 Z" fill={isNight ? "#075985" : "#0284c7"} opacity="0.7" />
+          <path d="M180 160 Q 185 135 190 160 Z" fill={isNight ? "#0e7490" : "#06b6d4"} opacity="0.5" />
+        </g>
+      )}
+
+      {/* Flatland: Windmill */}
+      {terrainType === 'flatland' && (
+        <g transform="translate(300, 110)">
+          {/* Windmill tower */}
+          <path d="M15 20 L18 50 L12 50 Z" fill={isNight ? "#57534e" : "#78350f"} />
+          {/* Windmill blades */}
+          <g transform="translate(15, 20)" className={isWindy ? "animate-spin" : "animate-spin-slow"}>
+            <rect x="-1" y="-15" width="2" height="15" fill={isNight ? "#e2e8f0" : "white"} />
+            <rect x="-1" y="0" width="2" height="15" fill={isNight ? "#e2e8f0" : "white"} />
+            <rect x="-15" y="-1" width="15" height="2" fill={isNight ? "#e2e8f0" : "white"} />
+            <rect x="0" y="-1" width="15" height="2" fill={isNight ? "#e2e8f0" : "white"} />
+          </g>
+          {/* Windmill center */}
+          <circle cx="15" cy="20" r="2" fill={isNight ? "#57534e" : "#92400e"} />
+        </g>
+      )}
+
+      {/* Flatland: Small fence */}
+      {terrainType === 'flatland' && (
+        <g>
+          {/* Fence posts and rails */}
+          <rect x="80" y="145" width="2" height="12" fill={isNight ? "#4a3830" : "#78350f"} />
+          <rect x="95" y="145" width="2" height="12" fill={isNight ? "#4a3830" : "#78350f"} />
+          <rect x="110" y="145" width="2" height="12" fill={isNight ? "#4a3830" : "#78350f"} />
+          <rect x="80" y="148" width="32" height="1.5" fill={isNight ? "#4a3830" : "#78350f"} />
+          <rect x="80" y="153" width="32" height="1.5" fill={isNight ? "#4a3830" : "#78350f"} />
+        </g>
+      )}
+
+      {/* City: Street lamp */}
+      {terrainType === 'city' && (
+        <g transform="translate(70, 130)">
+          {/* Lamp post */}
+          <rect x="8" y="0" width="2" height="28" fill={isNight ? "#475569" : "#64748b"} />
+          {/* Lamp head */}
+          <path d="M5 0 L8 0 L8 -4 L12 -4 L12 0 L15 0 L13 -6 L7 -6 Z" fill={isNight ? "#475569" : "#64748b"} />
+          {/* Light glow (only at night) */}
+          {isNight && (
+            <>
+              <circle cx="10" cy="-5" r="8" fill="#fbbf24" opacity="0.4" filter="blur(4px)" />
+              <circle cx="10" cy="-5" r="3" fill="#fef08a" opacity="0.9" />
+            </>
+          )}
+        </g>
+      )}
+
+      {/* --- HAUS (conditional rendering based on terrain) --- */}
+      {/* Don't show house in city, forest (show hut instead), or desert */}
+      {!['city', 'forest', 'desert'].includes(terrainType) && (
+        <g transform="translate(140, 120)">
+            <rect x="45" y="-10" width="6" height="15" fill="#57534e" />
+            <rect x="25" y="10" width="40" height="30" fill={houseWall} />
+            <path d="M18 10 L45 -15 L72 10 Z" fill={houseRoof} filter={isSnow ? "brightness(1.1)" : "none"} />
+            <rect x="32" y="18" width="10" height="10" fill={windowColor} stroke={windowStroke} strokeWidth="1"/>
+            <line x1="37" y1="18" x2="37" y2="28" stroke={windowStroke} strokeWidth="1" />
+            <line x1="32" y1="23" x2="42" y2="23" stroke={windowStroke} strokeWidth="1" />
+            <rect x="50" y="22" width="10" height="18" fill="#3f2e22" />
+            {isNight && <circle cx="37" cy="23" r="8" fill="#fbbf24" opacity="0.6" filter="blur(4px)" />}
+        </g>
+      )}
+
+      {/* Forest: Small hut instead of house */}
+      {terrainType === 'forest' && (
+        <g transform="translate(160, 135)">
+          <rect x="15" y="10" width="20" height="15" fill={houseWall} />
+          <path d="M10 10 L25 0 L40 10 Z" fill={houseRoof} />
+          <rect x="20" y="15" width="5" height="6" fill={windowColor} stroke={windowStroke} strokeWidth="0.5"/>
+          {isNight && <circle cx="22.5" cy="18" r="4" fill="#fbbf24" opacity="0.5" filter="blur(2px)" />}
+        </g>
+      )}
 
       {/* --- BÄUME --- */}
-      
-      {/* Baum Links - Rand (Deciduous tree) */}
-      <g transform="translate(40, 120)">
-        <g className={treeAnim}>
-            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-            {showDeciduousLeaves ? (
-              <>
-                <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
-                <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
-              </>
-            ) : bareBranches}
-        </g>
-      </g>
+      {/* Show trees for most terrains, but not for city, desert, or lakeside */}
+      {!['city', 'desert', 'lakeside', 'forest'].includes(terrainType) && (
+        <>
+          {/* Baum Links - Rand (Deciduous tree) */}
+          <g transform="translate(40, 120)">
+            <g className={treeAnim}>
+                <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+                {showDeciduousLeaves ? (
+                  <>
+                    <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+                    <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+                  </>
+                ) : bareBranches}
+            </g>
+          </g>
 
-      {/* Baumgruppe Rechts (Deciduous tree) */}
-      <g transform="translate(280, 135) scale(0.9)">
-        <g className={treeAnim} style={{animationDelay: '0.5s'}}>
-            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-            {showDeciduousLeaves ? (
-              <>
-                <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
-                <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
-              </>
-            ) : bareBranches}
-        </g>
-      </g>
-      
-      {/* Baum Rechts - Rand (Evergreen - Pine tree) */}
-      <g transform="translate(320, 134) scale(0.8)">
-        <g className={treeAnim} style={{animationDelay: '0.7s'}}>
-            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-            <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
-            <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
-        </g>
-      </g>
+          {/* Baumgruppe Rechts (Deciduous tree) */}
+          <g transform="translate(280, 135) scale(0.9)">
+            <g className={treeAnim} style={{animationDelay: '0.5s'}}>
+                <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+                {showDeciduousLeaves ? (
+                  <>
+                    <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+                    <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+                  </>
+                ) : bareBranches}
+            </g>
+          </g>
+          
+          {/* Baum Rechts - Rand (Evergreen - Pine tree) */}
+          <g transform="translate(320, 134) scale(0.8)">
+            <g className={treeAnim} style={{animationDelay: '0.7s'}}>
+                <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+                <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
+                <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
+            </g>
+          </g>
 
-      {/* Zusätzliche Bäume auf der Wiese */}
-      
-      {/* Kleiner Baum zwischen Links und Haus (Deciduous tree) */}
-      <g transform="translate(100, 130) scale(0.7)">
-        <g className={treeAnim} style={{animationDelay: '0.3s'}}>
-            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-            {showDeciduousLeaves ? (
-              <>
-                <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
-                <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
-              </>
-            ) : bareBranches}
-        </g>
-      </g>
+          {/* Zusätzliche Bäume auf der Wiese */}
+          
+          {/* Kleiner Baum zwischen Links und Haus (Deciduous tree) */}
+          <g transform="translate(100, 130) scale(0.7)">
+            <g className={treeAnim} style={{animationDelay: '0.3s'}}>
+                <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+                {showDeciduousLeaves ? (
+                  <>
+                    <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
+                    <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
+                  </>
+                ) : bareBranches}
+            </g>
+          </g>
 
-      {/* Kleiner Baum rechts vom Haus (Evergreen - Pine tree) */}
-      <g transform="translate(230, 128) scale(0.75)">
-        <g className={treeAnim} style={{animationDelay: '0.4s'}}>
-            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-            <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
-            <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
-        </g>
-      </g>
+          {/* Kleiner Baum rechts vom Haus (Evergreen - Pine tree) */}
+          <g transform="translate(230, 128) scale(0.75)">
+            <g className={treeAnim} style={{animationDelay: '0.4s'}}>
+                <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+                <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
+                <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
+            </g>
+          </g>
 
-      {/* Zusätzlicher kleiner Baum links (Evergreen - Pine tree) */}
-      <g transform="translate(70, 135) scale(0.65)">
-        <g className={treeAnim} style={{animationDelay: '0.6s'}}>
-            <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-            <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
-            <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
-        </g>
-      </g>
+          {/* Zusätzlicher kleiner Baum links (Evergreen - Pine tree) */}
+          <g transform="translate(70, 135) scale(0.65)">
+            <g className={treeAnim} style={{animationDelay: '0.6s'}}>
+                <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+                <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
+                <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
+            </g>
+          </g>
+        </>
+      )}
+
+      {/* Lakeside: Just a few trees, not as many */}
+      {terrainType === 'lakeside' && (
+        <>
+          {/* Single tree on left */}
+          <g transform="translate(40, 125)">
+            <g className={treeAnim}>
+                <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+                <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
+                <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
+            </g>
+          </g>
+          {/* Single tree on right */}
+          <g transform="translate(90, 130) scale(0.85)">
+            <g className={treeAnim} style={{animationDelay: '0.4s'}}>
+                <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+                <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
+                <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
+            </g>
+          </g>
+        </>
+      )}
+
+      {/* Desert: Cacti instead of trees */}
+      {terrainType === 'desert' && (
+        <>
+          {/* Cactus 1 - left */}
+          <g transform="translate(60, 130)">
+            {/* Main trunk */}
+            <rect x="8" y="0" width="4" height="20" fill={isNight ? "#15803d" : "#16a34a"} rx="2" />
+            {/* Left arm */}
+            <rect x="2" y="8" width="6" height="3" fill={isNight ? "#15803d" : "#16a34a"} rx="1.5" />
+            <rect x="2" y="8" width="3" height="8" fill={isNight ? "#15803d" : "#16a34a"} rx="1.5" />
+            {/* Right arm */}
+            <rect x="12" y="10" width="6" height="3" fill={isNight ? "#15803d" : "#16a34a"} rx="1.5" />
+            <rect x="15" y="10" width="3" height="7" fill={isNight ? "#15803d" : "#16a34a"} rx="1.5" />
+          </g>
+
+          {/* Cactus 2 - center */}
+          <g transform="translate(180, 135) scale(0.8)">
+            <rect x="8" y="0" width="4" height="18" fill={isNight ? "#15803d" : "#16a34a"} rx="2" />
+            <rect x="3" y="9" width="5" height="3" fill={isNight ? "#15803d" : "#16a34a"} rx="1.5" />
+            <rect x="3" y="9" width="3" height="7" fill={isNight ? "#15803d" : "#16a34a"} rx="1.5" />
+          </g>
+
+          {/* Cactus 3 - right */}
+          <g transform="translate(290, 132) scale(0.9)">
+            <rect x="8" y="0" width="4" height="22" fill={isNight ? "#15803d" : "#16a34a"} rx="2" />
+            <rect x="12" y="7" width="6" height="3" fill={isNight ? "#15803d" : "#16a34a"} rx="1.5" />
+            <rect x="15" y="7" width="3" height="9" fill={isNight ? "#15803d" : "#16a34a"} rx="1.5" />
+            <rect x="2" y="11" width="6" height="3" fill={isNight ? "#15803d" : "#16a34a"} rx="1.5" />
+            <rect x="2" y="11" width="3" height="6" fill={isNight ? "#15803d" : "#16a34a"} rx="1.5" />
+          </g>
+        </>
+      )}
 
       {/* DYNAMIC CLOUD RENDERING BASED ON CLOUDINESS */}
       {numClouds > 0 && (
@@ -6136,6 +6443,7 @@ export default function WeatherApp() {
   const [demoEvent, setDemoEvent] = useState(null);
   const [demoTime, setDemoTime] = useState(null); // Time override for demo mode (HH:MM format)
   const [demoWindSpeed, setDemoWindSpeed] = useState(null); // Wind speed override for demo mode
+  const [demoTerrain, setDemoTerrain] = useState(null); // Terrain type override for demo mode
 
   // Pull-to-refresh state
   const [pullStartY, setPullStartY] = useState(0);
@@ -7389,6 +7697,8 @@ export default function WeatherApp() {
               demoEvent={demoEvent}
               demoTime={demoTime}
               demoWindSpeed={demoWindSpeed}
+              demoTerrain={demoTerrain}
+              elevation={currentLoc?.elevation || 0}
             />
         </div>
         
@@ -7417,6 +7727,7 @@ export default function WeatherApp() {
                   setDemoEvent(null);
                   setDemoTime(null);
                   setDemoWindSpeed(null);
+                  setDemoTerrain(null);
                 }}
                 className="text-xs bg-white/20 px-2 py-1 rounded hover:bg-white/30"
               >
@@ -7525,6 +7836,26 @@ export default function WeatherApp() {
                   <option value="easter">🐰 Ostern / Easter</option>
                   <option value="halloween">🎃 Halloween</option>
                   <option value="newyear">🎆 Silvester / New Year</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs opacity-80 mb-1">Landschaft / Terrain</label>
+                <select 
+                  value={demoTerrain || ''} 
+                  onChange={(e) => setDemoTerrain(e.target.value || null)}
+                  className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-sm"
+                >
+                  <option value="">Auto (nach Höhe / By Elevation)</option>
+                  <option value="mountains">🏔️ Berge / Mountains (≥800m)</option>
+                  <option value="valley">🏞️ Tal / Valley (600-799m)</option>
+                  <option value="forest">🌲 Wald / Forest (400-599m)</option>
+                  <option value="hills">🏕️ Hügel / Hills (200-399m)</option>
+                  <option value="flatland">🌾 Flachland / Flatland (100-199m)</option>
+                  <option value="lakeside">🏖️ See / Lakeside (50-99m)</option>
+                  <option value="sea">🌊 Meer / Sea (&lt;50m)</option>
+                  <option value="desert">🏜️ Wüste / Desert (hot climates)</option>
+                  <option value="city">🏙️ Stadt / City (urban)</option>
                 </select>
               </div>
             </div>
@@ -7790,7 +8121,7 @@ export default function WeatherApp() {
             <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-t-m3-3xl p-4 shadow-m3-4 relative overflow-hidden min-h-[200px] border border-m3-outline-variant border-b-0 backdrop-blur-md`}>
               {/* Weather background animation */}
               <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
-                <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} elevation={currentLoc?.elevation || 0} />
+                <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} demoTerrain={demoTerrain} elevation={currentLoc?.elevation || 0} />
               </div>
               
               <div className="relative z-10">
