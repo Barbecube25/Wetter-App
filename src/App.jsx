@@ -4305,7 +4305,7 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
 };
 
 // --- NEU: PRECIPITATION TILE (Wann, Wie lang, Wie viel) ---
-const PrecipitationTile = ({ data, minutelyData, lang='de', formatPrecip, getPrecipUnitLabel }) => {
+const PrecipitationTile = ({ data, minutelyData, lang='de', formatPrecip, getPrecipUnitLabel, setActiveTab, setShowPrecipModal }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
 
   // Analyse der nächsten 24h
@@ -4736,6 +4736,28 @@ const PrecipitationTile = ({ data, minutelyData, lang='de', formatPrecip, getPre
                 </div>
             )}
         </div>
+
+        {/* Action Buttons for Integration */}
+        <div className="mt-4 flex gap-2">
+            {setActiveTab && (
+                <button 
+                    onClick={() => setActiveTab('radar')}
+                    className="flex-1 bg-m3-surface-container hover:bg-m3-surface-container-high active:scale-95 transition-all rounded-xl p-3 flex items-center justify-center gap-2 border border-m3-outline-variant"
+                >
+                    <MapIcon size={18} className="text-m3-primary" />
+                    <span className="text-m3-body-medium font-bold text-m3-on-surface">{lang === 'en' ? 'View Radar' : 'Zum Radar'}</span>
+                </button>
+            )}
+            {setShowPrecipModal && (
+                <button 
+                    onClick={() => setShowPrecipModal(true)}
+                    className="flex-1 bg-m3-surface-container hover:bg-m3-surface-container-high active:scale-95 transition-all rounded-xl p-3 flex items-center justify-center gap-2 border border-m3-outline-variant"
+                >
+                    <Info size={18} className="text-m3-primary" />
+                    <span className="text-m3-body-medium font-bold text-m3-on-surface">{lang === 'en' ? '24h Details' : '24h-Details'}</span>
+                </button>
+            )}
+        </div>
     </div>
   );
 };
@@ -5053,7 +5075,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
 };
 
 // --- PRECIPITATION DETAILS MODAL ---
-const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', formatPrecip, getPrecipUnitLabel }) => {
+const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', formatPrecip, getPrecipUnitLabel, setActiveTab }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
   
   if (!isOpen) return null;
@@ -5154,6 +5176,22 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
             </div>
           ))}
         </div>
+        
+        {/* Footer with Radar link */}
+        {setActiveTab && (
+          <div className="p-4 border-t border-m3-outline-variant bg-m3-surface-container/50 sticky bottom-0">
+            <button 
+              onClick={() => {
+                setActiveTab('radar');
+                onClose();
+              }}
+              className="w-full bg-m3-primary hover:bg-m3-primary/90 active:scale-95 transition-all rounded-xl p-3 flex items-center justify-center gap-2 text-m3-on-primary font-bold shadow-lg"
+            >
+              <MapIcon size={20} />
+              <span>{lang === 'en' ? 'View on Radar' : 'Im Radar ansehen'}</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -7485,7 +7523,7 @@ export default function WeatherApp() {
                <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
            </div>
            <h2 className="text-2xl font-bold mb-6 text-slate-800 text-center">{t('precipRadar')}</h2>
-            <PrecipitationTile data={processedShort} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} />
+            <PrecipitationTile data={processedShort} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} />
        </div>
     );
  }
@@ -7596,6 +7634,7 @@ export default function WeatherApp() {
           lang={lang}
           formatPrecip={formatPrecip}
           getPrecipUnitLabel={getPrecipUnitLabel}
+          setActiveTab={setActiveTab}
         />
       )}
       {showSettingsModal && (
@@ -7840,14 +7879,30 @@ export default function WeatherApp() {
           
           {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) && (
             <div 
-              onClick={() => setShowPrecipModal(true)}
-              className="bg-m3-tertiary-container rounded-m3-xl p-3 border border-m3-tertiary shadow-m3-1 cursor-pointer hover:bg-m3-tertiary-container/80 transition-all active:scale-95"
+              className="bg-m3-tertiary-container rounded-m3-xl p-3 border border-m3-tertiary shadow-m3-1 relative overflow-hidden"
             >
               <div className="flex items-center gap-2 text-m3-on-tertiary-container text-m3-label-small mb-1">
                 {next24HoursPrecip.snow > 0.1 ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
               </div>
-              <div className="text-m3-title-large font-bold text-m3-on-tertiary-container">
+              <div className="text-m3-title-large font-bold text-m3-on-tertiary-container mb-2">
                 {formatPrecip(next24HoursPrecip.total)} {getPrecipUnitLabel()}
+              </div>
+              {/* Action buttons */}
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setShowPrecipModal(true)}
+                  className="flex-1 bg-m3-on-tertiary-container/10 hover:bg-m3-on-tertiary-container/20 active:scale-95 transition-all rounded-lg px-2 py-1 flex items-center justify-center gap-1"
+                >
+                  <Info size={14} className="text-m3-on-tertiary-container" />
+                  <span className="text-xs font-medium text-m3-on-tertiary-container">Details</span>
+                </button>
+                <button 
+                  onClick={() => setActiveTab('radar')}
+                  className="flex-1 bg-m3-on-tertiary-container/10 hover:bg-m3-on-tertiary-container/20 active:scale-95 transition-all rounded-lg px-2 py-1 flex items-center justify-center gap-1"
+                >
+                  <MapIcon size={14} className="text-m3-on-tertiary-container" />
+                  <span className="text-xs font-medium text-m3-on-tertiary-container">Radar</span>
+                </button>
               </div>
             </div>
           )}
@@ -7860,7 +7915,7 @@ export default function WeatherApp() {
             <div className="space-y-4">
                <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
                <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} />
-               <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} />
+               <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} />
             </div>
           )}
 
@@ -8030,6 +8085,26 @@ export default function WeatherApp() {
                   ></iframe>
                 </div>
                 <div className="text-[10px] text-center opacity-50 mt-2">{t('radarCredit')}</div>
+                
+                {/* Quick Actions */}
+                {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) && (
+                  <div className="mt-3 flex gap-2">
+                    <button 
+                      onClick={() => setActiveTab('overview')}
+                      className="flex-1 bg-m3-surface-container hover:bg-m3-surface-container-high active:scale-95 transition-all rounded-xl p-2 flex items-center justify-center gap-2 border border-m3-outline-variant"
+                    >
+                      <List size={16} className="text-m3-primary" />
+                      <span className="text-sm font-medium text-m3-on-surface">{lang === 'en' ? 'Back to Overview' : 'Zurück zur Übersicht'}</span>
+                    </button>
+                    <button 
+                      onClick={() => setShowPrecipModal(true)}
+                      className="flex-1 bg-m3-tertiary-container hover:bg-m3-tertiary-container/80 active:scale-95 transition-all rounded-xl p-2 flex items-center justify-center gap-2 border border-m3-tertiary"
+                    >
+                      <Info size={16} className="text-m3-on-tertiary-container" />
+                      <span className="text-sm font-medium text-m3-on-tertiary-container">{lang === 'en' ? '24h Details' : '24h-Details'}</span>
+                    </button>
+                  </div>
+                )}
             </div>
           )}
 
