@@ -3671,10 +3671,15 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   // Determine terrain type based on elevation, geographic position, temperature, and other factors
   // Use deterministic logic to avoid flickering between renders
   
+  // Threshold for very low elevations that typically indicate coastal or sea-level locations
+  // Locations at or below this elevation are likely at sea level or in coastal deltas
+  const VERY_LOW_ELEVATION_THRESHOLD = 5;
+  
   // Helper function: Check if coordinates are near a coastline
   // This uses simple geographic boundaries for major seas and oceans worldwide
   const isNearCoast = (latitude, longitude, elevation) => {
-    if (!latitude || !longitude) return false;
+    // Explicit null/undefined check to allow valid 0 coordinates (equator, prime meridian)
+    if (latitude === null || latitude === undefined || longitude === null || longitude === undefined) return false;
     
     // EUROPE
     // North Sea coast (Netherlands, Germany, Denmark): Northern Europe coastal areas
@@ -3687,7 +3692,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
     if (longitude >= -10 && longitude <= 0 && latitude >= 36 && latitude <= 60 && elevation < 30) return true;
     
     // Mediterranean coast (Spain, France, Italy, Greece, Croatia)
-    if (latitude >= 36 && latitude <= 45 && ((longitude >= -5 && longitude <= 20) || (longitude >= 12 && longitude <= 28)) && elevation < 30) return true;
+    if (latitude >= 36 && latitude <= 45 && longitude >= -5 && longitude <= 28 && elevation < 30) return true;
     
     // Adriatic coast (Italy, Croatia, Albania)
     if (latitude >= 40 && latitude <= 46 && longitude >= 12 && longitude <= 20 && elevation < 30) return true;
@@ -3727,9 +3732,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
     // Brazilian coast
     if (latitude >= -30 && latitude <= 5 && longitude >= -50 && longitude <= -35 && elevation < 20) return true;
     
-    // Fallback: Very low elevation (<5m) locations are typically at or below sea level, 
+    // Fallback: Very low elevation locations are typically at or below sea level, 
     // indicating they are likely coastal or in river deltas near the sea
-    const VERY_LOW_ELEVATION_THRESHOLD = 5;
     if (elevation < VERY_LOW_ELEVATION_THRESHOLD) return true;
     
     return false;
