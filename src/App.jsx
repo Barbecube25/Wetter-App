@@ -3672,27 +3672,27 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   // Use deterministic logic to avoid flickering between renders
   let terrainType = 'hills'; // default
   
-  // Mountains: elevation > 800m (Alps, high mountains)
-  if (elevation > 800) {
+  // Mountains: elevation >= 800m (Alps, high mountains)
+  if (elevation >= 800) {
     terrainType = 'mountains';
   } 
-  // Valley: elevation 600-800m (pre-alpine areas)
-  else if (elevation >= 600 && elevation <= 800) {
+  // Valley: elevation 600-799m (pre-alpine areas)
+  else if (elevation >= 600 && elevation < 800) {
     terrainType = 'valley';
   }
-  // Forest: elevation 400-600m (forested hills)
+  // Forest: elevation 400-599m (forested hills)
   else if (elevation >= 400 && elevation < 600) {
     terrainType = 'forest';
   }
-  // Hills: elevation 200-400m (standard rolling hills)
+  // Hills: elevation 200-399m (standard rolling hills)
   else if (elevation >= 200 && elevation < 400) {
     terrainType = 'hills';
   }
-  // Flatland/Agriculture: elevation 100-200m, not at sea level
+  // Flatland/Agriculture: elevation 100-199m, not at sea level
   else if (elevation >= 100 && elevation < 200) {
     terrainType = 'flatland';
   }
-  // Lakeside: elevation 50-100m (near water bodies but not sea)
+  // Lakeside: elevation 50-99m (near water bodies but not sea)
   else if (elevation >= 50 && elevation < 100) {
     terrainType = 'lakeside';
   }
@@ -3702,8 +3702,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   }
   
   // Desert override: based on extreme heat (temperature > 35°C)
-  // Only override if not in mountains/valley
-  if (temp > 35 && elevation < 600) {
+  // Only override if not already a water-based or agricultural terrain
+  if (temp > 35 && elevation < 600 && !['lakeside', 'flatland', 'sea'].includes(terrainType)) {
     terrainType = 'desert';
   }
   
@@ -7847,12 +7847,12 @@ export default function WeatherApp() {
                   className="w-full bg-white/10 border border-white/20 rounded px-2 py-1 text-sm"
                 >
                   <option value="">Auto (nach Höhe / By Elevation)</option>
-                  <option value="mountains">🏔️ Berge / Mountains (&gt;800m)</option>
-                  <option value="valley">🏞️ Tal / Valley (600-800m)</option>
-                  <option value="forest">🌲 Wald / Forest (400-600m)</option>
-                  <option value="hills">🏕️ Hügel / Hills (200-400m)</option>
-                  <option value="flatland">🌾 Flachland / Flatland (100-200m)</option>
-                  <option value="lakeside">🏖️ See / Lakeside (50-100m)</option>
+                  <option value="mountains">🏔️ Berge / Mountains (≥800m)</option>
+                  <option value="valley">🏞️ Tal / Valley (600-799m)</option>
+                  <option value="forest">🌲 Wald / Forest (400-599m)</option>
+                  <option value="hills">🏕️ Hügel / Hills (200-399m)</option>
+                  <option value="flatland">🌾 Flachland / Flatland (100-199m)</option>
+                  <option value="lakeside">🏖️ See / Lakeside (50-99m)</option>
                   <option value="sea">🌊 Meer / Sea (&lt;50m)</option>
                   <option value="desert">🏜️ Wüste / Desert (hot climates)</option>
                   <option value="city">🏙️ Stadt / City (urban)</option>
