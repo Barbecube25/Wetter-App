@@ -2576,21 +2576,86 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
             });
         }
         
-        // Temperature text with more natural language
+        // Split today's data into time periods for time-aware briefing
+        const noonData = todayData.filter(d => d.time.getHours() >= 11 && d.time.getHours() < 14);
+        const afternoonData = todayData.filter(d => d.time.getHours() >= 14 && d.time.getHours() < 18);
+        const eveningData = todayData.filter(d => d.time.getHours() >= 18 && d.time.getHours() < 22);
+        const tonightData = todayData.filter(d => d.time.getHours() >= 22);
+        
+        // Temperature text with time-aware natural language based on current hour
         const tempRange = Math.round(maxToday) - Math.round(minToday);
         let tempDesc = "";
-        if (tempRange > 15) {
-            tempDesc = lang === 'en' 
-                ? `Quite a temperature swing today! Starting at ${Math.round(minToday)}° and warming up to ${Math.round(maxToday)}°. `
-                : `Heute gibt's große Temperaturschwankungen! Los geht's mit ${Math.round(minToday)}°, später dann bis zu ${Math.round(maxToday)}°. `;
-        } else if (tempRange > 8) {
-            tempDesc = lang === 'en' 
-                ? `Temperatures will vary between ${Math.round(minToday)}° and ${Math.round(maxToday)}° throughout the day. `
-                : `Die Temperatur schwankt heute zwischen ${Math.round(minToday)}° und ${Math.round(maxToday)}°. `;
-        } else {
-            tempDesc = lang === 'en' 
-                ? `Pretty steady temperatures around ${Math.round((minToday + maxToday) / 2)}° (${Math.round(minToday)}° to ${Math.round(maxToday)}°). `
-                : `Recht konstante Temperaturen um die ${Math.round((minToday + maxToday) / 2)}° (${Math.round(minToday)}° bis ${Math.round(maxToday)}°). `;
+        
+        // Morning (before 12): Show full day forecast
+        if (currentHour < 12 && lang !== 'en') {
+            const noonTemp = noonData.length > 0 ? Math.round(Math.max(...noonData.map(d => d.temp))) : null;
+            const afternoonTemp = afternoonData.length > 0 ? Math.round(Math.max(...afternoonData.map(d => d.temp))) : null;
+            const eveningTemp = eveningData.length > 0 ? Math.round(Math.min(...eveningData.map(d => d.temp))) : null;
+            
+            if (noonTemp !== null && afternoonTemp !== null && eveningTemp !== null) {
+                tempDesc = `Bis Mittag wird es ${noonTemp}°, am Nachmittag dann ${afternoonTemp}°, und der Abend klingt bei ${eveningTemp}° aus. `;
+            } else if (tempRange > 15) {
+                tempDesc = `Heute gibt's große Temperaturschwankungen! Los geht's mit ${Math.round(minToday)}°, später dann bis zu ${Math.round(maxToday)}°. `;
+            } else {
+                tempDesc = `Die Temperatur schwankt heute zwischen ${Math.round(minToday)}° und ${Math.round(maxToday)}°. `;
+            }
+        }
+        // Midday/Noon (12-16): Show afternoon and evening
+        else if (currentHour >= 12 && currentHour < 16 && lang !== 'en') {
+            const afternoonTemp = afternoonData.length > 0 ? Math.round(Math.max(...afternoonData.map(d => d.temp))) : null;
+            const eveningTemp = eveningData.length > 0 ? Math.round(Math.min(...eveningData.map(d => d.temp))) : null;
+            
+            if (afternoonTemp !== null && eveningTemp !== null) {
+                tempDesc = `Am Nachmittag wird es ${afternoonTemp}°, bevor der Abend bei ${eveningTemp}° ausklingt. `;
+            } else if (tempRange > 8) {
+                tempDesc = `Die Temperatur schwankt noch zwischen ${Math.round(minToday)}° und ${Math.round(maxToday)}°. `;
+            } else {
+                tempDesc = `Recht konstante Temperaturen um die ${Math.round((minToday + maxToday) / 2)}° (${Math.round(minToday)}° bis ${Math.round(maxToday)}°). `;
+            }
+        }
+        // Afternoon (16-20): Show evening and tonight
+        else if (currentHour >= 16 && currentHour < 20 && lang !== 'en') {
+            const eveningTemp = eveningData.length > 0 ? Math.round(Math.min(...eveningData.map(d => d.temp))) : null;
+            const tonightTemp = tonightData.length > 0 ? Math.round(Math.min(...tonightData.map(d => d.temp))) : 
+                               nightData.length > 0 ? Math.round(Math.min(...nightData.map(d => d.temp))) : null;
+            
+            if (eveningTemp !== null) {
+                tempDesc = `Der Abend klingt bei ${eveningTemp}° aus. `;
+                if (tonightTemp !== null) {
+                    tempDesc += `Heute Nacht wird es noch ${tonightTemp}°. `;
+                }
+            } else if (tempRange > 8) {
+                tempDesc = `Die Temperatur liegt noch zwischen ${Math.round(minToday)}° und ${Math.round(maxToday)}°. `;
+            } else {
+                tempDesc = `Recht konstante Temperaturen um die ${Math.round((minToday + maxToday) / 2)}°. `;
+            }
+        }
+        // Evening/Night (after 20): Show tonight
+        else if (currentHour >= 20 && lang !== 'en') {
+            const tonightTemp = tonightData.length > 0 ? Math.round(Math.min(...tonightData.map(d => d.temp))) : 
+                               nightData.length > 0 ? Math.round(Math.min(...nightData.map(d => d.temp))) : null;
+            
+            if (tonightTemp !== null) {
+                tempDesc = `Heute Nacht wird es noch ${tonightTemp}°. `;
+            } else {
+                tempDesc = `Temperaturen um die ${Math.round((minToday + maxToday) / 2)}°. `;
+            }
+        }
+        // English or fallback
+        else {
+            if (tempRange > 15) {
+                tempDesc = lang === 'en' 
+                    ? `Quite a temperature swing today! Starting at ${Math.round(minToday)}° and warming up to ${Math.round(maxToday)}°. `
+                    : `Heute gibt's große Temperaturschwankungen! Los geht's mit ${Math.round(minToday)}°, später dann bis zu ${Math.round(maxToday)}°. `;
+            } else if (tempRange > 8) {
+                tempDesc = lang === 'en' 
+                    ? `Temperatures will vary between ${Math.round(minToday)}° and ${Math.round(maxToday)}° throughout the day. `
+                    : `Die Temperatur schwankt heute zwischen ${Math.round(minToday)}° und ${Math.round(maxToday)}°. `;
+            } else {
+                tempDesc = lang === 'en' 
+                    ? `Pretty steady temperatures around ${Math.round((minToday + maxToday) / 2)}° (${Math.round(minToday)}° to ${Math.round(maxToday)}°). `
+                    : `Recht konstante Temperaturen um die ${Math.round((minToday + maxToday) / 2)}° (${Math.round(minToday)}° bis ${Math.round(maxToday)}°). `;
+            }
         }
         todayText += tempDesc;
         
