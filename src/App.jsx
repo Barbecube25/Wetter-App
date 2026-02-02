@@ -3,6 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Eye, Activity } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
 import { StatusBar } from '@capacitor/status-bar';
+import packageJson from '../package.json';
 
 // --- 1. KONSTANTEN & CONFIG & ÜBERSETZUNGEN ---
 
@@ -6948,13 +6949,22 @@ export default function WeatherApp() {
   };
   
   // --- CACHE HELPER FUNCTIONS ---
-  const APP_VERSION = '1.0.0'; // Update this when data structure changes
+  const APP_VERSION = packageJson.version; // Use version from package.json
   const CACHE_KEY_SHORT = 'weather_cache_short';
   const CACHE_KEY_LONG = 'weather_cache_long';
   const CACHE_KEY_TIMESTAMP = 'weather_cache_timestamp';
   const CACHE_KEY_LOCATION = 'weather_cache_location';
   const CACHE_KEY_VERSION = 'weather_cache_version';
   const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
+  
+  // Helper function to clear all weather cache
+  const clearWeatherCache = () => {
+    localStorage.removeItem(CACHE_KEY_SHORT);
+    localStorage.removeItem(CACHE_KEY_LONG);
+    localStorage.removeItem(CACHE_KEY_TIMESTAMP);
+    localStorage.removeItem(CACHE_KEY_LOCATION);
+    localStorage.removeItem(CACHE_KEY_VERSION);
+  };
   
   const saveWeatherCache = (shortData, longData, location) => {
     try {
@@ -6975,12 +6985,7 @@ export default function WeatherApp() {
       // Invalidate cache if version mismatch
       if (cachedVersion !== APP_VERSION) {
         console.log('Cache version mismatch, clearing cache');
-        // Clear all cache keys
-        localStorage.removeItem(CACHE_KEY_SHORT);
-        localStorage.removeItem(CACHE_KEY_LONG);
-        localStorage.removeItem(CACHE_KEY_TIMESTAMP);
-        localStorage.removeItem(CACHE_KEY_LOCATION);
-        localStorage.removeItem(CACHE_KEY_VERSION);
+        clearWeatherCache();
         return null;
       }
       
@@ -7015,11 +7020,7 @@ export default function WeatherApp() {
     } catch (e) {
       console.warn('Failed to load weather cache:', e);
       // Clear cache on parse error to prevent white screen
-      localStorage.removeItem(CACHE_KEY_SHORT);
-      localStorage.removeItem(CACHE_KEY_LONG);
-      localStorage.removeItem(CACHE_KEY_TIMESTAMP);
-      localStorage.removeItem(CACHE_KEY_LOCATION);
-      localStorage.removeItem(CACHE_KEY_VERSION);
+      clearWeatherCache();
       return null;
     }
   };
