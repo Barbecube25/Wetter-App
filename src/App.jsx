@@ -3255,7 +3255,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
     const t = TRANSLATIONS[localSettings.language] || TRANSLATIONS['de'];
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
              <div className="bg-m3-surface rounded-m3-xl max-w-sm w-full max-h-[90vh] shadow-m3-5 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
                  <div className="flex justify-between items-center px-6 pt-6 pb-4 border-b border-m3-outline-variant flex-shrink-0">
                      <h2 className="text-xl font-bold text-m3-on-surface flex items-center gap-2">
@@ -4711,7 +4711,7 @@ const FeedbackModal = ({ onClose, currentTemp, lang='de' }) => {
 
     if (sent) {
         return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
                 <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
                     <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-600">
                         <CheckCircle2 size={32} />
@@ -4726,7 +4726,7 @@ const FeedbackModal = ({ onClose, currentTemp, lang='de' }) => {
     const displayTemp = Math.round(currentTemp + tempAdjustment);
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
                 <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <h3 className="font-bold text-slate-800 flex items-center gap-2"><MessageSquarePlus size={18} className="text-blue-500"/> {t.feedbackTitle}</h3>
@@ -5017,7 +5017,7 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
   const totalAmount = next24Hours.reduce((sum, hour) => sum + hour.amount, 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 sticky top-0">
@@ -5143,7 +5143,7 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
                 <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <h3 className="font-bold text-slate-800 flex items-center gap-2"><MapIcon size={18} className="text-blue-500"/> {t.managePlaces}</h3>
