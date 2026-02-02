@@ -7801,21 +7801,21 @@ export default function WeatherApp() {
 
         {/* Weather Details Grid - Moved below animation card */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
+          <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1 min-h-[120px] flex flex-col`}>
             <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Sun size={14} /> {t('uv')}
             </div>
             <div className={`text-m3-title-large font-bold ${getUvColorClass(current.uvIndex, isRealNight)}`}>{current.uvIndex}</div>
           </div>
           
-          <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
+          <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1 min-h-[120px] flex flex-col`}>
             <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Waves size={14} /> {t('humidity')}
             </div>
             <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{current.humidity}%</div>
           </div>
           
-          <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
+          <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1 min-h-[120px] flex flex-col`}>
             <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }} /> {t('wind')}
             </div>
@@ -7829,7 +7829,7 @@ export default function WeatherApp() {
             )}
           </div>
           
-          <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
+          <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1 min-h-[120px] flex flex-col`}>
             <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Thermometer size={14} /> {t('dewPoint')}
             </div>
@@ -7840,7 +7840,7 @@ export default function WeatherApp() {
         {/* Additional Weather Details Grid - Second row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {current.pressure !== null && current.pressure !== undefined && (
-            <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
+            <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1 min-h-[120px] flex flex-col`}>
               <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                 <Gauge size={14} /> {t('pressure')}
               </div>
@@ -7851,7 +7851,7 @@ export default function WeatherApp() {
           )}
           
           {current.visibility !== null && current.visibility !== undefined && current.visibility > 0 && (
-            <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
+            <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1 min-h-[120px] flex flex-col`}>
               <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                 <Eye size={14} /> {t('visibility')}
               </div>
@@ -7864,7 +7864,7 @@ export default function WeatherApp() {
           )}
           
           {airQualityData && airQualityData.european_aqi !== undefined && (
-            <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1`}>
+            <div className={`${tileBg} rounded-m3-xl p-3 shadow-m3-1 min-h-[120px] flex flex-col`}>
               <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                 <Activity size={14} /> {t('airQuality')}
               </div>
@@ -7879,7 +7879,7 @@ export default function WeatherApp() {
           
           {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) && (
             <div 
-              className="bg-m3-tertiary-container rounded-m3-xl p-3 border border-m3-tertiary shadow-m3-1 relative overflow-hidden"
+              className="bg-m3-tertiary-container rounded-m3-xl p-3 border border-m3-tertiary shadow-m3-1 relative overflow-hidden min-h-[120px] flex flex-col"
             >
               <div className="flex items-center gap-2 text-m3-on-tertiary-container text-m3-label-small mb-1">
                 {next24HoursPrecip.snow > 0.1 ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
