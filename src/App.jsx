@@ -4754,7 +4754,7 @@ const PrecipitationTile = ({ data, minutelyData, lang='de', formatPrecip, getPre
                     className="flex-1 bg-m3-surface-container hover:bg-m3-surface-container-high active:scale-95 transition-all rounded-xl p-3 flex items-center justify-center gap-2 border border-m3-outline-variant"
                 >
                     <Info size={18} className="text-m3-primary" />
-                    <span className="text-m3-body-medium font-bold text-m3-on-surface">{lang === 'en' ? '24h Details' : '24h Details'}</span>
+                    <span className="text-m3-body-medium font-bold text-m3-on-surface">{lang === 'en' ? '24h Details' : '24h-Details'}</span>
                 </button>
             )}
         </div>
@@ -7894,14 +7894,14 @@ export default function WeatherApp() {
                   className="flex-1 bg-m3-on-tertiary-container/10 hover:bg-m3-on-tertiary-container/20 active:scale-95 transition-all rounded-lg px-2 py-1 flex items-center justify-center gap-1"
                 >
                   <Info size={14} className="text-m3-on-tertiary-container" />
-                  <span className="text-xs font-medium text-m3-on-tertiary-container">{lang === 'en' ? 'Details' : 'Details'}</span>
+                  <span className="text-xs font-medium text-m3-on-tertiary-container">Details</span>
                 </button>
                 <button 
                   onClick={() => setActiveTab('radar')}
                   className="flex-1 bg-m3-on-tertiary-container/10 hover:bg-m3-on-tertiary-container/20 active:scale-95 transition-all rounded-lg px-2 py-1 flex items-center justify-center gap-1"
                 >
                   <MapIcon size={14} className="text-m3-on-tertiary-container" />
-                  <span className="text-xs font-medium text-m3-on-tertiary-container">{lang === 'en' ? 'Radar' : 'Radar'}</span>
+                  <span className="text-xs font-medium text-m3-on-tertiary-container">Radar</span>
                 </button>
               </div>
             </div>
@@ -8101,7 +8101,7 @@ export default function WeatherApp() {
                       className="flex-1 bg-m3-tertiary-container hover:bg-m3-tertiary-container/80 active:scale-95 transition-all rounded-xl p-2 flex items-center justify-center gap-2 border border-m3-tertiary"
                     >
                       <Info size={16} className="text-m3-on-tertiary-container" />
-                      <span className="text-sm font-medium text-m3-on-tertiary-container">{lang === 'en' ? '24h Details' : '24h Details'}</span>
+                      <span className="text-sm font-medium text-m3-on-tertiary-container">{lang === 'en' ? '24h Details' : '24h-Details'}</span>
                     </button>
                   </div>
                 )}
