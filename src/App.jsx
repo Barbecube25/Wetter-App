@@ -8191,14 +8191,33 @@ export default function WeatherApp() {
                 <span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}{getCacheAgeText()}</span>
               </div>
             </div>
-            {/* Refresh Button */}
-            <button 
-              onClick={fetchData} 
-              aria-label={t('refresh') || "Refresh weather data"}
-              className={`p-2 rounded-m3-full bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary transition-all shadow-m3-2 ${isRefreshing ? 'animate-spin' : ''}`}
-            >
-              <RefreshCw size={16} />
-            </button>
+            {/* Action Buttons: Home, GPS, and Refresh */}
+            <div className="flex items-center gap-2">
+              {/* Home Button */}
+              <button 
+                onClick={handleSetHome} 
+                aria-label={t('home') || "Go to home location"}
+                className="p-2 rounded-m3-full bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary transition-all shadow-m3-2"
+              >
+                <Home size={16} />
+              </button>
+              {/* GPS Button - Green when GPS location taken, red otherwise */}
+              <button 
+                onClick={handleSetCurrent} 
+                aria-label={t('gps') || "Use GPS location"}
+                className={`p-2 rounded-m3-full ${gpsAvailable ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-white transition-all shadow-m3-2`}
+              >
+                <Crosshair size={16} />
+              </button>
+              {/* Refresh Button */}
+              <button 
+                onClick={fetchData} 
+                aria-label={t('refresh') || "Refresh weather data"}
+                className={`p-2 rounded-m3-full bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary transition-all shadow-m3-2 ${isRefreshing ? 'animate-spin' : ''}`}
+              >
+                <RefreshCw size={16} />
+              </button>
+            </div>
           </div>
 
           {/* iOS Install Tip */}
@@ -8775,26 +8794,6 @@ export default function WeatherApp() {
             >
               <MapIcon size={20} />
               <span className="text-m3-body-medium font-medium">{t('places')}</span>
-            </button>
-            <button
-              onClick={() => {
-                handleSetHome();
-                setShowFabMenu(false);
-              }}
-              className="flex items-center gap-3 px-4 py-3 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-3 hover:shadow-m3-4 hover:bg-m3-primary/90 transition-all whitespace-nowrap"
-            >
-              <Home size={20} />
-              <span className="text-m3-body-medium font-medium">{t('home')}</span>
-            </button>
-            <button
-              onClick={() => {
-                handleSetCurrent();
-                setShowFabMenu(false);
-              }}
-              className="flex items-center gap-3 px-4 py-3 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-3 hover:shadow-m3-4 hover:bg-m3-primary/90 transition-all whitespace-nowrap"
-            >
-              <Crosshair size={20} />
-              <span className="text-m3-body-medium font-medium">{t('gps')}</span>
             </button>
             <button
               onClick={() => {
