@@ -5679,7 +5679,7 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
     };
 
     const handleAddFoundLocation = (loc) => {
-        const newLoc = { name: loc.name, lat: loc.latitude, lon: loc.longitude, elevation: loc.elevation || 0, type: 'search', id: crypto.randomUUID() };
+        const newLoc = { name: loc.name, lat: loc.latitude, lon: loc.longitude, elevation: loc.elevation || 0, type: 'unsaved', id: crypto.randomUUID() };
         onSelectLocation(newLoc); 
         onClose();
     };
@@ -8798,7 +8798,7 @@ export default function WeatherApp() {
         {(() => {
           // Check if current location is already saved or is home
           const isHomeLoc = homeLoc && currentLoc && currentLoc.id === homeLoc.id;
-          const isSaved = locations.some(l => l.name === currentLoc.name || (l.lat === currentLoc.lat && l.lon === currentLoc.lon));
+          const isSaved = locations.some(l => l.lat === currentLoc.lat && l.lon === currentLoc.lon);
           const shouldShowSave = !isHomeLoc && !isSaved && currentLoc.type !== 'saved';
           
           return shouldShowSave ? (
