@@ -46,7 +46,16 @@ npm run build
 
 Die gebauten Dateien befinden sich im `dist/` Ordner.
 
-## Android App Bundle (.aab) erstellen
+## Android Studio Setup und App erstellen
+
+**Neu:** Vollständige Schritt-für-Schritt Anleitung für Android Studio:
+- 📱 [ANDROID_STUDIO_ANLEITUNG.md](./ANDROID_STUDIO_ANLEITUNG.md) - **Komplette Android Studio Setup-Anleitung (Deutsch)**
+  - Installation und Voraussetzungen
+  - Projekt in Android Studio öffnen
+  - App auf Gerät/Emulator testen
+  - Wear OS Informationen
+
+### Android App Bundle (.aab) erstellen
 
 Siehe detaillierte Anleitungen:
 - 🇩🇪 [BUILD_AAB_ANLEITUNG.md](./BUILD_AAB_ANLEITUNG.md) (Deutsch)
