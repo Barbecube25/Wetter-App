@@ -8853,7 +8853,7 @@ export default function WeatherApp() {
         <button
           onClick={() => setShowFabMenu(!showFabMenu)}
           aria-label="Toggle menu"
-          className={`p-4 rounded-m3-full bg-m3-primary text-m3-on-primary shadow-m3-4 hover:shadow-m3-5 transition-all ${showFabMenu ? 'rotate-45' : ''}`}
+          className={`p-4 rounded-m3-full bg-m3-primary text-m3-on-primary shadow-m3-4 hover:shadow-m3-5 transition-all duration-200 ${showFabMenu ? 'rotate-45' : ''}`}
         >
           <Plus size={24} />
         </button>
