@@ -22,6 +22,9 @@ const NAV_BAR_HEIGHT = '68px';
 // Gap between fixed elements for consistent spacing (24px to prevent tiles from overlapping with navigation bar)
 const FIXED_ELEMENTS_GAP = '24px'; 
 
+// Landscape mode detection threshold - devices with height less than this are considered landscape
+const LANDSCAPE_HEIGHT_THRESHOLD = 600; 
+
 // TEXT RESSOURCEN
 const TRANSLATIONS = {
   de: {
@@ -6550,6 +6553,9 @@ export default function WeatherApp() {
   const [isPulling, setIsPulling] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Landscape mode detection
+  const [isLandscape, setIsLandscape] = useState(false);
+
   // WICHTIG: Echtzeit-State für die Animation (NEU)
   const [now, setNow] = useState(new Date());
 
@@ -6559,6 +6565,22 @@ export default function WeatherApp() {
       setNow(new Date());
     }, 1000); // 1000ms = 1 Sekunde für präzise Animation
     return () => clearInterval(timer);
+  }, []);
+
+  // Detect landscape orientation
+  useEffect(() => {
+    const checkOrientation = () => {
+      setIsLandscape(window.innerWidth > window.innerHeight && window.innerHeight < LANDSCAPE_HEIGHT_THRESHOLD);
+    };
+    
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+    
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
   }, []);
 
   // --- HELPER: Berechne die ECHTE Ortszeit basierend auf dem API-Offset ---
@@ -7730,6 +7752,12 @@ export default function WeatherApp() {
   const tileBg = isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/50 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant';
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
 
+  // Dynamic layout constants for landscape mode support
+  const headerHeight = isLandscape ? '60px' : HEADER_HEIGHT;
+  const animationCardHeight = isLandscape ? '100px' : ANIMATION_CARD_HEIGHT;
+  const navBarHeight = isLandscape ? '56px' : NAV_BAR_HEIGHT;
+  const fixedElementsGap = isLandscape ? '12px' : FIXED_ELEMENTS_GAP;
+
   // Create a 3-day forecast: rest of today, tomorrow, and day after tomorrow
   const threeDayForecast = useMemo(() => {
     if (!processedShort.length || !processedLong.length) return [];
@@ -8190,16 +8218,16 @@ export default function WeatherApp() {
           />
       )}
 
-      <header className={`pt-4 px-4 pb-3 z-50 fixed top-0 left-0 right-0 backdrop-blur-md ${isRealNight ? 'bg-m3-dark-surface/95' : 'bg-m3-surface/95'}`}>
+      <header className={`${isLandscape ? 'pt-2 px-4 pb-1' : 'pt-4 px-4 pb-3'} z-50 fixed top-0 left-0 right-0 backdrop-blur-md ${isRealNight ? 'bg-m3-dark-surface/95' : 'bg-m3-surface/95'}`}>
         {/* Simplified header with just location name */}
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center">
             <div className="flex-1">
-              <h1 className={`text-m3-headline-small font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
+              <h1 className={`${isLandscape ? 'text-m3-title-large' : 'text-m3-headline-small'} font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
                 {currentLoc.name}
                 {currentLoc.type === 'gps' && <span className="text-m3-primary ml-2">📍</span>}
               </h1>
-              {(currentLoc.region || currentLoc.country) && (
+              {(currentLoc.region || currentLoc.country) && !isLandscape && (
                 <div className={`flex items-center gap-1 text-m3-body-small ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mt-0.5`}>
                   <MapPin size={12} />
                   <span>
@@ -8210,10 +8238,12 @@ export default function WeatherApp() {
                 </div>
               )}
               {/* Update Time Display */}
-              <div className={`flex items-center gap-2 text-m3-label-small ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mt-1`}>
-                <Clock size={12} />
-                <span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}{getCacheAgeText()}</span>
-              </div>
+              {!isLandscape && (
+                <div className={`flex items-center gap-2 text-m3-label-small ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mt-1`}>
+                  <Clock size={12} />
+                  <span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}{getCacheAgeText()}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -8240,11 +8270,11 @@ export default function WeatherApp() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: `calc(${HEADER_HEIGHT} + ${ANIMATION_CARD_HEIGHT} + ${NAV_BAR_HEIGHT} + ${FIXED_ELEMENTS_GAP})` }}>
+      <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: `calc(${headerHeight} + ${animationCardHeight} + ${navBarHeight} + ${fixedElementsGap})` }}>
         {/* Fixed Animation Card Container - Matches main content width */}
-        <div className="fixed left-0 right-0 z-30 px-4" style={{ top: HEADER_HEIGHT }}>
+        <div className="fixed left-0 right-0 z-30 px-4" style={{ top: headerHeight }}>
           <div className="max-w-4xl mx-auto">
-            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-t-m3-3xl p-4 shadow-m3-4 relative overflow-hidden min-h-[200px] border border-m3-outline-variant border-b-0 backdrop-blur-md`}>
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-t-m3-3xl ${isLandscape ? 'p-2' : 'p-4'} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant border-b-0 backdrop-blur-md ${isLandscape ? 'min-h-[100px]' : 'min-h-[200px]'}`}>
               {/* Weather background animation */}
               <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
                 <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} demoTerrain={demoTerrain} elevation={currentLoc?.elevation || 0} latitude={currentLoc?.lat} longitude={currentLoc?.lon} />
@@ -8254,37 +8284,52 @@ export default function WeatherApp() {
                 {/* Main Temperature Display */}
                 <div>
                   <div className="flex items-start justify-between">
-                    <div className="p-2 pr-4">
-                      <span className="text-m3-display-medium font-light text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">{formatTemp(current.temp)}{getTempUnitSymbol()}</span>
-                      <div className="flex items-center gap-2 mt-1 text-m3-body-medium text-white/95 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
-                        <Thermometer size={16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                    <div className={isLandscape ? 'p-1 pr-2' : 'p-2 pr-4'}>
+                      <span className={`${isLandscape ? 'text-m3-headline-large' : 'text-m3-display-medium'} font-light text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]`}>{formatTemp(current.temp)}{getTempUnitSymbol()}</span>
+                      <div className={`flex items-center gap-2 ${isLandscape ? 'mt-0.5' : 'mt-1'} ${isLandscape ? 'text-m3-body-small' : 'text-m3-body-medium'} text-white/95 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]`}>
+                        <Thermometer size={isLandscape ? 14 : 16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
                         <span>{t('feelsLike')} {formatTemp(current.appTemp)}{getTempUnitSymbol()}</span>
                       </div>
-                      <div className="flex items-center gap-3 mt-1 text-m3-label-large text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
-                        <span>H: {formatTemp(processedLong[0]?.max)}{getTempUnitSymbol()}</span>
-                        <span>•</span>
-                        <span>T: {formatTemp(processedLong[0]?.min)}{getTempUnitSymbol()}</span>
-                      </div>
-                      <div className="mt-2 text-m3-title-medium text-white font-medium drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">{weatherConf.text}</div>
+                      {!isLandscape && (
+                        <>
+                          <div className="flex items-center gap-3 mt-1 text-m3-label-large text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
+                            <span>H: {formatTemp(processedLong[0]?.max)}{getTempUnitSymbol()}</span>
+                            <span>•</span>
+                            <span>T: {formatTemp(processedLong[0]?.min)}{getTempUnitSymbol()}</span>
+                          </div>
+                          <div className="mt-2 text-m3-title-medium text-white font-medium drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">{weatherConf.text}</div>
+                        </>
+                      )}
                       
                       {/* Sunrise and Sunset Times */}
-                      <div className="flex items-center gap-4 mt-2 text-m3-label-large text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
-                        <div className="flex items-center gap-1.5">
-                          <Sunrise size={16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
-                          <span>{formatTime(sunriseSunset.sunrise)}</span>
+                      {!isLandscape && (
+                        <div className="flex items-center gap-4 mt-2 text-m3-label-large text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
+                          <div className="flex items-center gap-1.5">
+                            <Sunrise size={16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                            <span>{formatTime(sunriseSunset.sunrise)}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Sunset size={16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                            <span>{formatTime(sunriseSunset.sunset)}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <Sunset size={16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
-                          <span>{formatTime(sunriseSunset.sunset)}</span>
-                        </div>
-                      </div>
+                      )}
                     </div>
                     
                     {/* Weather Icon */}
-                    <div className="text-6xl opacity-90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
-                      {React.createElement(weatherConf.icon, { size: 56 })}
+                    <div className={`${isLandscape ? 'text-4xl' : 'text-6xl'} opacity-90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]`}>
+                      {React.createElement(weatherConf.icon, { size: isLandscape ? 40 : 56 })}
                     </div>
                   </div>
+                  {isLandscape && (
+                    <div className="flex items-center gap-3 mt-0.5 text-m3-label-small text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
+                      <span className="font-medium">{weatherConf.text}</span>
+                      <span>•</span>
+                      <span>H: {formatTemp(processedLong[0]?.max)}{getTempUnitSymbol()}</span>
+                      <span>•</span>
+                      <span>T: {formatTemp(processedLong[0]?.min)}{getTempUnitSymbol()}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -8292,22 +8337,22 @@ export default function WeatherApp() {
         </div>
 
         {/* Enhanced Tab Navigation - Fixed positioned below fixed animation card */}
-        <div className="fixed left-0 right-0 z-20 px-4" style={{ top: `calc(${HEADER_HEIGHT} + ${ANIMATION_CARD_HEIGHT})` }}>
+        <div className="fixed left-0 right-0 z-20 px-4" style={{ top: `calc(${headerHeight} + ${animationCardHeight})` }}>
           <div className="max-w-4xl mx-auto">
-            <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-b-m3-3xl p-2 shadow-m3-2 border border-m3-outline-variant border-t-0`}>
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-b-m3-3xl ${isLandscape ? 'p-1' : 'p-2'} shadow-m3-2 border border-m3-outline-variant border-t-0`}>
           <div className="grid grid-cols-5 gap-1">
             {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
               <button 
                 key={tab.id} 
                 onClick={() => setActiveTab(tab.id)} 
-                className={`flex flex-col items-center justify-center py-3 px-2 rounded-m3-2xl text-m3-label-medium font-medium transition-all ${
+                className={`flex flex-col items-center justify-center ${isLandscape ? 'py-2 px-1' : 'py-3 px-2'} rounded-m3-2xl ${isLandscape ? 'text-m3-label-small' : 'text-m3-label-medium'} font-medium transition-all ${
                   activeTab === tab.id 
                     ? 'bg-m3-primary text-m3-on-primary shadow-m3-2' 
                     : (isRealNight ? 'text-m3-dark-on-surface-variant hover:bg-m3-dark-surface-container-high hover:text-m3-dark-on-surface' : 'text-m3-on-surface-variant hover:bg-m3-surface-container-high hover:text-m3-on-surface')
                 }`}
               >
-                <tab.icon size={20} className="mb-1" />
-                <span className="text-[10px] sm:text-xs">{tab.label}</span>
+                <tab.icon size={isLandscape ? 16 : 20} className={isLandscape ? 'mb-0.5' : 'mb-1'} />
+                <span className={isLandscape ? 'text-[9px]' : 'text-[10px] sm:text-xs'}>{tab.label}</span>
               </button>
             ))}
           </div>
