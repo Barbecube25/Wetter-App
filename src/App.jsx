@@ -194,6 +194,8 @@ const TRANSLATIONS = {
     gpsAvailable: "GPS-Daten verfügbar",
     gpsNotAvailable: "Keine GPS-Daten",
     usingGpsData: "Verwendet GPS-Position",
+    pullToRefresh: "Zum Aktualisieren herunterziehen",
+    releaseToRefresh: "Loslassen zum Aktualisieren",
 
   },
   en: {
@@ -366,6 +368,8 @@ const TRANSLATIONS = {
     gpsAvailable: "GPS data available",
     gpsNotAvailable: "No GPS data",
     usingGpsData: "Using GPS position",
+    pullToRefresh: "Pull down to refresh",
+    releaseToRefresh: "Release to refresh",
 
   },
   fr: {
@@ -538,6 +542,9 @@ const TRANSLATIONS = {
     gpsAvailable: "Données GPS disponibles",
     gpsNotAvailable: "Aucune donnée GPS",
     usingGpsData: "Utilise la position GPS",
+    pullToRefresh: "Tirer vers le bas pour actualiser",
+    releaseToRefresh: "Relâcher pour actualiser",
+
 
   },
   es: {
@@ -8121,7 +8128,7 @@ export default function WeatherApp() {
       {/* Pull-to-refresh indicator */}
       {(isPulling || isRefreshing) && (
         <div 
-          className="fixed top-0 left-0 right-0 flex justify-center items-center z-50 transition-opacity"
+          className="fixed top-0 left-0 right-0 flex flex-col justify-center items-center z-50 transition-opacity"
           style={{ 
             height: `${Math.min(pullDistance, 60)}px`,
             opacity: Math.min(pullDistance / 60, 1)
@@ -8134,6 +8141,11 @@ export default function WeatherApp() {
               style={!isRefreshing ? { transform: `rotate(${pullDistance * 3}deg)` } : {}}
             />
           </div>
+          {!isRefreshing && (
+            <p className={`text-xs mt-1 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
+              {pullDistance > 60 ? t('releaseToRefresh') : t('pullToRefresh')}
+            </p>
+          )}
         </div>
       )}
       
@@ -8202,49 +8214,6 @@ export default function WeatherApp() {
                 <Clock size={12} />
                 <span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}{getCacheAgeText()}</span>
               </div>
-            </div>
-            {/* Action Buttons: Home, GPS, and Refresh */}
-            <div className="flex items-center gap-2">
-              {/* Places Button */}
-              <button 
-                onClick={() => setShowLocationModal(true)} 
-                aria-label={t('places') || "Manage places"}
-                className="p-2 rounded-m3-full bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary transition-all shadow-m3-2"
-              >
-                <MapIcon size={16} />
-              </button>
-              {/* Weather Report Button */}
-              <button 
-                onClick={() => setShowFeedback(true)} 
-                aria-label={t('feedback') || "Report weather"}
-                className="p-2 rounded-m3-full bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary transition-all shadow-m3-2"
-              >
-                <MessageSquarePlus size={16} />
-              </button>
-              {/* Home Button */}
-              <button 
-                onClick={handleSetHome} 
-                aria-label={t('home') || "Go to home location"}
-                className="p-2 rounded-m3-full bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary transition-all shadow-m3-2"
-              >
-                <Home size={16} />
-              </button>
-              {/* GPS Button - Green when GPS data is available, red when unavailable */}
-              <button 
-                onClick={handleSetCurrent} 
-                aria-label={t('gps') || "Use GPS location"}
-                className={`p-2 rounded-m3-full ${gpsAvailable ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-white transition-all shadow-m3-2`}
-              >
-                <Crosshair size={16} />
-              </button>
-              {/* Refresh Button */}
-              <button 
-                onClick={fetchData} 
-                aria-label={t('refresh') || "Refresh weather data"}
-                className={`p-2 rounded-m3-full bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary transition-all shadow-m3-2 ${isRefreshing ? 'animate-spin' : ''}`}
-              >
-                <RefreshCw size={16} />
-              </button>
             </div>
           </div>
 
@@ -8793,7 +8762,64 @@ export default function WeatherApp() {
       </main>
 
       {/* Floating Action Buttons at bottom right */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+        {/* Expandable FAB Menu Items - shown when menu is open */}
+        {showFabMenu && (
+          <>
+            {/* Places Button */}
+            <button
+              onClick={() => {
+                setShowLocationModal(true);
+                setShowFabMenu(false);
+              }}
+              aria-label={t('places') || "Manage places"}
+              className="p-3 rounded-m3-full bg-m3-surface-container text-m3-on-surface shadow-m3-3 hover:shadow-m3-4 transition-all animate-m3-scale-in flex items-center gap-3"
+            >
+              <span className="text-sm font-medium">{t('places')}</span>
+              <MapIcon size={20} />
+            </button>
+            
+            {/* Weather Report Button */}
+            <button
+              onClick={() => {
+                setShowFeedback(true);
+                setShowFabMenu(false);
+              }}
+              aria-label={t('feedback') || "Report weather"}
+              className="p-3 rounded-m3-full bg-m3-surface-container text-m3-on-surface shadow-m3-3 hover:shadow-m3-4 transition-all animate-m3-scale-in flex items-center gap-3"
+            >
+              <span className="text-sm font-medium">{t('feedback')}</span>
+              <MessageSquarePlus size={20} />
+            </button>
+            
+            {/* Home Button */}
+            <button
+              onClick={() => {
+                handleSetHome();
+                setShowFabMenu(false);
+              }}
+              aria-label={t('home') || "Go to home location"}
+              className="p-3 rounded-m3-full bg-m3-surface-container text-m3-on-surface shadow-m3-3 hover:shadow-m3-4 transition-all animate-m3-scale-in flex items-center gap-3"
+            >
+              <span className="text-sm font-medium">{t('home')}</span>
+              <Home size={20} />
+            </button>
+            
+            {/* GPS Button - Green when GPS data is available, red when unavailable */}
+            <button
+              onClick={() => {
+                handleSetCurrent();
+                setShowFabMenu(false);
+              }}
+              aria-label={t('gps') || "Use GPS location"}
+              className={`p-3 rounded-m3-full ${gpsAvailable ? 'bg-green-600 text-white' : 'bg-red-600 text-white'} shadow-m3-3 hover:shadow-m3-4 transition-all animate-m3-scale-in flex items-center gap-3`}
+            >
+              <span className="text-sm font-medium">{t('gps')}</span>
+              <Crosshair size={20} />
+            </button>
+          </>
+        )}
+        
         {/* Save Location Button - only shown when current location is not saved */}
         {(() => {
           // Check if current location is already saved or is home
@@ -8821,6 +8847,15 @@ export default function WeatherApp() {
           className="p-4 rounded-m3-full bg-m3-primary text-m3-on-primary shadow-m3-4 hover:shadow-m3-5 transition-all"
         >
           <Settings size={24} />
+        </button>
+        
+        {/* Main FAB Toggle Button */}
+        <button
+          onClick={() => setShowFabMenu(!showFabMenu)}
+          aria-label="Toggle menu"
+          className={`p-4 rounded-m3-full bg-m3-primary text-m3-on-primary shadow-m3-4 hover:shadow-m3-5 transition-all ${showFabMenu ? 'rotate-45' : ''}`}
+        >
+          <Plus size={24} />
         </button>
       </div>
     </div>
