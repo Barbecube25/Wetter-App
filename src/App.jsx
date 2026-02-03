@@ -7881,7 +7881,7 @@ export default function WeatherApp() {
         </div>
         
         {/* Demo Control Panel - Landscape optimized */}
-        {isLandscape ? (
+        {isLandscape && !hideControlsInLandscape ? (
           // Landscape mode: Show simplified button controls at the bottom
           <div className="absolute bottom-4 left-0 right-0 z-50 px-4">
             <div className="max-w-4xl mx-auto">
@@ -8118,6 +8118,22 @@ export default function WeatherApp() {
                 </div>
               </div>
           </div>
+        )}
+        
+        {/* Toggle button to show/hide controls in landscape mode */}
+        {isLandscape && (
+          <button
+            onClick={() => setHideControlsInLandscape(!hideControlsInLandscape)}
+            aria-label={hideControlsInLandscape ? t('showControls') : t('hideControls')}
+            className={`fixed ${hideControlsInLandscape ? 'bottom-6 right-6' : 'bottom-24 right-6'} z-50 p-3 rounded-full bg-black/70 text-white shadow-lg hover:bg-black/80 backdrop-blur-md transition-all`}
+            title={hideControlsInLandscape ? t('showControls') : t('hideControls')}
+          >
+            {hideControlsInLandscape ? (
+              <Eye size={20} />
+            ) : (
+              <ChevronDown size={20} />
+            )}
+          </button>
         )}
       </div>
     );
