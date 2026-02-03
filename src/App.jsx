@@ -33,6 +33,8 @@ const TRANSLATIONS = {
     places: "Orte",
     settings: "Einstellungen",
     savePlace: "Ort speichern",
+    hideControls: "Bedienelemente ausblenden",
+    showControls: "Bedienelemente einblenden",
     language: "Sprache",
     units: "Einheiten",
     theme: "Design",
@@ -207,6 +209,8 @@ const TRANSLATIONS = {
     places: "Places",
     settings: "Settings",
     savePlace: "Save place",
+    hideControls: "Hide controls",
+    showControls: "Show controls",
     language: "Language",
     units: "Units",
     theme: "Theme",
@@ -381,6 +385,8 @@ const TRANSLATIONS = {
     places: "Lieux",
     settings: "Paramètres",
     savePlace: "Enregistrer le lieu",
+    hideControls: "Masquer les contrôles",
+    showControls: "Afficher les contrôles",
     language: "Langue",
     units: "Unités",
     theme: "Thème",
@@ -556,6 +562,8 @@ const TRANSLATIONS = {
     places: "Lugares",
     settings: "Ajustes",
     savePlace: "Guardar lugar",
+    hideControls: "Ocultar controles",
+    showControls: "Mostrar controles",
     language: "Idioma",
     units: "Unidades",
     theme: "Tema",
@@ -728,6 +736,8 @@ const TRANSLATIONS = {
     places: "Luoghi",
     settings: "Impostazioni",
     savePlace: "Salva luogo",
+    hideControls: "Nascondi controlli",
+    showControls: "Mostra controlli",
     language: "Lingua",
     units: "Unità",
     theme: "Tema",
@@ -1244,6 +1254,8 @@ const TRANSLATIONS = {
     places: "Plaatsen",
     settings: "Instellingen",
     savePlace: "Plaats opslaan",
+    hideControls: "Verberg bedieningselementen",
+    showControls: "Toon bedieningselementen",
     language: "Taal",
     units: "Eenheden",
     theme: "Thema",
@@ -1416,6 +1428,8 @@ const TRANSLATIONS = {
     places: "Mjesta",
     settings: "Postavke",
     savePlace: "Spremi mjesto",
+    hideControls: "Sakrij kontrole",
+    showControls: "Prikaži kontrole",
     language: "Jezik",
     units: "Jedinice",
     theme: "Tema",
@@ -6555,6 +6569,9 @@ export default function WeatherApp() {
 
   // Landscape mode detection
   const [isLandscape, setIsLandscape] = useState(false);
+  
+  // Hide controls in landscape mode to see full animation
+  const [hideControlsInLandscape, setHideControlsInLandscape] = useState(false);
 
   // WICHTIG: Echtzeit-State für die Animation (NEU)
   const [now, setNow] = useState(new Date());
@@ -8397,7 +8414,8 @@ export default function WeatherApp() {
           </div>
         </div>
 
-        {/* Enhanced Tab Navigation - Fixed positioned below fixed animation card */}
+        {/* Enhanced Tab Navigation - Fixed positioned below fixed animation card, hidden in landscape when controls are hidden */}
+        {!(isLandscape && hideControlsInLandscape) && (
         <div className="fixed left-0 right-0 z-20 px-4" style={{ top: `calc(${headerHeight} + ${animationCardHeight})` }}>
           <div className="max-w-4xl mx-auto">
             <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-b-m3-3xl ${isLandscape ? 'p-1' : 'p-2'} shadow-m3-2 border border-m3-outline-variant border-t-0`}>
@@ -8420,6 +8438,7 @@ export default function WeatherApp() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Weather Details Grid - Moved below animation card */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -8867,7 +8886,8 @@ export default function WeatherApp() {
         </div>
       </main>
 
-      {/* Floating Action Buttons at bottom right */}
+      {/* Floating Action Buttons at bottom right, hidden in landscape when controls are hidden */}
+      {!(isLandscape && hideControlsInLandscape) && (
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
         {/* Expandable FAB Menu Items - shown when menu is open */}
         {showFabMenu && (
@@ -8964,6 +8984,22 @@ export default function WeatherApp() {
           <Plus size={24} />
         </button>
       </div>
+      )}
+
+      {/* Toggle button to show/hide controls in landscape mode */}
+      {isLandscape && (
+        <button
+          onClick={() => setHideControlsInLandscape(!hideControlsInLandscape)}
+          aria-label={hideControlsInLandscape ? t('showControls') : t('hideControls')}
+          className={`fixed ${hideControlsInLandscape ? 'bottom-6 right-6' : 'bottom-6 left-6'} z-50 p-3 rounded-m3-full ${isRealNight ? 'bg-m3-dark-surface-container/90' : 'bg-m3-surface-container/90'} ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'} shadow-m3-3 hover:shadow-m3-4 backdrop-blur-md transition-all`}
+        >
+          {hideControlsInLandscape ? (
+            <Eye size={20} />
+          ) : (
+            <ChevronDown size={20} />
+          )}
+        </button>
+      )}
     </div>
   );
 }
