@@ -7828,14 +7828,18 @@ export default function WeatherApp() {
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang), [processedLong, lang]);
 
   // --- WIDGET VIEWS ---
-  if (viewMode === 'animation') {
+  // Landscape mode: Automatically show animation demo mode
+  if (viewMode === 'animation' || isLandscape) {
     if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-m3-dark-surface text-m3-dark-on-surface">{t('loading')}</div>;
     return (
       <div className={`h-screen w-screen overflow-hidden relative bg-gradient-to-br ${bgGradient}`}>
         <style>{styles}</style>
-        <div className="absolute top-12 left-4 z-50">
-            <a href="/" className="bg-black/20 p-2 rounded-full text-white backdrop-blur-md block"><ArrowLeft size={24}/></a>
-        </div>
+        {/* Back button - only show in non-landscape or when explicitly in animation view mode */}
+        {(viewMode === 'animation' && !isLandscape) && (
+          <div className="absolute top-12 left-4 z-50">
+              <a href="/" className="bg-black/20 p-2 rounded-full text-white backdrop-blur-md block"><ArrowLeft size={24}/></a>
+          </div>
+        )}
         <div className="h-full w-full">
             {/* WICHTIG: hier locationTime übergeben! */}
             <WeatherLandscape 
@@ -7859,36 +7863,90 @@ export default function WeatherApp() {
             />
         </div>
         
-        {/* Demo Control Panel */}
-        <div className="absolute top-20 right-4 z-50">
-          <button 
-            onClick={() => setShowDemoPanel(!showDemoPanel)}
-            className="bg-black/30 backdrop-blur-md p-2 rounded-full text-white hover:bg-black/40 transition-colors"
-            title="Demo Controls"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M12 1v6m0 6v6M1 12h6m6 0h6"/>
-            </svg>
-          </button>
-        </div>
+        {/* Demo Control Panel - Landscape optimized */}
+        {isLandscape ? (
+          // Landscape mode: Show simplified button controls at the bottom
+          <div className="absolute bottom-4 left-0 right-0 z-50 px-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-black/70 backdrop-blur-md rounded-2xl p-3">
+                <div className="flex items-center gap-2 flex-wrap justify-center">
+                  {/* Weather quick buttons */}
+                  <button onClick={() => setDemoWeather(demoWeather === 'clear' ? null : 'clear')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoWeather === 'clear' ? 'bg-yellow-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>☀️ Sonne</button>
+                  <button onClick={() => setDemoWeather(demoWeather === 'cloudy' ? null : 'cloudy')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoWeather === 'cloudy' ? 'bg-gray-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>⛅ Wolken</button>
+                  <button onClick={() => setDemoWeather(demoWeather === 'medium_rain' ? null : 'medium_rain')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoWeather === 'medium_rain' ? 'bg-blue-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>🌧️ Regen</button>
+                  <button onClick={() => setDemoWeather(demoWeather === 'medium_snow' ? null : 'medium_snow')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoWeather === 'medium_snow' ? 'bg-blue-300 text-gray-800' : 'bg-white/10 text-white hover:bg-white/20'}`}>❄️ Schnee</button>
+                  <button onClick={() => setDemoWeather(demoWeather === 'thunderstorm' ? null : 'thunderstorm')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoWeather === 'thunderstorm' ? 'bg-purple-600 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>⛈️ Gewitter</button>
+                  <button onClick={() => setDemoWeather(demoWeather === 'fog' ? null : 'fog')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoWeather === 'fog' ? 'bg-gray-400 text-gray-800' : 'bg-white/10 text-white hover:bg-white/20'}`}>🌫️ Nebel</button>
+                  
+                  <div className="w-px h-8 bg-white/20 mx-1"></div>
+                  
+                  {/* Time quick buttons */}
+                  <button onClick={() => setDemoTime(demoTime === '06:00' ? null : '06:00')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoTime === '06:00' ? 'bg-orange-400 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>🌅 Morgen</button>
+                  <button onClick={() => setDemoTime(demoTime === '12:00' ? null : '12:00')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoTime === '12:00' ? 'bg-yellow-400 text-gray-800' : 'bg-white/10 text-white hover:bg-white/20'}`}>☀️ Mittag</button>
+                  <button onClick={() => setDemoTime(demoTime === '20:00' ? null : '20:00')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoTime === '20:00' ? 'bg-orange-600 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>🌇 Abend</button>
+                  <button onClick={() => setDemoTime(demoTime === '00:00' ? null : '00:00')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoTime === '00:00' ? 'bg-indigo-900 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>🌙 Nacht</button>
+                  
+                  <div className="w-px h-8 bg-white/20 mx-1"></div>
+                  
+                  {/* Season/Event quick buttons */}
+                  <button onClick={() => setDemoSeason(demoSeason === 'spring' ? null : 'spring')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoSeason === 'spring' ? 'bg-pink-400 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>🌸 Frühling</button>
+                  <button onClick={() => setDemoSeason(demoSeason === 'winter' ? null : 'winter')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoSeason === 'winter' ? 'bg-blue-400 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>❄️ Winter</button>
+                  <button onClick={() => setDemoEvent(demoEvent === 'christmas' ? null : 'christmas')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoEvent === 'christmas' ? 'bg-red-600 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>🎄 Weihnachten</button>
+                  
+                  <div className="w-px h-8 bg-white/20 mx-1"></div>
+                  
+                  {/* Reset button */}
+                  <button 
+                    onClick={() => {
+                      setDemoWeather(null);
+                      setDemoSeason(null);
+                      setDemoEvent(null);
+                      setDemoTime(null);
+                      setDemoWindSpeed(null);
+                      setDemoTerrain(null);
+                    }}
+                    className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500/80 text-white hover:bg-red-500 transition-all"
+                  >
+                    🔄 Reset
+                  </button>
+                  
+                  {/* Advanced settings button */}
+                  <button 
+                    onClick={() => setShowDemoPanel(!showDemoPanel)}
+                    className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${showDemoPanel ? 'bg-blue-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                  >
+                    ⚙️ Mehr
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          // Portrait mode: Show toggle button for advanced controls
+          <div className="absolute top-20 right-4 z-50">
+            <button 
+              onClick={() => setShowDemoPanel(!showDemoPanel)}
+              className="bg-black/30 backdrop-blur-md p-2 rounded-full text-white hover:bg-black/40 transition-colors"
+              title="Demo Controls"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 1v6m0 6v6M1 12h6m6 0h6"/>
+              </svg>
+            </button>
+          </div>
+        )}
 
+        {/* Advanced Demo Panel - shown when "Mehr" button is clicked in landscape or always available in portrait */}
         {showDemoPanel && (
-          <div className="absolute top-20 right-4 mt-12 bg-black/80 backdrop-blur-md rounded-lg p-4 text-white text-sm z-50 min-w-[250px] max-h-[80vh] overflow-y-auto">
+          <div className={`absolute ${isLandscape ? 'bottom-24 right-4' : 'top-20 right-4 mt-12'} bg-black/80 backdrop-blur-md rounded-lg p-4 text-white text-sm z-50 min-w-[250px] max-h-[60vh] overflow-y-auto`}>
             <div className="flex justify-between items-center mb-3">
-              <h3 className="font-bold">Demo Mode</h3>
+              <h3 className="font-bold">Erweiterte Einstellungen</h3>
               <button 
-                onClick={() => {
-                  setDemoWeather(null);
-                  setDemoSeason(null);
-                  setDemoEvent(null);
-                  setDemoTime(null);
-                  setDemoWindSpeed(null);
-                  setDemoTerrain(null);
-                }}
+                onClick={() => setShowDemoPanel(false)}
                 className="text-xs bg-white/20 px-2 py-1 rounded hover:bg-white/30"
               >
-                Reset
+                ✕
               </button>
             </div>
 
@@ -8019,28 +8077,31 @@ export default function WeatherApp() {
           </div>
         )}
         
-        <div className="absolute bottom-8 left-0 right-0 text-center text-white pointer-events-none" style={{textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5)'}}>
-            <div className="text-4xl font-bold">{formatTemp(current.temp)}{getTempUnitSymbol()}</div>
-            <div className="text-sm opacity-70 mb-1">{t('dewPoint')}: {formatTemp(current.dewPoint)}{getTempUnitSymbol()}</div>
-            <div className="text-xl mb-2">{weatherConf.text}</div>
-            
-            {/* NEU: Sonnenaufgang und Untergang */}
-            <div className="flex justify-center gap-6 text-sm font-medium">
-                <div className="flex items-center gap-1"><Sunrise size={16}/> {formatTime(sunriseSunset.sunrise)}</div>
-                <div className="flex items-center gap-1"><Sunset size={16}/> {formatTime(sunriseSunset.sunset)}</div>
-            </div>
-            
-            {/* GPS Availability Indicator */}
-            <div className="mt-2 flex justify-center">
-              <div className={`px-2 py-0.5 rounded-full text-xs font-medium backdrop-blur-sm ${
-                gpsAvailable 
-                  ? 'bg-green-500/20 text-green-100 border border-green-400/30' 
-                  : 'bg-yellow-500/20 text-yellow-100 border border-yellow-400/30'
-              }`}>
-                {gpsAvailable ? `✓ ${t('gpsAvailable')}` : `⚠ ${t('gpsNotAvailable')}`}
+        {/* Temperature and weather info - only show in portrait mode or when not in landscape */}
+        {!isLandscape && (
+          <div className="absolute bottom-8 left-0 right-0 text-center text-white pointer-events-none" style={{textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5)'}}>
+              <div className="text-4xl font-bold">{formatTemp(current.temp)}{getTempUnitSymbol()}</div>
+              <div className="text-sm opacity-70 mb-1">{t('dewPoint')}: {formatTemp(current.dewPoint)}{getTempUnitSymbol()}</div>
+              <div className="text-xl mb-2">{weatherConf.text}</div>
+              
+              {/* NEU: Sonnenaufgang und Untergang */}
+              <div className="flex justify-center gap-6 text-sm font-medium">
+                  <div className="flex items-center gap-1"><Sunrise size={16}/> {formatTime(sunriseSunset.sunrise)}</div>
+                  <div className="flex items-center gap-1"><Sunset size={16}/> {formatTime(sunriseSunset.sunset)}</div>
               </div>
-            </div>
-        </div>
+              
+              {/* GPS Availability Indicator */}
+              <div className="mt-2 flex justify-center">
+                <div className={`px-2 py-0.5 rounded-full text-xs font-medium backdrop-blur-sm ${
+                  gpsAvailable 
+                    ? 'bg-green-500/20 text-green-100 border border-green-400/30' 
+                    : 'bg-yellow-500/20 text-yellow-100 border border-yellow-400/30'
+                }`}>
+                  {gpsAvailable ? `✓ ${t('gpsAvailable')}` : `⚠ ${t('gpsNotAvailable')}`}
+                </div>
+              </div>
+          </div>
+        )}
       </div>
     );
   }
