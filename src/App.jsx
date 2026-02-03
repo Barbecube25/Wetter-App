@@ -22,6 +22,9 @@ const NAV_BAR_HEIGHT = '68px';
 // Gap between fixed elements for consistent spacing (24px to prevent tiles from overlapping with navigation bar)
 const FIXED_ELEMENTS_GAP = '24px'; 
 
+// Landscape mode detection threshold - devices with height less than this are considered landscape
+const LANDSCAPE_HEIGHT_THRESHOLD = 600; 
+
 // TEXT RESSOURCEN
 const TRANSLATIONS = {
   de: {
@@ -6567,7 +6570,7 @@ export default function WeatherApp() {
   // Detect landscape orientation
   useEffect(() => {
     const checkOrientation = () => {
-      setIsLandscape(window.innerWidth > window.innerHeight && window.innerHeight < 600);
+      setIsLandscape(window.innerWidth > window.innerHeight && window.innerHeight < LANDSCAPE_HEIGHT_THRESHOLD);
     };
     
     checkOrientation();
@@ -8323,6 +8326,7 @@ export default function WeatherApp() {
                       <span className="font-medium">{weatherConf.text}</span>
                       <span>•</span>
                       <span>H: {formatTemp(processedLong[0]?.max)}{getTempUnitSymbol()}</span>
+                      <span>•</span>
                       <span>T: {formatTemp(processedLong[0]?.min)}{getTempUnitSymbol()}</span>
                     </div>
                   )}
