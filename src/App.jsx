@@ -8121,20 +8121,25 @@ export default function WeatherApp() {
         )}
         
         {/* Toggle button to show/hide controls in landscape mode */}
-        {isLandscape && (
-          <button
-            onClick={() => setHideControlsInLandscape(!hideControlsInLandscape)}
-            aria-label={hideControlsInLandscape ? t('showControls') : t('hideControls')}
-            className={`fixed ${hideControlsInLandscape ? 'bottom-6 right-6' : 'bottom-24 right-6'} z-50 p-3 rounded-full bg-black/70 text-white shadow-lg hover:bg-black/80 backdrop-blur-md transition-all`}
-            title={hideControlsInLandscape ? t('showControls') : t('hideControls')}
-          >
-            {hideControlsInLandscape ? (
-              <Eye size={20} />
-            ) : (
-              <ChevronDown size={20} />
-            )}
-          </button>
-        )}
+        {isLandscape && (() => {
+          const buttonLabel = hideControlsInLandscape ? t('showControls') : t('hideControls');
+          const buttonPosition = hideControlsInLandscape ? 'bottom-6 right-6' : 'bottom-24 right-6';
+          
+          return (
+            <button
+              onClick={() => setHideControlsInLandscape(!hideControlsInLandscape)}
+              aria-label={buttonLabel}
+              title={buttonLabel}
+              className={`fixed ${buttonPosition} z-50 p-3 rounded-full bg-black/70 text-white shadow-lg hover:bg-black/80 backdrop-blur-md transition-all`}
+            >
+              {hideControlsInLandscape ? (
+                <Eye size={20} />
+              ) : (
+                <ChevronDown size={20} />
+              )}
+            </button>
+          );
+        })()}
       </div>
     );
   }
@@ -9000,21 +9005,6 @@ export default function WeatherApp() {
           <Plus size={24} />
         </button>
       </div>
-      )}
-
-      {/* Toggle button to show/hide controls in landscape mode */}
-      {isLandscape && (
-        <button
-          onClick={() => setHideControlsInLandscape(!hideControlsInLandscape)}
-          aria-label={hideControlsInLandscape ? t('showControls') : t('hideControls')}
-          className={`fixed ${hideControlsInLandscape ? 'bottom-6 right-6' : 'bottom-6 left-6'} z-50 p-3 rounded-m3-full ${isRealNight ? 'bg-m3-dark-surface-container/90' : 'bg-m3-surface-container/90'} ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'} shadow-m3-3 hover:shadow-m3-4 backdrop-blur-md transition-all`}
-        >
-          {hideControlsInLandscape ? (
-            <Eye size={20} />
-          ) : (
-            <ChevronDown size={20} />
-          )}
-        </button>
       )}
     </div>
   );
