@@ -7531,6 +7531,12 @@ export default function WeatherApp() {
 
 
   // --- PROCESSING LOGIC --- 
+  // Reliability calculation constants
+  // Penalty factor for temperature spread in multi-model ensemble
+  // Lower values (10) for larger ensembles (6+ models) account for natural spread increase
+  // Higher values (15) were used for 4-model ensembles
+  const RELIABILITY_PENALTY_FACTOR = 10;
+
   const processedShort = useMemo(() => {
     if (!shortTermData?.hourly) return [];
     const h = shortTermData.hourly;
@@ -7608,8 +7614,8 @@ export default function WeatherApp() {
         h.temperature_2m_meteofrance_seamless?.[i]
       ].filter(v => v !== null && v !== undefined);
       const t_spread = tempVals.length > 1 ? Math.max(...tempVals) - Math.min(...tempVals) : 0;
-      // Adjusted penalty for 6-model ensemble (reduced from 15 to 10 to account for natural spread increase)
-      const reliability = Math.round(Math.max(0, 100 - (t_spread * 10)));
+      // Use constant penalty factor appropriate for 6-model ensemble
+      const reliability = Math.round(Math.max(0, 100 - (t_spread * RELIABILITY_PENALTY_FACTOR)));
 
       res.push({
         time: t,
