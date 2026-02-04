@@ -6543,7 +6543,7 @@ export default function WeatherApp() {
   const [showAllHours, setShowAllHours] = useState(false); 
   const [sunriseSunset, setSunriseSunset] = useState({ sunrise: null, sunset: null });
   const [gpsAvailable, setGpsAvailable] = useState(false); // Track GPS data availability
-  const [modelRuns, setModelRuns] = useState({ icon: '', gfs: '', arome: '' });
+  const [modelRuns, setModelRuns] = useState({ icon: '', gfs: '', arome: '', ecmwf: '', meteofrance: '' });
   const [showIosInstall, setShowIosInstall] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
@@ -7106,10 +7106,13 @@ export default function WeatherApp() {
     try {
       const { lat, lon } = currentLoc;
       
-      const modelsShort = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless";
+      // Enhanced multi-model ensemble including ECMWF (most accurate globally) and additional regional models
+      // ECMWF IFS04: Most accurate global model, especially for medium-range forecasts
+      // MeteoFrance: Additional European coverage with ARPEGE/AROME ensemble
+      const modelsShort = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless,ecmwf_ifs04,meteofrance_seamless";
       const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,cloud_cover,pressure_msl,visibility&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2`;
       
-      const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
+      const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless,ecmwf_ifs04,meteofrance_seamless"; 
       const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max&models=${modelsLong}&timezone=auto&forecast_days=14`;
       // Separate API call for sunrise/sunset without models parameter (astronomical data is location-based, not model-dependent)
       const urlSunriseSunset = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&timezone=auto&forecast_days=1`;
@@ -7162,7 +7165,16 @@ export default function WeatherApp() {
       }
 
       setLastUpdated(new Date());
-      setModelRuns({ icon: getModelRunTime(3, 2.5), gfs: getModelRunTime(6, 4), arome: getModelRunTime(3, 2) });
+      // Enhanced ensemble model run times
+      // ECMWF: Runs every 6 hours (00, 06, 12, 18 UTC), ~3-4 hours delay
+      // MeteoFrance: ARPEGE runs 4x daily, typically 3-4 hours delay
+      setModelRuns({ 
+        icon: getModelRunTime(3, 2.5), 
+        gfs: getModelRunTime(6, 4), 
+        arome: getModelRunTime(3, 2),
+        ecmwf: getModelRunTime(6, 3.5),
+        meteofrance: getModelRunTime(6, 3.5)
+      });
 
     } catch (err) { 
         console.error("API Error:", err);
@@ -7252,11 +7264,11 @@ export default function WeatherApp() {
             loc = geoData.results[0];
         }
         
-        // 2. Weather Fetch (Seamless for best results) - 14 Days to cover future
+        // 2. Weather Fetch (Enhanced multi-model ensemble for best results) - 16 Days to cover future
         const lat = loc.latitude || loc.lat;
         const lon = loc.longitude || loc.lon;
-        // Fetch comparing data to calculate reliability
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,windspeed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,precipitation_sum,windgusts_10m_max&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&forecast_days=16`;
+        // Fetch comparing data with enhanced ensemble (6 models) to calculate reliability
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,windspeed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,precipitation_sum,windgusts_10m_max&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless,ecmwf_ifs04,meteofrance_seamless&timezone=auto&forecast_days=16`;
         
         const wRes = await fetch(url);
         if(!wRes.ok) throw new Error("Wetterdaten konnten nicht geladen werden.");
@@ -7294,8 +7306,10 @@ export default function WeatherApp() {
         // HELPER: Safely get value from potentially model-suffixed response
         const getSafeValue = (sourceObj, index, baseKey, average = true) => {
             if (!sourceObj) return null;
-            // 1. Try common model suffixes (average if multiple are available)
-            const models = ['icon_seamless', 'gfs_seamless', 'arome_seamless', 'gem_seamless'];
+            // 1. Try enhanced model ensemble (6 models for better accuracy)
+            // ECMWF: Most accurate global model, especially for medium-range forecasts
+            // MeteoFrance: High-resolution European coverage
+            const models = ['icon_seamless', 'gfs_seamless', 'arome_seamless', 'gem_seamless', 'ecmwf_ifs04', 'meteofrance_seamless'];
             const modelVals = models
                 .map((m) => sourceObj[`${baseKey}_${m}`]?.[index])
                 .filter((val) => val !== undefined && val !== null);
@@ -7484,7 +7498,8 @@ export default function WeatherApp() {
       useEffect(() => {
           const fetchPreview = async () => {
               try {
-                  const url = `https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${trip.startDate}`;
+                  // Enhanced ensemble with 6 models for better trip weather predictions
+                  const url = `https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless,ecmwf_ifs04,meteofrance_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${trip.startDate}`;
                   const res = await fetch(url);
                   const data = await res.json();
                   if (data.daily && data.daily.time.length > 0) {
@@ -7536,11 +7551,16 @@ export default function WeatherApp() {
 
       // FIX: Verwendung der globalen Seamless-Keys
       const getVal = (key) => {
+        // Enhanced multi-model ensemble averaging with 6 models
+        // ECMWF: Most accurate global model
+        // MeteoFrance: Additional European coverage
         const modelVals = [
           h[`${key}_icon_seamless`]?.[i],
           h[`${key}_gfs_seamless`]?.[i],
           h[`${key}_arome_seamless`]?.[i],
-          h[`${key}_gem_seamless`]?.[i]
+          h[`${key}_gem_seamless`]?.[i],
+          h[`${key}_ecmwf_ifs04`]?.[i],
+          h[`${key}_meteofrance_seamless`]?.[i]
         ].filter((val) => val !== undefined && val !== null);
 
         if (modelVals.length > 0) {
@@ -7555,42 +7575,53 @@ export default function WeatherApp() {
       
       // Auch bei Regen/Schnee/Wind alle Modelle einbeziehen
       const getAvg = (key) => {
+         // Enhanced ensemble with 6 models
          const v1 = h[`${key}_icon_seamless`]?.[i];
          const v2 = h[`${key}_gfs_seamless`]?.[i];
          const v3 = h[`${key}_arome_seamless`]?.[i];
          const v4 = h[`${key}_gem_seamless`]?.[i];
-         const vals = [v1, v2, v3, v4].filter(v => v !== undefined && v !== null);
+         const v5 = h[`${key}_ecmwf_ifs04`]?.[i];
+         const v6 = h[`${key}_meteofrance_seamless`]?.[i];
+         const vals = [v1, v2, v3, v4, v5, v6].filter(v => v !== undefined && v !== null);
          return vals.length > 0 ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
       };
 
       const getMax = (key) => {
+         // Enhanced ensemble with 6 models
          const v1 = h[`${key}_icon_seamless`]?.[i];
          const v2 = h[`${key}_gfs_seamless`]?.[i];
          const v3 = h[`${key}_arome_seamless`]?.[i];
          const v4 = h[`${key}_gem_seamless`]?.[i];
-         const vals = [v1, v2, v3, v4].filter(v => v !== undefined && v !== null);
+         const v5 = h[`${key}_ecmwf_ifs04`]?.[i];
+         const v6 = h[`${key}_meteofrance_seamless`]?.[i];
+         const vals = [v1, v2, v3, v4, v5, v6].filter(v => v !== undefined && v !== null);
          return vals.length > 0 ? Math.max(...vals) : 0;
       };
 
-      // Zuverlässigkeit
+      // Zuverlässigkeit - Enhanced with 6 models for better ensemble spread calculation
       const tempVals = [
         h.temperature_2m_icon_seamless?.[i],
         h.temperature_2m_gfs_seamless?.[i],
         h.temperature_2m_arome_seamless?.[i],
-        h.temperature_2m_gem_seamless?.[i]
+        h.temperature_2m_gem_seamless?.[i],
+        h.temperature_2m_ecmwf_ifs04?.[i],
+        h.temperature_2m_meteofrance_seamless?.[i]
       ].filter(v => v !== null && v !== undefined);
       const t_spread = tempVals.length > 1 ? Math.max(...tempVals) - Math.min(...tempVals) : 0;
-      const reliability = Math.round(Math.max(0, 100 - (t_spread * 15)));
+      // Adjusted penalty for 6-model ensemble (reduced from 15 to 10 to account for natural spread increase)
+      const reliability = Math.round(Math.max(0, 100 - (t_spread * 10)));
 
       res.push({
         time: t,
         displayTime: t.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}),
         temp: temp,
-        // Individual model temperatures for chart display
+        // Individual model temperatures for chart display (expanded with new models)
         temp_icon: h.temperature_2m_icon_seamless?.[i],
         temp_gfs: h.temperature_2m_gfs_seamless?.[i],
         temp_arome: h.temperature_2m_arome_seamless?.[i],
         temp_gem: h.temperature_2m_gem_seamless?.[i],
+        temp_ecmwf: h.temperature_2m_ecmwf_ifs04?.[i],
+        temp_meteofrance: h.temperature_2m_meteofrance_seamless?.[i],
         precip: getAvg('precipitation'),
         // FIX: Add precipProb field
         precipProb: getVal('precipitation_probability'),
@@ -8900,6 +8931,8 @@ export default function WeatherApp() {
                  <span className="bg-blue-500/10 px-2 py-1 rounded text-blue-500 border border-blue-500/20">ICON-D2: {modelRuns.icon || '--:--'}</span>
                  <span className="bg-purple-500/10 px-2 py-1 rounded text-purple-500 border border-purple-500/20">GFS: {modelRuns.gfs || '--:--'}</span>
                  <span className="bg-green-500/10 px-2 py-1 rounded text-green-500 border border-green-500/20">AROME: {modelRuns.arome || '--:--'}</span>
+                 <span className="bg-orange-500/10 px-2 py-1 rounded text-orange-500 border border-orange-500/20">ECMWF: {modelRuns.ecmwf || '--:--'}</span>
+                 <span className="bg-cyan-500/10 px-2 py-1 rounded text-cyan-500 border border-cyan-500/20">MeteoFrance: {modelRuns.meteofrance || '--:--'}</span>
                </div>
             </div>
           )}
