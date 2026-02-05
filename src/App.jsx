@@ -7591,10 +7591,10 @@ export default function WeatherApp() {
         temp_gfs: h.temperature_2m_gfs_seamless?.[i],
         temp_arome: h.temperature_2m_arome_seamless?.[i],
         temp_gem: h.temperature_2m_gem_seamless?.[i],
-        precip: getMax('precipitation'), // Use max to capture rain predicted by any model
+        precip: getMax('precipitation'), // Use max across models to show precipitation if any model predicts it
         // FIX: Add precipProb field
         precipProb: getVal('precipitation_probability'),
-        snow: getMax('snowfall'), // Use max to capture snow predicted by any model
+        snow: getMax('snowfall'), // Use max across models to show snowfall if any model predicts it
         wind: Math.round(getAvg('windspeed_10m')),
         gust: Math.round(getMax('windgusts_10m')), // Böen immer Max Warnung
         dir: h.winddirection_10m_icon_seamless?.[i] || 0,
