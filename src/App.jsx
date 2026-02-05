@@ -4878,8 +4878,8 @@ const PrecipitationTile = ({ data, minutelyData, lang='de', formatPrecip, getPre
                result.isSnow = isSnowCode;
            }
            const hourlyAmount = (d.precip || 0) + (d.snow || 0);
-           const hourlyRain = (d.precip || 0) > 0 ? (d.precip || 0) : 0;
-           const hourlySnow = (d.snow || 0) > 0 ? (d.snow || 0) : 0;
+           const hourlyRain = (d.precip || 0);
+           const hourlySnow = (d.snow || 0);
            
            result.maxIntensity = Math.max(result.maxIntensity, hourlyAmount);
            result.duration++;
