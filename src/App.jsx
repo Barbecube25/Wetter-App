@@ -4806,7 +4806,9 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
     // Override with current API data if available (more accurate, radar-based)
     if (currentData && currentData.precipitation !== undefined) {
       // Use total precipitation which includes all types (rain, snow, etc.)
+      // precipitation = total, rain = liquid only, snowfall = snow only
       const totalPrecip = currentData.precipitation || 0;
+      // For rain display, use rain value if available, otherwise use total precipitation
       currentPrecip = currentData.rain !== undefined ? currentData.rain : totalPrecip;
       currentSnow = currentData.snowfall || 0;
     }
@@ -7725,8 +7727,9 @@ export default function WeatherApp() {
       return {
         ...baseData,
         temp: curr.temperature_2m !== undefined ? curr.temperature_2m : baseData.temp,
-        // Use precipitation as total, fall back to rain if precipitation not available
-        precip: curr.precipitation !== undefined ? (curr.rain || 0) : baseData.precip,
+        // Match hourly data structure: precip = rain (liquid), snow = snowfall
+        // Note: API's current.precipitation is total, but we use rain for consistency
+        precip: curr.rain !== undefined ? curr.rain : baseData.precip,
         snow: curr.snowfall !== undefined ? curr.snowfall : baseData.snow,
         wind: curr.windspeed_10m !== undefined ? curr.windspeed_10m : baseData.wind,
         humidity: curr.relative_humidity_2m !== undefined ? curr.relative_humidity_2m : baseData.humidity,
