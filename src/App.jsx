@@ -4634,8 +4634,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
          <g>
             <circle cx="45" cy="108" r="2" fill="#fecdd3" />
             <circle cx="50" cy="105" r="1.5" fill="#fda4af" />
-            <circle cx="160" cy="110" r="2" fill="#fecdd3" />
-            <circle cx="165" cy="107" r="1.5" fill="#fda4af" />
+            <circle cx="102" cy="121" r="2" fill="#fecdd3" />
+            <circle cx="107" cy="118" r="1.5" fill="#fda4af" />
             <circle cx="285" cy="125" r="2" fill="#fecdd3" />
             <circle cx="325" cy="123" r="1.5" fill="#fda4af" />
             {/* Ground flowers */}
@@ -4678,7 +4678,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
          <g>
             {/* Snow on tree branches */}
             <ellipse cx="45" cy="110" rx="4" ry="2" fill="white" opacity="0.8" />
-            <ellipse cx="160" cy="112" rx="4" ry="2" fill="white" opacity="0.8" />
+            <ellipse cx="102" cy="123" rx="4" ry="2" fill="white" opacity="0.8" />
             <ellipse cx="285" cy="127" rx="4" ry="2" fill="white" opacity="0.8" />
             <ellipse cx="325" cy="126" rx="3" ry="1.5" fill="white" opacity="0.8" />
          </g>
@@ -4690,8 +4690,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
             {/* Ornaments on trees */}
             <circle cx="42" cy="112" r="2" fill="#dc2626" />
             <circle cx="48" cy="108" r="2" fill="#eab308" />
-            <circle cx="158" cy="114" r="2" fill="#dc2626" />
-            <circle cx="164" cy="110" r="2" fill="#3b82f6" />
+            <circle cx="99" cy="125" r="2" fill="#dc2626" />
+            <circle cx="105" cy="121" r="2" fill="#3b82f6" />
             <circle cx="283" cy="129" r="2" fill="#eab308" />
             <circle cx="287" cy="125" r="2" fill="#dc2626" />
          </g>
