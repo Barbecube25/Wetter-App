@@ -22,6 +22,13 @@ const NAV_BAR_HEIGHT = '68px';
 // Gap between fixed elements for consistent spacing (24px to prevent tiles from overlapping with navigation bar)
 const FIXED_ELEMENTS_GAP = '24px'; 
 
+// Time and precipitation thresholds
+const EVENING_START_HOUR = 16;
+const NIGHT_START_HOUR = 20;
+const LIGHT_PRECIP_THRESHOLD = 0.1;
+const STRONG_PRECIP_THRESHOLD = 0.5;
+const isAboveThreshold = (precipValue, snowValue, threshold) => precipValue > threshold || snowValue > threshold;
+
 // Landscape mode detection threshold - devices with height less than this are considered landscape
 const LANDSCAPE_HEIGHT_THRESHOLD = 600; 
 
@@ -2755,9 +2762,16 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
                     : "Ab und zu könnte es mal ein paar Tropfen geben, bleibt aber größtenteils trocken.";
             }
         } else {
-            const dryText = lang === 'en'
-                ? (currentHour >= 20 ? "It will be a nice, dry night." : currentHour >= 16 ? "It will be a nice, dry evening." : "It will be a nice, dry day.")
-                : (currentHour >= 20 ? "Eine schöne, trockene Nacht!" : currentHour >= 16 ? "Ein schöner, trockener Abend!" : "Ein schöner, trockener Tag!");
+            let dryText = "";
+            if (lang === 'en') {
+                if (currentHour >= NIGHT_START_HOUR) dryText = "The rest of the night stays nice and dry.";
+                else if (currentHour >= EVENING_START_HOUR) dryText = "It will be a nice, dry evening.";
+                else dryText = "It will be a nice, dry day.";
+            } else {
+                if (currentHour >= NIGHT_START_HOUR) dryText = "Der Rest der Nacht bleibt schön trocken!";
+                else if (currentHour >= EVENING_START_HOUR) dryText = "Ein schöner, trockener Abend!";
+                else dryText = "Ein schöner, trockener Tag!";
+            }
             todayText += dryText;
         }
         
@@ -4795,8 +4809,6 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
     
     // Wir betrachten nur die Zukunft (ab jetzt)
     const now = new Date();
-    const LIGHT_PRECIP_THRESHOLD = 0.1;
-    const STRONG_PRECIP_THRESHOLD = 0.5;
     const futureData = data.filter(d => d.time > now);
     
     if (futureData.length === 0) return null;
@@ -4819,8 +4831,8 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
       currentSnow = currentData.snowfall || 0;
     }
     
-    // Only consider it "raining now" if there's actual measurable precipitation (minimum 0.1mm)
-    const isRainingNow = currentPrecip > LIGHT_PRECIP_THRESHOLD || currentSnow > LIGHT_PRECIP_THRESHOLD;
+    // Only consider it "raining now" if there's actual measurable precipitation (LIGHT_PRECIP_THRESHOLD)
+    const isRainingNow = isAboveThreshold(currentPrecip, currentSnow, LIGHT_PRECIP_THRESHOLD);
     
     let result = { 
        type: 'none', // none, rain_now, rain_later, snow_now, snow_later, mixed_now, mixed_later
@@ -4834,6 +4846,7 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
        isMixed: false,
        strongStart: null,
        strongEnd: null,
+       strongEndIsEstimate: false,
        maxIntensity: 0,
        minutelyStart: null,
        currentIntensity: 0,
@@ -4862,15 +4875,11 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
         if (startIndex !== -1) {
             // Check next 2 hours (8 * 15min slots)
             for(let i=startIndex; i < Math.min(startIndex + 8, mTime.length); i++) {
-                if (mPrecip[i] > LIGHT_PRECIP_THRESHOLD) {
+                if (!result.minutelyStart && mPrecip[i] > LIGHT_PRECIP_THRESHOLD) {
                      result.minutelyStart = new Date(mTime[i]);
-                     break; 
                 }
-            }
-            for(let i=startIndex; i < Math.min(startIndex + 8, mTime.length); i++) {
-                if (mPrecip[i] > STRONG_PRECIP_THRESHOLD) {
+                if (!strongMinutelyStart && mPrecip[i] > STRONG_PRECIP_THRESHOLD) {
                      strongMinutelyStart = new Date(mTime[i]);
-                     break; 
                 }
             }
         }
@@ -4894,13 +4903,15 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
     let inStrongPeriod = false;
     let peakIntensity = 0;
     let peakTime = null;
+    let lastProcessedTime = null;
     
     // Loop to find start and end (Hourly Data) - limit to 24 hours
     for (let i = 0; i < Math.min(futureData.length, 24); i++) {
        const d = futureData[i];
-       // Only consider precipitation if actual amount >= 0.1mm (no false positives from trace amounts)
-       const hasPrecip = d.precip > LIGHT_PRECIP_THRESHOLD || d.snow > LIGHT_PRECIP_THRESHOLD;
-       const hasStrongPrecip = d.precip > STRONG_PRECIP_THRESHOLD || d.snow > STRONG_PRECIP_THRESHOLD;
+       lastProcessedTime = d.time;
+       // Only consider precipitation if actual amount >= LIGHT_PRECIP_THRESHOLD (no false positives from trace amounts)
+       const hasPrecip = isAboveThreshold(d.precip, d.snow, LIGHT_PRECIP_THRESHOLD);
+       const hasStrongPrecip = isAboveThreshold(d.precip, d.snow, STRONG_PRECIP_THRESHOLD);
        
        if (hasStrongPrecip) {
            if (!result.strongStart) {
@@ -4944,8 +4955,13 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
             }
         }
     }
-    if (inStrongPeriod && !result.strongEnd && result.endTime) {
-        result.strongEnd = result.endTime;
+    if (inStrongPeriod && !result.strongEnd) {
+        if (result.endTime) {
+            result.strongEnd = result.endTime;
+        } else if (lastProcessedTime) {
+            result.strongEnd = lastProcessedTime;
+            result.strongEndIsEstimate = true;
+        }
     }
     
     // Use 24h totals for display
@@ -5028,7 +5044,7 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
 
   if (!analysis) return null;
 
-  const { type, startTime, duration, amount, rainAmount, snowAmount, isSnow, isMixed, strongStart, strongEnd, maxIntensity, minutelyStart, currentIntensity, peakTime, hourlyForecast } = analysis;
+  const { type, startTime, duration, amount, rainAmount, snowAmount, isSnow, isMixed, strongStart, strongEnd, strongEndIsEstimate, maxIntensity, minutelyStart, currentIntensity, peakTime, hourlyForecast } = analysis;
   const isRain = type.includes('rain');
   const isNow = type.includes('now');
   const isMixedPrecip = type.includes('mixed');
@@ -5069,6 +5085,8 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
   const lightStartLabel = startTime ? startTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'}) : '';
   const strongStartLabel = strongStart ? strongStart.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'}) : '';
   const strongEndLabel = strongEnd ? strongEnd.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'}) : '';
+  const strongEndSuffixEn = strongEndLabel ? (strongEndIsEstimate ? ` to at least ${strongEndLabel}` : ` to ${strongEndLabel}`) : '';
+  const strongEndSuffixDe = strongEndLabel ? (strongEndIsEstimate ? ` mindestens bis ${strongEndLabel} Uhr` : ` bis ${strongEndLabel} Uhr`) : '';
 
   if (type === 'none') {
       headline = t.noPrecipExp;
@@ -5237,8 +5255,8 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
                     <CloudDrizzle size={18} className="text-cyan-600 mt-0.5" />
                     <span className="text-sm font-bold text-slate-700">
                         {lang === 'en'
-                            ? `Light precipitation from ${lightStartLabel}, heavier from ${strongStartLabel}${strongEndLabel ? ` to ${strongEndLabel}` : ''}.`
-                            : `Leichter Niederschlag ab ${lightStartLabel} Uhr, stärker ab ${strongStartLabel}${strongEndLabel ? ` bis ${strongEndLabel} Uhr` : ' Uhr'}.`}
+                            ? `Light precipitation from ${lightStartLabel}, heavier from ${strongStartLabel}${strongEndSuffixEn}.`
+                            : `Leichter Niederschlag ab ${lightStartLabel} Uhr, stärker ab ${strongStartLabel}${strongEndSuffixDe}.`}
                     </span>
                 </div>
             )}
