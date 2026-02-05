@@ -4782,7 +4782,7 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
 };
 
 // --- NEU: PRECIPITATION TILE (Wann, Wie lang, Wie viel) ---
-const PrecipitationTile = ({ data, minutelyData, lang='de', formatPrecip, getPrecipUnitLabel, setActiveTab, setShowPrecipModal }) => {
+const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatPrecip, getPrecipUnitLabel, setActiveTab, setShowPrecipModal }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
 
   // Analyse der nächsten 24h
@@ -4796,9 +4796,21 @@ const PrecipitationTile = ({ data, minutelyData, lang='de', formatPrecip, getPre
     if (futureData.length === 0) return null;
     
     // Ist es gerade nass? (in der aktuellen Stunde oder nächsten Stunde)
-    const current = data[0]; 
+    const current = data[0];
+    
+    // IMPROVED: Use real-time radar-based current precipitation data if available
+    // This provides more accurate "right now" data from actual observations
+    let currentPrecip = current.precip || 0;
+    let currentSnow = current.snow || 0;
+    
+    // Override with current API data if available (more accurate, radar-based)
+    if (currentData && currentData.precipitation !== undefined) {
+      currentPrecip = currentData.rain || 0;
+      currentSnow = currentData.snowfall || 0;
+    }
+    
     // Only consider it "raining now" if there's actual measurable precipitation (minimum 0.5mm)
-    const isRainingNow = current.precip > 0.5 || current.snow > 0.5;
+    const isRainingNow = currentPrecip > 0.5 || currentSnow > 0.5;
     
     let result = { 
        type: 'none', // none, rain_now, rain_later, snow_now, snow_later, mixed_now, mixed_later
@@ -4916,14 +4928,17 @@ const PrecipitationTile = ({ data, minutelyData, lang='de', formatPrecip, getPre
     // Check if it's currently raining FIRST (highest priority)
     if (isRainingNow) {
         // Es regnet/schneit jetzt
-        const hourlyRain = current.precip || 0;
-        const hourlySnow = current.snow || 0;
+        // Use actual current data from radar observations if available, otherwise use hourly forecast
+        const hourlyRain = currentPrecip;
+        const hourlySnow = currentSnow;
         const hourlyAmount = hourlyRain + hourlySnow;
         result.currentIntensity = hourlyAmount;
         
         // Check weather code to verify actual snow event
+        // Use current weather code if available from currentData, otherwise use forecast
+        const currentWeatherCode = (currentData && currentData.weathercode !== undefined) ? currentData.weathercode : current.code;
         // Snow should be treated like rain - only show if weather code explicitly indicates snow, not based on temperature
-        const isSnowCode = current.code && SNOW_WEATHER_CODES.includes(current.code);
+        const isSnowCode = currentWeatherCode && SNOW_WEATHER_CODES.includes(currentWeatherCode);
         
         // Determine if mixed precipitation now
         const isMixedNow = hourlyRain > 0.1 && hourlySnow > 0.1;
@@ -4974,7 +4989,7 @@ const PrecipitationTile = ({ data, minutelyData, lang='de', formatPrecip, getPre
     }
     
     return result;
-  }, [data, minutelyData]);
+  }, [data, minutelyData, currentData]);
 
   if (!analysis) return null;
 
@@ -7107,7 +7122,7 @@ export default function WeatherApp() {
       const { lat, lon } = currentLoc;
       
       const modelsShort = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless";
-      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,cloud_cover,pressure_msl,visibility&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2`;
+      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,rain,snowfall,weathercode,windspeed_10m,relative_humidity_2m&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,cloud_cover,pressure_msl,visibility&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2`;
       
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
       const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max&models=${modelsLong}&timezone=auto&forecast_days=14`;
@@ -7699,7 +7714,25 @@ export default function WeatherApp() {
   }, [longTermData, lang]); // Add lang to deps to refresh names
   
   // LIVE oder DEMO Daten?
-  const liveCurrent = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: 0, precip: 0, wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0, cloudCover: 0, pressure: null, visibility: null };
+  const liveCurrent = useMemo(() => {
+    const baseData = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: 0, precip: 0, wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0, cloudCover: 0, pressure: null, visibility: null };
+    
+    // Override with current API data if available (more accurate, radar-based observations)
+    if (shortTermData?.current) {
+      const curr = shortTermData.current;
+      return {
+        ...baseData,
+        temp: curr.temperature_2m !== undefined ? curr.temperature_2m : baseData.temp,
+        precip: curr.rain !== undefined ? curr.rain : baseData.precip,
+        snow: curr.snowfall !== undefined ? curr.snowfall : baseData.snow,
+        wind: curr.windspeed_10m !== undefined ? curr.windspeed_10m : baseData.wind,
+        humidity: curr.relative_humidity_2m !== undefined ? curr.relative_humidity_2m : baseData.humidity,
+        code: curr.weathercode !== undefined ? curr.weathercode : baseData.code
+      };
+    }
+    
+    return baseData;
+  }, [processedShort, shortTermData]);
   const current = liveCurrent;
 
   // --- NEUE LOGIK: Echter Tag/Nacht Status für das UI ---
@@ -8169,7 +8202,7 @@ export default function WeatherApp() {
                <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
            </div>
            <h2 className="text-2xl font-bold mb-6 text-slate-800 text-center">{t('precipRadar')}</h2>
-            <PrecipitationTile data={processedShort} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} />
+            <PrecipitationTile data={processedShort} currentData={shortTermData?.current} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} />
        </div>
     );
  }
@@ -8577,7 +8610,7 @@ export default function WeatherApp() {
             <div className="space-y-4">
                <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
                <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} />
-               <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} />
+               <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} currentData={shortTermData?.current} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} />
             </div>
           )}
 
