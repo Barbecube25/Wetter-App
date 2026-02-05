@@ -47,6 +47,24 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
+  // Navigation requests -> Network First (avoid stale index.html after updates)
+  if (event.request.mode === 'navigate' || event.request.destination === 'document') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, response.clone());
+            return response;
+          });
+        })
+        .catch((error) => {
+          console.warn('[Service Worker] Navigation request failed, using cached shell', error);
+          return caches.match('/index.html');
+        })
+    );
+    return;
+  }
+
   // A. API-Anfragen (Open-Meteo & Brightsky) -> Network First
   if (url.hostname.includes('open-meteo.com') || url.hostname.includes('brightsky.dev')) {
     event.respondWith(
