@@ -5563,8 +5563,8 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
     .slice(0, 24)
     .map(hour => {
       const totalPrecip = (hour.precip || 0) + (hour.snow || 0);
-      const hasSnow = (hour.snow || 0) > 0.1;
-      const hasRain = (hour.precip || 0) > 0.1;
+      const hasSnow = (hour.snow || 0) > 0.05; // Lower threshold to detect lighter snow
+      const hasRain = (hour.precip || 0) > 0.05; // Lower threshold to detect lighter rain
       
       return {
         time: hour.time,
@@ -5574,7 +5574,7 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
         snow: hour.snow || 0,
         hasSnow,
         hasRain,
-        hasPrecip: totalPrecip > 0.1
+        hasPrecip: totalPrecip > 0.05 // Lower threshold to detect lighter precipitation
       };
     });
   
@@ -7591,10 +7591,10 @@ export default function WeatherApp() {
         temp_gfs: h.temperature_2m_gfs_seamless?.[i],
         temp_arome: h.temperature_2m_arome_seamless?.[i],
         temp_gem: h.temperature_2m_gem_seamless?.[i],
-        precip: getAvg('precipitation'),
+        precip: getMax('precipitation'), // Use max across models to show precipitation if any model predicts it
         // FIX: Add precipProb field
         precipProb: getVal('precipitation_probability'),
-        snow: getAvg('snowfall'),
+        snow: getMax('snowfall'), // Use max across models to show snowfall if any model predicts it
         wind: Math.round(getAvg('windspeed_10m')),
         gust: Math.round(getMax('windgusts_10m')), // Böen immer Max Warnung
         dir: h.winddirection_10m_icon_seamless?.[i] || 0,
