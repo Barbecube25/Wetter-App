@@ -2664,17 +2664,12 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
                 tempDesc = `Relativ gleichbleibend um die ${Math.round((minToday + maxToday) / 2)}° (${Math.round(minToday)}° bis ${Math.round(maxToday)}°). `;
             }
         }
-        // Afternoon (16-20): Show evening and tonight
+        // Afternoon (16-20): Show evening only (night will be shown in separate nightText section)
         else if (currentHour >= 16 && currentHour < 20 && lang !== 'en') {
             const eveningTemp = eveningData.length > 0 ? Math.round(Math.min(...eveningData.map(d => d.temp))) : null;
-            const tonightTemp = tonightData.length > 0 ? Math.round(Math.min(...tonightData.map(d => d.temp))) : 
-                               nightData.length > 0 ? Math.round(Math.min(...nightData.map(d => d.temp))) : null;
             
             if (eveningTemp !== null) {
                 tempDesc = `Heute Abend sind's noch ${eveningTemp}°. `;
-                if (tonightTemp !== null) {
-                    tempDesc += `In der Nacht kühlt es auf ${tonightTemp}° ab. `;
-                }
             } else if (tempRange > 8) {
                 tempDesc = `Wir haben heute noch zwischen ${Math.round(minToday)}° und ${Math.round(maxToday)}°. `;
             } else {
