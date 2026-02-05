@@ -4845,18 +4845,11 @@ const PrecipitationTile = ({ data, minutelyData, lang='de', formatPrecip, getPre
         }
     }
 
-    // Calculate total precipitation for next 24 hours (for display on tile)
-    // Include current hour + next 23 hours to match modal behavior
-    let total24hPrecip = 0;
-    let total24hRain = 0;
-    let total24hSnow = 0;
-    const next24Hours = data.slice(0, 24); // Include current hour (data[0])
-    for (let i = 0; i < next24Hours.length; i++) {
-        const d = next24Hours[i];
-        total24hPrecip += (d.precip || 0) + (d.snow || 0);
-        total24hRain += (d.precip || 0);
-        total24hSnow += (d.snow || 0);
-    }
+    // Calculate precipitation for the upcoming rain event (not full 24h)
+    // This shows the amount that will fall during the specific rain period
+    let eventPrecip = 0;
+    let eventRain = 0;
+    let eventSnow = 0;
     
     let foundStart = false;
     let peakIntensity = 0;
@@ -4881,6 +4874,11 @@ const PrecipitationTile = ({ data, minutelyData, lang='de', formatPrecip, getPre
            const hourlyRain = d.precip > 0 ? d.precip : 0;
            const hourlySnow = d.snow > 0 ? d.snow : 0;
            
+           // Accumulate precipitation for this rain event
+           eventPrecip += hourlyAmount;
+           eventRain += hourlyRain;
+           eventSnow += hourlySnow;
+           
            result.maxIntensity = Math.max(result.maxIntensity, hourlyAmount);
            result.duration++;
            
@@ -4901,10 +4899,10 @@ const PrecipitationTile = ({ data, minutelyData, lang='de', formatPrecip, getPre
        }
     }
     
-    // Use 24h totals for display
-    result.amount = total24hPrecip;
-    result.rainAmount = total24hRain;
-    result.snowAmount = total24hSnow;
+    // Use event totals for display (amount for the specific rain event)
+    result.amount = eventPrecip;
+    result.rainAmount = eventRain;
+    result.snowAmount = eventSnow;
     
     result.peakTime = peakTime;
     
@@ -4935,6 +4933,11 @@ const PrecipitationTile = ({ data, minutelyData, lang='de', formatPrecip, getPre
             result.type = isSnowCode ? 'snow_now' : 'rain_now';
         }
         
+        // Add current hour precipitation to the event total
+        result.amount += hourlyAmount;
+        result.rainAmount += hourlyRain;
+        result.snowAmount += hourlySnow;
+        
         // If we haven't found future rain, set duration and peak for current hour
         if (!foundStart) {
             result.duration = 1; 
@@ -4950,8 +4953,8 @@ const PrecipitationTile = ({ data, minutelyData, lang='de', formatPrecip, getPre
                 result.peakTime = current.time;
             }
         }
-        // Note: result.amount, rainAmount, and snowAmount remain as 24h totals
-        // Otherwise, keep the future rain data we already collected
+        // Note: The event totals now include current precipitation
+        // Combined with future rain data already collected
     } else if (foundStart) {
         // Not raining now, but will rain later
         // Determine type based on startTime closeness
