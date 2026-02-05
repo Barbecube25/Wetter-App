@@ -3372,7 +3372,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     confidence = 80;
   }
 
-  return { title, summary, details, structuredDetails, warning, confidence };
+  return { title, summary, details, structuredDetails, warning, confidence, type };
 };
 
 // --- 4. KOMPONENTEN ---
@@ -5475,6 +5475,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
   
   const hasDwd = dwdWarnings && dwdWarnings.length > 0;
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+  const showDetails = report.type !== 'daily';
   const getWindUnitLabelSafe = getWindUnitLabel || (() => 'km/h');
   const formatWindSafe = formatWind || ((val) => (val ?? '--'));
   const getPrecipUnitLabelSafe = getPrecipUnitLabel || (() => 'mm');
@@ -5556,7 +5557,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
             <p className="text-lg text-slate-800 leading-relaxed font-semibold relative z-10 whitespace-pre-line">{summary}</p>
             
             {/* Toggle Button */}
-            {(details || structuredDetails) && (
+            {showDetails && (details || structuredDetails) && (
                 <button 
                     onClick={() => setExpanded(!expanded)} 
                     className="mt-3 text-sm font-bold text-indigo-600 flex items-center gap-1 hover:text-indigo-800 transition-colors"
@@ -5567,7 +5568,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
         </div>
 
         {/* EXPANDABLE DETAILS */}
-        {expanded && (
+        {showDetails && expanded && (
             <div className="px-4 pb-4 pt-0 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="h-px w-full bg-indigo-200/50 mb-3"></div>
                 
@@ -7713,6 +7714,22 @@ export default function WeatherApp() {
       // Mittelwert robuster
       const maxVals = [maxIcon, maxGfs, maxArome, maxGem].filter(v => v !== null && v !== undefined);
       
+      const precipVals = [
+        d.precipitation_sum_icon_seamless?.[i],
+        d.precipitation_sum_gfs_seamless?.[i],
+        d.precipitation_sum_arome_seamless?.[i],
+        d.precipitation_sum_gem_seamless?.[i]
+      ].filter(v => v !== undefined && v !== null);
+      const snowVals = [
+        d.snowfall_sum_icon_seamless?.[i],
+        d.snowfall_sum_gfs_seamless?.[i],
+        d.snowfall_sum_arome_seamless?.[i],
+        d.snowfall_sum_gem_seamless?.[i]
+      ].filter(v => v !== undefined && v !== null);
+      const avgPrecip = precipVals.length > 0 ? precipVals.reduce((a, b) => a + b, 0) / precipVals.length : 0;
+      const avgSnow = snowVals.length > 0 ? snowVals.reduce((a, b) => a + b, 0) / snowVals.length : 0;
+      const rainAmount = Math.max(0, avgPrecip - avgSnow);
+
       return {
         date,
         dayName: new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(date),
@@ -7730,24 +7747,8 @@ export default function WeatherApp() {
         })(),
         max_icon: maxIcon, max_gfs: maxGfs, max_arome: maxArome, max_gem: maxGem,
         // Use averaging (consistent with hourly data) instead of Math.max
-        rain: (() => {
-          const vals = [
-            d.precipitation_sum_icon_seamless?.[i],
-            d.precipitation_sum_gfs_seamless?.[i],
-            d.precipitation_sum_arome_seamless?.[i],
-            d.precipitation_sum_gem_seamless?.[i]
-          ].filter(v => v !== undefined && v !== null);
-          return vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : '0.0';
-        })(),
-        snow: (() => {
-          const vals = [
-            d.snowfall_sum_icon_seamless?.[i],
-            d.snowfall_sum_gfs_seamless?.[i],
-            d.snowfall_sum_arome_seamless?.[i],
-            d.snowfall_sum_gem_seamless?.[i]
-          ].filter(v => v !== undefined && v !== null);
-          return vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : '0.0';
-        })(),
+        rain: rainAmount.toFixed(1),
+        snow: avgSnow.toFixed(1),
         wind: Math.round(Math.max(
           d.windspeed_10m_max_icon_seamless?.[i] || 0,
           d.windspeed_10m_max_gfs_seamless?.[i] || 0,
