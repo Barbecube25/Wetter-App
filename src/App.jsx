@@ -2682,7 +2682,14 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
                                nightData.length > 0 ? Math.round(Math.min(...nightData.map(d => d.temp))) : null;
             
             if (tonightTemp !== null) {
-                tempDesc = `In der Nacht geht's runter auf ${tonightTemp}°. `;
+                // Add frost/cold information inline to avoid duplicate "Nacht" section
+                if (tonightTemp < 1) {
+                    tempDesc = `In der Nacht wird's frostig (${tonightTemp}°). Vorsicht, kann glatt werden! `;
+                } else if (tonightTemp < 2) {
+                    tempDesc = `In der Nacht kühlt es auf frische ${tonightTemp}° ab (am Boden könnte's frieren). `;
+                } else {
+                    tempDesc = `In der Nacht geht's runter auf ${tonightTemp}°. `;
+                }
             } else {
                 tempDesc = `Wir bleiben um die ${Math.round((minToday + maxToday) / 2)}°. `;
             }
@@ -2825,11 +2832,12 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         
         parts.push(todayText);
     }
-    if (nightData.length > 0) {
+    // Only add separate night section if we haven't already covered it in the evening/night temperature description (currentHour < 20)
+    if (nightData.length > 0 && currentHour < 20) {
         const minNight = Math.min(...nightData.map(d => d.temp));
         let nightText = `🌙 ${t.night} `;
         if (minNight < 1) nightText += lang === 'en' ? `it gets frosty (${Math.round(minNight)}°). Watch for ice!` : `wird's frostig (${Math.round(minNight)}°). Vorsicht, kann glatt werden!`;
-        else if (minNight < 4) nightText += lang === 'en' ? `cooling to fresh ${Math.round(minNight)}° (ground frost possible).` : `kühlt es auf frische ${Math.round(minNight)}° ab (am Boden könnte's frieren).`;
+        else if (minNight < 2) nightText += lang === 'en' ? `cooling to fresh ${Math.round(minNight)}° (ground frost possible).` : `kühlt es auf frische ${Math.round(minNight)}° ab (am Boden könnte's frieren).`;
         else nightText += lang === 'en' ? `lows around ${Math.round(minNight)}°.` : `geht's runter auf ${Math.round(minNight)}°.`;
         parts.push(nightText);
     }
