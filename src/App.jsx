@@ -2579,7 +2579,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         let periodSnow = 0;
         
         todayData.forEach((d, idx) => {
-            const hasPrecip = parseFloat(d.precip || 0) > 0.5 || parseFloat(d.snow || 0) > 0.5;
+            const hasPrecip = parseFloat(d.precip || 0) > 0.1 || parseFloat(d.snow || 0) > 0.1;
             
             if (hasPrecip && !inRainPeriod) {
                 // Start new period
@@ -2867,7 +2867,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         let periodSnow = 0;
         
         tomorrowDayData.forEach((d, idx) => {
-            const hasPrecip = d.precip > 0.5 || d.snow > 0.5;
+            const hasPrecip = d.precip > 0.1 || d.snow > 0.1;
             const isSnow = parseFloat(d.snow || 0) > parseFloat(d.precip || 0);
             
             if (hasPrecip && !inPrecipPeriod) {
@@ -4797,8 +4797,8 @@ const PrecipitationTile = ({ data, minutelyData, lang='de', formatPrecip, getPre
     
     // Ist es gerade nass? (in der aktuellen Stunde oder nächsten Stunde)
     const current = data[0]; 
-    // Only consider it "raining now" if there's actual measurable precipitation (minimum 0.5mm)
-    const isRainingNow = current.precip > 0.5 || current.snow > 0.5;
+    // Only consider it "raining now" if there's actual measurable precipitation (minimum 0.1mm)
+    const isRainingNow = current.precip > 0.1 || current.snow > 0.1;
     
     let result = { 
        type: 'none', // none, rain_now, rain_later, snow_now, snow_later, mixed_now, mixed_later
@@ -4835,9 +4835,9 @@ const PrecipitationTile = ({ data, minutelyData, lang='de', formatPrecip, getPre
         }
         
         if (startIndex !== -1) {
-            // Check next 2 hours (8 * 15min slots) - only show if precipitation >= 0.5mm
+            // Check next 2 hours (8 * 15min slots) - only show if precipitation >= 0.1mm
             for(let i=startIndex; i < Math.min(startIndex + 8, mTime.length); i++) {
-                if (mPrecip[i] > 0.5) {
+                if (mPrecip[i] > 0.1) {
                      result.minutelyStart = new Date(mTime[i]);
                      break; 
                 }
@@ -4865,8 +4865,8 @@ const PrecipitationTile = ({ data, minutelyData, lang='de', formatPrecip, getPre
     // Loop to find start and end (Hourly Data) - limit to 24 hours
     for (let i = 0; i < Math.min(futureData.length, 24); i++) {
        const d = futureData[i];
-       // Only consider precipitation if actual amount >= 0.5mm (no false positives from trace amounts)
-       const hasPrecip = d.precip > 0.5 || d.snow > 0.5;
+       // Only consider precipitation if actual amount >= 0.1mm (no false positives from trace amounts)
+       const hasPrecip = d.precip > 0.1 || d.snow > 0.1;
        
        if (hasPrecip) {
            if (!foundStart) {
