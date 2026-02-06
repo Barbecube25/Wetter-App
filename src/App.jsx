@@ -2387,33 +2387,6 @@ const formatDateShort = (date, lang = 'de') => {
   try { return new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit' }).format(date); } catch (e) { return ""; }
 };
 
-const getTripClothingTip = ({ lang = 'de', maxTemp = 0, minTemp = 0, rainChance = 0, rainAmount = 0, wind = 0 }) => {
-  const tips = [];
-  if (maxTemp <= 5 || minTemp <= 0) {
-    tips.push(lang === 'en' ? "Warm coat, hat and gloves." : "Warme Jacke, Mütze und Handschuhe.");
-  } else if (maxTemp <= 12) {
-    tips.push(lang === 'en' ? "Warm jacket recommended." : "Warme Jacke einpacken.");
-  } else if (maxTemp >= 28) {
-    tips.push(lang === 'en' ? "Light clothing and sun protection." : "Leichte Kleidung und Sonnenschutz.");
-  } else if (maxTemp >= 22) {
-    tips.push(lang === 'en' ? "Light layers work well." : "Leichte Kleidung im Zwiebellook.");
-  }
-
-  if (rainAmount > 1 || rainChance >= 50) {
-    tips.push(lang === 'en' ? "Bring a rain jacket or umbrella." : "Regenjacke oder Schirm nicht vergessen.");
-  }
-
-  if (wind >= 45) {
-    tips.push(lang === 'en' ? "Windproof layer recommended." : "Windfeste Jacke einplanen.");
-  }
-
-  if (tips.length === 0) {
-    tips.push(lang === 'en' ? "No special clothing needed." : "Keine besondere Kleidung nötig.");
-  }
-
-  return `👕 ${lang === 'en' ? 'Clothing tip' : 'Kleidungstipp'}: ${tips.join(' ')}`;
-};
-
 const getWindColorClass = (speed, isDark = false) => {
   // In dark mode, use brighter colors for better contrast
   if (isDark) {
@@ -2484,6 +2457,42 @@ const getModelRunTime = (intervalHours, processingDelayHours) => {
 // Snow codes: 71 (light), 73 (moderate), 75 (heavy), 77 (snow grains), 85 (light showers), 86 (heavy showers)
 // Sleet codes: 56 (light freezing drizzle), 57 (dense freezing drizzle), 66 (light freezing rain), 67 (heavy freezing rain)
 const SNOW_WEATHER_CODES = [71, 73, 75, 77, 85, 86, 56, 57, 66, 67];
+const RELIABILITY_THRESHOLDS_PERCENT = { min: 10, max: 100, decayPerDay: 5 };
+const TEMPERATURE_THRESHOLDS_C = { freezing: 0, cold: 5, cool: 12, warm: 22, hot: 28 };
+const WEATHER_THRESHOLDS = { rainAmountMm: 1, rainChancePercent: 50, windSpeedKmh: 45 };
+const MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
+const RAIN_TO_SNOW_RATIO = 10;
+
+/**
+ * Builds a clothing tip string for trip reports using Celsius temperatures,
+ * precipitation in mm / %, and wind speed in km/h.
+ */
+const getTripClothingTip = ({ lang = 'de', maxTemp = 0, minTemp = 0, rainChance = 0, rainAmount = 0, wind = 0 }) => {
+  const tips = [];
+  if (maxTemp <= TEMPERATURE_THRESHOLDS_C.cold && minTemp <= TEMPERATURE_THRESHOLDS_C.freezing) {
+    tips.push(lang === 'en' ? "Warm coat, hat and gloves." : "Warme Jacke, Mütze und Handschuhe.");
+  } else if (maxTemp <= TEMPERATURE_THRESHOLDS_C.cool && minTemp > TEMPERATURE_THRESHOLDS_C.freezing) {
+    tips.push(lang === 'en' ? "Warm jacket recommended." : "Warme Jacke einpacken.");
+  } else if (maxTemp >= TEMPERATURE_THRESHOLDS_C.hot) {
+    tips.push(lang === 'en' ? "Light clothing and sun protection." : "Leichte Kleidung und Sonnenschutz.");
+  } else if (maxTemp >= TEMPERATURE_THRESHOLDS_C.warm) {
+    tips.push(lang === 'en' ? "Light layers work well." : "Leichte Kleidung im Zwiebellook.");
+  }
+
+  if (rainAmount > WEATHER_THRESHOLDS.rainAmountMm || rainChance >= WEATHER_THRESHOLDS.rainChancePercent) {
+    tips.push(lang === 'en' ? "Bring a rain jacket or umbrella." : "Regenjacke oder Schirm nicht vergessen.");
+  }
+
+  if (wind >= WEATHER_THRESHOLDS.windSpeedKmh) {
+    tips.push(lang === 'en' ? "Windproof layer recommended." : "Windfeste Jacke einplanen.");
+  }
+
+  if (tips.length === 0) {
+    tips.push(lang === 'en' ? "No special clothing needed." : "Keine besondere Kleidung nötig.");
+  }
+
+  return `👕 ${lang === 'en' ? 'Clothing tip' : 'Kleidungstipp'}: ${tips.join(' ')}`;
+};
 
 const getWeatherConfig = (code, isDay = 1, lang = 'de') => {
   const isNight = isDay === 0;
@@ -5725,7 +5734,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                                 </>
                               ) : isDaySnow ? (
                                 rainValue > 0.1 || snowValue > 0.1 ? (
-                                  <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {formatPrecipSafe(snowValue > 0 ? snowValue : (rainValue / 10))}{getPrecipUnitLabelSafe()}</span>
+                                  <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {formatPrecipSafe(snowValue > 0 ? snowValue : (rainValue / RAIN_TO_SNOW_RATIO))}{getPrecipUnitLabelSafe()}</span>
                                 ) : ( <span className="opacity-20 text-xs">-</span> )
                               ) : rainValue > 0.1 ? (
                                 <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {formatPrecipSafe(rainValue)}{getPrecipUnitLabelSafe()}</span>
@@ -7500,14 +7509,15 @@ export default function WeatherApp() {
     const q = overrideQuery || travelQuery;
     if (!q && !overrideData) return;
     
-    setTravelLoading(true);
-    setTravelResult(null);
-    setTripReport(null); // Reset Report
     if (overrideData?.id) {
         setActiveTripId(overrideData.id);
     } else {
         setActiveTripId(null);
     }
+
+    setTravelLoading(true);
+    setTravelResult(null);
+    setTripReport(null); // Reset Report
     
     try {
         let loc;
@@ -7618,10 +7628,12 @@ export default function WeatherApp() {
                     const gust = getSafeValue(daily, i, 'windgusts_10m_max') ?? 0;
 
                     const d = new Date(dayDateStr).getTime();
-                    const daysInFuture = (d - new Date().getTime()) / (1000 * 60 * 60 * 24);
-                    const rel = Math.max(10, 100 - (daysInFuture * 5));
-                    totalRel += rel;
-                    count++;
+                    const daysInFuture = (d - new Date().getTime()) / MILLISECONDS_PER_DAY;
+                    const rel = Math.max(
+                        RELIABILITY_THRESHOLDS_PERCENT.min,
+                        RELIABILITY_THRESHOLDS_PERCENT.max - (daysInFuture * RELIABILITY_THRESHOLDS_PERCENT.decayPerDay)
+                    );
+                    const relRounded = Math.round(rel);
                     dailyItems.push({
                         date: new Date(dayDateStr),
                         max: maxT,
@@ -7630,8 +7642,10 @@ export default function WeatherApp() {
                         precipProb: prob,
                         precipSum: sum,
                         wind: gust,
-                        reliability: Math.round(rel)
+                        reliability: relRounded
                     });
+                    totalRel += relRounded;
+                    count++;
                 }
             }
             result.items = dailyItems;
@@ -7699,8 +7713,11 @@ export default function WeatherApp() {
                 };
                 
                 // Reliability
-                const daysInFuture = (startDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24);
-                result.reliability = Math.round(Math.max(10, 100 - (daysInFuture * 5)));
+                const daysInFuture = (startDate.getTime() - new Date().getTime()) / MILLISECONDS_PER_DAY;
+                result.reliability = Math.round(Math.max(
+                  RELIABILITY_THRESHOLDS_PERCENT.min,
+                  RELIABILITY_THRESHOLDS_PERCENT.max - (daysInFuture * RELIABILITY_THRESHOLDS_PERCENT.decayPerDay)
+                ));
             } else {
                 result.reliability = 0; 
                 // Initialize empty summary to prevent crash
@@ -7783,6 +7800,13 @@ export default function WeatherApp() {
           if (cachedWeather) {
               setWeather(cachedWeather);
               setLoading(false);
+          }
+      }, [cachedWeather]);
+
+      useEffect(() => {
+          if (cachedWeather) {
+              setWeather(cachedWeather);
+              setLoading(false);
               return;
           }
           const fetchPreview = async () => {
@@ -7805,7 +7829,7 @@ export default function WeatherApp() {
               }
           };
           fetchPreview();
-      }, [cachedWeather, trip.id, trip.lat, trip.lon, trip.startDate]);
+      }, [trip]);
 
       if (loading) return <div className="w-8 h-8 rounded-full bg-m3-surface-container animate-pulse"></div>;
       if (!weather) return <div className="text-[10px] text-m3-on-surface-variant">--</div>;
@@ -9380,16 +9404,18 @@ export default function WeatherApp() {
                 </div>
 
                 {/* Result Area */}
-                {travelResult && !activeTripId && (
+                {travelResult && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                       <AIReportBox report={tripReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
-                        
-                       <button 
-                          onClick={handleSaveTrip}
-                          className="w-full mt-2 py-3 bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition flex items-center justify-center gap-2"
-                       >
-                          <Save size={18}/> {t('saveTrip')}
-                       </button>
+                       
+                       {!activeTripId && (
+                         <button 
+                            onClick={handleSaveTrip}
+                            className="w-full mt-2 py-3 bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition flex items-center justify-center gap-2"
+                         >
+                            <Save size={18}/> {t('saveTrip')}
+                         </button>
+                       )}
                     </div>
                 )}
 
