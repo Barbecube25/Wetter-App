@@ -7826,7 +7826,8 @@ export default function WeatherApp() {
           }
       }
       
-      // Restore scroll position after state update to prevent jump
+      // Restore scroll position after React re-renders the component
+      // requestAnimationFrame ensures this runs after the DOM has been updated
       requestAnimationFrame(() => {
           window.scrollTo(0, scrollY);
       });
