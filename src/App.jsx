@@ -116,6 +116,9 @@ const TRANSLATIONS = {
     saveTrip: "Reise speichern",
     myTrips: "Meine Reisen",
     tripSaved: "Reise gespeichert!",
+    tripName: "Reisename (Optional)",
+    expandDetails: "Details anzeigen",
+    collapseDetails: "Details verbergen",
     radarCredit: "Radarbild bereitgestellt von Windy.com", // Radar data from Windy.com
     noRain: "Trocken",
     rain: "Regen",
@@ -292,6 +295,9 @@ const TRANSLATIONS = {
     saveTrip: "Save Trip",
     myTrips: "My Trips",
     tripSaved: "Trip saved!",
+    tripName: "Trip Name (Optional)",
+    expandDetails: "Show Details",
+    collapseDetails: "Hide Details",
     radarCredit: "Radar image provided by Windy.com", // Radar data from Windy.com
     noRain: "Dry",
     rain: "Rain",
@@ -468,6 +474,9 @@ const TRANSLATIONS = {
     saveTrip: "Enregistrer le voyage",
     myTrips: "Mes voyages",
     tripSaved: "Voyage enregistré !",
+    tripName: "Nom du voyage (Optionnel)",
+    expandDetails: "Afficher les détails",
+    collapseDetails: "Masquer les détails",
     radarCredit: "Image radar fournie par Windy.com",
     noRain: "Sec",
     rain: "Pluie",
@@ -645,6 +654,9 @@ const TRANSLATIONS = {
     saveTrip: "Guardar viaje",
     myTrips: "Mis viajes",
     tripSaved: "¡Viaje guardado!",
+    tripName: "Nombre del viaje (Opcional)",
+    expandDetails: "Mostrar detalles",
+    collapseDetails: "Ocultar detalles",
     radarCredit: "Imagen de radar proporcionada por Windy.com",
     noRain: "Seco",
     rain: "Lluvia",
@@ -819,6 +831,9 @@ const TRANSLATIONS = {
     saveTrip: "Salva viaggio",
     myTrips: "I miei viaggi",
     tripSaved: "Viaggio salvato!",
+    tripName: "Nome del viaggio (Opzionale)",
+    expandDetails: "Mostra dettagli",
+    collapseDetails: "Nascondi dettagli",
     radarCredit: "Immagine radar fornita da Windy.com",
     noRain: "Asciutto",
     rain: "Pioggia",
@@ -991,6 +1006,9 @@ const TRANSLATIONS = {
     saveTrip: "Seyahati kaydet",
     myTrips: "Seyahatlerim",
     tripSaved: "Seyahat kaydedildi!",
+    tripName: "Seyahat Adı (İsteğe bağlı)",
+    expandDetails: "Detayları göster",
+    collapseDetails: "Detayları gizle",
     radarCredit: "Radar görüntüsü Windy.com tarafından sağlanmıştır",
     noRain: "Kuru",
     rain: "Yağmur",
@@ -1163,6 +1181,9 @@ const TRANSLATIONS = {
     saveTrip: "Zapisz podróż",
     myTrips: "Moje podróże",
     tripSaved: "Podróż zapisana!",
+    tripName: "Nazwa podróży (Opcjonalne)",
+    expandDetails: "Pokaż szczegóły",
+    collapseDetails: "Ukryj szczegóły",
     radarCredit: "Obraz radarowy dostarczony przez Windy.com",
     noRain: "Sucho",
     rain: "Deszcz",
@@ -1337,6 +1358,9 @@ const TRANSLATIONS = {
     saveTrip: "Reis opslaan",
     myTrips: "Mijn reizen",
     tripSaved: "Reis opgeslagen!",
+    tripName: "Reisnaam (Optioneel)",
+    expandDetails: "Details tonen",
+    collapseDetails: "Details verbergen",
     radarCredit: "Radarbeeld geleverd door Windy.com",
     noRain: "Droog",
     rain: "Regen",
@@ -1511,6 +1535,9 @@ const TRANSLATIONS = {
     saveTrip: "Spremi putovanje",
     myTrips: "Moja putovanja",
     tripSaved: "Putovanje spremljeno!",
+    tripName: "Naziv putovanja (Opcionalno)",
+    expandDetails: "Prikaži detalje",
+    collapseDetails: "Sakrij detalje",
     radarCredit: "Radarsku sliku omogućio Windy.com",
     noRain: "Suho",
     rain: "Kiša",
@@ -1682,6 +1709,9 @@ const TRANSLATIONS = {
     saveTrip: "Αποθήκευση ταξιδιού",
     myTrips: "Τα ταξίδια μου",
     tripSaved: "Το ταξίδι αποθηκεύτηκε!",
+    tripName: "Όνομα ταξιδιού (Προαιρετικό)",
+    expandDetails: "Εμφάνιση λεπτομερειών",
+    collapseDetails: "Απόκρυψη λεπτομερειών",
     radarCredit: "Εικόνα radar παρέχεται από το Windy.com",
     noRain: "Στεγνό",
     rain: "Βροχή",
@@ -1854,6 +1884,9 @@ const TRANSLATIONS = {
     saveTrip: "Gem rejse",
     myTrips: "Mine rejser",
     tripSaved: "Rejse gemt!",
+    tripName: "Rejsenavn (Valgfrit)",
+    expandDetails: "Vis detaljer",
+    collapseDetails: "Skjul detaljer",
     radarCredit: "Radarbillede leveret af Windy.com",
     noRain: "Tørt",
     rain: "Regn",
@@ -2026,6 +2059,9 @@ const TRANSLATIONS = {
     saveTrip: "Сохранить поездку",
     myTrips: "Мои поездки",
     tripSaved: "Поездка сохранена!",
+    tripName: "Название поездки (Необязательно)",
+    expandDetails: "Показать детали",
+    collapseDetails: "Скрыть детали",
     radarCredit: "Радарное изображение предоставлено Windy.com",
     noRain: "Сухо",
     rain: "Дождь",
@@ -6836,12 +6872,15 @@ export default function WeatherApp() {
   // --- Travel Planner State ---
   const [savedTrips, setSavedTrips] = useState(() => getSavedTrips());
   const [travelQuery, setTravelQuery] = useState("");
+  const [travelTripName, setTravelTripName] = useState("");
   const [travelStartDate, setTravelStartDate] = useState("");
   const [travelEndDate, setTravelEndDate] = useState("");
   const [travelStartTime, setTravelStartTime] = useState("");
   const [travelEndTime, setTravelEndTime] = useState("");
   const [travelResult, setTravelResult] = useState(null);
   const [travelLoading, setTravelLoading] = useState(false);
+  const [expandedTripId, setExpandedTripId] = useState(null);
+  const [tripDetails, setTripDetails] = useState({});
   // Trip Report
   const [tripReport, setTripReport] = useState(null);
 
@@ -7536,6 +7575,7 @@ export default function WeatherApp() {
       const newTrip = {
           id: crypto.randomUUID(),
           name: travelResult.location.name || travelQuery,
+          customName: travelTripName.trim() || null,
           lat: travelResult.location.latitude || travelResult.location.lat,
           lon: travelResult.location.longitude || travelResult.location.lon,
           startDate: travelStartDate,
@@ -7544,6 +7584,7 @@ export default function WeatherApp() {
           endTime: travelEndTime
       };
       setSavedTrips([...savedTrips, newTrip]);
+      setTravelTripName("");
       alert(t('tripSaved'));
   };
 
@@ -7597,6 +7638,182 @@ export default function WeatherApp() {
               <span className="font-bold text-slate-700 text-xs">{formatTemp(weather.max)}{getTempUnitSymbol()}</span>
           </div>
       );
+  };
+
+  // --- EXPANDED TRIP DETAILS COMPONENT ---
+  const TripDetailedView = ({ trip }) => {
+      const details = tripDetails[trip.id];
+      
+      if (!details || details.loading) {
+          return <div className="p-4 text-center"><RefreshCw className="animate-spin inline" size={20}/></div>;
+      }
+      
+      if (details.error) {
+          return <div className="p-4 text-center text-red-500">{details.error}</div>;
+      }
+
+      const dailyData = details.data;
+      
+      return (
+          <div className="mt-3 pt-3 border-t border-white/40">
+              <div className="overflow-x-auto -mx-3 px-3 pb-2 scrollbar-hide">
+                  <div className="flex gap-3 w-max">
+                      {dailyData.map((day, idx) => {
+                          const Icon = getWeatherConfig(day.code, 1, lang).icon;
+                          return (
+                              <div key={idx} className="min-w-[160px] w-[160px] bg-white/60 backdrop-blur-sm border border-white/40 rounded-xl p-3">
+                                  <div className="text-center mb-2">
+                                      <div className="font-bold text-slate-800 text-sm">{day.dayName}</div>
+                                      <div className="text-xs text-slate-500">{day.dateShort}</div>
+                                  </div>
+                                  
+                                  <div className="flex justify-center my-3">
+                                      <Icon size={48} className="text-blue-600"/>
+                                  </div>
+                                  
+                                  <div className="space-y-2">
+                                      <div className="flex items-center justify-between text-xs">
+                                          <span className="text-slate-600">Max:</span>
+                                          <span className="font-bold text-red-600">{formatTemp(day.max)}{getTempUnitSymbol()}</span>
+                                      </div>
+                                      <div className="flex items-center justify-between text-xs">
+                                          <span className="text-slate-600">Min:</span>
+                                          <span className="font-bold text-blue-600">{formatTemp(day.min)}{getTempUnitSymbol()}</span>
+                                      </div>
+                                      
+                                      {(parseFloat(day.rain) > 0 || parseFloat(day.snow) > 0) && (
+                                          <div className="pt-2 border-t border-white/40">
+                                              {parseFloat(day.rain) > 0 && (
+                                                  <div className="flex items-center justify-between text-xs">
+                                                      <span className="text-blue-500">💧 {t('rain')}</span>
+                                                      <span className="font-bold">{formatPrecip(day.rain)}{getPrecipUnitLabel()}</span>
+                                                  </div>
+                                              )}
+                                              {parseFloat(day.snow) > 0 && (
+                                                  <div className="flex items-center justify-between text-xs">
+                                                      <span className="text-cyan-500">❄️ {t('snow')}</span>
+                                                      <span className="font-bold">{formatPrecip(day.snow)}{getPrecipUnitLabel()}</span>
+                                                  </div>
+                                              )}
+                                          </div>
+                                      )}
+                                      
+                                      {day.prob > 0 && (
+                                          <div className="flex items-center justify-between text-xs">
+                                              <span className="text-slate-600">{t('probability')}</span>
+                                              <span className="font-bold">{day.prob}%</span>
+                                          </div>
+                                      )}
+                                      
+                                      {day.wind > 0 && (
+                                          <div className="flex items-center justify-between text-xs">
+                                              <span className="text-slate-600">💨 Wind</span>
+                                              <span className="font-bold">{formatWind(day.wind)} {getWindUnitLabel()}</span>
+                                          </div>
+                                      )}
+                                  </div>
+                              </div>
+                          );
+                      })}
+                  </div>
+              </div>
+          </div>
+      );
+  };
+
+  // --- FETCH DETAILED TRIP WEATHER ---
+  const fetchTripDetails = async (trip) => {
+      try {
+          setTripDetails(prev => ({ ...prev, [trip.id]: { loading: true } }));
+          
+          const endDate = trip.endDate || trip.startDate;
+          const url = `https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,precipitation_probability_max,windspeed_10m_max&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${endDate}`;
+          
+          const res = await fetch(url);
+          const data = await res.json();
+          
+          if (!data.daily || !data.daily.time) {
+              throw new Error('No data available');
+          }
+          
+          const locale = lang === 'en' ? 'en-US' : 'de-DE';
+          const dailyData = data.daily.time.map((t, i) => {
+              const date = new Date(t);
+              
+              // Average temperatures from all models
+              const maxVals = [
+                  data.daily.temperature_2m_max_icon_seamless?.[i],
+                  data.daily.temperature_2m_max_gfs_seamless?.[i],
+                  data.daily.temperature_2m_max_arome_seamless?.[i],
+                  data.daily.temperature_2m_max_gem_seamless?.[i]
+              ].filter(v => v !== null && v !== undefined);
+              
+              const minVals = [
+                  data.daily.temperature_2m_min_icon_seamless?.[i],
+                  data.daily.temperature_2m_min_gfs_seamless?.[i],
+                  data.daily.temperature_2m_min_arome_seamless?.[i],
+                  data.daily.temperature_2m_min_gem_seamless?.[i]
+              ].filter(v => v !== null && v !== undefined);
+              
+              const precipVals = [
+                  data.daily.precipitation_sum_icon_seamless?.[i],
+                  data.daily.precipitation_sum_gfs_seamless?.[i],
+                  data.daily.precipitation_sum_arome_seamless?.[i],
+                  data.daily.precipitation_sum_gem_seamless?.[i]
+              ].filter(v => v !== undefined && v !== null);
+              
+              const snowVals = [
+                  data.daily.snowfall_sum_icon_seamless?.[i],
+                  data.daily.snowfall_sum_gfs_seamless?.[i],
+                  data.daily.snowfall_sum_arome_seamless?.[i],
+                  data.daily.snowfall_sum_gem_seamless?.[i]
+              ].filter(v => v !== undefined && v !== null);
+              
+              const probVals = [
+                  data.daily.precipitation_probability_max_icon_seamless?.[i],
+                  data.daily.precipitation_probability_max_gfs_seamless?.[i],
+                  data.daily.precipitation_probability_max_arome_seamless?.[i],
+                  data.daily.precipitation_probability_max_gem_seamless?.[i]
+              ].filter(v => v !== undefined && v !== null);
+              
+              const avgPrecip = precipVals.length > 0 ? precipVals.reduce((a, b) => a + b, 0) / precipVals.length : 0;
+              const avgSnow = snowVals.length > 0 ? snowVals.reduce((a, b) => a + b, 0) / snowVals.length : 0;
+              const rainAmount = Math.max(0, avgPrecip - avgSnow);
+              
+              return {
+                  date,
+                  dayName: new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(date),
+                  dateShort: formatDateShort(date, lang),
+                  max: maxVals.length > 0 ? maxVals.reduce((a,b)=>a+b,0)/maxVals.length : 0,
+                  min: minVals.length > 0 ? minVals.reduce((a,b)=>a+b,0)/minVals.length : 0,
+                  rain: rainAmount.toFixed(1),
+                  snow: avgSnow.toFixed(1),
+                  wind: Math.round(Math.max(
+                      data.daily.windspeed_10m_max_icon_seamless?.[i] || 0,
+                      data.daily.windspeed_10m_max_gfs_seamless?.[i] || 0,
+                      data.daily.windspeed_10m_max_arome_seamless?.[i] || 0,
+                      data.daily.windspeed_10m_max_gem_seamless?.[i] || 0
+                  )),
+                  code: data.daily.weathercode_icon_seamless?.[i] || 0,
+                  prob: probVals.length > 0 ? Math.round(probVals.reduce((a, b) => a + b, 0) / probVals.length) : 0
+              };
+          });
+          
+          setTripDetails(prev => ({ ...prev, [trip.id]: { loading: false, data: dailyData } }));
+      } catch (e) {
+          setTripDetails(prev => ({ ...prev, [trip.id]: { loading: false, error: lang === 'en' ? 'Failed to load details' : 'Details konnten nicht geladen werden' } }));
+      }
+  };
+
+  const toggleTripExpansion = (trip) => {
+      if (expandedTripId === trip.id) {
+          setExpandedTripId(null);
+      } else {
+          setExpandedTripId(trip.id);
+          if (!tripDetails[trip.id]) {
+              fetchTripDetails(trip);
+          }
+      }
   };
 
 
@@ -8896,6 +9113,19 @@ export default function WeatherApp() {
                         </div>
                       </div>
                       
+                      <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('tripName')}</label>
+                        <div className="relative">
+                            <input 
+                              type="text" 
+                              value={travelTripName}
+                              onChange={(e) => setTravelTripName(e.target.value)}
+                              className="w-full px-3 py-2.5 rounded-xl border border-white/50 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
+                              placeholder={lang === 'en' ? "e.g., Summer Vacation, Business Trip..." : "z.B. Sommerurlaub, Geschäftsreise..."}
+                            />
+                        </div>
+                      </div>
+                      
                       <div className="grid grid-cols-2 gap-3">
                          <div>
                             <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('startDate')}</label>
@@ -8980,18 +9210,41 @@ export default function WeatherApp() {
                    <div>
                      <h3 className="text-sm font-bold uppercase opacity-70 mb-3 ml-2 mt-6">{t('myTrips')}</h3>
                      <div className="space-y-2">
-                        {savedTrips.map(trip => (
-                           <div key={trip.id} className="bg-white/40 border border-white/40 p-3 rounded-xl flex items-center justify-between">
-                              <button onClick={() => loadTrip(trip)} className="text-left flex-1">
-                                 <div className="font-bold text-slate-800">{trip.name}</div>
-                                 <div className="text-xs text-slate-500">{formatDateShort(new Date(trip.startDate), lang)} - {formatDateShort(new Date(trip.endDate || trip.startDate), lang)}</div>
-                              </button>
-                              <div className="flex items-center gap-3">
-                                 <TripWeatherPreview trip={trip} />
-                                 <button onClick={() => handleDeleteTrip(trip.id)} className="p-2 text-slate-400 hover:text-red-500 transition"><Trash2 size={16}/></button>
-                              </div>
-                           </div>
-                        ))}
+                        {savedTrips.map(trip => {
+                            const isExpanded = expandedTripId === trip.id;
+                            return (
+                               <div key={trip.id} className="bg-white/40 border border-white/40 rounded-xl overflow-hidden">
+                                  <div className="p-3 flex items-center justify-between">
+                                     <button onClick={() => loadTrip(trip)} className="text-left flex-1">
+                                        <div className="font-bold text-slate-800">{trip.name}</div>
+                                        <div className="text-xs text-slate-500">{formatDateShort(new Date(trip.startDate), lang)} - {formatDateShort(new Date(trip.endDate || trip.startDate), lang)}</div>
+                                        {trip.customName && (
+                                           <div className="text-xs font-semibold text-blue-600 mt-1">📝 {trip.customName}</div>
+                                        )}
+                                     </button>
+                                     <div className="flex items-center gap-2">
+                                        <TripWeatherPreview trip={trip} />
+                                        <button 
+                                           onClick={(e) => {
+                                              e.stopPropagation();
+                                              toggleTripExpansion(trip);
+                                           }} 
+                                           className="p-2 text-slate-600 hover:text-blue-600 transition"
+                                           title={isExpanded ? t('collapseDetails') : t('expandDetails')}
+                                        >
+                                           {isExpanded ? <ChevronUp size={18}/> : <ChevronDown size={18}/>}
+                                        </button>
+                                        <button onClick={(e) => {
+                                           e.stopPropagation();
+                                           handleDeleteTrip(trip.id);
+                                        }} className="p-2 text-slate-400 hover:text-red-500 transition"><Trash2 size={16}/></button>
+                                     </div>
+                                  </div>
+                                  
+                                  {isExpanded && <TripDetailedView trip={trip} />}
+                               </div>
+                            );
+                        })}
                      </div>
                    </div>
                 )}
