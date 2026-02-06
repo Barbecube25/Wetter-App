@@ -2457,6 +2457,42 @@ const getModelRunTime = (intervalHours, processingDelayHours) => {
 // Snow codes: 71 (light), 73 (moderate), 75 (heavy), 77 (snow grains), 85 (light showers), 86 (heavy showers)
 // Sleet codes: 56 (light freezing drizzle), 57 (dense freezing drizzle), 66 (light freezing rain), 67 (heavy freezing rain)
 const SNOW_WEATHER_CODES = [71, 73, 75, 77, 85, 86, 56, 57, 66, 67];
+const RELIABILITY_THRESHOLDS_PERCENT = { min: 10, max: 100, decayPerDay: 5 };
+const TEMPERATURE_THRESHOLDS_C = { freezing: 0, cold: 5, cool: 12, warm: 22, hot: 28 };
+const WEATHER_THRESHOLDS = { rainAmountMm: 1, rainChancePercent: 50, windSpeedKmh: 45 };
+const MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
+const RAIN_TO_SNOW_RATIO = 10;
+
+/**
+ * Builds a clothing tip string for trip reports using Celsius temperatures,
+ * precipitation in mm / %, and wind speed in km/h.
+ */
+const getTripClothingTip = ({ lang = 'de', maxTemp = 0, minTemp = 0, rainChance = 0, rainAmount = 0, wind = 0 }) => {
+  const tips = [];
+  if (maxTemp <= TEMPERATURE_THRESHOLDS_C.cold && minTemp <= TEMPERATURE_THRESHOLDS_C.freezing) {
+    tips.push(lang === 'en' ? "Warm coat, hat and gloves." : "Warme Jacke, Mütze und Handschuhe.");
+  } else if (maxTemp <= TEMPERATURE_THRESHOLDS_C.cool && minTemp > TEMPERATURE_THRESHOLDS_C.freezing) {
+    tips.push(lang === 'en' ? "Warm jacket recommended." : "Warme Jacke einpacken.");
+  } else if (maxTemp >= TEMPERATURE_THRESHOLDS_C.hot) {
+    tips.push(lang === 'en' ? "Light clothing and sun protection." : "Leichte Kleidung und Sonnenschutz.");
+  } else if (maxTemp >= TEMPERATURE_THRESHOLDS_C.warm) {
+    tips.push(lang === 'en' ? "Light layers work well." : "Leichte Kleidung im Zwiebellook.");
+  }
+
+  if (rainAmount > WEATHER_THRESHOLDS.rainAmountMm || rainChance >= WEATHER_THRESHOLDS.rainChancePercent) {
+    tips.push(lang === 'en' ? "Bring a rain jacket or umbrella." : "Regenjacke oder Schirm nicht vergessen.");
+  }
+
+  if (wind >= WEATHER_THRESHOLDS.windSpeedKmh) {
+    tips.push(lang === 'en' ? "Windproof layer recommended." : "Windfeste Jacke einplanen.");
+  }
+
+  if (tips.length === 0) {
+    tips.push(lang === 'en' ? "No special clothing needed." : "Keine besondere Kleidung nötig.");
+  }
+
+  return `👕 ${lang === 'en' ? 'Clothing tip' : 'Kleidungstipp'}: ${tips.join(' ')}`;
+};
 
 const getWeatherConfig = (code, isDay = 1, lang = 'de') => {
   const isNight = isDay === 0;
@@ -2502,6 +2538,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
   let warning = null;
   let confidence = null;
   let structuredDetails = null; // New field for list view
+  let tripDetails = null;
 
   if (type === 'trip') {
       const { location, mode, startDate, endDate, summary: daySummary, items, reliability } = data;
@@ -2527,14 +2564,37 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
           if (daySummary.maxWind > 45) warning = lang === 'en' ? "Windy" : "Windig";
           if (daySummary.maxWind > 65) warning = lang === 'en' ? "Stormy" : "Stürmisch";
 
-          summary = `📅 ${lang === 'en' ? 'Trip on' : 'Ausflug am'} ${dateStr}:\n${tempText} ${condText}`;
-          details = lang === 'en' 
-             ? `Rain probability approx. ${daySummary.avgProb || 0}%. Wind gusts up to ${Math.round(daySummary.maxWind)} km/h.`
-             : `Für deinen Ausflug nach ${location.name}: Regenwahrscheinlichkeit ${daySummary.avgProb || 0}%. Wind mit Böen bis ${Math.round(daySummary.maxWind)} km/h.`;
+          const clothingTip = getTripClothingTip({
+             lang,
+             maxTemp: daySummary.maxTemp,
+             minTemp: daySummary.minTemp,
+             rainChance: daySummary.avgProb || 0,
+             rainAmount: daySummary.totalPrecip || 0,
+             wind: daySummary.maxWind || 0
+          });
+
+          summary = `📅 ${lang === 'en' ? 'Trip on' : 'Ausflug am'} ${dateStr}:\n${tempText} ${condText}\n\n${clothingTip}`;
           
           if (daySummary.isTimeWindow) {
-              details += lang === 'en' ? `\n\nForecast precision for time window (${daySummary.startH}-${daySummary.endH}h).` : `\n\nDie Vorhersage bezieht sich auf ${daySummary.startH}-${daySummary.endH} Uhr.`;
+              summary += lang === 'en'
+                ? `\nTime window: ${daySummary.startH}-${daySummary.endH}h.`
+                : `\nZeitraum: ${daySummary.startH}-${daySummary.endH} Uhr.`;
           }
+
+          tripDetails = [{
+             date: startDate,
+             dayName: new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(startDate),
+             dateShort: formatDateShort(startDate, lang),
+             max: daySummary.maxTemp,
+             min: daySummary.minTemp,
+             code: daySummary.code,
+             rain: daySummary.totalPrecip || 0,
+             snow: 0,
+             prob: daySummary.avgProb || 0,
+             wind: daySummary.maxWind || 0,
+             reliability: reliability
+          }];
+          details = null;
       } else {
           // Multi Day Trip Text
           const daysCount = items.length;
@@ -2544,8 +2604,11 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
           const endStr = endDate.toLocaleDateString(locale, { day: 'numeric', month: 'long' });
           
           const avgMax = Math.round(items.reduce((a,b)=>a+b.max,0)/daysCount);
+          const avgMin = Math.round(items.reduce((a,b)=>a+b.min,0)/daysCount);
           const totalRain = items.reduce((a,b)=>a+b.precipSum,0);
           const rainDays = items.filter(d=>d.precipSum > 1.0).length;
+          const avgProb = Math.round(items.reduce((a,b)=>a+b.precipProb,0)/daysCount);
+          const maxWind = Math.max(...items.map(d => d.wind || 0));
 
           let availText = daysCount === tripDuration ? "" : (lang === 'en' ? `(Weather available for ${daysCount} of ${tripDuration} days)` : `(Wetter für ${daysCount} von ${tripDuration} Tagen verfügbar)`);
           summary = `🧳 ${lang === 'en' ? 'Trip' : 'Urlaub'} (${startStr} - ${endStr}):\n${availText}\n${lang === 'en' ? 'Avg' : 'Durchschnittlich'} ${avgMax}°. `;
@@ -2554,8 +2617,30 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
           else if (rainDays >= daysCount/2) summary += lang === 'en' ? "Unsettled weather expected." : "Das Wetter wird wohl wechselhaft.";
           else summary += lang === 'en' ? "Mix of sun and clouds." : "Mix aus Sonne und Wolken.";
 
-          let detailList = items.map(d => `- ${d.date.toLocaleDateString(locale,{weekday:'short'})}: ${Math.round(d.max)}°, ${d.precipSum > 0.5 ? d.precipSum.toFixed(1)+'mm' : (lang === 'en' ? 'Dry' : 'Trocken')}`).join('\n');
-          details = `${lang === 'en' ? 'Weather trend for' : 'Wettertrend für'} ${location.name}:\n${detailList}\n\n${lang === 'en' ? 'Total precip approx.' : 'Insgesamt etwa'} ${totalRain.toFixed(1)}mm ${lang === 'de' ? 'Niederschlag' : ''}.`;
+          const clothingTip = getTripClothingTip({
+             lang,
+             maxTemp: avgMax,
+             minTemp: avgMin,
+             rainChance: avgProb || 0,
+             rainAmount: totalRain || 0,
+             wind: maxWind
+          });
+          summary += `\n\n${clothingTip}`;
+
+          tripDetails = items.map((item) => ({
+             date: item.date,
+             dayName: new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(item.date),
+             dateShort: formatDateShort(item.date, lang),
+             max: item.max,
+             min: item.min,
+             code: item.code,
+             rain: item.precipSum,
+             snow: 0,
+             prob: item.precipProb || 0,
+             wind: item.wind || 0,
+             reliability: item.reliability ?? reliability
+          }));
+          details = null;
       }
   }
 
@@ -3416,7 +3501,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     confidence = 80;
   }
 
-  return { title, summary, details, structuredDetails, warning, confidence, type };
+  return { title, summary, details, structuredDetails, tripDetails, warning, confidence, type };
 };
 
 // --- 4. KOMPONENTEN ---
@@ -5515,7 +5600,7 @@ const DwdAlertItem = ({ alert, lang='de' }) => {
 const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, getWindUnitLabel, formatPrecip, getPrecipUnitLabel, getTempUnitSymbol }) => {
   const [expanded, setExpanded] = useState(false);
   if (!report) return null;
-  const { title, summary, details, warning: localWarning, confidence, structuredDetails } = report;
+  const { title, summary, details, warning: localWarning, confidence, structuredDetails, tripDetails } = report;
   
   const hasDwd = dwdWarnings && dwdWarnings.length > 0;
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
@@ -5524,6 +5609,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
   const formatWindSafe = formatWind || ((val) => (val ?? '--'));
   const getPrecipUnitLabelSafe = getPrecipUnitLabel || (() => 'mm');
   const formatPrecipSafe = formatPrecip || ((val) => (val ?? '--'));
+  const showTripDetails = report.type === 'trip' && Array.isArray(tripDetails) && tripDetails.length > 0;
   
   let maxSeverityLevel = 0; 
   if (hasDwd) {
@@ -5601,7 +5687,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
             <p className="text-lg text-slate-800 leading-relaxed font-semibold relative z-10 whitespace-pre-line">{summary}</p>
             
             {/* Toggle Button */}
-            {showDetails && (details || structuredDetails) && (
+            {showDetails && (details || structuredDetails || showTripDetails) && (
                 <button 
                     onClick={() => setExpanded(!expanded)} 
                     className="mt-3 text-sm font-bold text-indigo-600 flex items-center gap-1 hover:text-indigo-800 transition-colors"
@@ -5616,8 +5702,66 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
             <div className="px-4 pb-4 pt-0 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="h-px w-full bg-indigo-200/50 mb-3"></div>
                 
+                {/* Trip Details (Horizontal View) */}
+                {showTripDetails && (
+                  <div className="overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
+                    <div className="flex gap-3 w-max">
+                      {tripDetails.map((day, idx) => {
+                        const DayIcon = getWeatherConfig(day.code, 1, lang).icon;
+                        const isDaySnow = SNOW_WEATHER_CODES.includes(day.code);
+                        const probColor = day.prob >= 50 ? "text-blue-600 font-bold" : day.prob >= 20 ? "text-blue-400 font-medium" : "text-slate-400 opacity-50";
+                        const rainValue = parseFloat(day.rain || 0);
+                        const snowValue = parseFloat(day.snow || 0);
+                        const reliabilityValue = day.reliability ?? null;
+                        const confColor = reliabilityValue !== null ? getConfidenceColor(reliabilityValue) : "";
+                        return (
+                          <div key={idx} className="flex flex-col items-center bg-m3-surface-container/80 backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl p-3 min-w-[160px] w-[160px] shadow-m3-1 hover:shadow-m3-2 transition-all">
+                            <div className="text-base font-bold mb-0.5 text-m3-on-surface">{day.dayName}</div>
+                            <div className="text-xs mb-2 font-medium text-m3-on-surface-variant">{day.dateShort}</div>
+                            <DayIcon size={48} className="mb-2 text-m3-on-surface" />
+                            <div className="flex items-center gap-2 mb-2 w-full justify-center">
+                              <span className="text-2xl font-bold text-blue-400">{tempFunc(day.min)}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}</span>
+                              <div className="h-1 w-6 bg-white/10 rounded-full overflow-hidden">
+                                <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
+                              </div>
+                              <span className="text-2xl font-bold text-red-400">{tempFunc(day.max)}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}</span>
+                            </div>
+                            <div className="mb-1 min-h-[16px] flex flex-col items-center justify-center w-full gap-0.5">
+                              {rainValue > 0.1 && snowValue > 0.1 ? (
+                                <>
+                                  <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><CloudRain size={10}/> {formatPrecipSafe(rainValue)}{getPrecipUnitLabelSafe()}</span>
+                                  <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {formatPrecipSafe(snowValue)}{getPrecipUnitLabelSafe()}</span>
+                                </>
+                              ) : isDaySnow ? (
+                                rainValue > 0.1 || snowValue > 0.1 ? (
+                                  <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {formatPrecipSafe(snowValue > 0 ? snowValue : (rainValue / RAIN_TO_SNOW_RATIO))}{getPrecipUnitLabelSafe()}</span>
+                                ) : ( <span className="opacity-20 text-xs">-</span> )
+                              ) : rainValue > 0.1 ? (
+                                <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {formatPrecipSafe(rainValue)}{getPrecipUnitLabelSafe()}</span>
+                              ) : ( <span className="opacity-20 text-xs">-</span> )}
+                            </div>
+                            <div className={`text-xs mb-2 ${probColor} h-3`}>{day.prob > 0 ? `${day.prob}% ${t.probability}` : ''}</div>
+                            <div className="flex flex-col items-center gap-0.5 mb-2 w-full">
+                              <div className="flex items-center justify-center gap-1 w-full">
+                                <Navigation size={12} style={{ transform: `rotate(${day.dir || 0}deg)` }} />
+                                <span className={`text-sm font-bold ${getWindColorClass(day.wind || 0, false)}`}>{formatWindSafe(day.wind || 0)} {getWindUnitLabelSafe()}</span>
+                              </div>
+                            </div>
+                            {reliabilityValue !== null && (
+                              <div className="mt-1 text-xs flex items-center gap-1 border border-m3-outline-variant/30 bg-m3-surface-container-highest/50 px-2 py-0.5 rounded-full">
+                                <ShieldCheck size={10} className={confColor} />
+                                <span className={confColor}>{reliabilityValue}% {t.safe}</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Fallback Text Details */}
-                {details && (
+                {details && !showTripDetails && (
                     <div className="text-base text-slate-700 leading-relaxed space-y-2 whitespace-pre-line mb-4">
                         {details}
                     </div>
@@ -6891,6 +7035,9 @@ export default function WeatherApp() {
   const [tripDetails, setTripDetails] = useState({});
   // Trip Report
   const [tripReport, setTripReport] = useState(null);
+  const [savedTripReports, setSavedTripReports] = useState({});
+  const [activeTripId, setActiveTripId] = useState(null);
+  const [tripPreviewCache, setTripPreviewCache] = useState({});
 
   // Initial Location Logic / Home Check
   useEffect(() => {
@@ -7362,6 +7509,12 @@ export default function WeatherApp() {
     const q = overrideQuery || travelQuery;
     if (!q && !overrideData) return;
     
+    if (overrideData?.id) {
+        setActiveTripId(overrideData.id);
+    } else {
+        setActiveTripId(null);
+    }
+
     setTravelLoading(true);
     setTravelResult(null);
     setTripReport(null); // Reset Report
@@ -7474,6 +7627,13 @@ export default function WeatherApp() {
                     const sum = getSafeValue(daily, i, 'precipitation_sum') ?? 0;
                     const gust = getSafeValue(daily, i, 'windgusts_10m_max') ?? 0;
 
+                    const d = new Date(dayDateStr).getTime();
+                    const daysInFuture = (d - new Date().getTime()) / MILLISECONDS_PER_DAY;
+                    const rel = Math.max(
+                        RELIABILITY_THRESHOLDS_PERCENT.min,
+                        RELIABILITY_THRESHOLDS_PERCENT.max - (daysInFuture * RELIABILITY_THRESHOLDS_PERCENT.decayPerDay)
+                    );
+                    const relRounded = Math.round(rel);
                     dailyItems.push({
                         date: new Date(dayDateStr),
                         max: maxT,
@@ -7481,13 +7641,10 @@ export default function WeatherApp() {
                         code: code,
                         precipProb: prob,
                         precipSum: sum,
-                        wind: gust
+                        wind: gust,
+                        reliability: relRounded
                     });
-                    
-                    const d = new Date(dayDateStr).getTime();
-                    const daysInFuture = (d - new Date().getTime()) / (1000 * 60 * 60 * 24);
-                    const rel = Math.max(10, 100 - (daysInFuture * 5));
-                    totalRel += rel;
+                    totalRel += relRounded;
                     count++;
                 }
             }
@@ -7556,8 +7713,11 @@ export default function WeatherApp() {
                 };
                 
                 // Reliability
-                const daysInFuture = (startDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24);
-                result.reliability = Math.round(Math.max(10, 100 - (daysInFuture * 5)));
+                const daysInFuture = (startDate.getTime() - new Date().getTime()) / MILLISECONDS_PER_DAY;
+                result.reliability = Math.round(Math.max(
+                  RELIABILITY_THRESHOLDS_PERCENT.min,
+                  RELIABILITY_THRESHOLDS_PERCENT.max - (daysInFuture * RELIABILITY_THRESHOLDS_PERCENT.decayPerDay)
+                ));
             } else {
                 result.reliability = 0; 
                 // Initialize empty summary to prevent crash
@@ -7568,7 +7728,11 @@ export default function WeatherApp() {
         setTravelResult(result);
         
         // Generate AI Report for the trip if valid - NOW WITH LANG SUPPORT
-        setTripReport(generateAIReport('trip', result, lang));
+        const report = generateAIReport('trip', result, lang);
+        setTripReport(report);
+        if (overrideData?.id) {
+            setSavedTripReports(prev => ({ ...prev, [overrideData.id]: report }));
+        }
 
     } catch (e) {
         console.error(e);
@@ -7598,6 +7762,22 @@ export default function WeatherApp() {
 
   const handleDeleteTrip = (id) => {
       setSavedTrips(savedTrips.filter(t => t.id !== id));
+      setSavedTripReports(prev => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+      });
+      setTripPreviewCache(prev => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+      });
+      if (activeTripId === id) {
+          setActiveTripId(null);
+      }
+      if (expandedTripId === id) {
+          setExpandedTripId(null);
+      }
   };
 
   const loadTrip = (trip) => {
@@ -7612,20 +7792,35 @@ export default function WeatherApp() {
 
   // --- PREVIEW COMPONENT FOR TRIP LIST ---
   const TripWeatherPreview = ({ trip }) => {
-      const [weather, setWeather] = useState(null);
-      const [loading, setLoading] = useState(true);
+      const cachedWeather = tripPreviewCache[trip.id];
+      const [weather, setWeather] = useState(cachedWeather || null);
+      const [loading, setLoading] = useState(!cachedWeather);
 
       useEffect(() => {
+          if (cachedWeather) {
+              setWeather(cachedWeather);
+              setLoading(false);
+          }
+      }, [cachedWeather]);
+
+      useEffect(() => {
+          if (cachedWeather) {
+              setWeather(cachedWeather);
+              setLoading(false);
+              return;
+          }
           const fetchPreview = async () => {
               try {
                   const url = `https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${trip.startDate}`;
                   const res = await fetch(url);
                   const data = await res.json();
                   if (data.daily && data.daily.time.length > 0) {
-                      setWeather({
+                      const nextWeather = {
                           code: data.daily.weathercode[0],
                           max: data.daily.temperature_2m_max[0]
-                      });
+                      };
+                      setWeather(nextWeather);
+                      setTripPreviewCache(prev => ({ ...prev, [trip.id]: nextWeather }));
                   }
               } catch (e) {
                   // silent fail or retry
@@ -9213,12 +9408,14 @@ export default function WeatherApp() {
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                       <AIReportBox report={tripReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
                        
-                       <button 
-                          onClick={handleSaveTrip}
-                          className="w-full mt-2 py-3 bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition flex items-center justify-center gap-2"
-                       >
-                          <Save size={18}/> {t('saveTrip')}
-                       </button>
+                       {!activeTripId && (
+                         <button 
+                            onClick={handleSaveTrip}
+                            className="w-full mt-2 py-3 bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition flex items-center justify-center gap-2"
+                         >
+                            <Save size={18}/> {t('saveTrip')}
+                         </button>
+                       )}
                     </div>
                 )}
 
@@ -9258,10 +9455,20 @@ export default function WeatherApp() {
                                      </div>
                                   </div>
                                   
+                                  {activeTripId === trip.id && (
+                                    <div className="px-3 pb-3">
+                                      {savedTripReports[trip.id] ? (
+                                        <AIReportBox report={savedTripReports[trip.id]} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
+                                      ) : travelLoading ? (
+                                        <div className="p-4 text-center"><RefreshCw className="animate-spin inline" size={20}/></div>
+                                      ) : null}
+                                    </div>
+                                  )}
+
                                   {isExpanded && <TripDetailedView trip={trip} />}
-                               </div>
-                            );
-                        })}
+                                </div>
+                             );
+                         })}
                      </div>
                    </div>
                 )}
