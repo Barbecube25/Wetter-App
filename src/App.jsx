@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Eye, Activity } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
@@ -6889,6 +6889,8 @@ export default function WeatherApp() {
   const [travelLoading, setTravelLoading] = useState(false);
   const [expandedTripId, setExpandedTripId] = useState(null);
   const [tripDetails, setTripDetails] = useState({});
+  const [tripHorizontalScrollPos, setTripHorizontalScrollPos] = useState({});
+  const tripScrollRefs = useRef({});
   // Trip Report
   const [tripReport, setTripReport] = useState(null);
 
@@ -7661,10 +7663,27 @@ export default function WeatherApp() {
       }
 
       const dailyData = details.data;
+      const hourlyData = details.hourlyData;
       
       return (
           <div className="mt-3 pt-3 border-t border-white/40">
-              <div className="overflow-x-auto -mx-3 px-3 pb-2 scrollbar-hide">
+              {/* Hourly Temperature Tiles */}
+              {hourlyData && hourlyData.length > 0 && (
+                  <div className="mb-4">
+                      <HourlyTemperatureTiles 
+                          data={hourlyData} 
+                          lang={lang} 
+                          formatTemp={formatTemp} 
+                          getTempUnitSymbol={getTempUnitSymbol} 
+                      />
+                  </div>
+              )}
+              
+              {/* Daily Cards */}
+              <div 
+                  className="overflow-x-auto -mx-3 px-3 pb-2 scrollbar-hide"
+                  ref={el => tripScrollRefs.current[trip.id] = el}
+              >
                   <div className="flex gap-3 w-max">
                       {dailyData.map((day, idx) => {
                           const Icon = getWeatherConfig(day.code, 1, lang).icon;
@@ -7735,7 +7754,9 @@ export default function WeatherApp() {
           setTripDetails(prev => ({ ...prev, [trip.id]: { loading: true } }));
           
           const endDate = trip.endDate || trip.startDate;
-          const url = `https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,precipitation_probability_max,windspeed_10m_max&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${endDate}`;
+          
+          // Fetch both daily and hourly data
+          const url = `https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,precipitation_probability_max,windspeed_10m_max&hourly=temperature_2m,weathercode,is_day&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${endDate}`;
           
           const res = await fetch(url);
           const data = await res.json();
@@ -7745,6 +7766,8 @@ export default function WeatherApp() {
           }
           
           const locale = lang === 'en' ? 'en-US' : 'de-DE';
+          
+          // Process daily data
           const dailyData = data.daily.time.map((t, i) => {
               const date = new Date(t);
               
@@ -7807,7 +7830,45 @@ export default function WeatherApp() {
               };
           });
           
-          setTripDetails(prev => ({ ...prev, [trip.id]: { loading: false, data: dailyData } }));
+          // Process hourly data - take next 12 hours from the trip start
+          let hourlyData = [];
+          if (data.hourly && data.hourly.time) {
+              const h = data.hourly;
+              const now = new Date();
+              const tripStartDate = new Date(trip.startDate);
+              
+              // Use trip start date if it's in the future, otherwise use now
+              const startFrom = tripStartDate > now ? tripStartDate : now;
+              
+              for (let i = 0; i < h.time.length && hourlyData.length < 12; i++) {
+                  const t = parseLocalTime(h.time[i]);
+                  
+                  if (t < startFrom) continue;
+                  
+                  // Average temperatures from all models
+                  const tempVals = [
+                      h.temperature_2m_icon_seamless?.[i],
+                      h.temperature_2m_gfs_seamless?.[i],
+                      h.temperature_2m_arome_seamless?.[i],
+                      h.temperature_2m_gem_seamless?.[i]
+                  ].filter(v => v !== null && v !== undefined);
+                  
+                  const temp = tempVals.length > 0 ? tempVals.reduce((a,b)=>a+b,0)/tempVals.length : 0;
+                  const code = h.weathercode_icon_seamless?.[i] || h.weathercode_gfs_seamless?.[i] || 0;
+                  const isDayArray = h.is_day_icon_seamless || h.is_day_gfs_seamless || h.is_day;
+                  const isDay = isDayArray?.[i] ?? (t.getHours() >= 6 && t.getHours() <= 21 ? 1 : 0);
+                  
+                  hourlyData.push({
+                      time: t,
+                      displayTime: t.toLocaleTimeString(locale, {hour:'2-digit', minute:'2-digit'}),
+                      temp: temp,
+                      code: code,
+                      isDay: isDay
+                  });
+              }
+          }
+          
+          setTripDetails(prev => ({ ...prev, [trip.id]: { loading: false, data: dailyData, hourlyData: hourlyData } }));
       } catch (e) {
           setTripDetails(prev => ({ ...prev, [trip.id]: { loading: false, error: lang === 'en' ? 'Failed to load details' : 'Details konnten nicht geladen werden' } }));
       }
@@ -7816,6 +7877,15 @@ export default function WeatherApp() {
   const toggleTripExpansion = (trip) => {
       // Preserve scroll position when expanding/collapsing trips
       const scrollY = window.scrollY;
+      
+      // Save horizontal scroll position before toggling
+      const container = tripScrollRefs.current[trip.id];
+      if (container && expandedTripId === trip.id) {
+          setTripHorizontalScrollPos(prev => ({
+              ...prev,
+              [trip.id]: container.scrollLeft
+          }));
+      }
       
       if (expandedTripId === trip.id) {
           setExpandedTripId(null);
@@ -7830,6 +7900,12 @@ export default function WeatherApp() {
       // requestAnimationFrame ensures this runs after the DOM has been updated
       requestAnimationFrame(() => {
           window.scrollTo(0, scrollY);
+          
+          // Restore horizontal scroll position for newly expanded trip
+          const newContainer = tripScrollRefs.current[trip.id];
+          if (newContainer && tripHorizontalScrollPos[trip.id] !== undefined) {
+              newContainer.scrollLeft = tripHorizontalScrollPos[trip.id];
+          }
       });
   };
 
