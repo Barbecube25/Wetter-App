@@ -2919,10 +2919,12 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         let periodAmount = 0;
         let periodRain = 0;
         let periodSnow = 0;
+        let periodHasSnowCode = false;
+        let periodHasRainCode = false;
         
         tomorrowDayData.forEach((d, idx) => {
             const hasPrecip = d.precip > 0.5 || d.snow > 0.5;
-            const isSnow = parseFloat(d.snow || 0) > parseFloat(d.precip || 0);
+            const isSnowCode = d.code && SNOW_WEATHER_CODES.includes(d.code);
             
             if (hasPrecip && !inPrecipPeriod) {
                 // Start new period
@@ -2931,22 +2933,26 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
                 periodAmount = parseFloat(d.precip) + parseFloat(d.snow || 0);
                 periodRain = parseFloat(d.precip || 0);
                 periodSnow = parseFloat(d.snow || 0);
+                periodHasSnowCode = isSnowCode;
+                periodHasRainCode = !isSnowCode && hasPrecip;
             } else if (hasPrecip && inPrecipPeriod) {
                 // Continue period
                 periodEnd = d.time;
                 periodAmount += parseFloat(d.precip) + parseFloat(d.snow || 0);
                 periodRain += parseFloat(d.precip || 0);
                 periodSnow += parseFloat(d.snow || 0);
+                if (isSnowCode) periodHasSnowCode = true;
+                if (!isSnowCode && hasPrecip) periodHasRainCode = true;
             } else if (!hasPrecip && inPrecipPeriod) {
-                // End period
+                // End period - use weather codes to determine type, not just quantities
                 precipPeriodsTomorrow.push({
                     start: periodStart,
                     end: periodEnd || periodStart,
                     amount: periodAmount,
                     rain: periodRain,
                     snow: periodSnow,
-                    isSnow: periodSnow > periodRain,
-                    isMixed: periodRain > 0.1 && periodSnow > 0.1
+                    isSnow: periodHasSnowCode && !periodHasRainCode,
+                    isMixed: periodHasSnowCode && periodHasRainCode
                 });
                 inPrecipPeriod = false;
                 periodStart = null;
@@ -2954,6 +2960,8 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
                 periodAmount = 0;
                 periodRain = 0;
                 periodSnow = 0;
+                periodHasSnowCode = false;
+                periodHasRainCode = false;
             }
         });
         
@@ -2965,8 +2973,8 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
                 amount: periodAmount,
                 rain: periodRain,
                 snow: periodSnow,
-                isSnow: periodSnow > periodRain,
-                isMixed: periodRain > 0.1 && periodSnow > 0.1
+                isSnow: periodHasSnowCode && !periodHasRainCode,
+                isMixed: periodHasSnowCode && periodHasRainCode
             });
         }
         
@@ -7806,6 +7814,9 @@ export default function WeatherApp() {
   };
 
   const toggleTripExpansion = (trip) => {
+      // Preserve scroll position when expanding/collapsing trips
+      const scrollY = window.scrollY;
+      
       if (expandedTripId === trip.id) {
           setExpandedTripId(null);
       } else {
@@ -7814,6 +7825,12 @@ export default function WeatherApp() {
               fetchTripDetails(trip);
           }
       }
+      
+      // Restore scroll position after React re-renders the component
+      // requestAnimationFrame ensures this runs after the DOM has been updated
+      requestAnimationFrame(() => {
+          window.scrollTo(0, scrollY);
+      });
   };
 
 
