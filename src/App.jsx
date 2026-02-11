@@ -16,8 +16,8 @@ const HEADER_HEIGHT = '100px';
 // Animation card height constant for fixed positioning and spacing calculations
 const ANIMATION_CARD_HEIGHT = '240px'; 
 
-// Navigation bar height constant for spacing calculations
-const NAV_BAR_HEIGHT = '68px'; 
+// Navigation bar height constant for spacing calculations (82px actual rendered height + 8px spacing)
+const NAV_BAR_HEIGHT = '90px'; 
 
 // Gap between fixed elements for consistent spacing (24px to prevent tiles from overlapping with navigation bar)
 const FIXED_ELEMENTS_GAP = '24px'; 
