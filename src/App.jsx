@@ -4089,6 +4089,11 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   // 0 = full night, 1 = full day
   let skyTransitionFactor = 0;
   const transitionDuration = 0.75; // Duration in hours for dawn/dusk transition
+  
+  // Helper function for dawn/dusk gradient opacity using bell curve
+  // Peaks at mid-transition (0.3 opacity when factor=0.5), fades to 0 at extremes
+  // Multiplier 1.2 scales the parabola to reach desired peak opacity
+  const getDawnDuskOpacity = (factor) => Math.min(1, factor * (1 - factor) * 1.2);
 
   // ÄNDERUNG: < sunsetHour (nicht <=), damit bei Sonnenuntergang die Sonne sofort verschwindet
   if (currentHour >= sunriseHour && currentHour < sunsetHour) {
@@ -4238,7 +4243,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
           width="600" 
           height="160" 
           fill="url(#dawnGradient)" 
-          opacity={Math.min(1, skyTransitionFactor * (1 - skyTransitionFactor) * 1.2)}
+          opacity={getDawnDuskOpacity(skyTransitionFactor)}
           className="anim-glow"
           style={{ transition: 'opacity 2s ease-in-out' }}
         />
@@ -4250,7 +4255,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
           width="600" 
           height="160" 
           fill="url(#duskGradient)" 
-          opacity={Math.min(1, skyTransitionFactor * (1 - skyTransitionFactor) * 1.2)}
+          opacity={getDawnDuskOpacity(skyTransitionFactor)}
           className="anim-glow"
           style={{ transition: 'opacity 2s ease-in-out' }}
         />
