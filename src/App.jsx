@@ -4090,10 +4090,14 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   let skyTransitionFactor = 0;
   const transitionDuration = 0.75; // Duration in hours for dawn/dusk transition
   
+  // Multiplier for dawn/dusk gradient opacity calculation
+  // Scales the parabola to reach desired peak opacity (0.3 at mid-transition)
+  const DAWN_DUSK_OPACITY_MULTIPLIER = 1.2;
+  
   // Helper function for dawn/dusk gradient opacity using bell curve
   // Peaks at mid-transition (0.3 opacity when factor=0.5), fades to 0 at extremes
-  // Multiplier 1.2 scales the parabola to reach desired peak opacity
-  const getDawnDuskOpacity = (factor) => Math.min(1, factor * (1 - factor) * 1.2);
+  // Math.min ensures opacity never exceeds 1.0 even if multiplier is adjusted
+  const getDawnDuskOpacity = (factor) => Math.min(1, factor * (1 - factor) * DAWN_DUSK_OPACITY_MULTIPLIER);
 
   // ÄNDERUNG: < sunsetHour (nicht <=), damit bei Sonnenuntergang die Sonne sofort verschwindet
   if (currentHour >= sunriseHour && currentHour < sunsetHour) {
