@@ -4088,7 +4088,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   // Calculate smooth transition factor for sky color blending
   // 0 = full night, 1 = full day
   let skyTransitionFactor = 0;
-  const transitionDuration = 0.75; // Duration in hours for dawn/dusk transition
+  const TRANSITION_DURATION = 0.75; // Duration in hours for dawn/dusk transition (45 minutes)
+  const CSS_TRANSITION_DURATION = '2s'; // CSS transition duration for smooth opacity changes
   
   // Multiplier for dawn/dusk gradient opacity calculation
   // Scales the parabola to reach desired peak opacity (0.3 at mid-transition)
@@ -4115,14 +4116,14 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
      // Dadurch "ploppt" sie nicht am Himmel auf, sondern geht wirklich am Horizont auf/unter.
      celestialY = 25 + 0.0075 * Math.pow(celestialX - 180, 2); 
 
-     if (currentHour - sunriseHour < transitionDuration) {
+     if (currentHour - sunriseHour < TRANSITION_DURATION) {
        isDawn = true;
        // Smooth transition from 0 (night) to 1 (day) during dawn
-       skyTransitionFactor = Math.min(1, (currentHour - sunriseHour) / transitionDuration);
-     } else if (sunsetHour - currentHour < transitionDuration) {
+       skyTransitionFactor = Math.min(1, (currentHour - sunriseHour) / TRANSITION_DURATION);
+     } else if (sunsetHour - currentHour < TRANSITION_DURATION) {
        isDusk = true;
        // Smooth transition from 1 (day) to 0 (night) during dusk
-       skyTransitionFactor = Math.max(0, (sunsetHour - currentHour) / transitionDuration);
+       skyTransitionFactor = Math.max(0, (sunsetHour - currentHour) / TRANSITION_DURATION);
      } else {
        // Full day
        skyTransitionFactor = 1;
@@ -4235,7 +4236,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
         height="160" 
         fill="url(#daySkyGradient)" 
         opacity={skyTransitionFactor}
-        style={{ transition: 'opacity 2s ease-in-out' }}
+        style={{ transition: `opacity ${CSS_TRANSITION_DURATION} ease-in-out` }}
       />
       
       {/* Dawn/Dusk gradient overlays with smooth opacity transitions */}
@@ -4249,7 +4250,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
           fill="url(#dawnGradient)" 
           opacity={getDawnDuskOpacity(skyTransitionFactor)}
           className="anim-glow"
-          style={{ transition: 'opacity 2s ease-in-out' }}
+          style={{ transition: `opacity ${CSS_TRANSITION_DURATION} ease-in-out` }}
         />
       )}
       {isDusk && (
@@ -4261,7 +4262,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
           fill="url(#duskGradient)" 
           opacity={getDawnDuskOpacity(skyTransitionFactor)}
           className="anim-glow"
-          style={{ transition: 'opacity 2s ease-in-out' }}
+          style={{ transition: `opacity ${CSS_TRANSITION_DURATION} ease-in-out` }}
         />
       )}
 
