@@ -8903,7 +8903,7 @@ export default function WeatherApp() {
 
       <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: `calc(${animationCardHeight} + ${navBarHeight} + ${fixedElementsGap})` }}>
         {/* Fixed Animation Card Container - Matches main content width, extends to top edge */}
-        <div className="fixed left-0 right-0 z-30 px-4" style={{ top: 0 }}>
+        <div className="fixed left-0 right-0 z-20 px-4" style={{ top: 0 }}>
           <div className="max-w-4xl mx-auto">
             <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-t-m3-3xl ${isLandscape ? 'pt-2 px-4 pb-2' : 'pt-4 px-4 pb-4'} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant border-b-0 backdrop-blur-md ${isLandscape ? 'min-h-[100px]' : 'min-h-[200px]'}`}>
               {/* Weather background animation */}
@@ -8994,7 +8994,7 @@ export default function WeatherApp() {
 
         {/* Enhanced Tab Navigation - Fixed positioned below fixed animation card, hidden in landscape when controls are hidden */}
         {!(isLandscape && hideControlsInLandscape) && (
-        <div className="fixed left-0 right-0 z-20 px-4" style={{ top: animationCardHeight }}>
+        <div className="fixed left-0 right-0 z-30 px-4" style={{ top: animationCardHeight }}>
           <div className="max-w-4xl mx-auto">
             <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-b-m3-3xl ${isLandscape ? 'p-1' : 'p-2'} shadow-m3-2 border border-m3-outline-variant border-t-0`}>
           <div className="grid grid-cols-5 gap-1">
