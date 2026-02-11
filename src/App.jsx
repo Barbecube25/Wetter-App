@@ -4092,11 +4092,13 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const CSS_TRANSITION_DURATION = '2s'; // CSS transition duration for smooth opacity changes
   
   // Multiplier for dawn/dusk gradient opacity calculation
-  // Scales the parabola to reach desired peak opacity (0.3 at mid-transition)
+  // Formula: max opacity = (1/4) * multiplier (occurs at factor=0.5)
+  // With multiplier=1.2: peak opacity = 0.25 * 1.2 = 0.3
   const DAWN_DUSK_OPACITY_MULTIPLIER = 1.2;
   
   // Helper function for dawn/dusk gradient opacity using bell curve
   // Peaks at mid-transition (0.3 opacity when factor=0.5), fades to 0 at extremes
+  // Expects factor in range [0, 1] where 0=night, 1=day
   // Math.min ensures opacity never exceeds 1.0 even if multiplier is adjusted
   const getDawnDuskOpacity = (factor) => Math.min(1, factor * (1 - factor) * DAWN_DUSK_OPACITY_MULTIPLIER);
 
