@@ -14,7 +14,7 @@ const DEFAULT_LOC = null;
 const HEADER_HEIGHT = '100px';
 
 // Animation card height constant for fixed positioning and spacing calculations
-const ANIMATION_CARD_HEIGHT = '200px'; 
+const ANIMATION_CARD_HEIGHT = '240px'; 
 
 // Navigation bar height constant for spacing calculations
 const NAV_BAR_HEIGHT = '68px'; 
