@@ -4230,6 +4230,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       />
       
       {/* Dawn/Dusk gradient overlays with smooth opacity transitions */}
+      {/* Use bell curve: peaks at mid-transition (factor=0.5), fades at extremes */}
       {isDawn && (
         <rect 
           x="-100" 
@@ -4237,7 +4238,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
           width="600" 
           height="160" 
           fill="url(#dawnGradient)" 
-          opacity={0.3 * (1 - skyTransitionFactor)}
+          opacity={skyTransitionFactor * (1 - skyTransitionFactor) * 1.2}
           className="anim-glow"
           style={{ transition: 'opacity 2s ease-in-out' }}
         />
@@ -4249,7 +4250,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
           width="600" 
           height="160" 
           fill="url(#duskGradient)" 
-          opacity={0.3 * (1 - skyTransitionFactor)}
+          opacity={skyTransitionFactor * (1 - skyTransitionFactor) * 1.2}
           className="anim-glow"
           style={{ transition: 'opacity 2s ease-in-out' }}
         />
