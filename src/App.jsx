@@ -4084,6 +4084,23 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   let celestialType = 'none';
   let isDawn = false;
   let isDusk = false;
+  
+  // Calculate smooth transition factor for sky color blending
+  // 0 = full night, 1 = full day
+  let skyTransitionFactor = 0;
+  const TRANSITION_DURATION = 0.75; // Duration in hours for dawn/dusk transition (45 minutes)
+  const CSS_TRANSITION_DURATION = '2s'; // CSS transition duration for smooth opacity changes
+  
+  // Multiplier for dawn/dusk gradient opacity calculation
+  // Formula: max opacity = (1/4) * multiplier (occurs at factor=0.5)
+  // With multiplier=1.2: peak opacity = 0.25 * 1.2 = 0.3
+  const DAWN_DUSK_OPACITY_MULTIPLIER = 1.2;
+  
+  // Helper function for dawn/dusk gradient opacity using bell curve
+  // Peaks at mid-transition (0.3 opacity when factor=0.5), fades to 0 at extremes
+  // Expects factor in range [0, 1] where 0=night, 1=day
+  // Math.min ensures opacity never exceeds 1.0 even if multiplier is adjusted
+  const getDawnDuskOpacity = (factor) => Math.min(1, factor * (1 - factor) * DAWN_DUSK_OPACITY_MULTIPLIER);
 
   // ÄNDERUNG: < sunsetHour (nicht <=), damit bei Sonnenuntergang die Sonne sofort verschwindet
   if (currentHour >= sunriseHour && currentHour < sunsetHour) {
@@ -4101,8 +4118,18 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
      // Dadurch "ploppt" sie nicht am Himmel auf, sondern geht wirklich am Horizont auf/unter.
      celestialY = 25 + 0.0075 * Math.pow(celestialX - 180, 2); 
 
-     if (currentHour - sunriseHour < 0.75) isDawn = true;
-     if (sunsetHour - currentHour < 0.75) isDusk = true;
+     if (currentHour - sunriseHour < TRANSITION_DURATION) {
+       isDawn = true;
+       // Smooth transition from 0 (night) to 1 (day) during dawn
+       skyTransitionFactor = Math.min(1, (currentHour - sunriseHour) / TRANSITION_DURATION);
+     } else if (sunsetHour - currentHour < TRANSITION_DURATION) {
+       isDusk = true;
+       // Smooth transition from 1 (day) to 0 (night) during dusk
+       skyTransitionFactor = Math.max(0, (sunsetHour - currentHour) / TRANSITION_DURATION);
+     } else {
+       // Full day
+       skyTransitionFactor = 1;
+     }
   } else {
      celestialType = 'moon';
      let nightDuration = (24 - sunsetHour) + sunriseHour;
@@ -4113,6 +4140,9 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
      const nightProgress = timeSinceSunset / safeNightDuration;
      celestialX = 40 + nightProgress * 280;
      celestialY = 25 + 0.0075 * Math.pow(celestialX - 180, 2);
+     
+     // Full night
+     skyTransitionFactor = 0;
   }
 
   const moonPhase = date ? getMoonPhase(date) : 0;
@@ -4196,15 +4226,47 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
         </filter>
       </defs>
 
-      {/* Sky background - blue gradient for day, black for night */}
-      {isNight ? (
-        <rect x="0" y="0" width="360" height="160" fill="#0a0a0a" />
-      ) : (
-        <rect x="0" y="0" width="360" height="160" fill="url(#daySkyGradient)" />
-      )}
+      {/* Sky background - smooth blend between night and day */}
+      {/* Night sky base - always rendered */}
+      <rect x="0" y="0" width="360" height="160" fill="#0a0a0a" />
       
-      {isDawn && <rect x="-100" y="0" width="600" height="160" fill="url(#dawnGradient)" opacity="0.3" className="anim-glow" />}
-      {isDusk && <rect x="-100" y="0" width="600" height="160" fill="url(#duskGradient)" opacity="0.3" className="anim-glow" />}
+      {/* Day sky - fades in/out smoothly based on skyTransitionFactor */}
+      <rect 
+        x="0" 
+        y="0" 
+        width="360" 
+        height="160" 
+        fill="url(#daySkyGradient)" 
+        opacity={skyTransitionFactor}
+        style={{ transition: `opacity ${CSS_TRANSITION_DURATION} ease-in-out` }}
+      />
+      
+      {/* Dawn/Dusk gradient overlays with smooth opacity transitions */}
+      {/* Use bell curve: peaks at mid-transition (factor=0.5), fades at extremes */}
+      {isDawn && (
+        <rect 
+          x="-100" 
+          y="0" 
+          width="600" 
+          height="160" 
+          fill="url(#dawnGradient)" 
+          opacity={getDawnDuskOpacity(skyTransitionFactor)}
+          className="anim-glow"
+          style={{ transition: `opacity ${CSS_TRANSITION_DURATION} ease-in-out` }}
+        />
+      )}
+      {isDusk && (
+        <rect 
+          x="-100" 
+          y="0" 
+          width="600" 
+          height="160" 
+          fill="url(#duskGradient)" 
+          opacity={getDawnDuskOpacity(skyTransitionFactor)}
+          className="anim-glow"
+          style={{ transition: `opacity ${CSS_TRANSITION_DURATION} ease-in-out` }}
+        />
+      )}
 
       {/* SONNE UND MOND - IMMER GERENDERT, ABER HINTER WOLKEN WENN OVERCAST */}
       {celestialType === 'sun' && (
