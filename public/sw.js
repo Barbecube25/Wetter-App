@@ -91,7 +91,7 @@ self.addEventListener('fetch', (event) => {
             }
             // If no cached version, return a simple offline page
             return new Response(
-              '<html><body><h1>Offline</h1><p>Please check your internet connection and reload.</p></body></html>',
+              '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Offline</title></head><body style="font-family:system-ui;text-align:center;padding:50px"><h1>⚠️ Offline</h1><p>Please check your internet connection and reload.</p><button onclick="location.reload()" style="padding:10px 20px;font-size:16px;cursor:pointer">Reload</button></body></html>',
               { headers: { 'Content-Type': 'text/html' } }
             );
           });

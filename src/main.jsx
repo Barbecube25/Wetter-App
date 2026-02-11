@@ -166,8 +166,11 @@ window.addEventListener('error', (event) => {
 // Handle unhandled promise rejections
 window.addEventListener('unhandledrejection', (event) => {
   console.error('Unhandled promise rejection:', event.reason);
-  // Prevent default to avoid console noise, but log for debugging
-  event.preventDefault();
+  // Only prevent default in production to avoid console noise
+  // In development, let errors surface normally for debugging
+  if (process.env.NODE_ENV === 'production') {
+    event.preventDefault();
+  }
 });
 
 ReactDOM.createRoot(document.getElementById('root')).render(
