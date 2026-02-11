@@ -8905,7 +8905,7 @@ export default function WeatherApp() {
         {/* Fixed Animation Card Container - Matches main content width, extends to top edge */}
         <div className="fixed left-0 right-0 z-20 px-4" style={{ top: 0 }}>
           <div className="max-w-4xl mx-auto">
-            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-t-m3-3xl ${isLandscape ? 'pt-2 px-4 pb-2' : 'pt-4 px-4 pb-4'} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant border-b-0 backdrop-blur-md ${isLandscape ? 'min-h-[100px]' : 'min-h-[200px]'}`}>
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl ${isLandscape ? 'pt-2 px-4 pb-2' : 'pt-4 px-4 pb-4'} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant backdrop-blur-md ${isLandscape ? 'min-h-[100px]' : 'min-h-[200px]'}`}>
               {/* Weather background animation */}
               <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
                 <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} demoTerrain={demoTerrain} elevation={currentLoc?.elevation || 0} latitude={currentLoc?.lat} longitude={currentLoc?.lon} />
@@ -8992,11 +8992,11 @@ export default function WeatherApp() {
           </div>
         </div>
 
-        {/* Enhanced Tab Navigation - Fixed positioned below fixed animation card, hidden in landscape when controls are hidden */}
+        {/* Enhanced Tab Navigation - Fixed positioned below fixed animation card with gap, hidden in landscape when controls are hidden */}
         {!(isLandscape && hideControlsInLandscape) && (
-        <div className="fixed left-0 right-0 z-30 px-4" style={{ top: animationCardHeight }}>
+        <div className="fixed left-0 right-0 z-30 px-4" style={{ top: `calc(${animationCardHeight} + ${fixedElementsGap})` }}>
           <div className="max-w-4xl mx-auto">
-            <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-b-m3-3xl ${isLandscape ? 'p-1' : 'p-2'} shadow-m3-2 border border-m3-outline-variant border-t-0`}>
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl ${isLandscape ? 'p-1' : 'p-2'} shadow-m3-2 border border-m3-outline-variant`}>
           <div className="grid grid-cols-5 gap-1">
             {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
               <button 
