@@ -4238,7 +4238,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
         height="160" 
         fill="url(#daySkyGradient)" 
         opacity={skyTransitionFactor}
-        style={{ transition: `opacity ${CSS_TRANSITION_DURATION} ease-in-out` }}
+        style={{ transition: (isDawn || isDusk) ? `opacity ${CSS_TRANSITION_DURATION} ease-in-out` : 'none' }}
       />
       
       {/* Dawn/Dusk gradient overlays with smooth opacity transitions */}
