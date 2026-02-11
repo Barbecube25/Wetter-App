@@ -4237,7 +4237,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
           width="600" 
           height="160" 
           fill="url(#dawnGradient)" 
-          opacity={0.3 * skyTransitionFactor}
+          opacity={0.3 * (1 - skyTransitionFactor)}
           className="anim-glow"
           style={{ transition: 'opacity 2s ease-in-out' }}
         />
@@ -4249,7 +4249,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
           width="600" 
           height="160" 
           fill="url(#duskGradient)" 
-          opacity={0.3 * skyTransitionFactor}
+          opacity={0.3 * (1 - skyTransitionFactor)}
           className="anim-glow"
           style={{ transition: 'opacity 2s ease-in-out' }}
         />
