@@ -9025,6 +9025,8 @@ export default function WeatherApp() {
         {/* Toggle button for weather detail tiles */}
         <button
           onClick={() => setTilesExpanded(!tilesExpanded)}
+          aria-expanded={tilesExpanded}
+          aria-controls="weather-details-tiles"
           className={`w-full flex items-center justify-center gap-2 ${isRealNight ? 'bg-m3-dark-surface-container/90 hover:bg-m3-dark-surface-container text-m3-dark-on-surface' : 'bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface'} rounded-m3-2xl py-3 shadow-m3-1 transition-all`}
         >
           <span className="text-m3-label-large font-medium">
@@ -9035,8 +9037,9 @@ export default function WeatherApp() {
 
         {/* Collapsible Weather Details Container */}
         <div 
+          id="weather-details-tiles"
           className={`transition-all duration-300 ease-in-out overflow-hidden space-y-2 ${
-            tilesExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
+            tilesExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
           {/* Weather Details Grid - First row (4 tiles) */}
