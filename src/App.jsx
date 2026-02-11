@@ -8331,7 +8331,7 @@ export default function WeatherApp() {
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
 
   // Dynamic layout constants for landscape mode support
-  const headerHeight = isLandscape ? '60px' : HEADER_HEIGHT;
+  const headerHeight = '0px'; // Header removed, location moved to animation card
   const animationCardHeight = isLandscape ? '100px' : ANIMATION_CARD_HEIGHT;
   const navBarHeight = isLandscape ? '56px' : NAV_BAR_HEIGHT;
   const fixedElementsGap = isLandscape ? '12px' : FIXED_ELEMENTS_GAP;
@@ -8878,69 +8878,65 @@ export default function WeatherApp() {
           />
       )}
 
-      <header className={`${isLandscape ? 'pt-2 px-4 pb-1' : 'pt-4 px-4 pb-3'} z-50 fixed top-0 left-0 right-0 backdrop-blur-md ${isRealNight ? 'bg-m3-dark-surface/95' : 'bg-m3-surface/95'}`}>
-        {/* Simplified header with just location name */}
-        <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center">
-            <div className="flex-1">
-              <h1 className={`${isLandscape ? 'text-m3-title-large' : 'text-m3-headline-small'} font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
-                {currentLoc.name}
-                {currentLoc.type === 'gps' && <span className="text-m3-primary ml-2">📍</span>}
-              </h1>
-              {(currentLoc.region || currentLoc.country) && !isLandscape && (
-                <div className={`flex items-center gap-1 text-m3-body-small ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mt-0.5`}>
-                  <MapPin size={12} />
-                  <span>
-                    {currentLoc.region}
-                    {currentLoc.region && currentLoc.country ? ', ' : ''}
-                    {currentLoc.country}
-                  </span>
-                </div>
-              )}
-              {/* Update Time Display */}
-              {!isLandscape && (
-                <div className={`flex items-center gap-2 text-m3-label-small ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mt-1`}>
-                  <Clock size={12} />
-                  <span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}{getCacheAgeText()}</span>
-                </div>
-              )}
-            </div>
+      {/* iOS Install Tip */}
+      {showIosInstall && (
+        <div className="fixed top-4 left-4 right-4 z-50 max-w-sm mx-auto">
+          <div className="bg-m3-surface-container p-4 rounded-m3-2xl shadow-m3-3 text-m3-on-surface relative animate-m3-slide-up">
+            <button onClick={() => setShowIosInstall(false)} className="absolute top-2 right-2 text-m3-on-surface-variant hover:text-m3-on-surface"><X size={18}/></button>
+            <div className="font-bold text-m3-title-medium mb-2 flex items-center gap-2"><Share size={18} /> {t('installTitle')}</div>
+            <p className="text-m3-body-small text-m3-on-surface-variant">{t('installDesc')}</p>
           </div>
-
-          {/* iOS Install Tip */}
-          {showIosInstall && (
-            <div className="bg-m3-surface-container p-4 rounded-m3-2xl shadow-m3-3 text-m3-on-surface max-w-sm mb-4 relative animate-m3-slide-up mt-4">
-              <button onClick={() => setShowIosInstall(false)} className="absolute top-2 right-2 text-m3-on-surface-variant hover:text-m3-on-surface"><X size={18}/></button>
-              <div className="font-bold text-m3-title-medium mb-2 flex items-center gap-2"><Share size={18} /> {t('installTitle')}</div>
-              <p className="text-m3-body-small text-m3-on-surface-variant">{t('installDesc')}</p>
-            </div>
-          )}
-
-          {/* Install FAB */}
-          {deferredPrompt && (
-            <button 
-              onClick={handleInstallClick} 
-              aria-label={t('installTitle') || "Install application"}
-              className="fixed right-4 z-40 p-4 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-4 hover:shadow-m3-5 transition-all animate-m3-scale-in"
-              style={{ bottom: 'calc(6rem + 80px)' }}
-            >
-              <Download size={24} />
-            </button>
-          )}
         </div>
-      </header>
+      )}
 
-      <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: `calc(${headerHeight} + ${animationCardHeight} + ${navBarHeight} + ${fixedElementsGap})` }}>
-        {/* Fixed Animation Card Container - Matches main content width */}
-        <div className="fixed left-0 right-0 z-30 px-4" style={{ top: headerHeight }}>
+      {/* Install FAB */}
+      {deferredPrompt && (
+        <button 
+          onClick={handleInstallClick} 
+          aria-label={t('installTitle') || "Install application"}
+          className="fixed right-4 z-40 p-4 rounded-m3-2xl bg-m3-primary text-m3-on-primary shadow-m3-4 hover:shadow-m3-5 transition-all animate-m3-scale-in"
+          style={{ bottom: 'calc(6rem + 80px)' }}
+        >
+          <Download size={24} />
+        </button>
+      )}
+
+      <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: `calc(${animationCardHeight} + ${navBarHeight} + ${fixedElementsGap})` }}>
+        {/* Fixed Animation Card Container - Matches main content width, extends to top edge */}
+        <div className="fixed left-0 right-0 z-30 px-4" style={{ top: 0 }}>
           <div className="max-w-4xl mx-auto">
-            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-t-m3-3xl ${isLandscape ? 'p-2' : 'p-4'} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant border-b-0 backdrop-blur-md ${isLandscape ? 'min-h-[100px]' : 'min-h-[200px]'}`}>
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-t-m3-3xl ${isLandscape ? 'pt-2 px-4 pb-2' : 'pt-4 px-4 pb-4'} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant border-b-0 backdrop-blur-md ${isLandscape ? 'min-h-[100px]' : 'min-h-[200px]'}`}>
               {/* Weather background animation */}
               <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
                 <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} demoTerrain={demoTerrain} elevation={currentLoc?.elevation || 0} latitude={currentLoc?.lat} longitude={currentLoc?.lon} />
               </div>
               
               <div className="relative z-10">
+                {/* Location and Update Time at top */}
+                <div className="mb-2">
+                  <h1 className={`${isLandscape ? 'text-m3-title-medium' : 'text-m3-headline-small'} font-bold text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]`}>
+                    {currentLoc.name}
+                    {currentLoc.type === 'gps' && <span className="ml-2">📍</span>}
+                  </h1>
+                  {(currentLoc.region || currentLoc.country) && !isLandscape && (
+                    <div className="flex items-center gap-1 text-m3-body-small text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)] mt-0.5">
+                      <MapPin size={12} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                      <span>
+                        {currentLoc.region}
+                        {currentLoc.region && currentLoc.country ? ', ' : ''}
+                        {currentLoc.country}
+                      </span>
+                    </div>
+                  )}
+                  {/* Update Time Display */}
+                  {!isLandscape && (
+                    <div className="flex items-center gap-2 text-m3-label-small text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)] mt-1">
+                      <Clock size={12} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                      <span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}{getCacheAgeText()}</span>
+                    </div>
+                  )}
+                </div>
+
                 {/* Main Temperature Display */}
                 <div>
                   <div className="flex items-start justify-between">
@@ -8998,7 +8994,7 @@ export default function WeatherApp() {
 
         {/* Enhanced Tab Navigation - Fixed positioned below fixed animation card, hidden in landscape when controls are hidden */}
         {!(isLandscape && hideControlsInLandscape) && (
-        <div className="fixed left-0 right-0 z-20 px-4" style={{ top: `calc(${headerHeight} + ${animationCardHeight})` }}>
+        <div className="fixed left-0 right-0 z-20 px-4" style={{ top: animationCardHeight }}>
           <div className="max-w-4xl mx-auto">
             <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-b-m3-3xl ${isLandscape ? 'p-1' : 'p-2'} shadow-m3-2 border border-m3-outline-variant border-t-0`}>
           <div className="grid grid-cols-5 gap-1">
