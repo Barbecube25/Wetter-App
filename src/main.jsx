@@ -157,16 +157,16 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Global error handler for uncaught errors
+// Global error handler for logging (doesn't trigger ErrorBoundary)
 window.addEventListener('error', (event) => {
   console.error('Uncaught error:', event.error);
-  // Don't prevent default - let error boundary handle it
+  // Note: This won't trigger ErrorBoundary, but logs for debugging
 });
 
 // Handle unhandled promise rejections
 window.addEventListener('unhandledrejection', (event) => {
   console.error('Unhandled promise rejection:', event.reason);
-  // Don't fail the app on promise rejections
+  // Prevent default to avoid console noise, but log for debugging
   event.preventDefault();
 });
 

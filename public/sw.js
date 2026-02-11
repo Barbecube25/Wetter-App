@@ -125,7 +125,25 @@ self.addEventListener('fetch', (event) => {
   // B. Statische Ressourcen -> Stale-While-Revalidate
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request).then((networkResponse) => {
+      // If we have a cached response, return it immediately and update in background
+      if (cachedResponse) {
+        // Fetch in background to update cache
+        fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, networkResponse.clone()).catch(err => {
+                console.warn('[Service Worker] Failed to cache static resource:', err);
+              });
+            });
+          }
+        }).catch(err => {
+          console.warn('[Service Worker] Background fetch failed for:', event.request.url, err);
+        });
+        return cachedResponse;
+      }
+      
+      // No cached response, try network
+      return fetch(event.request).then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, networkResponse.clone()).catch(err => {
@@ -135,23 +153,12 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       }).catch(err => {
-        console.warn('[Service Worker] Fetch failed for:', event.request.url, err);
-        // Return cached response if available, otherwise throw to be handled below
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        throw err;
-      });
-      
-      // Return cached response immediately if available, otherwise wait for fetch
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      
-      return fetchPromise.catch(() => {
-        // If both cache and network fail, return a minimal error response
-        console.error('[Service Worker] Both cache and network failed for:', event.request.url);
-        return new Response('Resource unavailable', { status: 503, statusText: 'Service Unavailable' });
+        console.error('[Service Worker] Fetch failed for:', event.request.url, err);
+        // Both cache and network failed, return error response
+        return new Response('Resource unavailable', { 
+          status: 503, 
+          statusText: 'Service Unavailable' 
+        });
       });
     })
   );
