@@ -211,6 +211,8 @@ const TRANSLATIONS = {
     usingGpsData: "Verwendet GPS-Position",
     pullToRefresh: "Zum Aktualisieren herunterziehen",
     releaseToRefresh: "Loslassen zum Aktualisieren",
+    showMoreDetails: "Weitere Details anzeigen",
+    hideMoreDetails: "Details verbergen",
 
   },
   en: {
@@ -390,6 +392,8 @@ const TRANSLATIONS = {
     usingGpsData: "Using GPS position",
     pullToRefresh: "Pull down to refresh",
     releaseToRefresh: "Release to refresh",
+    showMoreDetails: "Show more details",
+    hideMoreDetails: "Hide details",
 
   },
   fr: {
@@ -569,6 +573,8 @@ const TRANSLATIONS = {
     usingGpsData: "Utilise la position GPS",
     pullToRefresh: "Tirer vers le bas pour actualiser",
     releaseToRefresh: "Relâcher pour actualiser",
+    showMoreDetails: "Afficher plus de détails",
+    hideMoreDetails: "Masquer les détails",
 
 
   },
@@ -747,6 +753,8 @@ const TRANSLATIONS = {
     gpsAvailable: "Datos GPS disponibles",
     gpsNotAvailable: "Sin datos GPS",
     usingGpsData: "Usando posición GPS",
+    showMoreDetails: "Mostrar más detalles",
+    hideMoreDetails: "Ocultar detalles",
 
   },
   it: {
@@ -924,6 +932,8 @@ const TRANSLATIONS = {
     gpsAvailable: "Dati GPS disponibili",
     gpsNotAvailable: "Nessun dato GPS",
     usingGpsData: "Usa posizione GPS",
+    showMoreDetails: "Mostra più dettagli",
+    hideMoreDetails: "Nascondi dettagli",
 
   },
   tr: {
@@ -1099,6 +1109,8 @@ const TRANSLATIONS = {
     gpsAvailable: "GPS verileri mevcut",
     gpsNotAvailable: "GPS verisi yok",
     usingGpsData: "GPS konumunu kullanıyor",
+    showMoreDetails: "Daha fazla ayrıntı göster",
+    hideMoreDetails: "Ayrıntıları gizle",
 
   },
   pl: {
@@ -1274,6 +1286,8 @@ const TRANSLATIONS = {
     gpsAvailable: "Dane GPS dostępne",
     gpsNotAvailable: "Brak danych GPS",
     usingGpsData: "Używa pozycji GPS",
+    showMoreDetails: "Pokaż więcej szczegółów",
+    hideMoreDetails: "Ukryj szczegóły",
 
   },
   nl: {
@@ -1451,6 +1465,8 @@ const TRANSLATIONS = {
     gpsAvailable: "GPS-gegevens beschikbaar",
     gpsNotAvailable: "Geen GPS-gegevens",
     usingGpsData: "Gebruikt GPS-positie",
+    showMoreDetails: "Meer details tonen",
+    hideMoreDetails: "Details verbergen",
 
   },
   hr: {
@@ -1628,6 +1644,8 @@ const TRANSLATIONS = {
     gpsAvailable: "GPS podaci dostupni",
     gpsNotAvailable: "Nema GPS podataka",
     usingGpsData: "Koristi GPS poziciju",
+    showMoreDetails: "Prikaži više detalja",
+    hideMoreDetails: "Sakrij detalje",
 
   },
   el: {
@@ -1802,6 +1820,8 @@ const TRANSLATIONS = {
     gpsAvailable: "Διαθέσιμα δεδομένα GPS",
     gpsNotAvailable: "Χωρίς δεδομένα GPS",
     usingGpsData: "Χρήση θέσης GPS",
+    showMoreDetails: "Εμφάνιση περισσότερων λεπτομερειών",
+    hideMoreDetails: "Απόκρυψη λεπτομερειών",
 
   },
   da: {
@@ -1977,6 +1997,8 @@ const TRANSLATIONS = {
     gpsAvailable: "GPS-data tilgængelige",
     gpsNotAvailable: "Ingen GPS-data",
     usingGpsData: "Bruger GPS-position",
+    showMoreDetails: "Vis flere detaljer",
+    hideMoreDetails: "Skjul detaljer",
 
   },
   ru: {
@@ -2151,6 +2173,8 @@ const TRANSLATIONS = {
     gpsAvailable: "Данные GPS доступны",
     gpsNotAvailable: "Нет данных GPS",
     usingGpsData: "Используется позиция GPS",
+    showMoreDetails: "Показать больше деталей",
+    hideMoreDetails: "Скрыть детали",
 
   }
 };
@@ -6846,6 +6870,9 @@ export default function WeatherApp() {
   // Hide controls in landscape mode to see full animation
   const [hideControlsInLandscape, setHideControlsInLandscape] = useState(false);
 
+  // State for collapsible tiles (hidden by default)
+  const [tilesExpanded, setTilesExpanded] = useState(false);
+
   // WICHTIG: Echtzeit-State für die Animation (NEU)
   const [now, setNow] = useState(new Date());
 
@@ -8995,8 +9022,28 @@ export default function WeatherApp() {
         </div>
         )}
 
-        {/* Weather Details Grid - Moved below animation card */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {/* Toggle button for weather detail tiles */}
+        <button
+          onClick={() => setTilesExpanded(!tilesExpanded)}
+          aria-expanded={tilesExpanded}
+          aria-controls="weather-details-tiles"
+          className={`w-full flex items-center justify-center gap-2 ${isRealNight ? 'bg-m3-dark-surface-container/90 hover:bg-m3-dark-surface-container text-m3-dark-on-surface' : 'bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface'} rounded-m3-2xl py-3 shadow-m3-1 transition-all`}
+        >
+          <span className="text-m3-label-large font-medium">
+            {tilesExpanded ? t('hideMoreDetails') : t('showMoreDetails')}
+          </span>
+          {tilesExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        </button>
+
+        {/* Collapsible Weather Details Container */}
+        <div 
+          id="weather-details-tiles"
+          className={`transition-all duration-300 ease-in-out overflow-hidden space-y-2 ${
+            tilesExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
+          }`}
+        >
+          {/* Weather Details Grid - First row (4 tiles) */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col`}>
             <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Sun size={14} /> {t('uv')}
@@ -9033,7 +9080,7 @@ export default function WeatherApp() {
           </div>
         </div>
         
-        {/* Additional Weather Details Grid - Second row */}
+        {/* Additional Weather Details Grid - Second row (4 tiles) */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {current.pressure !== null && current.pressure !== undefined && (
             <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col`}>
@@ -9102,6 +9149,8 @@ export default function WeatherApp() {
               </div>
             </div>
           )}
+        </div>
+        {/* End of collapsible tiles */}
         </div>
 
         {/* Content Card with modern elevation */}
