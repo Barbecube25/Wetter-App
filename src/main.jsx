@@ -20,30 +20,38 @@ class ErrorBoundary extends React.Component {
   }
 
   clearCacheAndReload = () => {
-    // Clear all caches
-    if ('caches' in window) {
-      caches.keys().then(names => {
-        names.forEach(name => caches.delete(name));
-      });
-    }
-    
-    // Clear localStorage
-    try {
-      localStorage.clear();
-    } catch (e) {
-      console.error('Failed to clear localStorage:', e);
-    }
-    
-    // Unregister service worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        registrations.forEach(registration => registration.unregister());
-      }).then(() => {
-        window.location.reload();
-      });
-    } else {
+    // Clear all caches, localStorage, and service worker, then reload
+    Promise.all([
+      // Clear all caches
+      'caches' in window
+        ? caches.keys().then(names => Promise.all(names.map(name => caches.delete(name))))
+        : Promise.resolve(),
+      
+      // Clear localStorage
+      Promise.resolve().then(() => {
+        try {
+          localStorage.clear();
+        } catch (e) {
+          console.error('Failed to clear localStorage:', e);
+        }
+      }),
+      
+      // Unregister service worker
+      'serviceWorker' in navigator
+        ? navigator.serviceWorker.getRegistrations().then(registrations =>
+            Promise.all(registrations.map(reg => reg.unregister()))
+          )
+        : Promise.resolve()
+    ])
+    .then(() => {
+      console.log('All caches and data cleared, reloading...');
       window.location.reload();
-    }
+    })
+    .catch(err => {
+      console.error('Error during cache clearing:', err);
+      // Reload anyway to attempt recovery
+      window.location.reload();
+    });
   };
 
   render() {

@@ -136,9 +136,23 @@ self.addEventListener('fetch', (event) => {
         return networkResponse;
       }).catch(err => {
         console.warn('[Service Worker] Fetch failed for:', event.request.url, err);
-        return cachedResponse; // Return cached response if network fails
+        // Return cached response if available, otherwise throw to be handled below
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        throw err;
       });
-      return cachedResponse || fetchPromise;
+      
+      // Return cached response immediately if available, otherwise wait for fetch
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      
+      return fetchPromise.catch(() => {
+        // If both cache and network fail, return a minimal error response
+        console.error('[Service Worker] Both cache and network failed for:', event.request.url);
+        return new Response('Resource unavailable', { status: 503, statusText: 'Service Unavailable' });
+      });
     })
   );
 });
