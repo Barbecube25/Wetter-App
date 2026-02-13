@@ -5154,12 +5154,12 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
            result.maxIntensity = Math.max(result.maxIntensity, hourlyAmount);
            result.duration++;
            
-           // Track peak time and hourly forecast (next 6 hours)
+           // Track peak time and hourly forecast (next 24 hours)
            if (hourlyAmount > peakIntensity) {
                peakIntensity = hourlyAmount;
                peakTime = d.time;
            }
-           if (i < 6) { // Only first 6 hours for hourly forecast
+           if (i < 24) { // Only first 24 hours for hourly forecast
                result.hourlyForecast.push({ time: d.time, amount: hourlyAmount, rain: hourlyRain, snow: hourlySnow });
            }
        } else {
@@ -5484,7 +5484,7 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
                         <span className="text-sm font-bold text-slate-700">{t.nextHours}</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
-                        {hourlyForecast.slice(0, 6).map((forecast, idx) => {
+                        {hourlyForecast.slice(0, 24).map((forecast, idx) => {
                             const hasMixedInHour = forecast.rain > 0.1 && forecast.snow > 0.1;
                             return (
                                 <div key={idx} className="flex flex-col items-center bg-white/40 rounded-lg p-2">
