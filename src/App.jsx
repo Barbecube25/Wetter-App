@@ -6930,7 +6930,7 @@ export default function WeatherApp() {
   // Landscape mode detection
   const [isLandscape, setIsLandscape] = useState(false);
   
-  // Small screen detection - tracks devices with width strictly less than 375px (e.g., iPhone SE: 320px, small Android phones: 320-360px)
+  // Small screen detection - tracks devices with viewport width strictly less than 375px (e.g., iPhone SE: 320px, small Android phones: 320-360px)
   // Used to apply compact layout styles with reduced padding, smaller text, and tighter spacing
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   
