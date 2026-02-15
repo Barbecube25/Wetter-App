@@ -3544,7 +3544,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
 
 // --- 4. KOMPONENTEN ---
 // --- SETTINGS MODAL (NEU) ---
-const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
+const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmallScreen = false }) => {
     const [localSettings, setLocalSettings] = useState(settings);
 
     useEffect(() => {
@@ -4105,12 +4105,12 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   // 0 = full night, 1 = full day
   let skyTransitionFactor = 0;
   const TRANSITION_DURATION = 0.75; // Duration in hours for dawn/dusk transition (45 minutes)
-  const CSS_TRANSITION_DURATION = '2s'; // CSS transition duration for smooth opacity changes
+  const CSS_TRANSITION_DURATION = '4s'; // CSS transition duration for smooth opacity changes
   
   // Multiplier for dawn/dusk gradient opacity calculation
   // Formula: max opacity = (1/4) * multiplier (occurs at factor=0.5)
-  // With multiplier=1.2: peak opacity = 0.25 * 1.2 = 0.3
-  const DAWN_DUSK_OPACITY_MULTIPLIER = 1.2;
+  // With multiplier=1.0: peak opacity = 0.25
+  const DAWN_DUSK_OPACITY_MULTIPLIER = 1.0;
   
   // Helper function for dawn/dusk gradient opacity using bell curve
   // Peaks at mid-transition (0.3 opacity when factor=0.5), fades to 0 at extremes
@@ -4267,7 +4267,6 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
           height="160" 
           fill="url(#dawnGradient)" 
           opacity={getDawnDuskOpacity(skyTransitionFactor)}
-          className="anim-glow"
           style={{ transition: `opacity ${CSS_TRANSITION_DURATION} ease-in-out` }}
         />
       )}
@@ -4279,7 +4278,6 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
           height="160" 
           fill="url(#duskGradient)" 
           opacity={getDawnDuskOpacity(skyTransitionFactor)}
-          className="anim-glow"
           style={{ transition: `opacity ${CSS_TRANSITION_DURATION} ease-in-out` }}
         />
       )}
@@ -5600,7 +5598,7 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
 };
 
 // --- NEU: FEEDBACK MODAL (ERWEITERT) ---
-const FeedbackModal = ({ onClose, currentTemp, lang='de' }) => {
+const FeedbackModal = ({ onClose, currentTemp, lang='de', isSmallScreen = false }) => {
     const [sent, setSent] = useState(false);
     const [tempAdjustment, setTempAdjustment] = useState(0); // Offset in Grad
     const [selectedCondition, setSelectedCondition] = useState(null);
@@ -5972,7 +5970,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
 };
 
 // --- PRECIPITATION DETAILS MODAL ---
-const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', formatPrecip, getPrecipUnitLabel, setActiveTab }) => {
+const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', formatPrecip, getPrecipUnitLabel, setActiveTab, isSmallScreen = false }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
   
   if (!isOpen) return null;
@@ -6095,7 +6093,7 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
 };
 
 // --- LOCATION MODAL ---
-const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAddCurrentLocation, onDeleteLocation, currentLoc, onRenameLocation, onRenameHome, homeLoc, lang='de' }) => {
+const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAddCurrentLocation, onDeleteLocation, currentLoc, onRenameLocation, onRenameHome, homeLoc, lang='de', isSmallScreen = false }) => {
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
@@ -6294,7 +6292,7 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
 };
 
 // --- NEU: HOME SETUP MODAL (Für den allerersten Start) ---
-const HomeSetupModal = ({ onSave, lang='de' }) => {
+const HomeSetupModal = ({ onSave, lang='de', isSmallScreen = false }) => {
     const [searchQuery, setSearchQuery] = useState("");
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -6476,7 +6474,7 @@ const LANGUAGE_FLAGS = {
 };
 
 // --- TUTORIAL COMPONENT (Für den allerersten Start) ---
-const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' }) => {
+const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de', isSmallScreen = false }) => {
     const [step, setStep] = useState(0);
     const [homeLocation, setHomeLocation] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
@@ -8973,6 +8971,7 @@ export default function WeatherApp() {
                   settings={settings}
                   setSettings={setSettings}
                   lang={lang}
+                  isSmallScreen={isSmallScreen}
               />
           </div>
       );
@@ -8998,6 +8997,7 @@ export default function WeatherApp() {
                       setShowHomeSetup(false);
                   }}
                   lang={lang}
+                  isSmallScreen={isSmallScreen}
               />
           </div>
       );
@@ -9045,7 +9045,7 @@ export default function WeatherApp() {
         </div>
       )}
       
-      {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} currentTemp={current.temp} lang={lang} />}
+      {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} currentTemp={current.temp} lang={lang} isSmallScreen={isSmallScreen} />}
       {showPrecipModal && (
         <PrecipitationDetailsModal 
           isOpen={showPrecipModal}
@@ -9055,6 +9055,7 @@ export default function WeatherApp() {
           formatPrecip={formatPrecip}
           getPrecipUnitLabel={getPrecipUnitLabel}
           setActiveTab={setActiveTab}
+          isSmallScreen={isSmallScreen}
         />
       )}
       {showSettingsModal && (
@@ -9064,6 +9065,7 @@ export default function WeatherApp() {
              settings={settings}
              onSave={setSettings}
              onChangeHome={() => setShowHomeSetup(true)} // NEU: Trigger für Setup Modal
+             isSmallScreen={isSmallScreen}
           />
       )}
       {showLocationModal && (
@@ -9083,6 +9085,7 @@ export default function WeatherApp() {
             onRenameHome={handleRenameHome}
             homeLoc={homeLoc}
             lang={lang}
+            isSmallScreen={isSmallScreen}
           />
       )}
 
