@@ -6930,7 +6930,7 @@ export default function WeatherApp() {
   // Landscape mode detection
   const [isLandscape, setIsLandscape] = useState(false);
   
-  // Small screen detection - tracks devices with width < 375px (e.g., iPhone SE, small Android phones)
+  // Small screen detection - tracks devices with width strictly less than 375px (e.g., iPhone SE: 320px, small Android phones: 320-360px)
   // Used to apply compact layout styles with reduced padding, smaller text, and tighter spacing
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   
@@ -8399,6 +8399,8 @@ export default function WeatherApp() {
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
 
   // Helper function to get responsive layout dimensions based on device orientation and size
+  // Note: Landscape mode takes precedence over small screen when both are true,
+  // as landscape orientation is a more significant layout constraint
   const getLayoutDimensions = (isLandscape, isSmallScreen) => {
     if (isLandscape) {
       return {
@@ -8429,6 +8431,7 @@ export default function WeatherApp() {
   const fixedElementsGap = layoutDimensions.fixedElementsGap;
 
   // Helper function to get animation card padding classes
+  // Landscape mode takes precedence when both isLandscape and isSmallScreen are true
   const getAnimationCardPadding = () => {
     if (isLandscape) return 'pt-2 px-4 pb-2';
     if (isSmallScreen) return 'pt-3 px-3 pb-3';
@@ -8436,6 +8439,7 @@ export default function WeatherApp() {
   };
 
   // Helper function to get animation card min-height
+  // Landscape mode takes precedence when both isLandscape and isSmallScreen are true
   const getAnimationCardMinHeight = () => {
     if (isLandscape) return 'min-h-[100px]';
     if (isSmallScreen) return 'min-h-[160px]';
