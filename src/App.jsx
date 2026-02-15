@@ -6930,7 +6930,8 @@ export default function WeatherApp() {
   // Landscape mode detection
   const [isLandscape, setIsLandscape] = useState(false);
   
-  // Small screen detection (for extra-small devices like 320-375px)
+  // Small screen detection - tracks devices with width < 375px (e.g., iPhone SE, small Android phones)
+  // Used to apply compact layout styles with reduced padding, smaller text, and tighter spacing
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   
   // Hide controls in landscape mode to see full animation
@@ -8397,11 +8398,49 @@ export default function WeatherApp() {
   const tileBg = isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/50 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant';
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
 
+  // Helper function to get responsive layout dimensions based on device orientation and size
+  const getLayoutDimensions = (isLandscape, isSmallScreen) => {
+    if (isLandscape) {
+      return {
+        animationCardHeight: '100px',
+        navBarHeight: '56px',
+        fixedElementsGap: '12px'
+      };
+    }
+    if (isSmallScreen) {
+      return {
+        animationCardHeight: '180px',
+        navBarHeight: '70px',
+        fixedElementsGap: '16px'
+      };
+    }
+    return {
+      animationCardHeight: ANIMATION_CARD_HEIGHT,
+      navBarHeight: NAV_BAR_HEIGHT,
+      fixedElementsGap: FIXED_ELEMENTS_GAP
+    };
+  };
+
   // Dynamic layout constants for landscape mode and small screen support
   const headerHeight = '0px'; // Header removed, location moved to animation card
-  const animationCardHeight = isLandscape ? '100px' : (isSmallScreen ? '180px' : ANIMATION_CARD_HEIGHT);
-  const navBarHeight = isLandscape ? '56px' : (isSmallScreen ? '70px' : NAV_BAR_HEIGHT);
-  const fixedElementsGap = isLandscape ? '12px' : (isSmallScreen ? '16px' : FIXED_ELEMENTS_GAP);
+  const layoutDimensions = getLayoutDimensions(isLandscape, isSmallScreen);
+  const animationCardHeight = layoutDimensions.animationCardHeight;
+  const navBarHeight = layoutDimensions.navBarHeight;
+  const fixedElementsGap = layoutDimensions.fixedElementsGap;
+
+  // Helper function to get animation card padding classes
+  const getAnimationCardPadding = () => {
+    if (isLandscape) return 'pt-2 px-4 pb-2';
+    if (isSmallScreen) return 'pt-3 px-3 pb-3';
+    return 'pt-4 px-4 pb-4';
+  };
+
+  // Helper function to get animation card min-height
+  const getAnimationCardMinHeight = () => {
+    if (isLandscape) return 'min-h-[100px]';
+    if (isSmallScreen) return 'min-h-[160px]';
+    return 'min-h-[200px]';
+  };
 
   // Create a 3-day forecast: rest of today, tomorrow, and day after tomorrow
   const threeDayForecast = useMemo(() => {
@@ -8972,7 +9011,7 @@ export default function WeatherApp() {
         {/* Fixed Animation Card Container - Matches main content width, extends to top edge */}
         <div className={`fixed left-0 right-0 z-20 ${isSmallScreen ? 'px-2' : 'px-4'}`} style={{ top: 0 }}>
           <div className="max-w-4xl mx-auto">
-            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl ${isLandscape ? 'pt-2 px-4 pb-2' : (isSmallScreen ? 'pt-3 px-3 pb-3' : 'pt-4 px-4 pb-4')} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant backdrop-blur-md ${isLandscape ? 'min-h-[100px]' : (isSmallScreen ? 'min-h-[160px]' : 'min-h-[200px]')}`}>
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl ${getAnimationCardPadding()} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant backdrop-blur-md ${getAnimationCardMinHeight()}`}>
               {/* Weather background animation */}
               <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
                 <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} demoTerrain={demoTerrain} elevation={currentLoc?.elevation || 0} latitude={currentLoc?.lat} longitude={currentLoc?.lon} />
