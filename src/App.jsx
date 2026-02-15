@@ -8152,7 +8152,8 @@ export default function WeatherApp() {
           if (gfsVal !== undefined && gfsVal !== null) {
             return gfsVal;
           }
-          return h[key]?.[i] ?? null;
+          // No generic fallback: visibility is only available in GFS model
+          return null;
         }
         
         // Special handling for apparent_temperature: Prefer ICON model (most reliable for Europe)
@@ -8176,6 +8177,10 @@ export default function WeatherApp() {
           if (gemVal !== undefined && gemVal !== null) {
             return gemVal;
           }
+          // Fallback to generic field or 0. Note: 0 is returned as default (not null) 
+          // to maintain compatibility with existing code that performs math operations 
+          // on appTemp (e.g., line 2679). While 0°C is a valid temperature, it's used 
+          // here to indicate "no data" and matches the baseData initialization pattern.
           return h[key]?.[i] ?? 0;
         }
         
