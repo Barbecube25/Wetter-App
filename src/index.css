@@ -13,3 +13,11 @@ body {
   min-width: 320px;
   min-height: 100vh;
 }
+
+/* Safe area padding for notched devices (iPhone X+, newer Android) */
+@supports (padding: env(safe-area-inset-left)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}

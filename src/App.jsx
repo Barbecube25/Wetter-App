@@ -29,8 +29,9 @@ const LIGHT_PRECIP_THRESHOLD = 0.1;
 const STRONG_PRECIP_THRESHOLD = 0.5;
 const isAboveThreshold = (precipValue, snowValue, threshold) => precipValue > threshold || snowValue > threshold;
 
-// Landscape mode detection threshold - devices with height less than this are considered landscape
-const LANDSCAPE_HEIGHT_THRESHOLD = 600; 
+// Responsive design thresholds
+const LANDSCAPE_HEIGHT_THRESHOLD = 600; // Landscape mode detection threshold - devices with height less than this are considered landscape
+const SMALL_SCREEN_WIDTH_THRESHOLD = 375; // Small screen detection threshold - devices with width less than this need tighter spacing
 
 // TEXT RESSOURCEN
 const TRANSLATIONS = {
@@ -3542,8 +3543,8 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome }) => {
     const t = TRANSLATIONS[localSettings.language] || TRANSLATIONS['de'];
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-             <div className="bg-m3-surface rounded-m3-xl max-w-sm w-full max-h-[90vh] shadow-m3-5 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+        <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
+             <div className={`bg-m3-surface rounded-m3-xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-sm'} w-full max-h-[90vh] shadow-m3-5 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200`}>
                  <div className="flex justify-between items-center px-6 pt-6 pb-4 border-b border-m3-outline-variant flex-shrink-0">
                      <h2 className="text-xl font-bold text-m3-on-surface flex items-center gap-2">
                          <Settings size={24} className="text-m3-primary"/> {t.settings}
@@ -5574,8 +5575,8 @@ const FeedbackModal = ({ onClose, currentTemp, lang='de' }) => {
 
     if (sent) {
         return (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
+            <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
+                <div className={`bg-white rounded-3xl ${isSmallScreen ? 'p-4' : 'p-8'} ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-sm'} w-full text-center shadow-2xl scale-100 animate-in zoom-in-95 duration-200`}>
                     <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-600">
                         <CheckCircle2 size={32} />
                     </div>
@@ -5589,8 +5590,8 @@ const FeedbackModal = ({ onClose, currentTemp, lang='de' }) => {
     const displayTemp = Math.round(currentTemp + tempAdjustment);
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
+            <div className={`bg-white rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-sm'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
                 <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <h3 className="font-bold text-slate-800 flex items-center gap-2"><MessageSquarePlus size={18} className="text-blue-500"/> {t.feedbackTitle}</h3>
                     <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={20} className="text-slate-400" /></button>
@@ -5940,8 +5941,8 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
   const totalAmount = next24Hours.reduce((sum, hour) => sum + hour.amount, 0);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+    <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
+      <div className={`bg-white rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-md'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
         {/* Header */}
         <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 sticky top-0">
           <h3 className="font-bold text-slate-800 flex items-center gap-2">
@@ -6082,8 +6083,8 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
     };
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
+            <div className={`bg-white rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-sm'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
                 <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <h3 className="font-bold text-slate-800 flex items-center gap-2"><MapIcon size={18} className="text-blue-500"/> {t.managePlaces}</h3>
                     <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={20} className="text-slate-400" /></button>
@@ -6314,8 +6315,8 @@ const HomeSetupModal = ({ onSave, lang='de' }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-500">
-             <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden p-6 text-center animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+        <div className={`fixed inset-0 z-[100] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-500`}>
+             <div className={`bg-white rounded-3xl ${isSmallScreen ? 'max-w-[95vw] p-4' : 'max-w-sm p-6'} w-full shadow-2xl overflow-hidden text-center animate-in zoom-in-95 slide-in-from-bottom-4 duration-500`}>
                  {!selectedLoc ? (
                      <>
                         <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -6613,8 +6614,8 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de' 
     };
     
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-m3-surface/95 backdrop-blur-lg animate-in fade-in duration-500">
-            <div className="bg-m3-surface-container rounded-m3-xl max-w-md w-full shadow-m3-5 overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-500 max-h-[90vh] flex flex-col">
+        <div className={`fixed inset-0 z-[100] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-m3-surface/95 backdrop-blur-lg animate-in fade-in duration-500`}>
+            <div className={`bg-m3-surface-container rounded-m3-xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-md'} w-full shadow-m3-5 overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-500 max-h-[90vh] flex flex-col`}>
                 {/* Header with Progress */}
                 <div className="bg-m3-primary p-6 text-m3-on-primary relative overflow-hidden flex-shrink-0">
                     <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
@@ -6929,6 +6930,10 @@ export default function WeatherApp() {
   // Landscape mode detection
   const [isLandscape, setIsLandscape] = useState(false);
   
+  // Small screen detection - tracks devices with viewport width strictly less than 375px (e.g., iPhone SE: 320px, small Android phones: 320-360px)
+  // Used to apply compact layout styles with reduced padding, smaller text, and tighter spacing
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+  
   // Hide controls in landscape mode to see full animation
   const [hideControlsInLandscape, setHideControlsInLandscape] = useState(false);
 
@@ -6946,10 +6951,11 @@ export default function WeatherApp() {
     return () => clearInterval(timer);
   }, []);
 
-  // Detect landscape orientation
+  // Detect landscape orientation and small screens
   useEffect(() => {
     const checkOrientation = () => {
       setIsLandscape(window.innerWidth > window.innerHeight && window.innerHeight < LANDSCAPE_HEIGHT_THRESHOLD);
+      setIsSmallScreen(window.innerWidth < SMALL_SCREEN_WIDTH_THRESHOLD);
     };
     
     checkOrientation();
@@ -8392,11 +8398,53 @@ export default function WeatherApp() {
   const tileBg = isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/50 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant';
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
 
-  // Dynamic layout constants for landscape mode support
+  // Helper function to get responsive layout dimensions based on device orientation and size
+  // Note: Landscape mode takes precedence over small screen when both are true,
+  // as landscape orientation is a more significant layout constraint
+  const getLayoutDimensions = (isLandscape, isSmallScreen) => {
+    if (isLandscape) {
+      return {
+        animationCardHeight: '100px',
+        navBarHeight: '56px',
+        fixedElementsGap: '12px'
+      };
+    }
+    if (isSmallScreen) {
+      return {
+        animationCardHeight: '180px',
+        navBarHeight: '70px',
+        fixedElementsGap: '16px'
+      };
+    }
+    return {
+      animationCardHeight: ANIMATION_CARD_HEIGHT,
+      navBarHeight: NAV_BAR_HEIGHT,
+      fixedElementsGap: FIXED_ELEMENTS_GAP
+    };
+  };
+
+  // Dynamic layout constants for landscape mode and small screen support
   const headerHeight = '0px'; // Header removed, location moved to animation card
-  const animationCardHeight = isLandscape ? '100px' : ANIMATION_CARD_HEIGHT;
-  const navBarHeight = isLandscape ? '56px' : NAV_BAR_HEIGHT;
-  const fixedElementsGap = isLandscape ? '12px' : FIXED_ELEMENTS_GAP;
+  const layoutDimensions = getLayoutDimensions(isLandscape, isSmallScreen);
+  const animationCardHeight = layoutDimensions.animationCardHeight;
+  const navBarHeight = layoutDimensions.navBarHeight;
+  const fixedElementsGap = layoutDimensions.fixedElementsGap;
+
+  // Helper function to get animation card padding classes
+  // Landscape mode takes precedence when both isLandscape and isSmallScreen are true
+  const getAnimationCardPadding = () => {
+    if (isLandscape) return 'pt-2 px-4 pb-2';
+    if (isSmallScreen) return 'pt-3 px-3 pb-3';
+    return 'pt-4 px-4 pb-4';
+  };
+
+  // Helper function to get animation card min-height
+  // Landscape mode takes precedence when both isLandscape and isSmallScreen are true
+  const getAnimationCardMinHeight = () => {
+    if (isLandscape) return 'min-h-[100px]';
+    if (isSmallScreen) return 'min-h-[160px]';
+    return 'min-h-[200px]';
+  };
 
   // Create a 3-day forecast: rest of today, tomorrow, and day after tomorrow
   const threeDayForecast = useMemo(() => {
@@ -8942,7 +8990,7 @@ export default function WeatherApp() {
 
       {/* iOS Install Tip */}
       {showIosInstall && (
-        <div className="fixed top-4 left-4 right-4 z-50 max-w-sm mx-auto">
+        <div className={`fixed top-4 left-4 right-4 z-50 ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-sm'} mx-auto`}>
           <div className="bg-m3-surface-container p-4 rounded-m3-2xl shadow-m3-3 text-m3-on-surface relative animate-m3-slide-up">
             <button onClick={() => setShowIosInstall(false)} className="absolute top-2 right-2 text-m3-on-surface-variant hover:text-m3-on-surface"><X size={18}/></button>
             <div className="font-bold text-m3-title-medium mb-2 flex items-center gap-2"><Share size={18} /> {t('installTitle')}</div>
@@ -8963,11 +9011,11 @@ export default function WeatherApp() {
         </button>
       )}
 
-      <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: `calc(${animationCardHeight} + ${navBarHeight} + ${fixedElementsGap})` }}>
+      <main className={`max-w-4xl mx-auto ${isSmallScreen ? 'px-2' : 'px-4'} pb-4 z-10 relative space-y-4`} style={{ paddingTop: `calc(${animationCardHeight} + ${navBarHeight} + ${fixedElementsGap})` }}>
         {/* Fixed Animation Card Container - Matches main content width, extends to top edge */}
-        <div className="fixed left-0 right-0 z-20 px-4" style={{ top: 0 }}>
+        <div className={`fixed left-0 right-0 z-20 ${isSmallScreen ? 'px-2' : 'px-4'}`} style={{ top: 0 }}>
           <div className="max-w-4xl mx-auto">
-            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl ${isLandscape ? 'pt-2 px-4 pb-2' : 'pt-4 px-4 pb-4'} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant backdrop-blur-md ${isLandscape ? 'min-h-[100px]' : 'min-h-[200px]'}`}>
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl ${getAnimationCardPadding()} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant backdrop-blur-md ${getAnimationCardMinHeight()}`}>
               {/* Weather background animation */}
               <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
                 <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} demoTerrain={demoTerrain} elevation={currentLoc?.elevation || 0} latitude={currentLoc?.lat} longitude={currentLoc?.lon} />
@@ -9056,22 +9104,22 @@ export default function WeatherApp() {
 
         {/* Enhanced Tab Navigation - Fixed positioned below fixed animation card with gap, hidden in landscape when controls are hidden */}
         {!(isLandscape && hideControlsInLandscape) && (
-        <div className="fixed left-0 right-0 z-30 px-4" style={{ top: `calc(${animationCardHeight} + ${fixedElementsGap})` }}>
+        <div className={`fixed left-0 right-0 z-30 ${isSmallScreen ? 'px-2' : 'px-4'}`} style={{ top: `calc(${animationCardHeight} + ${fixedElementsGap})` }}>
           <div className="max-w-4xl mx-auto">
-            <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl ${isLandscape ? 'p-1' : 'p-2'} shadow-m3-2 border border-m3-outline-variant`}>
-          <div className="grid grid-cols-5 gap-1">
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl ${isLandscape ? 'p-1' : (isSmallScreen ? 'p-1.5' : 'p-2')} shadow-m3-2 border border-m3-outline-variant`}>
+          <div className={`grid grid-cols-5 ${isSmallScreen ? 'gap-0.5' : 'gap-1'}`}>
             {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
               <button 
                 key={tab.id} 
                 onClick={() => setActiveTab(tab.id)} 
-                className={`flex flex-col items-center justify-center ${isLandscape ? 'py-2 px-1' : 'py-3 px-2'} rounded-m3-2xl ${isLandscape ? 'text-m3-label-small' : 'text-m3-label-medium'} font-medium transition-all ${
+                className={`flex flex-col items-center justify-center ${isLandscape ? 'py-2 px-1' : (isSmallScreen ? 'py-2 px-0.5' : 'py-3 px-2')} rounded-m3-2xl ${isLandscape ? 'text-m3-label-small' : 'text-m3-label-medium'} font-medium transition-all ${
                   activeTab === tab.id 
                     ? 'bg-m3-primary text-m3-on-primary shadow-m3-2' 
                     : (isRealNight ? 'text-m3-dark-on-surface-variant hover:bg-m3-dark-surface-container-high hover:text-m3-dark-on-surface' : 'text-m3-on-surface-variant hover:bg-m3-surface-container-high hover:text-m3-on-surface')
                 }`}
               >
-                <tab.icon size={isLandscape ? 16 : 20} className={isLandscape ? 'mb-0.5' : 'mb-1'} />
-                <span className={isLandscape ? 'text-[9px]' : 'text-[10px] sm:text-xs'}>{tab.label}</span>
+                <tab.icon size={isLandscape ? 16 : (isSmallScreen ? 16 : 20)} className={isLandscape ? 'mb-0.5' : (isSmallScreen ? 'mb-0.5' : 'mb-1')} />
+                <span className={isLandscape ? 'text-[9px]' : (isSmallScreen ? 'text-[9px]' : 'text-[10px] sm:text-xs')}>{tab.label}</span>
               </button>
             ))}
           </div>
@@ -9101,7 +9149,7 @@ export default function WeatherApp() {
           }`}
         >
           {/* Weather Details Grid - First row (4 tiles) */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className={`grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'gap-1.5' : 'gap-2'}`}>
           <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col`}>
             <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Sun size={14} /> {t('uv')}
@@ -9139,7 +9187,7 @@ export default function WeatherApp() {
         </div>
         
         {/* Additional Weather Details Grid - Second row (4 tiles) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className={`grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'gap-1.5' : 'gap-2'}`}>
           {current.pressure !== null && current.pressure !== undefined && (
             <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col`}>
               <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
