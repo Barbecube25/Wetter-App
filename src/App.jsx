@@ -4105,12 +4105,12 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   // 0 = full night, 1 = full day
   let skyTransitionFactor = 0;
   const TRANSITION_DURATION = 0.75; // Duration in hours for dawn/dusk transition (45 minutes)
-  const CSS_TRANSITION_DURATION = '2s'; // CSS transition duration for smooth opacity changes
+  const CSS_TRANSITION_DURATION = '4s'; // CSS transition duration for smooth opacity changes
   
   // Multiplier for dawn/dusk gradient opacity calculation
   // Formula: max opacity = (1/4) * multiplier (occurs at factor=0.5)
-  // With multiplier=1.2: peak opacity = 0.25 * 1.2 = 0.3
-  const DAWN_DUSK_OPACITY_MULTIPLIER = 1.2;
+  // With multiplier=1.0: peak opacity = 0.25 * 1.0 = 0.25
+  const DAWN_DUSK_OPACITY_MULTIPLIER = 1.0;
   
   // Helper function for dawn/dusk gradient opacity using bell curve
   // Peaks at mid-transition (0.3 opacity when factor=0.5), fades to 0 at extremes
@@ -4267,7 +4267,6 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
           height="160" 
           fill="url(#dawnGradient)" 
           opacity={getDawnDuskOpacity(skyTransitionFactor)}
-          className="anim-glow"
           style={{ transition: `opacity ${CSS_TRANSITION_DURATION} ease-in-out` }}
         />
       )}
@@ -4279,7 +4278,6 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
           height="160" 
           fill="url(#duskGradient)" 
           opacity={getDawnDuskOpacity(skyTransitionFactor)}
-          className="anim-glow"
           style={{ transition: `opacity ${CSS_TRANSITION_DURATION} ease-in-out` }}
         />
       )}
