@@ -2676,7 +2676,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     
     const current = data[0];
     let intro = `${t.now} (${current.displayTime} ${t.oclock}): ${Math.round(current.temp)}°`;
-    if (Math.abs(current.appTemp - current.temp) > 2) intro += `, ${t.feelsLike} ${Math.round(current.appTemp)}°.`;
+    if (current.appTemp !== null && current.appTemp !== undefined && Math.abs(current.appTemp - current.temp) > 2) intro += `, ${t.feelsLike} ${Math.round(current.appTemp)}°.`;
     else intro += `.`;
     
     let parts = [intro];
@@ -8145,6 +8145,44 @@ export default function WeatherApp() {
 
       // FIX: Verwendung der globalen Seamless-Keys
       const getVal = (key) => {
+        // Special handling for visibility: Only GFS/HRRR models support visibility
+        // ICON, AROME, and GEM do not provide visibility data
+        if (key === 'visibility') {
+          const gfsVal = h[`${key}_gfs_seamless`]?.[i];
+          if (gfsVal !== undefined && gfsVal !== null) {
+            return gfsVal;
+          }
+          // No generic fallback: visibility is only available in GFS model
+          return null;
+        }
+        
+        // Special handling for apparent_temperature: Prefer ICON model (most reliable for Europe)
+        // with fallback to other models
+        if (key === 'apparent_temperature') {
+          const iconVal = h[`${key}_icon_seamless`]?.[i];
+          if (iconVal !== undefined && iconVal !== null) {
+            return iconVal;
+          }
+          // Fallback to GFS if ICON not available
+          const gfsVal = h[`${key}_gfs_seamless`]?.[i];
+          if (gfsVal !== undefined && gfsVal !== null) {
+            return gfsVal;
+          }
+          // Last resort: use other models
+          const aromeVal = h[`${key}_arome_seamless`]?.[i];
+          if (aromeVal !== undefined && aromeVal !== null) {
+            return aromeVal;
+          }
+          const gemVal = h[`${key}_gem_seamless`]?.[i];
+          if (gemVal !== undefined && gemVal !== null) {
+            return gemVal;
+          }
+          // Return null if no model provides data. This allows calling code to distinguish
+          // between "no data available" and "actual temperature is 0°C".
+          return null;
+        }
+        
+        // Default behavior: average across all available models
         const modelVals = [
           h[`${key}_icon_seamless`]?.[i],
           h[`${key}_gfs_seamless`]?.[i],
@@ -8309,7 +8347,7 @@ export default function WeatherApp() {
   
   // LIVE oder DEMO Daten?
   const liveCurrent = useMemo(() => {
-    const baseData = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: 0, precip: 0, wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0, cloudCover: 0, pressure: null, visibility: null };
+    const baseData = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: 0, precip: 0, wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: null, humidity: 0, dewPoint: 0, uvIndex: 0, cloudCover: 0, pressure: null, visibility: null };
     
     // Override with current API data if available (more accurate, radar-based observations)
     if (shortTermData?.current) {
