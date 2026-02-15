@@ -2311,6 +2311,13 @@ const styles = `
     100% { transform: translateY(180px) translateX(20px); opacity: 0; } 
   }
 
+  @keyframes sleet-fall { 
+    0% { transform: translateY(-20px) translateX(-3px) rotate(0deg); opacity: 0; } 
+    15% { opacity: 0.85; } 
+    50% { transform: translateY(80px) translateX(3px) rotate(90deg); }
+    100% { transform: translateY(160px) translateX(-5px) rotate(180deg); opacity: 0; } 
+  }
+
   /* --- NEBEL & ATMOSPHÄRE --- */
   @keyframes fog-flow { 
     0% { transform: translateX(-5%); opacity: 0.3; } 
@@ -2380,6 +2387,8 @@ const styles = `
   
   .animate-snow-slow { animation: snow-fall-slow 6s infinite linear; }
   .animate-snow-fast { animation: snow-fall-fast 3.5s infinite linear; }
+  
+  .animate-sleet { animation: sleet-fall 4s infinite linear; }
   
   .anim-fog-1 { animation: fog-flow 12s ease-in-out infinite; }
   .anim-fog-2 { animation: fog-flow 18s ease-in-out infinite reverse; }
@@ -3867,6 +3876,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const isHeavySnow = [75, 86].includes(code);
   const isSnow = isLightSnow || isMediumSnow || isHeavySnow;
   const isSleet = [56, 57, 66, 67].includes(code);
+  const isLightSleet = [56, 66].includes(code); // Light freezing drizzle/rain
+  const isHeavySleet = [57, 67].includes(code); // Dense freezing drizzle/rain
   const isStorm = [95, 96, 99].includes(code);
   const isFog = [45, 48].includes(code);
   const isExtremeHeat = temp >= 30;
@@ -4779,8 +4790,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
          </g>
       )}
 
-      {(isRain || isSleet) && (
-         <g fill={isSleet ? "#cbd5e1" : "#93c5fd"} opacity={0.8} transform={rainRotation}>
+      {(isRain && !isSleet) && (
+         <g fill="#93c5fd" opacity={0.8} transform={rainRotation}>
             {[...Array(isHeavyRain ? 60 : isMediumRain ? 40 : 30)].map((_, i) => (
                <rect key={i} x={Math.random() * 400 - 20} y="40" 
                      width={isHeavyRain ? 2 : isMediumRain ? 1.7 : 1.5} 
@@ -4791,7 +4802,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
          </g>
       )}
 
-      {(isSnow || isSleet) && (
+      {(isSnow && !isSleet) && (
          <g fill="white" opacity="0.9" transform={rainRotation}>
             {[...Array(isHeavySnow ? 80 : isMediumSnow ? 60 : 40)].map((_, i) => {
                const startX = Math.random() * 400 - 20;
@@ -4811,6 +4822,51 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
                     }} 
                   />
                );
+            })}
+         </g>
+      )}
+      
+      {/* Mixed Precipitation (Sleet/Mischniederschlag) */}
+      {isSleet && (
+         <g opacity="0.85" transform={rainRotation}>
+            {[...Array(isHeavySleet ? 50 : 35)].map((_, i) => {
+               const startX = Math.random() * 400 - 20;
+               const delay = Math.random() * 4;
+               const particleType = Math.random();
+               
+               // Mix of rain drops and ice/snow particles
+               if (particleType < 0.5) {
+                  // Rain-like particles (gray-blue for icy rain)
+                  return (
+                     <rect 
+                       key={`rain-${i}`} 
+                       x={startX} 
+                       y="40" 
+                       width={isHeavySleet ? 1.8 : 1.3} 
+                       height={isHeavySleet ? 12 : 10} 
+                       fill="#94a3b8"
+                       className="animate-sleet" 
+                       style={{animationDelay: `${delay}s`}} 
+                     />
+                  );
+               } else {
+                  // Ice/snow-like particles
+                  const size = isHeavySleet ? Math.random() * 2.5 + 1 : Math.random() * 2 + 0.8;
+                  return (
+                     <circle 
+                       key={`snow-${i}`} 
+                       cx={startX} 
+                       cy="-10" 
+                       r={size} 
+                       fill="white"
+                       className="animate-sleet" 
+                       style={{
+                          animationDelay: `${delay}s`, 
+                          opacity: Math.random() * 0.3 + 0.6
+                       }} 
+                     />
+                  );
+               }
             })}
          </g>
       )}
