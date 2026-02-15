@@ -8145,6 +8145,41 @@ export default function WeatherApp() {
 
       // FIX: Verwendung der globalen Seamless-Keys
       const getVal = (key) => {
+        // Special handling for visibility: Only GFS/HRRR models support visibility
+        // ICON, AROME, and GEM do not provide visibility data
+        if (key === 'visibility') {
+          const gfsVal = h[`${key}_gfs_seamless`]?.[i];
+          if (gfsVal !== undefined && gfsVal !== null) {
+            return gfsVal;
+          }
+          return h[key]?.[i] ?? null;
+        }
+        
+        // Special handling for apparent_temperature: Prefer ICON model (most reliable for Europe)
+        // with fallback to other models
+        if (key === 'apparent_temperature') {
+          const iconVal = h[`${key}_icon_seamless`]?.[i];
+          if (iconVal !== undefined && iconVal !== null) {
+            return iconVal;
+          }
+          // Fallback to GFS if ICON not available
+          const gfsVal = h[`${key}_gfs_seamless`]?.[i];
+          if (gfsVal !== undefined && gfsVal !== null) {
+            return gfsVal;
+          }
+          // Last resort: use other models
+          const aromeVal = h[`${key}_arome_seamless`]?.[i];
+          if (aromeVal !== undefined && aromeVal !== null) {
+            return aromeVal;
+          }
+          const gemVal = h[`${key}_gem_seamless`]?.[i];
+          if (gemVal !== undefined && gemVal !== null) {
+            return gemVal;
+          }
+          return h[key]?.[i] ?? 0;
+        }
+        
+        // Default behavior: average across all available models
         const modelVals = [
           h[`${key}_icon_seamless`]?.[i],
           h[`${key}_gfs_seamless`]?.[i],
