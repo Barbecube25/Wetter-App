@@ -29,6 +29,10 @@ const LIGHT_PRECIP_THRESHOLD = 0.1;
 const STRONG_PRECIP_THRESHOLD = 0.5;
 const isAboveThreshold = (precipValue, snowValue, threshold) => precipValue > threshold || snowValue > threshold;
 
+// Precipitation particle counts
+const HEAVY_SLEET_PARTICLES = 50;
+const LIGHT_SLEET_PARTICLES = 35;
+
 // Responsive design thresholds
 const LANDSCAPE_HEIGHT_THRESHOLD = 600; // Landscape mode detection threshold - devices with height less than this are considered landscape
 const SMALL_SCREEN_WIDTH_THRESHOLD = 375; // Small screen detection threshold - devices with width less than this need tighter spacing
@@ -2314,7 +2318,7 @@ const styles = `
   @keyframes sleet-fall { 
     0% { transform: translateY(-20px) translateX(-3px) rotate(0deg); opacity: 0; } 
     15% { opacity: 0.85; } 
-    50% { transform: translateY(80px) translateX(3px) rotate(90deg); }
+    50% { transform: translateY(80px) translateX(3px) rotate(90deg); opacity: 0.85; }
     100% { transform: translateY(160px) translateX(-5px) rotate(180deg); opacity: 0; } 
   }
 
@@ -4829,7 +4833,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       {/* Mixed Precipitation (Sleet/Mischniederschlag) */}
       {isSleet && (
          <g opacity="0.85" transform={rainRotation}>
-            {[...Array(isHeavySleet ? 50 : 35)].map((_, i) => {
+            {[...Array(isHeavySleet ? HEAVY_SLEET_PARTICLES : LIGHT_SLEET_PARTICLES)].map((_, i) => {
                const startX = Math.random() * 400 - 20;
                const delay = Math.random() * 4;
                const particleType = Math.random();
