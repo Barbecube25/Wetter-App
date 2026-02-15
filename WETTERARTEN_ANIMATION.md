@@ -27,15 +27,18 @@ Diese Datei listet alle Wetterarten auf, die in der animierten SVG-Szene der Wet
 - **Animation**: Fallende weiße Schneeflocken (`animate-snow-slow`, `animate-snow-fast`)
 - **Effekt**: 40-80 rotierende Schneeflocken je nach Intensität, weiße Schneedecke auf Bergen und Boden
 
-### 4. Schneeregen / Graupel (Sleet)
+### 4. Mischniederschlag / Schneeregen (Sleet)
 - **Codes**: 56, 57, 66, 67
 - **Details**:
   - 56: Leichter gefrierender Nieselregen
   - 57: Dichter gefrierender Nieselregen  
   - 66: Leichter gefrierender Regen (Freezing Rain)
   - 67: Starker gefrierender Regen (Freezing Rain)
-- **Animation**: Kombination aus Regen und Schnee
-- **Effekt**: Graue Regentropfen, weiße Bergspitzen, eisige Bodenoberfläche mit Glitzereffekt
+- **Varianten**:
+  - Leichter Mischniederschlag (Light Sleet): Codes 56, 66
+  - Starker Mischniederschlag (Heavy Sleet): Codes 57, 67
+- **Animation**: Spezialisierte Mischniederschlag-Animation (`animate-sleet`)
+- **Effekt**: 35-50 gemischte Partikel (50% eisige Regentropfen in Grau-Blau, 50% Eis/Schneepartikel in Weiß), weiße Bergspitzen, eisige Bodenoberfläche mit Glitzereffekt, Intensität je nach Wettercode
 
 ### 5. Hagel (Hail)
 - **Codes**: 96, 99
@@ -156,6 +159,7 @@ Die App verwendet folgende CSS-Keyframe-Animationen:
 - **rain-drop**: Fallende Regentropfen mit Splash-Effekt
 - **snow-fall-slow**: Langsam fallende, rotierende Schneeflocken
 - **snow-fall-fast**: Schnell fallende Schneeflocken
+- **sleet-fall**: Mischniederschlag-Animation (halb drehende, fallende Partikel für gemischten Niederschlag)
 - **fog-flow**: Horizontal fließende Nebelschichten
 - **heat-shimmer**: Hitzeflirrern-Effekt
 - **ice-sparkle**: Funkelnde Eiskristalle
