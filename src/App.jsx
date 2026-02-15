@@ -4109,7 +4109,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   
   // Multiplier for dawn/dusk gradient opacity calculation
   // Formula: max opacity = (1/4) * multiplier (occurs at factor=0.5)
-  // With multiplier=1.0: peak opacity = 0.25 * 1.0 = 0.25
+  // With multiplier=1.0: peak opacity = 0.25
   const DAWN_DUSK_OPACITY_MULTIPLIER = 1.0;
   
   // Helper function for dawn/dusk gradient opacity using bell curve
