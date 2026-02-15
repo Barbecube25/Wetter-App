@@ -4979,8 +4979,8 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
   
   if (!data || data.length === 0) return null;
   
-  // Take next 12 hours
-  const hourlyData = data.slice(0, 12);
+  // Take next 24 hours
+  const hourlyData = data.slice(0, 24);
   
   return (
     <div className="bg-m3-surface-container-high/60 backdrop-blur-sm rounded-m3-2xl p-4 border border-m3-outline-variant/40 shadow-m3-2">
