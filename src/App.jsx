@@ -29,8 +29,9 @@ const LIGHT_PRECIP_THRESHOLD = 0.1;
 const STRONG_PRECIP_THRESHOLD = 0.5;
 const isAboveThreshold = (precipValue, snowValue, threshold) => precipValue > threshold || snowValue > threshold;
 
-// Landscape mode detection threshold - devices with height less than this are considered landscape
-const LANDSCAPE_HEIGHT_THRESHOLD = 600; 
+// Responsive design thresholds
+const LANDSCAPE_HEIGHT_THRESHOLD = 600; // Landscape mode detection threshold - devices with height less than this are considered landscape
+const SMALL_SCREEN_WIDTH_THRESHOLD = 375; // Small screen detection threshold - devices with width less than this need tighter spacing
 
 // TEXT RESSOURCEN
 const TRANSLATIONS = {
@@ -6953,7 +6954,7 @@ export default function WeatherApp() {
   useEffect(() => {
     const checkOrientation = () => {
       setIsLandscape(window.innerWidth > window.innerHeight && window.innerHeight < LANDSCAPE_HEIGHT_THRESHOLD);
-      setIsSmallScreen(window.innerWidth < 375); // Detect small screens (iPhone SE, small Android phones)
+      setIsSmallScreen(window.innerWidth < SMALL_SCREEN_WIDTH_THRESHOLD);
     };
     
     checkOrientation();
