@@ -6929,6 +6929,9 @@ export default function WeatherApp() {
   // Landscape mode detection
   const [isLandscape, setIsLandscape] = useState(false);
   
+  // Small screen detection (for extra-small devices like 320-375px)
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+  
   // Hide controls in landscape mode to see full animation
   const [hideControlsInLandscape, setHideControlsInLandscape] = useState(false);
 
@@ -6946,10 +6949,11 @@ export default function WeatherApp() {
     return () => clearInterval(timer);
   }, []);
 
-  // Detect landscape orientation
+  // Detect landscape orientation and small screens
   useEffect(() => {
     const checkOrientation = () => {
       setIsLandscape(window.innerWidth > window.innerHeight && window.innerHeight < LANDSCAPE_HEIGHT_THRESHOLD);
+      setIsSmallScreen(window.innerWidth < 375); // Detect small screens (iPhone SE, small Android phones)
     };
     
     checkOrientation();
@@ -8392,11 +8396,11 @@ export default function WeatherApp() {
   const tileBg = isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/50 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant';
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
 
-  // Dynamic layout constants for landscape mode support
+  // Dynamic layout constants for landscape mode and small screen support
   const headerHeight = '0px'; // Header removed, location moved to animation card
-  const animationCardHeight = isLandscape ? '100px' : ANIMATION_CARD_HEIGHT;
-  const navBarHeight = isLandscape ? '56px' : NAV_BAR_HEIGHT;
-  const fixedElementsGap = isLandscape ? '12px' : FIXED_ELEMENTS_GAP;
+  const animationCardHeight = isLandscape ? '100px' : (isSmallScreen ? '180px' : ANIMATION_CARD_HEIGHT);
+  const navBarHeight = isLandscape ? '56px' : (isSmallScreen ? '70px' : NAV_BAR_HEIGHT);
+  const fixedElementsGap = isLandscape ? '12px' : (isSmallScreen ? '16px' : FIXED_ELEMENTS_GAP);
 
   // Create a 3-day forecast: rest of today, tomorrow, and day after tomorrow
   const threeDayForecast = useMemo(() => {
@@ -8963,11 +8967,11 @@ export default function WeatherApp() {
         </button>
       )}
 
-      <main className="max-w-4xl mx-auto px-4 pb-4 z-10 relative space-y-4" style={{ paddingTop: `calc(${animationCardHeight} + ${navBarHeight} + ${fixedElementsGap})` }}>
+      <main className={`max-w-4xl mx-auto ${isSmallScreen ? 'px-2' : 'px-4'} pb-4 z-10 relative space-y-4`} style={{ paddingTop: `calc(${animationCardHeight} + ${navBarHeight} + ${fixedElementsGap})` }}>
         {/* Fixed Animation Card Container - Matches main content width, extends to top edge */}
-        <div className="fixed left-0 right-0 z-20 px-4" style={{ top: 0 }}>
+        <div className={`fixed left-0 right-0 z-20 ${isSmallScreen ? 'px-2' : 'px-4'}`} style={{ top: 0 }}>
           <div className="max-w-4xl mx-auto">
-            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl ${isLandscape ? 'pt-2 px-4 pb-2' : 'pt-4 px-4 pb-4'} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant backdrop-blur-md ${isLandscape ? 'min-h-[100px]' : 'min-h-[200px]'}`}>
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl ${isLandscape ? 'pt-2 px-4 pb-2' : (isSmallScreen ? 'pt-3 px-3 pb-3' : 'pt-4 px-4 pb-4')} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant backdrop-blur-md ${isLandscape ? 'min-h-[100px]' : (isSmallScreen ? 'min-h-[160px]' : 'min-h-[200px]')}`}>
               {/* Weather background animation */}
               <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
                 <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} demoTerrain={demoTerrain} elevation={currentLoc?.elevation || 0} latitude={currentLoc?.lat} longitude={currentLoc?.lon} />
@@ -9056,22 +9060,22 @@ export default function WeatherApp() {
 
         {/* Enhanced Tab Navigation - Fixed positioned below fixed animation card with gap, hidden in landscape when controls are hidden */}
         {!(isLandscape && hideControlsInLandscape) && (
-        <div className="fixed left-0 right-0 z-30 px-4" style={{ top: `calc(${animationCardHeight} + ${fixedElementsGap})` }}>
+        <div className={`fixed left-0 right-0 z-30 ${isSmallScreen ? 'px-2' : 'px-4'}`} style={{ top: `calc(${animationCardHeight} + ${fixedElementsGap})` }}>
           <div className="max-w-4xl mx-auto">
-            <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl ${isLandscape ? 'p-1' : 'p-2'} shadow-m3-2 border border-m3-outline-variant`}>
-          <div className="grid grid-cols-5 gap-1">
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl ${isLandscape ? 'p-1' : (isSmallScreen ? 'p-1.5' : 'p-2')} shadow-m3-2 border border-m3-outline-variant`}>
+          <div className={`grid grid-cols-5 ${isSmallScreen ? 'gap-0.5' : 'gap-1'}`}>
             {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
               <button 
                 key={tab.id} 
                 onClick={() => setActiveTab(tab.id)} 
-                className={`flex flex-col items-center justify-center ${isLandscape ? 'py-2 px-1' : 'py-3 px-2'} rounded-m3-2xl ${isLandscape ? 'text-m3-label-small' : 'text-m3-label-medium'} font-medium transition-all ${
+                className={`flex flex-col items-center justify-center ${isLandscape ? 'py-2 px-1' : (isSmallScreen ? 'py-2 px-0.5' : 'py-3 px-2')} rounded-m3-2xl ${isLandscape ? 'text-m3-label-small' : 'text-m3-label-medium'} font-medium transition-all ${
                   activeTab === tab.id 
                     ? 'bg-m3-primary text-m3-on-primary shadow-m3-2' 
                     : (isRealNight ? 'text-m3-dark-on-surface-variant hover:bg-m3-dark-surface-container-high hover:text-m3-dark-on-surface' : 'text-m3-on-surface-variant hover:bg-m3-surface-container-high hover:text-m3-on-surface')
                 }`}
               >
-                <tab.icon size={isLandscape ? 16 : 20} className={isLandscape ? 'mb-0.5' : 'mb-1'} />
-                <span className={isLandscape ? 'text-[9px]' : 'text-[10px] sm:text-xs'}>{tab.label}</span>
+                <tab.icon size={isLandscape ? 16 : (isSmallScreen ? 16 : 20)} className={isLandscape ? 'mb-0.5' : (isSmallScreen ? 'mb-0.5' : 'mb-1')} />
+                <span className={isLandscape ? 'text-[9px]' : (isSmallScreen ? 'text-[9px]' : 'text-[10px] sm:text-xs')}>{tab.label}</span>
               </button>
             ))}
           </div>
