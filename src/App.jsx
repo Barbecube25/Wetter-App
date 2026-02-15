@@ -2676,7 +2676,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     
     const current = data[0];
     let intro = `${t.now} (${current.displayTime} ${t.oclock}): ${Math.round(current.temp)}°`;
-    if (Math.abs(current.appTemp - current.temp) > 2) intro += `, ${t.feelsLike} ${Math.round(current.appTemp)}°.`;
+    if (current.appTemp !== null && current.appTemp !== undefined && Math.abs(current.appTemp - current.temp) > 2) intro += `, ${t.feelsLike} ${Math.round(current.appTemp)}°.`;
     else intro += `.`;
     
     let parts = [intro];
@@ -8177,11 +8177,9 @@ export default function WeatherApp() {
           if (gemVal !== undefined && gemVal !== null) {
             return gemVal;
           }
-          // Fallback to generic field or 0. Note: 0 is returned as default (not null) 
-          // to maintain compatibility with existing code that performs math operations 
-          // on appTemp (e.g., line 2679). While 0°C is a valid temperature, it's used 
-          // here to indicate "no data" and matches the baseData initialization pattern.
-          return h[key]?.[i] ?? 0;
+          // Return null if no model provides data. This allows calling code to distinguish
+          // between "no data available" and "actual temperature is 0°C".
+          return null;
         }
         
         // Default behavior: average across all available models
@@ -8349,7 +8347,7 @@ export default function WeatherApp() {
   
   // LIVE oder DEMO Daten?
   const liveCurrent = useMemo(() => {
-    const baseData = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: 0, precip: 0, wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: 0, humidity: 0, dewPoint: 0, uvIndex: 0, cloudCover: 0, pressure: null, visibility: null };
+    const baseData = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: 0, precip: 0, wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: null, humidity: 0, dewPoint: 0, uvIndex: 0, cloudCover: 0, pressure: null, visibility: null };
     
     // Override with current API data if available (more accurate, radar-based observations)
     if (shortTermData?.current) {
