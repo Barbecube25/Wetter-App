@@ -30,8 +30,9 @@ const STRONG_PRECIP_THRESHOLD = 0.5;
 const isAboveThreshold = (precipValue, snowValue, threshold) => precipValue > threshold || snowValue > threshold;
 
 // Precipitation particle counts
-const HEAVY_SLEET_PARTICLES = 50;
-const LIGHT_SLEET_PARTICLES = 35;
+const HEAVY_SLEET_PARTICLES = 55;
+const MEDIUM_SLEET_PARTICLES = 40;
+const LIGHT_SLEET_PARTICLES = 30;
 
 // Responsive design thresholds
 const LANDSCAPE_HEIGHT_THRESHOLD = 600; // Landscape mode detection threshold - devices with height less than this are considered landscape
@@ -3880,7 +3881,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const isHeavySnow = [75, 86].includes(code);
   const isSnow = isLightSnow || isMediumSnow || isHeavySnow;
   const isSleet = [56, 57, 66, 67].includes(code);
-  const isLightSleet = [56, 66].includes(code); // Light freezing drizzle/rain
+  const isLightSleet = [56].includes(code); // Light freezing drizzle
+  const isMediumSleet = [66].includes(code); // Freezing rain
   const isHeavySleet = [57, 67].includes(code); // Dense freezing drizzle/rain
   const isStorm = [95, 96, 99].includes(code);
   const isFog = [45, 48].includes(code);
@@ -4783,9 +4785,9 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       )}
 
       {isDrizzle && (
-         <g fill="#93c5fd" opacity="0.4" transform={rainRotation}>
-            {[...Array(40)].map((_, i) => (
-               <rect key={i} x={Math.random() * 400 - 20} y="40" width="0.8" height="6" 
+         <g fill="#93c5fd" opacity="0.35" transform={rainRotation}>
+            {[...Array(50)].map((_, i) => (
+               <rect key={i} x={Math.random() * 400 - 20} y="40" width="0.7" height="5" 
                      className={`animate-rain-${i%3 === 0 ? '1' : i%3 === 1 ? '2' : '3'}`} 
                      style={{animationDelay: `${Math.random()}s`}} />
             ))}
@@ -4794,10 +4796,10 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
 
       {(isRain && !isSleet) && (
          <g fill="#93c5fd" opacity={0.8} transform={rainRotation}>
-            {[...Array(isHeavyRain ? 60 : isMediumRain ? 40 : 30)].map((_, i) => (
+            {[...Array(isHeavyRain ? 70 : isMediumRain ? 45 : 25)].map((_, i) => (
                <rect key={i} x={Math.random() * 400 - 20} y="40" 
-                     width={isHeavyRain ? 2 : isMediumRain ? 1.7 : 1.5} 
-                     height={isHeavyRain ? 15 : isMediumRain ? 13 : 12} 
+                     width={isHeavyRain ? 2.2 : isMediumRain ? 1.8 : 1.4} 
+                     height={isHeavyRain ? 16 : isMediumRain ? 13 : 11} 
                      className={isHeavyRain ? "animate-rain-storm" : `animate-rain-${i%3 === 0 ? '1' : i%3 === 1 ? '2' : '3'}`} 
                      style={{animationDelay: `${Math.random()}s`}} />
             ))}
@@ -4806,10 +4808,10 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
 
       {(isSnow && !isSleet) && (
          <g fill="white" opacity="0.9" transform={rainRotation}>
-            {[...Array(isHeavySnow ? 80 : isMediumSnow ? 60 : 40)].map((_, i) => {
+            {[...Array(isHeavySnow ? 90 : isMediumSnow ? 65 : 35)].map((_, i) => {
                const startX = Math.random() * 400 - 20;
                const delay = Math.random() * 5;
-               const size = isHeavySnow ? Math.random() * 3 + 1.5 : isMediumSnow ? Math.random() * 2.5 + 1 : Math.random() * 2 + 1;
+               const size = isHeavySnow ? Math.random() * 3.5 + 1.5 : isMediumSnow ? Math.random() * 3 + 1 : Math.random() * 2.5 + 0.8;
                const isSlow = i % 2 === 0;
                return (
                   <circle 
@@ -4831,7 +4833,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       {/* Mixed Precipitation (Sleet/Mischniederschlag) */}
       {isSleet && (
          <g opacity="0.85" transform={rainRotation}>
-            {[...Array(isHeavySleet ? HEAVY_SLEET_PARTICLES : LIGHT_SLEET_PARTICLES)].map((_, i) => {
+            {[...Array(isHeavySleet ? HEAVY_SLEET_PARTICLES : isMediumSleet ? MEDIUM_SLEET_PARTICLES : LIGHT_SLEET_PARTICLES)].map((_, i) => {
                const startX = Math.random() * 400 - 20;
                const delay = Math.random() * 4;
                const particleType = Math.random();
@@ -4844,8 +4846,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
                        key={`rain-${i}`} 
                        x={startX} 
                        y="40" 
-                       width={isHeavySleet ? 1.8 : 1.3} 
-                       height={isHeavySleet ? 12 : 10} 
+                       width={isHeavySleet ? 1.9 : isMediumSleet ? 1.5 : 1.2} 
+                       height={isHeavySleet ? 13 : isMediumSleet ? 11 : 9} 
                        fill="#94a3b8"
                        className="animate-sleet" 
                        style={{animationDelay: `${delay}s`}} 
@@ -4853,7 +4855,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
                   );
                } else {
                   // Ice/snow-like particles
-                  const size = isHeavySleet ? Math.random() * 2.5 + 1 : Math.random() * 2 + 0.8;
+                  const size = isHeavySleet ? Math.random() * 2.8 + 1 : isMediumSleet ? Math.random() * 2.3 + 0.9 : Math.random() * 2 + 0.7;
                   return (
                      <circle 
                        key={`snow-${i}`} 
@@ -8419,7 +8421,8 @@ export default function WeatherApp() {
         snow: curr.snowfall !== undefined ? curr.snowfall : baseData.snow,
         wind: curr.windspeed_10m !== undefined ? curr.windspeed_10m : baseData.wind,
         humidity: curr.relative_humidity_2m !== undefined ? curr.relative_humidity_2m : baseData.humidity,
-        code: curr.weathercode !== undefined ? curr.weathercode : baseData.code
+        code: curr.weathercode !== undefined ? curr.weathercode : baseData.code,
+        cloudCover: baseData.cloudCover // Preserve cloudCover from hourly data
       };
     }
     
