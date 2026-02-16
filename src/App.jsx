@@ -5982,19 +5982,24 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
   const next24Hours = hourlyData
     .slice(0, 24)
     .map(hour => {
-      const totalPrecip = (hour.precip || 0) + (hour.snow || 0);
-      const hasSnow = (hour.snow || 0) > 0.05; // Lower threshold to detect lighter snow
-      const hasRain = (hour.precip || 0) > 0.05; // Lower threshold to detect lighter rain
+      const rainAmount = hour.precip || 0;
+      const snowAmount = hour.snow || 0;
+      // Only count amounts >= LIGHT_PRECIP_THRESHOLD (0.1mm) to match briefing behavior
+      const countedRain = rainAmount >= LIGHT_PRECIP_THRESHOLD ? rainAmount : 0;
+      const countedSnow = snowAmount >= LIGHT_PRECIP_THRESHOLD ? snowAmount : 0;
+      const totalPrecip = countedRain + countedSnow;
+      const hasSnow = snowAmount > 0.05; // Lower threshold to detect lighter snow for display
+      const hasRain = rainAmount > 0.05; // Lower threshold to detect lighter rain for display
       
       return {
         time: hour.time,
         displayTime: hour.time.toLocaleTimeString(lang === 'de' ? 'de-DE' : lang === 'en' ? 'en-US' : lang === 'fr' ? 'fr-FR' : lang === 'es' ? 'es-ES' : lang === 'it' ? 'it-IT' : 'de-DE', { hour: '2-digit', minute: '2-digit' }),
         amount: totalPrecip,
-        rain: hour.precip || 0,
-        snow: hour.snow || 0,
+        rain: countedRain,
+        snow: countedSnow,
         hasSnow,
         hasRain,
-        hasPrecip: totalPrecip > 0.05 // Lower threshold to detect lighter precipitation
+        hasPrecip: totalPrecip > 0.05 // Lower threshold to detect lighter precipitation for display
       };
     });
   
@@ -8476,8 +8481,15 @@ export default function WeatherApp() {
     let totalRain = 0;
     let totalSnow = 0;
     for (let i = 0; i < next24Hours.length; i++) {
-      totalRain += (next24Hours[i].precip || 0);
-      totalSnow += (next24Hours[i].snow || 0);
+      // Only count precipitation above LIGHT_PRECIP_THRESHOLD to match briefing behavior
+      const precipAmount = next24Hours[i].precip || 0;
+      const snowAmount = next24Hours[i].snow || 0;
+      if (precipAmount >= LIGHT_PRECIP_THRESHOLD) {
+        totalRain += precipAmount;
+      }
+      if (snowAmount >= LIGHT_PRECIP_THRESHOLD) {
+        totalSnow += snowAmount;
+      }
     }
     return {
       rain: totalRain,
