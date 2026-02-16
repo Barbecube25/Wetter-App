@@ -48,7 +48,7 @@ Diese Datei listet alle Wetterarten auf, die in der animierten SVG-Szene der Wet
 ## Wetterereignisse
 
 ### 6. Gewitter (Storm/Thunderstorm)
-- **Codes**: 95, 96, 99
+- **Codes**: 17, 95, 96, 99
 - **Animation**: Blitze (`anim-lightning`), starkes Baumschütteln (`anim-tree-storm`)
 - **Effekt**: Gelber Blitz mit Leuchten, dunkle Wolken, weiße Flash-Overlays
 

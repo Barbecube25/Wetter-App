@@ -2548,7 +2548,7 @@ const getWeatherConfig = (code, isDay = 1, lang = 'de') => {
   if ([65, 82].includes(code)) return { text: t.heavyRain, icon: CloudRain };
   if ([71, 73, 75, 77, 85, 86].includes(code)) return { text: t.snow, icon: Snowflake };
   if ([56, 57, 66, 67].includes(code)) return { text: t.sleet, icon: Snowflake };
-  if ([95, 96, 99].includes(code)) return { text: t.thunderstorm, icon: CloudLightning };
+  if ([17, 95, 96, 99].includes(code)) return { text: t.thunderstorm, icon: CloudLightning };
   return { text: t.unknown, icon: Info };
 };
 
@@ -2724,7 +2724,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         const snowSumToday = todayData.reduce((acc, c) => acc + parseFloat(c.snow || 0), 0);
         const maxWind = Math.max(...todayData.map(d => d.gust));
         const maxUV = Math.max(...todayData.map(d => d.uvIndex || 0));
-        const hasThunderstorm = todayData.some(d => [95, 96, 99].includes(d.code));
+        const hasThunderstorm = todayData.some(d => [17, 95, 96, 99].includes(d.code));
         
         // Calculate snow probability (average of hours with snow > 0.1mm)
         const hoursWithSnow = todayData.filter(d => parseFloat(d.snow || 0) > 0.1);
@@ -3023,7 +3023,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         const tSnow = tomorrowDayData.reduce((acc, c) => acc + parseFloat(c.snow || 0), 0);
         const tGust = Math.max(...tomorrowDayData.map(d => d.gust));
         const tMaxUV = Math.max(...tomorrowDayData.map(d => d.uvIndex || 0));
-        const tHasThunderstorm = tomorrowDayData.some(d => [95, 96, 99].includes(d.code));
+        const tHasThunderstorm = tomorrowDayData.some(d => [17, 95, 96, 99].includes(d.code));
         
         // Calculate snow probability for tomorrow
         const hoursWithSnowTomorrow = tomorrowDayData.filter(d => parseFloat(d.snow || 0) > 0.1);
@@ -3244,7 +3244,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     const maxUVNow = Math.max(...(todayData.map(d=>d.uvIndex||0)), 0);
     const maxTempNow = Math.max(...(todayData.map(d=>d.temp)||[]), 0);
     const minTempNow = Math.min(...(todayData.map(d=>d.temp)||[]), 0) || 0;
-    const hasThunderstormNow = todayData.some(d => [95, 96, 99].includes(d.code));
+    const hasThunderstormNow = todayData.some(d => [17, 95, 96, 99].includes(d.code));
     
     // Set warnings based on today's data (prioritized by severity)
     if (maxGustNow > 60) warning = lang === 'en' ? "GALE GUSTS (Today)" : "STURMBÖEN (Heute)";
@@ -3884,7 +3884,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const isLightSleet = [56].includes(code); // Light freezing drizzle
   const isMediumSleet = [66].includes(code); // Freezing rain
   const isHeavySleet = [57, 67].includes(code); // Dense freezing drizzle/rain
-  const isStorm = [95, 96, 99].includes(code);
+  const isStorm = [17, 95, 96, 99].includes(code);
   const isFog = [45, 48].includes(code);
   const isExtremeHeat = temp >= 30;
   const isDeepFreeze = temp <= -5;
