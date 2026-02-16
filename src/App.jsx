@@ -5988,8 +5988,8 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
       const countedRain = rainAmount >= LIGHT_PRECIP_THRESHOLD ? rainAmount : 0;
       const countedSnow = snowAmount >= LIGHT_PRECIP_THRESHOLD ? snowAmount : 0;
       const totalPrecip = countedRain + countedSnow;
-      const hasSnow = snowAmount > 0.05; // Lower threshold to detect lighter snow for display
-      const hasRain = rainAmount > 0.05; // Lower threshold to detect lighter rain for display
+      const hasSnow = countedSnow > 0; // Based on counted snow for consistency
+      const hasRain = countedRain > 0; // Based on counted rain for consistency
       
       return {
         time: hour.time,
@@ -5999,7 +5999,7 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
         snow: countedSnow,
         hasSnow,
         hasRain,
-        hasPrecip: totalPrecip > 0.05 // Lower threshold to detect lighter precipitation for display
+        hasPrecip: totalPrecip > 0 // Based on counted precipitation for consistency
       };
     });
   
