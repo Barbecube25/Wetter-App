@@ -5805,8 +5805,8 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
               </div>
             )}
 
-            {/* Custom Warning */}
-            {!hasDwd && localWarning && (
+            {/* Custom Warning - Show severe weather warnings (thunderstorms, gale gusts) even when DWD warnings exist */}
+            {localWarning && (
               <div className="mb-3 p-3 bg-red-100 border-l-4 border-red-500 text-red-900 rounded-r shadow-sm flex items-start gap-3 animate-pulse-red relative z-10">
                 <AlertTriangle className="shrink-0 text-red-600 mt-0.5" size={20} />
                 <div>
