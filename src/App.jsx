@@ -6557,7 +6557,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
     
     const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
     
-    // Hide status bar and navigation bar on mount, restore on unmount
+    // Hide status bar on mount, restore on unmount
     useEffect(() => {
         let isMounted = true;
         

@@ -24,7 +24,7 @@ public class MainActivity extends BridgeActivity {
         // This ensures backward compatibility with earlier Android versions
         EdgeToEdge.enable(this);
         
-        // Enable fullscreen/immersive mode
+        // Keep the system navigation bar visible
         enableFullscreenMode();
     }
     
@@ -44,20 +44,16 @@ public class MainActivity extends BridgeActivity {
             WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
             WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
             if (controller != null) {
-                // Hide both status bar and navigation bar
-                controller.hide(WindowInsetsCompat.Type.statusBars() | WindowInsetsCompat.Type.navigationBars());
-                // Use immersive sticky mode - bars will reappear on swipe and auto-hide again
-                controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                // Hide only the status bar, keep navigation bar visible
+                controller.hide(WindowInsetsCompat.Type.statusBars());
+                controller.show(WindowInsetsCompat.Type.navigationBars());
             }
         } else {
             // Android 10 and below - use legacy flags
             View decorView = getWindow().getDecorView();
             decorView.setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                 | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                 | View.SYSTEM_UI_FLAG_FULLSCREEN
             );
             
