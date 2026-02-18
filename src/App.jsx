@@ -4156,6 +4156,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   // Calculate star opacity for smooth twilight transitions
   // Stars fade out gradually during morning twilight and fade in during evening twilight
   let starOpacity = 0;
+  const EXTENDED_TWILIGHT_DURATION = TRANSITION_DURATION + TWILIGHT_EXTENSION;
 
   // ÄNDERUNG: < sunsetHour (nicht <=), damit bei Sonnenuntergang die Sonne sofort verschwindet
   if (currentHour >= sunriseHour && currentHour < sunsetHour) {
@@ -4179,16 +4180,14 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
        skyTransitionFactor = Math.min(1, (currentHour - sunriseHour) / TRANSITION_DURATION);
        // Stars fade out during extended morning twilight
        const timeSinceSunrise = currentHour - sunriseHour;
-       const extendedTwilight = TRANSITION_DURATION + TWILIGHT_EXTENSION;
-       starOpacity = Math.max(0, 1 - (timeSinceSunrise / extendedTwilight));
+       starOpacity = Math.max(0, 1 - (timeSinceSunrise / EXTENDED_TWILIGHT_DURATION));
      } else if (sunsetHour - currentHour < TRANSITION_DURATION) {
        isDusk = true;
        // Smooth transition from 1 (day) to 0 (night) during dusk
        skyTransitionFactor = Math.max(0, (sunsetHour - currentHour) / TRANSITION_DURATION);
        // Stars fade in during extended evening twilight
        const timeUntilSunset = sunsetHour - currentHour;
-       const extendedTwilight = TRANSITION_DURATION + TWILIGHT_EXTENSION;
-       starOpacity = Math.max(0, 1 - (timeUntilSunset / extendedTwilight));
+       starOpacity = Math.max(0, 1 - (timeUntilSunset / EXTENDED_TWILIGHT_DURATION));
      } else {
        // Full day - no stars
        skyTransitionFactor = 1;
