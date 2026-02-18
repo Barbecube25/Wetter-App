@@ -8608,7 +8608,7 @@ export default function WeatherApp() {
   // Helper function to get animation card padding classes
   // Landscape mode takes precedence when both isLandscape and isSmallScreen are true
   const getAnimationCardPadding = () => {
-    if (isLandscape) return 'pt-2 px-4 pb-2';
+    if (isLandscape) return 'pt-4 px-4 pb-4';
     if (isSmallScreen) return 'pt-3 px-3 pb-3';
     return 'pt-4 px-4 pb-4';
   };
