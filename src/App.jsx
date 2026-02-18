@@ -8307,7 +8307,7 @@ export default function WeatherApp() {
         // FIX: Add precipProb field
         precipProb: getVal('precipitation_probability'),
         snow: getMax('snowfall'), // Use max across models to show snowfall if any model predicts it
-        wind: Math.round(getAvg('windspeed_10m')),
+        wind: Math.round(getMax('windspeed_10m')), // Use max across models for accurate wind forecast (consistent with daily forecast)
         gust: Math.round(getMax('windgusts_10m')), // Böen immer Max Warnung
         dir: h.winddirection_10m_icon_seamless?.[i] || 0,
         code: h.weathercode_icon_seamless?.[i] || h.weathercode?.[i] || 0,
