@@ -5837,9 +5837,9 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
   let bannerClass = "bg-m3-surface-container-high text-m3-on-surface border-m3-outline-variant"; 
   let icon = <Info size={20} />;
   
-  if (maxSeverityLevel === 1) { bannerClass = "bg-m3-surface-container-high text-m3-on-surface border-m3-outline-variant"; icon = <AlertTriangle size={20} />; }
-  else if (maxSeverityLevel === 2) { bannerClass = "bg-m3-surface-container-high text-m3-on-surface border-m3-outline-variant"; icon = <AlertTriangle size={20} />; }
-  else if (maxSeverityLevel >= 3) { bannerClass = "bg-m3-surface-container-high text-m3-on-surface border-m3-outline-variant animate-pulse-red"; icon = <Siren size={20} />; }
+  if (maxSeverityLevel === 1) { bannerClass = "bg-m3-tertiary-container text-m3-on-tertiary-container border-m3-tertiary"; icon = <AlertTriangle size={20} />; }
+  else if (maxSeverityLevel === 2) { bannerClass = "bg-m3-secondary-container text-m3-on-secondary-container border-m3-secondary"; icon = <AlertTriangle size={20} />; }
+  else if (maxSeverityLevel >= 3) { bannerClass = "bg-m3-error-container text-m3-on-error-container border-m3-error animate-pulse-red"; icon = <Siren size={20} />; }
 
   return (
     <>
@@ -5887,7 +5887,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                     {title || t.weatherReport}
                 </div>
                 {confidence !== null && (
-                    <div className="text-m3-label-small px-2 py-0.5 rounded-full font-bold border bg-m3-surface-container-high text-m3-on-surface border-m3-outline-variant">
+                    <div className={`text-m3-label-small px-2 py-0.5 rounded-full font-bold border ${confidence > 70 ? 'bg-m3-tertiary-container text-m3-on-tertiary-container border-m3-tertiary' : confidence > 40 ? 'bg-m3-secondary-container text-m3-on-secondary-container border-m3-secondary' : 'bg-m3-error-container text-m3-on-error-container border-m3-error'}`}>
                         {confidence}% {t.safe}
                     </div>
                 )}
