@@ -3520,24 +3520,56 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
   
   if (type === 'model-hourly') {
      title = lang === 'en' ? "Model Check (48h)" : "Modell-Check (48h)";
-     let totalDiff = 0;
-     data.forEach(d => { if (d.temp_icon !== null && d.temp_gfs !== null) totalDiff += Math.abs(d.temp_icon - d.temp_gfs); });
-     const avgDiff = totalDiff / data.length;
-     if (avgDiff < 1.0) { summary = lang === 'en' ? "✅ High agreement: Models match almost perfectly." : "✅ Hohe Einigkeit: Die Modelle rechnen fast identisch."; confidence = 95; }
-     else if (avgDiff < 2.5) { summary = lang === 'en' ? "⚠️ Slight uncertainties in detail." : "⚠️ Leichte Unsicherheiten im Detail."; confidence = 70; }
-     else { summary = lang === 'en' ? "❌ Large discrepancy: Models disagree." : "❌ Große Diskrepanz: Modelle rechnen verschieden."; confidence = 40; warning = lang === 'en' ? "UNCERTAIN" : "UNSICHER"; }
-     details = lang === 'en' ? "Comparison of ICON (DE), GFS (US), and AROME (FR) shows forecast certainty." : "Der Vergleich von ICON (DE), GFS (US) und AROME (FR) zeigt, wie sicher die Vorhersage ist. Bei großer Abweichung (❌) ist das Wetter schwer vorherzusagen.";
+     // Calculate spread across all 4 models (ICON, GFS, AROME, GEM)
+     let totalSpread = 0;
+     let validCount = 0;
+     data.forEach(d => {
+       const temps = [d.temp_icon, d.temp_gfs, d.temp_arome, d.temp_gem].filter(t => t !== null && t !== undefined);
+       if (temps.length >= 2) {
+         const spread = Math.max(...temps) - Math.min(...temps);
+         totalSpread += spread;
+         validCount++;
+       }
+     });
+     const avgSpread = validCount > 0 ? totalSpread / validCount : 0;
+     if (avgSpread < 1.0) { summary = lang === 'en' ? "✅ High agreement: All 4 models match almost perfectly." : "✅ Hohe Einigkeit: Alle 4 Modelle rechnen fast identisch."; confidence = 95; }
+     else if (avgSpread < 2.5) { summary = lang === 'en' ? "⚠️ Slight uncertainties across models." : "⚠️ Leichte Unsicherheiten zwischen den Modellen."; confidence = 70; }
+     else { summary = lang === 'en' ? "❌ Large discrepancy: Models disagree significantly." : "❌ Große Diskrepanz: Modelle rechnen deutlich verschieden."; confidence = 40; warning = lang === 'en' ? "UNCERTAIN" : "UNSICHER"; }
+     details = lang === 'en' ? "Comparison of ICON (DE), GFS (US), AROME (FR), and GEM (CA) shows forecast certainty. Greater spread indicates higher uncertainty." : "Der Vergleich von ICON (DE), GFS (US), AROME (FR) und GEM (CA) zeigt, wie sicher die Vorhersage ist. Bei großer Abweichung (❌) ist das Wetter schwer vorherzusagen.";
   }
 
   if (type === 'model-daily') {
     title = lang === 'en' ? "Model Compare (Longterm)" : "Modell-Vergleich (Langzeit)";
     const slicedData = data.slice(0, 6); 
-    const diff = slicedData.reduce((acc, d) => acc + (d.max_gfs - d.max_icon), 0);
-    if (Math.abs(diff) < 5) summary = lang === 'en' ? "Longterm models are mostly synchronized." : "Die Langzeitmodelle sind weitgehend synchron.";
-    else if (diff > 0) summary = lang === 'en' ? "GFS (US) predicts warmer than ICON (EU)." : "GFS (US) rechnet wärmer als ICON (EU).";
-    else summary = lang === 'en' ? "ICON (EU) sees the week warmer than GFS." : "ICON (EU) sieht die Woche wärmer als GFS.";
-    details = lang === 'en' ? "Comparison of max daily temps between US GFS and German ICON model." : "Vergleich der maximalen Tagestemperaturen zwischen dem amerikanischen GFS und dem deutschen ICON Modell über die nächsten 6 Tage.";
-    confidence = 80;
+    
+    // Calculate average max temperature across all 4 models for better comparison
+    let totalSpread = 0;
+    let validDays = 0;
+    slicedData.forEach(d => {
+      const maxTemps = [d.max_icon, d.max_gfs, d.max_arome, d.max_gem].filter(t => t !== null && t !== undefined);
+      if (maxTemps.length >= 2) {
+        const daySpread = Math.max(...maxTemps) - Math.min(...maxTemps);
+        totalSpread += daySpread;
+        validDays++;
+      }
+    });
+    const avgSpread = validDays > 0 ? totalSpread / validDays : 0;
+    
+    // More sophisticated model comparison considering all 4 models
+    if (avgSpread < 2) {
+      summary = lang === 'en' ? "✅ Excellent agreement: All 4 models synchronized." : "✅ Hervorragende Übereinstimmung: Alle 4 Modelle synchron.";
+      confidence = 90;
+    } else if (avgSpread < 4) {
+      summary = lang === 'en' ? "Good agreement across ICON, GFS, AROME, and GEM." : "Gute Übereinstimmung zwischen ICON, GFS, AROME und GEM.";
+      confidence = 80;
+    } else {
+      summary = lang === 'en' ? "⚠️ Notable differences between models - higher uncertainty." : "⚠️ Deutliche Unterschiede zwischen Modellen - höhere Unsicherheit.";
+      confidence = 65;
+    }
+    
+    details = lang === 'en' 
+      ? "Comparison of max daily temps across all 4 models: ICON (German), GFS (US), AROME (French), and GEM (Canadian) over the next 6 days." 
+      : "Vergleich der maximalen Tagestemperaturen über alle 4 Modelle: ICON (Deutsch), GFS (USA), AROME (Französisch) und GEM (Kanadisch) über die nächsten 6 Tage.";
   }
 
   return { title, summary, details, structuredDetails, tripDetails, warning, confidence, type };
@@ -6968,7 +7000,7 @@ export default function WeatherApp() {
   const [showAllHours, setShowAllHours] = useState(false); 
   const [sunriseSunset, setSunriseSunset] = useState({ sunrise: null, sunset: null });
   const [gpsAvailable, setGpsAvailable] = useState(false); // Track GPS data availability
-  const [modelRuns, setModelRuns] = useState({ icon: '', gfs: '', arome: '' });
+  const [modelRuns, setModelRuns] = useState({ icon: '', gfs: '', arome: '', gem: '' });
   const [showIosInstall, setShowIosInstall] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
@@ -7601,7 +7633,7 @@ export default function WeatherApp() {
       }
 
       setLastUpdated(new Date());
-      setModelRuns({ icon: getModelRunTime(3, 2.5), gfs: getModelRunTime(6, 4), arome: getModelRunTime(3, 2) });
+      setModelRuns({ icon: getModelRunTime(3, 2.5), gfs: getModelRunTime(6, 4), arome: getModelRunTime(3, 2), gem: getModelRunTime(6, 3) });
 
     } catch (err) { 
         console.error("API Error:", err);
@@ -9431,7 +9463,7 @@ export default function WeatherApp() {
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400"></div> KNMI</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400"></div> GEM</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div> Ø</span>
                     </>
                   ) : (
@@ -9753,6 +9785,7 @@ export default function WeatherApp() {
                  <span className="bg-blue-500/10 px-2 py-1 rounded text-blue-500 border border-blue-500/20">ICON-D2: {modelRuns.icon || '--:--'}</span>
                  <span className="bg-purple-500/10 px-2 py-1 rounded text-purple-500 border border-purple-500/20">GFS: {modelRuns.gfs || '--:--'}</span>
                  <span className="bg-green-500/10 px-2 py-1 rounded text-green-500 border border-green-500/20">AROME: {modelRuns.arome || '--:--'}</span>
+                 <span className="bg-orange-500/10 px-2 py-1 rounded text-orange-500 border border-orange-500/20">GEM: {modelRuns.gem || '--:--'}</span>
                </div>
             </div>
           )}
