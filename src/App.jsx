@@ -8581,20 +8581,23 @@ export default function WeatherApp() {
       return {
         animationCardHeight: '100px',
         navBarHeight: '56px',
-        fixedElementsGap: '12px'
+        fixedElementsGap: '12px',
+        fixedTopOffset: '12px'
       };
     }
     if (isSmallScreen) {
       return {
         animationCardHeight: '180px',
         navBarHeight: '70px',
-        fixedElementsGap: '16px'
+        fixedElementsGap: '16px',
+        fixedTopOffset: '12px'
       };
     }
     return {
       animationCardHeight: ANIMATION_CARD_HEIGHT,
       navBarHeight: NAV_BAR_HEIGHT,
-      fixedElementsGap: FIXED_ELEMENTS_GAP
+      fixedElementsGap: FIXED_ELEMENTS_GAP,
+      fixedTopOffset: '12px'
     };
   };
 
@@ -8604,7 +8607,7 @@ export default function WeatherApp() {
   const animationCardHeight = layoutDimensions.animationCardHeight;
   const navBarHeight = layoutDimensions.navBarHeight;
   const fixedElementsGap = layoutDimensions.fixedElementsGap;
-  const fixedTopOffset = '12px';
+  const fixedTopOffset = layoutDimensions.fixedTopOffset;
 
   // Helper function to get animation card padding classes
   // Landscape mode takes precedence when both isLandscape and isSmallScreen are true
