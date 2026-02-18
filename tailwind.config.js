@@ -6,6 +6,9 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        'sans': ['Roboto', 'system-ui', '-apple-system', 'sans-serif'],
+      },
       colors: {
         // Material 3 Color System
         'm3': {

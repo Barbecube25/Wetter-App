@@ -5470,7 +5470,7 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
   // If type is 'none', we just show the "No precipitation" box
   if (type === 'none') {
       return (
-        <div className="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between shadow-sm mb-4">
+        <div className="bg-m3-surface-container-high border border-m3-outline-variant rounded-m3-2xl p-4 flex items-center justify-between shadow-m3-1 mb-4">
             <div className="flex items-center gap-3">
                 <div className="p-3 bg-m3-secondary-container rounded-full text-m3-on-secondary-container"><Sun size={28} /></div>
                 <div>
@@ -5556,7 +5556,7 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
             </div>
         </div>
 
-        <div className="mt-4 h-3 w-full bg-white/40 rounded-full overflow-hidden relative">
+        <div className="mt-4 h-3 w-full bg-m3-surface-container-high rounded-full overflow-hidden relative">
             <div 
                 className={`h-full ${intensity.color} rounded-full transition-all duration-1000 ease-out`} 
                 style={{ width: `${intensity.percent}%` }}
@@ -5578,12 +5578,12 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
             
             {/* Peak Rain Time */}
             {peakTime && maxIntensity > 0 && (
-                <div className="flex items-center justify-between bg-white/30 rounded-xl p-3">
+                <div className="flex items-center justify-between bg-m3-surface-container-high rounded-m3-xl p-3">
                     <div className="flex items-center gap-2">
-                        <Clock size={18} className="text-blue-600" />
-                        <span className="text-sm font-bold text-slate-700">{t.peakRainAt}</span>
+                        <Clock size={18} className="text-m3-primary" />
+                        <span className="text-m3-label-large font-bold text-m3-on-surface">{t.peakRainAt}</span>
                     </div>
-                    <span className="text-base font-bold text-slate-800">
+                    <span className="text-m3-body-large font-bold text-m3-on-surface">
                         {peakTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})} ({formatPrecip ? formatPrecip(maxIntensity) : maxIntensity.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}/h)
                     </span>
                 </div>
@@ -5591,9 +5591,9 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
 
             {/* Light rain before stronger start */}
             {hasLightBeforeStrong && (
-                <div className="flex items-start gap-2 bg-white/30 rounded-xl p-3">
-                    <CloudDrizzle size={18} className="text-cyan-600 mt-0.5" />
-                    <span className="text-sm font-bold text-slate-700">
+                <div className="flex items-start gap-2 bg-m3-surface-container-high rounded-m3-xl p-3">
+                    <CloudDrizzle size={18} className="text-m3-primary mt-0.5" />
+                    <span className="text-m3-label-large font-bold text-m3-on-surface">
                         {lang === 'en'
                             ? `Light precipitation from ${lightStartLabel}, heavier from ${strongStartLabel}${strongEndSuffixEn}.`
                             : `Leichter Niederschlag ab ${lightStartLabel} Uhr, stärker ab ${strongStartLabel}${strongEndSuffixDe}.`}
@@ -5603,25 +5603,25 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
             
             {/* Hourly Forecast (if available) */}
             {hourlyForecast.length > 0 && (
-                <div className="bg-white/30 rounded-xl p-3">
+                <div className="bg-m3-surface-container-high rounded-m3-xl p-3">
                     <div className="flex items-center gap-2 mb-2">
-                        <BarChart2 size={18} className={isMixedPrecip ? "text-purple-600" : "text-blue-600"} />
-                        <span className="text-sm font-bold text-slate-700">{t.nextHours}</span>
+                        <BarChart2 size={18} className={isMixedPrecip ? "text-m3-tertiary" : "text-m3-primary"} />
+                        <span className="text-m3-label-large font-bold text-m3-on-surface">{t.nextHours}</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                         {hourlyForecast.slice(0, 24).map((forecast, idx) => {
                             const hasMixedInHour = forecast.rain > 0.1 && forecast.snow > 0.1;
                             return (
-                                <div key={idx} className="flex flex-col items-center bg-white/40 rounded-lg p-2">
-                                    <span className="text-xs font-medium text-slate-600">
+                                <div key={idx} className="flex flex-col items-center bg-m3-surface-container rounded-m3-md p-2">
+                                    <span className="text-m3-label-small font-medium text-m3-on-surface-variant">
                                         {forecast.time.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})}
                                     </span>
                                     {hasMixedInHour ? (
-                                        <div className="text-xs font-bold mt-1">
-                                            <div className="flex items-center gap-1 text-blue-600">
+                                        <div className="text-m3-label-small font-bold mt-1">
+                                            <div className="flex items-center gap-1 text-m3-primary">
                                                 <CloudRain size={10}/>{formatPrecip ? formatPrecip(forecast.rain) : forecast.rain.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                                             </div>
-                                            <div className="flex items-center gap-1 text-cyan-600">
+                                            <div className="flex items-center gap-1 text-m3-tertiary">
                                                 <Snowflake size={10}/>{formatPrecip ? formatPrecip(forecast.snow) : forecast.snow.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                                             </div>
                                         </div>
@@ -5834,16 +5834,16 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
       });
   }
   
-  let bannerClass = "bg-blue-100 text-blue-900 border-blue-300"; 
+  let bannerClass = "bg-m3-surface-container-high text-m3-on-surface border-m3-outline-variant"; 
   let icon = <Info size={20} />;
   
-  if (maxSeverityLevel === 1) { bannerClass = "bg-yellow-100 text-yellow-900 border-yellow-300"; icon = <AlertTriangle size={20} />; }
-  else if (maxSeverityLevel === 2) { bannerClass = "bg-orange-100 text-orange-900 border-orange-300"; icon = <AlertTriangle size={20} />; }
-  else if (maxSeverityLevel >= 3) { bannerClass = "bg-red-100 text-red-900 border-red-300 animate-pulse-red"; icon = <Siren size={20} />; }
+  if (maxSeverityLevel === 1) { bannerClass = "bg-m3-surface-container-high text-m3-on-surface border-m3-outline-variant"; icon = <AlertTriangle size={20} />; }
+  else if (maxSeverityLevel === 2) { bannerClass = "bg-m3-surface-container-high text-m3-on-surface border-m3-outline-variant"; icon = <AlertTriangle size={20} />; }
+  else if (maxSeverityLevel >= 3) { bannerClass = "bg-m3-surface-container-high text-m3-on-surface border-m3-outline-variant animate-pulse-red"; icon = <Siren size={20} />; }
 
   return (
     <>
-      <div className="mb-4 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 rounded-xl border border-indigo-100 shadow-sm relative overflow-hidden transition-all duration-500">
+      <div className="mb-4 bg-m3-surface-container rounded-xl border border-m3-outline-variant shadow-m3-1 relative overflow-hidden transition-all duration-500">
         
         {/* HEADER BEREICH */}
         <div className="p-4 relative z-10">
@@ -5871,23 +5871,23 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
 
             {/* Custom Warning - Show severe weather warnings (thunderstorms, gale gusts) even when DWD warnings exist */}
             {localWarning && (
-              <div className="mb-3 p-3 bg-red-100 border-l-4 border-red-500 text-red-900 rounded-r shadow-sm flex items-start gap-3 animate-pulse-red relative z-10">
-                <AlertTriangle className="shrink-0 text-red-600 mt-0.5" size={20} />
+              <div className="mb-3 p-3 bg-m3-error-container border-l-4 border-m3-error text-m3-on-error-container rounded-r shadow-m3-1 flex items-start gap-3 animate-pulse-red relative z-10">
+                <AlertTriangle className="shrink-0 text-m3-error mt-0.5" size={20} />
                 <div>
-                  <div className="font-extrabold uppercase text-xs tracking-wider mb-0.5">Wettertrend Warnung</div>
-                  <div className="font-bold leading-tight text-sm">{localWarning}</div>
+                  <div className="font-extrabold uppercase text-m3-label-small tracking-wider mb-0.5">Wettertrend Warnung</div>
+                  <div className="font-bold leading-tight text-m3-body-medium">{localWarning}</div>
                 </div>
               </div>
             )}
             
             {/* Main Report Title & Summary */}
             <div className="flex justify-between items-start mb-2">
-                <div className="text-xs font-extrabold uppercase tracking-wider text-indigo-900/60 mb-1 flex items-center gap-1">
-                    <Sparkles size={12} className="text-indigo-500"/> 
+                <div className="text-m3-label-small font-extrabold uppercase tracking-wider text-m3-on-surface-variant mb-1 flex items-center gap-1">
+                    <Sparkles size={12} className="text-m3-primary"/> 
                     {title || t.weatherReport}
                 </div>
                 {confidence !== null && (
-                    <div className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${confidence > 70 ? 'bg-green-100 text-green-700 border-green-200' : confidence > 40 ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
+                    <div className="text-m3-label-small px-2 py-0.5 rounded-full font-bold border bg-m3-surface-container-high text-m3-on-surface border-m3-outline-variant">
                         {confidence}% {t.safe}
                     </div>
                 )}
