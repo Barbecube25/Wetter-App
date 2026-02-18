@@ -25,19 +25,20 @@ public class MainActivity extends BridgeActivity {
         EdgeToEdge.enable(this);
         
         // Keep the system navigation bar visible
-        enableFullscreenMode();
+        configureSystemBars();
     }
     
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus) {
-            // Re-enable immersive mode when window regains focus
-            enableFullscreenMode();
+            // Re-apply system bar visibility when window regains focus
+            configureSystemBars();
         }
     }
     
-    private void enableFullscreenMode() {
+    @SuppressWarnings("deprecation")
+    private void configureSystemBars() {
         // Use modern Android 11+ (API 30+) approach with WindowInsetsController
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             // Android 11+ (API 30+) - use WindowInsetsController
