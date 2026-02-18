@@ -8581,20 +8581,23 @@ export default function WeatherApp() {
       return {
         animationCardHeight: '100px',
         navBarHeight: '56px',
-        fixedElementsGap: '12px'
+        fixedElementsGap: '12px',
+        fixedTopOffset: '12px'
       };
     }
     if (isSmallScreen) {
       return {
         animationCardHeight: '180px',
         navBarHeight: '70px',
-        fixedElementsGap: '16px'
+        fixedElementsGap: '16px',
+        fixedTopOffset: '12px'
       };
     }
     return {
       animationCardHeight: ANIMATION_CARD_HEIGHT,
       navBarHeight: NAV_BAR_HEIGHT,
-      fixedElementsGap: FIXED_ELEMENTS_GAP
+      fixedElementsGap: FIXED_ELEMENTS_GAP,
+      fixedTopOffset: '12px'
     };
   };
 
@@ -8604,6 +8607,7 @@ export default function WeatherApp() {
   const animationCardHeight = layoutDimensions.animationCardHeight;
   const navBarHeight = layoutDimensions.navBarHeight;
   const fixedElementsGap = layoutDimensions.fixedElementsGap;
+  const fixedTopOffset = layoutDimensions.fixedTopOffset;
 
   // Helper function to get animation card padding classes
   // Landscape mode takes precedence when both isLandscape and isSmallScreen are true
@@ -9191,9 +9195,9 @@ export default function WeatherApp() {
         </button>
       )}
 
-      <main className={`max-w-4xl mx-auto ${isSmallScreen ? 'px-2' : 'px-4'} pb-4 z-10 relative space-y-4`} style={{ paddingTop: `calc(${animationCardHeight} + ${navBarHeight} + ${fixedElementsGap})` }}>
+      <main className={`max-w-4xl mx-auto ${isSmallScreen ? 'px-2' : 'px-4'} pb-4 z-10 relative space-y-4`} style={{ paddingTop: `calc(${animationCardHeight} + ${navBarHeight} + ${fixedElementsGap} + ${fixedTopOffset})` }}>
         {/* Fixed Animation Card Container - Matches main content width, extends to top edge */}
-        <div className={`fixed left-0 right-0 z-20 ${isSmallScreen ? 'px-2' : 'px-4'}`} style={{ top: 0 }}>
+        <div className={`fixed left-0 right-0 z-20 ${isSmallScreen ? 'px-2' : 'px-4'}`} style={{ top: fixedTopOffset }}>
           <div className="max-w-4xl mx-auto">
             <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl ${getAnimationCardPadding()} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant backdrop-blur-md ${getAnimationCardMinHeight()}`}>
               {/* Weather background animation */}
@@ -9284,7 +9288,7 @@ export default function WeatherApp() {
 
         {/* Enhanced Tab Navigation - Fixed positioned below fixed animation card with gap, hidden in landscape when controls are hidden */}
         {!(isLandscape && hideControlsInLandscape) && (
-        <div className={`fixed left-0 right-0 z-30 ${isSmallScreen ? 'px-2' : 'px-4'}`} style={{ top: `calc(${animationCardHeight} + ${fixedElementsGap})` }}>
+        <div className={`fixed left-0 right-0 z-30 ${isSmallScreen ? 'px-2' : 'px-4'}`} style={{ top: `calc(${animationCardHeight} + ${fixedElementsGap} + ${fixedTopOffset})` }}>
           <div className="max-w-4xl mx-auto">
             <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl ${isLandscape ? 'p-1' : (isSmallScreen ? 'p-1.5' : 'p-2')} shadow-m3-2 border border-m3-outline-variant`}>
           <div className={`grid grid-cols-5 ${isSmallScreen ? 'gap-0.5' : 'gap-1'}`}>
