@@ -4138,19 +4138,24 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   // Calculate smooth transition factor for sky color blending
   // 0 = full night, 1 = full day
   let skyTransitionFactor = 0;
-  const TRANSITION_DURATION = 0.75; // Duration in hours for dawn/dusk transition (45 minutes)
+  const TRANSITION_DURATION = 1.0; // Duration in hours for dawn/dusk transition (60 minutes) - extended for smoother twilight
+  const TWILIGHT_EXTENSION = 0.5; // Extended twilight period for stars to fade (30 minutes before/after main transition)
   const CSS_TRANSITION_DURATION = '4s'; // CSS transition duration for smooth opacity changes
   
   // Multiplier for dawn/dusk gradient opacity calculation
   // Formula: max opacity = (1/4) * multiplier (occurs at factor=0.5)
-  // With multiplier=1.0: peak opacity = 0.25
-  const DAWN_DUSK_OPACITY_MULTIPLIER = 1.0;
+  // With multiplier=1.2: peak opacity = 0.3
+  const DAWN_DUSK_OPACITY_MULTIPLIER = 1.2; // Increased for more prominent twilight colors
   
   // Helper function for dawn/dusk gradient opacity using bell curve
   // Peaks at mid-transition (0.3 opacity when factor=0.5), fades to 0 at extremes
   // Expects factor in range [0, 1] where 0=night, 1=day
   // Math.min ensures opacity never exceeds 1.0 even if multiplier is adjusted
   const getDawnDuskOpacity = (factor) => Math.min(1, factor * (1 - factor) * DAWN_DUSK_OPACITY_MULTIPLIER);
+  
+  // Calculate star opacity for smooth twilight transitions
+  // Stars fade out gradually during morning twilight and fade in during evening twilight
+  let starOpacity = 0;
 
   // ÄNDERUNG: < sunsetHour (nicht <=), damit bei Sonnenuntergang die Sonne sofort verschwindet
   if (currentHour >= sunriseHour && currentHour < sunsetHour) {
@@ -4172,13 +4177,22 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
        isDawn = true;
        // Smooth transition from 0 (night) to 1 (day) during dawn
        skyTransitionFactor = Math.min(1, (currentHour - sunriseHour) / TRANSITION_DURATION);
+       // Stars fade out during extended morning twilight
+       const timeSinceSunrise = currentHour - sunriseHour;
+       const extendedTwilight = TRANSITION_DURATION + TWILIGHT_EXTENSION;
+       starOpacity = Math.max(0, 1 - (timeSinceSunrise / extendedTwilight));
      } else if (sunsetHour - currentHour < TRANSITION_DURATION) {
        isDusk = true;
        // Smooth transition from 1 (day) to 0 (night) during dusk
        skyTransitionFactor = Math.max(0, (sunsetHour - currentHour) / TRANSITION_DURATION);
+       // Stars fade in during extended evening twilight
+       const timeUntilSunset = sunsetHour - currentHour;
+       const extendedTwilight = TRANSITION_DURATION + TWILIGHT_EXTENSION;
+       starOpacity = Math.max(0, 1 - (timeUntilSunset / extendedTwilight));
      } else {
-       // Full day
+       // Full day - no stars
        skyTransitionFactor = 1;
+       starOpacity = 0;
      }
   } else {
      celestialType = 'moon';
@@ -4193,6 +4207,24 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
      
      // Full night
      skyTransitionFactor = 0;
+     
+     // Calculate star opacity during extended evening twilight (after sunset)
+     if (timeSinceSunset < TWILIGHT_EXTENSION) {
+       // Stars fade in after sunset
+       starOpacity = Math.min(1, timeSinceSunset / TWILIGHT_EXTENSION);
+     } else {
+       // Calculate time before sunrise for morning twilight
+       const timeBeforeSunrise = sunriseHour - currentHour;
+       const adjustedTimeBeforeSunrise = timeBeforeSunrise < 0 ? timeBeforeSunrise + 24 : timeBeforeSunrise;
+       
+       if (adjustedTimeBeforeSunrise < TWILIGHT_EXTENSION) {
+         // Stars fade out before sunrise
+         starOpacity = Math.min(1, adjustedTimeBeforeSunrise / TWILIGHT_EXTENSION);
+       } else {
+         // Full night - stars at full opacity
+         starOpacity = 1;
+       }
+     }
   }
 
   const moonPhase = date ? getMoonPhase(date) : 0;
@@ -4341,9 +4373,10 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
         </g>
       )}
       
-      {/* Stars visible at night regardless of weather conditions */}
-      {isNight && (
-         <g>
+      {/* Stars visible with smooth twilight transitions */}
+      {/* Stars now fade in/out gradually during twilight periods */}
+      {starOpacity > 0 && (
+         <g opacity={starOpacity} style={{ transition: `opacity ${CSS_TRANSITION_DURATION} ease-in-out` }}>
             <circle cx="50" cy="30" r="1" fill="white" className="animate-twinkle-1" style={{animationDelay: '0s'}} />
             <circle cx="300" cy="40" r="1.5" fill="white" className="animate-twinkle-2" style={{animationDelay: '1s'}} />
             <circle cx="200" cy="20" r="1" fill="white" className="animate-twinkle-3" style={{animationDelay: '2s'}} />
