@@ -5470,7 +5470,7 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
   // If type is 'none', we just show the "No precipitation" box
   if (type === 'none') {
       return (
-        <div className="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between shadow-sm mb-4">
+        <div className="bg-m3-surface-container-high border border-m3-outline-variant rounded-m3-2xl p-4 flex items-center justify-between shadow-m3-1 mb-4">
             <div className="flex items-center gap-3">
                 <div className="p-3 bg-m3-secondary-container rounded-full text-m3-on-secondary-container"><Sun size={28} /></div>
                 <div>
@@ -5556,7 +5556,7 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
             </div>
         </div>
 
-        <div className="mt-4 h-3 w-full bg-white/40 rounded-full overflow-hidden relative">
+        <div className="mt-4 h-3 w-full bg-m3-surface-container-high rounded-full overflow-hidden relative">
             <div 
                 className={`h-full ${intensity.color} rounded-full transition-all duration-1000 ease-out`} 
                 style={{ width: `${intensity.percent}%` }}
@@ -5578,12 +5578,12 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
             
             {/* Peak Rain Time */}
             {peakTime && maxIntensity > 0 && (
-                <div className="flex items-center justify-between bg-white/30 rounded-xl p-3">
+                <div className="flex items-center justify-between bg-m3-surface-container-high rounded-m3-xl p-3">
                     <div className="flex items-center gap-2">
-                        <Clock size={18} className="text-blue-600" />
-                        <span className="text-sm font-bold text-slate-700">{t.peakRainAt}</span>
+                        <Clock size={18} className="text-m3-primary" />
+                        <span className="text-m3-label-large font-bold text-m3-on-surface">{t.peakRainAt}</span>
                     </div>
-                    <span className="text-base font-bold text-slate-800">
+                    <span className="text-m3-body-large font-bold text-m3-on-surface">
                         {peakTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})} ({formatPrecip ? formatPrecip(maxIntensity) : maxIntensity.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}/h)
                     </span>
                 </div>
@@ -5591,9 +5591,9 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
 
             {/* Light rain before stronger start */}
             {hasLightBeforeStrong && (
-                <div className="flex items-start gap-2 bg-white/30 rounded-xl p-3">
-                    <CloudDrizzle size={18} className="text-cyan-600 mt-0.5" />
-                    <span className="text-sm font-bold text-slate-700">
+                <div className="flex items-start gap-2 bg-m3-surface-container-high rounded-m3-xl p-3">
+                    <CloudDrizzle size={18} className="text-m3-primary mt-0.5" />
+                    <span className="text-m3-label-large font-bold text-m3-on-surface">
                         {lang === 'en'
                             ? `Light precipitation from ${lightStartLabel}, heavier from ${strongStartLabel}${strongEndSuffixEn}.`
                             : `Leichter Niederschlag ab ${lightStartLabel} Uhr, stärker ab ${strongStartLabel}${strongEndSuffixDe}.`}
@@ -5603,30 +5603,30 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
             
             {/* Hourly Forecast (if available) */}
             {hourlyForecast.length > 0 && (
-                <div className="bg-white/30 rounded-xl p-3">
+                <div className="bg-m3-surface-container-high rounded-m3-xl p-3">
                     <div className="flex items-center gap-2 mb-2">
-                        <BarChart2 size={18} className={isMixedPrecip ? "text-purple-600" : "text-blue-600"} />
-                        <span className="text-sm font-bold text-slate-700">{t.nextHours}</span>
+                        <BarChart2 size={18} className={isMixedPrecip ? "text-m3-tertiary" : "text-m3-primary"} />
+                        <span className="text-m3-label-large font-bold text-m3-on-surface">{t.nextHours}</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                         {hourlyForecast.slice(0, 24).map((forecast, idx) => {
                             const hasMixedInHour = forecast.rain > 0.1 && forecast.snow > 0.1;
                             return (
-                                <div key={idx} className="flex flex-col items-center bg-white/40 rounded-lg p-2">
-                                    <span className="text-xs font-medium text-slate-600">
+                                <div key={idx} className="flex flex-col items-center bg-m3-surface-container rounded-m3-md p-2">
+                                    <span className="text-m3-label-small font-medium text-m3-on-surface-variant">
                                         {forecast.time.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})}
                                     </span>
                                     {hasMixedInHour ? (
-                                        <div className="text-xs font-bold mt-1">
-                                            <div className="flex items-center gap-1 text-blue-600">
+                                        <div className="text-m3-label-small font-bold mt-1">
+                                            <div className="flex items-center gap-1 text-m3-primary">
                                                 <CloudRain size={10}/>{formatPrecip ? formatPrecip(forecast.rain) : forecast.rain.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                                             </div>
-                                            <div className="flex items-center gap-1 text-cyan-600">
+                                            <div className="flex items-center gap-1 text-m3-tertiary">
                                                 <Snowflake size={10}/>{formatPrecip ? formatPrecip(forecast.snow) : forecast.snow.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                                             </div>
                                         </div>
                                     ) : (
-                                        <span className={`text-sm font-bold mt-1 ${forecast.snow > 0.1 ? 'text-cyan-600' : 'text-blue-600'}`}>
+                                        <span className={`text-m3-label-large font-bold mt-1 ${forecast.snow > 0.1 ? 'text-m3-tertiary' : 'text-m3-primary'}`}>
                                             {formatPrecip ? formatPrecip(forecast.amount) : forecast.amount.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                                         </span>
                                     )}
@@ -5700,12 +5700,12 @@ const FeedbackModal = ({ onClose, currentTemp, lang='de', isSmallScreen = false 
     if (sent) {
         return (
             <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
-                <div className={`bg-white rounded-3xl ${isSmallScreen ? 'p-4' : 'p-8'} ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-sm'} w-full text-center shadow-2xl scale-100 animate-in zoom-in-95 duration-200`}>
-                    <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-600">
+                <div className={`bg-m3-surface rounded-m3-3xl ${isSmallScreen ? 'p-4' : 'p-8'} ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-sm'} w-full text-center shadow-m3-5 scale-100 animate-in zoom-in-95 duration-200`}>
+                    <div className="mx-auto w-16 h-16 bg-m3-secondary-container rounded-full flex items-center justify-center mb-4 text-m3-on-secondary-container">
                         <CheckCircle2 size={32} />
                     </div>
-                    <h3 className="text-xl font-black text-slate-800 mb-2">{t.feedbackThanks}</h3>
-                    <p className="text-slate-500">{t.feedbackDesc}</p>
+                    <h3 className="text-m3-headline-small font-black text-m3-on-surface mb-2">{t.feedbackThanks}</h3>
+                    <p className="text-m3-body-large text-m3-on-surface-variant">{t.feedbackDesc}</p>
                 </div>
             </div>
         );
@@ -5715,18 +5715,18 @@ const FeedbackModal = ({ onClose, currentTemp, lang='de', isSmallScreen = false 
 
     return (
         <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
-            <div className={`bg-white rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-sm'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
-                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <h3 className="font-bold text-slate-800 flex items-center gap-2"><MessageSquarePlus size={18} className="text-blue-500"/> {t.feedbackTitle}</h3>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={20} className="text-slate-400" /></button>
+            <div className={`bg-m3-surface rounded-m3-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-sm'} w-full shadow-m3-5 overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
+                <div className="p-4 border-b border-m3-outline-variant flex justify-between items-center bg-m3-surface-container">
+                    <h3 className="font-bold text-m3-on-surface flex items-center gap-2"><MessageSquarePlus size={18} className="text-m3-primary"/> {t.feedbackTitle}</h3>
+                    <button onClick={onClose} className="p-2 hover:bg-m3-surface-container-high rounded-full transition"><X size={20} className="text-m3-on-surface-variant" /></button>
                 </div>
                 
                 <div className="p-6 overflow-y-auto">
                     {/* Temperatur Slider */}
                     <div className="mb-8">
                         <div className="flex justify-between items-end mb-4">
-                            <label className="text-sm font-bold text-slate-500 uppercase tracking-wide">Temperatur</label>
-                            <div className="text-3xl font-black text-slate-800">{displayTemp}°</div>
+                            <label className="text-m3-label-large font-bold text-m3-on-surface-variant uppercase tracking-wide">Temperatur</label>
+                            <div className="text-m3-display-small font-black text-m3-on-surface">{displayTemp}°</div>
                         </div>
                         <input 
                             type="range" 
@@ -5735,9 +5735,9 @@ const FeedbackModal = ({ onClose, currentTemp, lang='de', isSmallScreen = false 
                             step="1" 
                             value={tempAdjustment} 
                             onChange={(e) => setTempAdjustment(parseInt(e.target.value))}
-                            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                            className="w-full h-2 bg-m3-surface-container-high rounded-lg appearance-none cursor-pointer accent-m3-primary"
                         />
-                        <div className="flex justify-between text-xs text-slate-400 mt-2 font-medium">
+                        <div className="flex justify-between text-m3-label-small text-m3-on-surface-variant mt-2 font-medium">
                             <span>-10°</span>
                             <span>OK</span>
                             <span>+10°</span>
@@ -5746,16 +5746,16 @@ const FeedbackModal = ({ onClose, currentTemp, lang='de', isSmallScreen = false 
 
                     {/* Wetter Grid */}
                     <div className="mb-6">
-                        <label className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 block">{t.weatherReport}</label>
+                        <label className="text-m3-label-large font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 block">{t.weatherReport}</label>
                         <div className="grid grid-cols-3 gap-2">
                             {conditions.map((c) => (
                                 <button 
                                     key={c.id}
                                     onClick={() => setSelectedCondition(c.id)}
-                                    className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200 ${selectedCondition === c.id ? `ring-2 ring-offset-1 ring-blue-500 ${c.color}` : 'border-slate-100 hover:bg-slate-50'}`}
+                                    className={`flex flex-col items-center justify-center p-3 rounded-m3-xl border transition-all duration-200 ${selectedCondition === c.id ? `ring-2 ring-offset-1 ring-m3-primary bg-m3-primary-container border-m3-primary text-m3-on-primary-container` : 'border-m3-outline-variant hover:bg-m3-surface-container-high'}`}
                                 >
-                                    <c.icon size={24} className={selectedCondition === c.id ? '' : 'text-slate-400'} />
-                                    <span className={`text-xs font-medium mt-2 ${selectedCondition === c.id ? '' : 'text-slate-600'}`}>{c.label}</span>
+                                    <c.icon size={24} className={selectedCondition === c.id ? '' : 'text-m3-on-surface-variant'} />
+                                    <span className={`text-m3-label-small font-medium mt-2 ${selectedCondition === c.id ? '' : 'text-m3-on-surface-variant'}`}>{c.label}</span>
                                 </button>
                             ))}
                         </div>
@@ -5834,16 +5834,16 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
       });
   }
   
-  let bannerClass = "bg-blue-100 text-blue-900 border-blue-300"; 
+  let bannerClass = "bg-m3-surface-container-high text-m3-on-surface border-m3-outline-variant"; 
   let icon = <Info size={20} />;
   
-  if (maxSeverityLevel === 1) { bannerClass = "bg-yellow-100 text-yellow-900 border-yellow-300"; icon = <AlertTriangle size={20} />; }
-  else if (maxSeverityLevel === 2) { bannerClass = "bg-orange-100 text-orange-900 border-orange-300"; icon = <AlertTriangle size={20} />; }
-  else if (maxSeverityLevel >= 3) { bannerClass = "bg-red-100 text-red-900 border-red-300 animate-pulse-red"; icon = <Siren size={20} />; }
+  if (maxSeverityLevel === 1) { bannerClass = "bg-m3-tertiary-container text-m3-on-tertiary-container border-m3-tertiary"; icon = <AlertTriangle size={20} />; }
+  else if (maxSeverityLevel === 2) { bannerClass = "bg-m3-secondary-container text-m3-on-secondary-container border-m3-secondary"; icon = <AlertTriangle size={20} />; }
+  else if (maxSeverityLevel >= 3) { bannerClass = "bg-m3-error-container text-m3-on-error-container border-m3-error animate-pulse-red"; icon = <Siren size={20} />; }
 
   return (
     <>
-      <div className="mb-4 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 rounded-xl border border-indigo-100 shadow-sm relative overflow-hidden transition-all duration-500">
+      <div className="mb-4 bg-m3-surface-container rounded-xl border border-m3-outline-variant shadow-m3-1 relative overflow-hidden transition-all duration-500">
         
         {/* HEADER BEREICH */}
         <div className="p-4 relative z-10">
@@ -5871,23 +5871,23 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
 
             {/* Custom Warning - Show severe weather warnings (thunderstorms, gale gusts) even when DWD warnings exist */}
             {localWarning && (
-              <div className="mb-3 p-3 bg-red-100 border-l-4 border-red-500 text-red-900 rounded-r shadow-sm flex items-start gap-3 animate-pulse-red relative z-10">
-                <AlertTriangle className="shrink-0 text-red-600 mt-0.5" size={20} />
+              <div className="mb-3 p-3 bg-m3-error-container border-l-4 border-m3-error text-m3-on-error-container rounded-r shadow-m3-1 flex items-start gap-3 animate-pulse-red relative z-10">
+                <AlertTriangle className="shrink-0 text-m3-error mt-0.5" size={20} />
                 <div>
-                  <div className="font-extrabold uppercase text-xs tracking-wider mb-0.5">Wettertrend Warnung</div>
-                  <div className="font-bold leading-tight text-sm">{localWarning}</div>
+                  <div className="font-extrabold uppercase text-m3-label-small tracking-wider mb-0.5">Wettertrend Warnung</div>
+                  <div className="font-bold leading-tight text-m3-body-medium">{localWarning}</div>
                 </div>
               </div>
             )}
             
             {/* Main Report Title & Summary */}
             <div className="flex justify-between items-start mb-2">
-                <div className="text-xs font-extrabold uppercase tracking-wider text-indigo-900/60 mb-1 flex items-center gap-1">
-                    <Sparkles size={12} className="text-indigo-500"/> 
+                <div className="text-m3-label-small font-extrabold uppercase tracking-wider text-m3-on-surface-variant mb-1 flex items-center gap-1">
+                    <Sparkles size={12} className="text-m3-primary"/> 
                     {title || t.weatherReport}
                 </div>
                 {confidence !== null && (
-                    <div className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${confidence > 70 ? 'bg-green-100 text-green-700 border-green-200' : confidence > 40 ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
+                    <div className={`text-m3-label-small px-2 py-0.5 rounded-full font-bold border ${confidence > 70 ? 'bg-m3-tertiary-container text-m3-on-tertiary-container border-m3-tertiary' : confidence > 40 ? 'bg-m3-secondary-container text-m3-on-secondary-container border-m3-secondary' : 'bg-m3-error-container text-m3-on-error-container border-m3-error'}`}>
                         {confidence}% {t.safe}
                     </div>
                 )}
@@ -5895,13 +5895,13 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
             
             {/* Hinzugefügt: whitespace-pre-line für korrekte Zeilenumbrüche im Daily Report */}
             {/* NOTE: We might need to run temp conversion on summary string but that's complex with regex. For now summary remains as generated (mostly C) unless we rebuild AI report completely with units. */}
-            <p className="text-lg text-slate-800 leading-relaxed font-semibold relative z-10 whitespace-pre-line">{summary}</p>
+            <p className="text-m3-body-large text-m3-on-surface leading-relaxed font-semibold relative z-10 whitespace-pre-line">{summary}</p>
             
             {/* Toggle Button */}
             {showDetails && (details || structuredDetails || showTripDetails) && (
                 <button 
                     onClick={() => setExpanded(!expanded)} 
-                    className="mt-3 text-sm font-bold text-indigo-600 flex items-center gap-1 hover:text-indigo-800 transition-colors"
+                    className="mt-3 text-m3-label-large font-bold text-m3-primary flex items-center gap-1 hover:text-m3-primary/80 transition-colors"
                 >
                     {expanded ? t.showLess : t.showDetails} {expanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
                 </button>
@@ -5973,7 +5973,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
 
                 {/* Fallback Text Details */}
                 {details && !showTripDetails && (
-                    <div className="text-base text-slate-700 leading-relaxed space-y-2 whitespace-pre-line mb-4">
+                    <div className="text-m3-body-medium text-m3-on-surface leading-relaxed space-y-2 whitespace-pre-line mb-4">
                         {details}
                     </div>
                 )}
@@ -5983,39 +5983,39 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                    <div className="space-y-6 mt-2">
                        {structuredDetails.map((group, idx) => (
                            <div key={idx}>
-                               <h4 className="text-[10px] font-extrabold uppercase text-indigo-400 mb-2 tracking-widest pl-1">{group.title}</h4>
+                               <h4 className="text-m3-label-small font-extrabold uppercase text-m3-primary mb-2 tracking-widest pl-1">{group.title}</h4>
                                <div className="space-y-2">
                                    {group.items.map((item, i) => {
                                        const Icon = getWeatherConfig(item.code, 1, lang).icon;
                                        return (
-                                           <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-white/60 hover:bg-white/80 transition border border-white/40 shadow-sm text-sm">
+                                           <div key={i} className="flex items-center justify-between p-2 rounded-m3-xl bg-m3-surface-container-high hover:bg-m3-surface-container-highest transition border border-m3-outline-variant shadow-m3-1 text-m3-body-medium">
                                                {/* Date & Icon */}
                                                <div className="flex items-center gap-3 min-w-[100px]">
                                                    <div className="w-10 text-center">
-                                                       <div className="font-bold text-slate-700">{item.day}</div>
-                                                       <div className="text-[10px] font-medium text-slate-400">{item.date}</div>
+                                                       <div className="font-bold text-m3-on-surface">{item.day}</div>
+                                                       <div className="text-m3-label-small font-medium text-m3-on-surface-variant">{item.date}</div>
                                                    </div>
-                                                   <div className="p-1.5 bg-indigo-50 rounded-lg text-indigo-600">
+                                                   <div className="p-1.5 bg-m3-primary-container rounded-m3-md text-m3-on-primary-container">
                                                         <Icon size={20}/>
                                                    </div>
                                                </div>
                                                
                                                 {/* Temp */}
                                                 <div className="flex items-center gap-1 flex-1 justify-center">
-                                                    <span className="font-bold text-slate-800 text-base">{tempFunc(item.max)}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}</span>
-                                                    <span className="text-slate-400 text-xs font-medium">/ {tempFunc(item.min)}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}</span>
+                                                    <span className="font-bold text-m3-on-surface text-m3-body-large">{tempFunc(item.max)}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}</span>
+                                                    <span className="text-m3-on-surface-variant text-m3-label-small font-medium">/ {tempFunc(item.min)}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}</span>
                                                 </div>
 
                                                {/* Rain/Wind */}
                                                <div className="text-right min-w-[80px] flex flex-col items-end gap-0.5">
                                                     {item.rain > 0.1 ? (
-                                                        <div className="flex items-center justify-end gap-1 text-blue-600 font-bold text-xs bg-blue-50 px-1.5 py-0.5 rounded-md w-max">
+                                                        <div className="flex items-center justify-end gap-1 text-m3-primary font-bold text-m3-label-small bg-m3-primary-container px-1.5 py-0.5 rounded-m3-sm w-max">
                                                             <Droplets size={10}/> {formatPrecipSafe(item.rain)}{getPrecipUnitLabelSafe()}
                                                         </div>
-                                                    ) : <span className="text-[10px] text-slate-400 font-medium px-1.5 py-0.5">{t.noRain}</span>}
+                                                    ) : <span className="text-m3-label-small text-m3-on-surface-variant font-medium px-1.5 py-0.5">{t.noRain}</span>}
                                                    
                                                     {item.wind > 20 && (
-                                                        <div className={`flex items-center justify-end gap-1 text-[10px] font-bold ${getWindColorClass(item.wind, false)}`}>
+                                                        <div className={`flex items-center justify-end gap-1 text-m3-label-small font-bold ${getWindColorClass(item.wind, false)}`}>
                                                             <Wind size={10}/> {formatWindSafe(item.wind)} {getWindUnitLabelSafe()}
                                                         </div>
                                                     )}

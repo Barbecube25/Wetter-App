@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Roboto', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 }
@@ -12,6 +12,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  font-family: 'Roboto', system-ui, -apple-system, sans-serif;
 }
 
 /* Safe area padding for notched devices (iPhone X+, newer Android) */
