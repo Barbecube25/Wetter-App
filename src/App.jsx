@@ -102,7 +102,6 @@ const TRANSLATIONS = {
     welcomeDesc: "Um zu starten, legen Sie bitte Ihren Heimatort fest.",
     useGps: "Standort verwenden",
     orSearch: "Oder suchen",
-    locFound: "Ort gefunden!",
     nameLoc: "Wie möchten Sie diesen Ort nennen?",
     saveStart: "Speichern & Starten",
     dailyReport: "Tages-Bericht",
@@ -283,7 +282,6 @@ const TRANSLATIONS = {
     welcomeDesc: "To start, please set your home location.",
     useGps: "Use Location",
     orSearch: "Or search",
-    locFound: "Location found!",
     nameLoc: "What do you want to call this place?",
     saveStart: "Save & Start",
     dailyReport: "Daily Report",
@@ -464,7 +462,6 @@ const TRANSLATIONS = {
     welcomeDesc: "Pour commencer, veuillez définir votre lieu principal.",
     useGps: "Utiliser la position",
     orSearch: "Ou rechercher",
-    locFound: "Lieu trouvé !",
     nameLoc: "Comment voulez-vous nommer ce lieu ?",
     saveStart: "Enregistrer & Démarrer",
     dailyReport: "Rapport du jour",
@@ -646,7 +643,6 @@ const TRANSLATIONS = {
     welcomeDesc: "Para empezar, establezca su ubicación principal.",
     useGps: "Usar ubicación",
     orSearch: "O buscar",
-    locFound: "¡Ubicación encontrada!",
     nameLoc: "¿Cómo quieres llamar este lugar?",
     saveStart: "Guardar e Iniciar",
     dailyReport: "Informe diario",
@@ -759,6 +755,8 @@ const TRANSLATIONS = {
     gpsAvailable: "Datos GPS disponibles",
     gpsNotAvailable: "Sin datos GPS",
     usingGpsData: "Usando posición GPS",
+    pullToRefresh: "Desliza hacia abajo para actualizar",
+    releaseToRefresh: "Suelta para actualizar",
     showMoreDetails: "Mostrar más detalles",
     hideMoreDetails: "Ocultar detalles",
 
@@ -825,7 +823,6 @@ const TRANSLATIONS = {
     welcomeDesc: "Per iniziare, imposta il tuo luogo principale.",
     useGps: "Usa posizione",
     orSearch: "O cerca",
-    locFound: "Luogo trovato!",
     nameLoc: "Come vuoi chiamare questo luogo?",
     saveStart: "Salva e Avvia",
     dailyReport: "Resoconto giornaliero",
@@ -938,6 +935,8 @@ const TRANSLATIONS = {
     gpsAvailable: "Dati GPS disponibili",
     gpsNotAvailable: "Nessun dato GPS",
     usingGpsData: "Usa posizione GPS",
+    pullToRefresh: "Tira giù per aggiornare",
+    releaseToRefresh: "Rilascia per aggiornare",
     showMoreDetails: "Mostra più dettagli",
     hideMoreDetails: "Nascondi dettagli",
 
@@ -948,6 +947,8 @@ const TRANSLATIONS = {
     places: "Yerler",
     settings: "Ayarlar",
     savePlace: "Yeri kaydet",
+    hideControls: "Kontrolleri gizle",
+    showControls: "Kontrolleri göster",
     language: "Dil",
     units: "Birim",
     theme: "Tema",
@@ -1002,7 +1003,6 @@ const TRANSLATIONS = {
     welcomeDesc: "Başlamak için lütfen ana konumunuzu ayarlayın.",
     useGps: "Konumu kullan",
     orSearch: "Veya ara",
-    locFound: "Konum bulundu!",
     nameLoc: "Bu yere ne ad vermek istersiniz?",
     saveStart: "Kaydet ve Başlat",
     dailyReport: "Günlük rapor",
@@ -1115,6 +1115,8 @@ const TRANSLATIONS = {
     gpsAvailable: "GPS verileri mevcut",
     gpsNotAvailable: "GPS verisi yok",
     usingGpsData: "GPS konumunu kullanıyor",
+    pullToRefresh: "Yenilemek için aşağı çekin",
+    releaseToRefresh: "Yenilemek için bırakın",
     showMoreDetails: "Daha fazla ayrıntı göster",
     hideMoreDetails: "Ayrıntıları gizle",
 
@@ -1125,6 +1127,8 @@ const TRANSLATIONS = {
     places: "Miejsca",
     settings: "Ustawienia",
     savePlace: "Zapisz miejsce",
+    hideControls: "Ukryj elementy sterujące",
+    showControls: "Pokaż elementy sterujące",
     language: "Język",
     units: "Jednostki",
     theme: "Motyw",
@@ -1179,7 +1183,6 @@ const TRANSLATIONS = {
     welcomeDesc: "Aby rozpocząć, ustaw swoje miejsce główne.",
     useGps: "Użyj lokalizacji",
     orSearch: "Lub szukaj",
-    locFound: "Lokalizacja znaleziona!",
     nameLoc: "Jak chcesz nazwać to miejsce?",
     saveStart: "Zapisz i Rozpocznij",
     dailyReport: "Raport dzienny",
@@ -1292,6 +1295,8 @@ const TRANSLATIONS = {
     gpsAvailable: "Dane GPS dostępne",
     gpsNotAvailable: "Brak danych GPS",
     usingGpsData: "Używa pozycji GPS",
+    pullToRefresh: "Przeciągnij w dół, aby odświeżyć",
+    releaseToRefresh: "Puść, aby odświeżyć",
     showMoreDetails: "Pokaż więcej szczegółów",
     hideMoreDetails: "Ukryj szczegóły",
 
@@ -1358,7 +1363,6 @@ const TRANSLATIONS = {
     welcomeDesc: "Om te beginnen, stel je hoofdlocatie in.",
     useGps: "Locatie gebruiken",
     orSearch: "Of zoeken",
-    locFound: "Locatie gevonden!",
     nameLoc: "Hoe wil je deze plaats noemen?",
     saveStart: "Opslaan & Starten",
     dailyReport: "Dagrapport",
@@ -1471,6 +1475,8 @@ const TRANSLATIONS = {
     gpsAvailable: "GPS-gegevens beschikbaar",
     gpsNotAvailable: "Geen GPS-gegevens",
     usingGpsData: "Gebruikt GPS-positie",
+    pullToRefresh: "Omlaag trekken om te vernieuwen",
+    releaseToRefresh: "Loslaten om te vernieuwen",
     showMoreDetails: "Meer details tonen",
     hideMoreDetails: "Details verbergen",
 
@@ -1537,7 +1543,6 @@ const TRANSLATIONS = {
     welcomeDesc: "Za početak, postavite svoju glavnu lokaciju.",
     useGps: "Koristi lokaciju",
     orSearch: "Ili traži",
-    locFound: "Lokacija pronađena!",
     nameLoc: "Kako želite nazvati ovo mjesto?",
     saveStart: "Spremi i Pokreni",
     dailyReport: "Dnevno izvješće",
@@ -1650,6 +1655,8 @@ const TRANSLATIONS = {
     gpsAvailable: "GPS podaci dostupni",
     gpsNotAvailable: "Nema GPS podataka",
     usingGpsData: "Koristi GPS poziciju",
+    pullToRefresh: "Povucite prema dolje za osvježavanje",
+    releaseToRefresh: "Pustite za osvježavanje",
     showMoreDetails: "Prikaži više detalja",
     hideMoreDetails: "Sakrij detalje",
 
@@ -1660,6 +1667,8 @@ const TRANSLATIONS = {
     places: "Τοποθεσίες",
     settings: "Ρυθμίσεις",
     savePlace: "Αποθήκευση τοποθεσίας",
+    hideControls: "Απόκρυψη στοιχείων ελέγχου",
+    showControls: "Εμφάνιση στοιχείων ελέγχου",
     language: "Γλώσσα",
     units: "Μονάδες",
     theme: "Θέμα",
@@ -1714,11 +1723,11 @@ const TRANSLATIONS = {
     welcomeDesc: "Για να ξεκινήσετε, ορίστε την κύρια τοποθεσία σας.",
     useGps: "Χρήση τοποθεσίας",
     orSearch: "Ή αναζητήστε",
-    locFound: "Βρέθηκε τοποθεσία!",
     nameLoc: "Πώς θέλετε να ονομάσετε αυτό το μέρος;",
     saveStart: "Αποθήκευση & Έναρξη",
     dailyReport: "Ημερήσια αναφορά",
     trend: "Τάση 7 ημερών",
+    threeDayForecast: "Πρόβλεψη 3 ημερών",
     precipRadar: "Radar κατακρημνισμάτων",
     modelCheck: "Έλεγχος μοντέλου",
     longtermList: "Λίστα 14 ημερών",
@@ -1826,6 +1835,8 @@ const TRANSLATIONS = {
     gpsAvailable: "Διαθέσιμα δεδομένα GPS",
     gpsNotAvailable: "Χωρίς δεδομένα GPS",
     usingGpsData: "Χρήση θέσης GPS",
+    pullToRefresh: "Τραβήξτε προς τα κάτω για ανανέωση",
+    releaseToRefresh: "Αφήστε για ανανέωση",
     showMoreDetails: "Εμφάνιση περισσότερων λεπτομερειών",
     hideMoreDetails: "Απόκρυψη λεπτομερειών",
 
@@ -1836,6 +1847,8 @@ const TRANSLATIONS = {
     places: "Steder",
     settings: "Indstillinger",
     savePlace: "Gem sted",
+    hideControls: "Skjul kontrolelementer",
+    showControls: "Vis kontrolelementer",
     language: "Sprog",
     units: "Enheder",
     theme: "Tema",
@@ -1890,7 +1903,6 @@ const TRANSLATIONS = {
     welcomeDesc: "For at starte, indstil venligst din hovedplacering.",
     useGps: "Brug placering",
     orSearch: "Eller søg",
-    locFound: "Placering fundet!",
     nameLoc: "Hvad vil du kalde dette sted?",
     saveStart: "Gem & Start",
     dailyReport: "Dagsrapport",
@@ -2003,6 +2015,8 @@ const TRANSLATIONS = {
     gpsAvailable: "GPS-data tilgængelige",
     gpsNotAvailable: "Ingen GPS-data",
     usingGpsData: "Bruger GPS-position",
+    pullToRefresh: "Træk ned for at opdatere",
+    releaseToRefresh: "Slip for at opdatere",
     showMoreDetails: "Vis flere detaljer",
     hideMoreDetails: "Skjul detaljer",
 
@@ -2013,6 +2027,8 @@ const TRANSLATIONS = {
     places: "Места",
     settings: "Настройки",
     savePlace: "Сохранить место",
+    hideControls: "Скрыть элементы управления",
+    showControls: "Показать элементы управления",
     language: "Язык",
     units: "Единицы",
     theme: "Тема",
@@ -2179,6 +2195,8 @@ const TRANSLATIONS = {
     gpsAvailable: "Данные GPS доступны",
     gpsNotAvailable: "Нет данных GPS",
     usingGpsData: "Используется позиция GPS",
+    pullToRefresh: "Потяните вниз для обновления",
+    releaseToRefresh: "Отпустите для обновления",
     showMoreDetails: "Показать больше деталей",
     hideMoreDetails: "Скрыть детали",
 
@@ -2420,9 +2438,15 @@ const styles = `
 
 // --- 2. HILFSFUNKTIONEN ---
 
+const LANG_LOCALE_MAP = {
+  de: 'de-DE', en: 'en-US', fr: 'fr-FR', es: 'es-ES', it: 'it-IT',
+  tr: 'tr-TR', pl: 'pl-PL', nl: 'nl-NL', hr: 'hr-HR', el: 'el-GR',
+  da: 'da-DK', ru: 'ru-RU',
+};
+
 const formatDateShort = (date, lang = 'de') => {
   if (!date) return "";
-  const locale = lang === 'en' ? 'en-US' : 'de-DE';
+  const locale = LANG_LOCALE_MAP[lang] || 'de-DE';
   try { return new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit' }).format(date); } catch (e) { return ""; }
 };
 
