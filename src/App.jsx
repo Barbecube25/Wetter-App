@@ -249,6 +249,7 @@ const TRANSLATIONS = {
     pollenModerate: "Mittel",
     pollenHigh: "Hoch",
     pollenVeryHigh: "Sehr hoch",
+    pollenFilter: "Pollen in Kachel anzeigen",
     goldenHour: "Goldene Stunde",
     blueHour: "Blaue Stunde",
     photographerWeather: "Fotograf",
@@ -461,6 +462,7 @@ const TRANSLATIONS = {
     pollenModerate: "Moderate",
     pollenHigh: "High",
     pollenVeryHigh: "Very high",
+    pollenFilter: "Show pollen in tile",
     goldenHour: "Golden Hour",
     blueHour: "Blue Hour",
     photographerWeather: "Photographer",
@@ -2332,7 +2334,8 @@ const getSavedSettings = () => {
             unit: 'celsius', 
             theme: 'auto',
             windUnit: 'kmh',
-            precipUnit: 'mm'
+            precipUnit: 'mm',
+            pollenFilter: ['alder_pollen', 'birch_pollen', 'grass_pollen', 'mugwort_pollen', 'olive_pollen', 'ragweed_pollen']
         };
         if (!saved) return defaults;
         const parsed = JSON.parse(saved);
@@ -2346,6 +2349,9 @@ const getSavedSettings = () => {
         if (!['mm', 'in'].includes(merged.precipUnit)) {
             merged.precipUnit = 'mm';
         }
+        if (!Array.isArray(merged.pollenFilter)) {
+            merged.pollenFilter = ['alder_pollen', 'birch_pollen', 'grass_pollen', 'mugwort_pollen', 'olive_pollen', 'ragweed_pollen'];
+        }
         return merged;
     } catch (e) { 
         return { 
@@ -2353,7 +2359,8 @@ const getSavedSettings = () => {
             unit: 'celsius', 
             theme: 'auto',
             windUnit: 'kmh',
-            precipUnit: 'mm'
+            precipUnit: 'mm',
+            pollenFilter: ['alder_pollen', 'birch_pollen', 'grass_pollen', 'mugwort_pollen', 'olive_pollen', 'ragweed_pollen']
         }; 
     }
 };
@@ -4089,6 +4096,41 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                           </button>
                       </div>
                   </div>
+
+                 {/* POLLEN FILTER */}
+                 <div className="mb-8">
+                     <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <Sparkles size={16}/> {t.pollenFilter}
+                     </label>
+                     <div className="grid grid-cols-2 gap-2 bg-m3-surface-container p-2 rounded-m3-md">
+                         {[
+                             { key: 'alder_pollen', label: t.pollenAlder },
+                             { key: 'birch_pollen', label: t.pollenBirch },
+                             { key: 'grass_pollen', label: t.pollenGrass },
+                             { key: 'mugwort_pollen', label: t.pollenMugwort },
+                             { key: 'olive_pollen', label: t.pollenOlive },
+                             { key: 'ragweed_pollen', label: t.pollenRagweed },
+                         ].map(({ key, label }) => {
+                             const filter = localSettings.pollenFilter || [];
+                             const isActive = filter.includes(key);
+                             return (
+                                 <button
+                                     key={key}
+                                     onClick={() => {
+                                         const updated = isActive
+                                             ? filter.filter(k => k !== key)
+                                             : [...filter, key];
+                                         setLocalSettings({ ...localSettings, pollenFilter: updated });
+                                     }}
+                                     className={`py-2 px-3 rounded-m3-sm text-sm font-bold transition flex items-center justify-between gap-1 ${isActive ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                                 >
+                                     <span>{label}</span>
+                                     {isActive && <Check size={14} />}
+                                 </button>
+                             );
+                         })}
+                     </div>
+                 </div>
 
                  </div>
 
@@ -7873,6 +7915,7 @@ export default function WeatherApp() {
   // Helper to get dominant pollen type and level
   const getDominantPollen = useMemo(() => {
     if (!airQualityData) return null;
+    const activeFilter = settings.pollenFilter || ['alder_pollen', 'birch_pollen', 'grass_pollen', 'mugwort_pollen', 'olive_pollen', 'ragweed_pollen'];
     const types = [
       { key: 'alder_pollen', label: t('pollenAlder') },
       { key: 'birch_pollen', label: t('pollenBirch') },
@@ -7880,7 +7923,7 @@ export default function WeatherApp() {
       { key: 'mugwort_pollen', label: t('pollenMugwort') },
       { key: 'olive_pollen', label: t('pollenOlive') },
       { key: 'ragweed_pollen', label: t('pollenRagweed') },
-    ];
+    ].filter(({ key }) => activeFilter.includes(key));
     let max = null;
     types.forEach(({ key, label }) => {
       const val = airQualityData[key];
@@ -7894,7 +7937,7 @@ export default function WeatherApp() {
     else if (max.val >= POLLEN_HIGH_THRESHOLD) level = t('pollenHigh');
     else if (max.val >= POLLEN_MODERATE_THRESHOLD) level = t('pollenModerate');
     return { ...max, level };
-  }, [airQualityData, lang]);
+  }, [airQualityData, lang, settings.pollenFilter]);
 
 
 
