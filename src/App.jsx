@@ -9621,7 +9621,7 @@ export default function WeatherApp() {
         </button>
       )}
 
-      <main className={`max-w-4xl mx-auto ${isSmallScreen ? 'px-2' : 'px-4'} pb-4 z-10 relative space-y-4`} style={{ paddingTop: `calc(${animationCardHeight} + ${navBarHeight} + ${fixedElementsGap} + ${fixedTopOffset})` }}>
+      <main className={`max-w-4xl mx-auto ${isSmallScreen ? 'px-2' : 'px-4'} pb-4 z-10 relative space-y-2`} style={{ paddingTop: `calc(${animationCardHeight} + ${navBarHeight} + ${fixedElementsGap} + ${fixedTopOffset})` }}>
         {/* Fixed Animation Card Container - Matches main content width, extends to top edge */}
         <div className={`fixed left-0 right-0 z-20 ${isSmallScreen ? 'px-2' : 'px-4'}`} style={{ top: fixedTopOffset }}>
           <div className="max-w-4xl mx-auto">
