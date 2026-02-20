@@ -9619,9 +9619,11 @@ export default function WeatherApp() {
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang, { pollenData: airQualityData }), [processedLong, lang, airQualityData]);
 
   // --- WIDGET VIEWS ---
+  // Only block rendering on initial load (no data yet); during location switches, keep existing data visible.
+  const isInitialLoading = loading && !shortTermData;
   // Landscape mode: Automatically show animation demo mode
   if (viewMode === 'animation' || isLandscape) {
-    if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-m3-dark-surface text-m3-dark-on-surface">{t('loading')}</div>;
+    if (isInitialLoading) return <div className="h-screen w-screen flex items-center justify-center bg-m3-dark-surface text-m3-dark-on-surface">{t('loading')}</div>;
     return (
       <div className={`h-screen w-screen overflow-hidden relative bg-gradient-to-br ${bgGradient}`}>
         <style>{styles}</style>
@@ -9919,7 +9921,7 @@ export default function WeatherApp() {
   }
 
   if (viewMode === 'report') {
-     if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-m3-surface">{t('loading')}</div>;
+     if (isInitialLoading) return <div className="h-screen w-screen flex items-center justify-center bg-m3-surface">{t('loading')}</div>;
      return (
         <div className="min-h-screen bg-m3-surface px-4 pb-4 pt-14">
             <div className="mb-4">
@@ -9936,7 +9938,7 @@ export default function WeatherApp() {
   }
 
   if (viewMode === 'precip') {
-    if (loading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-50">{t('loading')}</div>;
+    if (isInitialLoading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-50">{t('loading')}</div>;
     return (
        <div className="min-h-screen bg-m3-surface p-4 flex flex-col justify-center">
            <div className="absolute top-12 left-4">
@@ -10011,7 +10013,7 @@ export default function WeatherApp() {
   }
 
   // Erst laden, wenn Home gesetzt ist
-  if (loading || !currentLoc) return <div className="min-h-screen bg-m3-surface flex items-center justify-center"><div className="w-12 h-12 border-4 border-m3-primary border-t-transparent rounded-full animate-spin"></div></div>;
+  if (isInitialLoading || !currentLoc) return <div className="min-h-screen bg-m3-surface flex items-center justify-center"><div className="w-12 h-12 border-4 border-m3-primary border-t-transparent rounded-full animate-spin"></div></div>;
   
   if (error) return <div className="min-h-screen flex items-center justify-center p-8 bg-m3-error-container text-m3-on-error-container font-bold">{error} <button onClick={() => setCurrentLoc(homeLoc)} className="ml-4 underline">Reset</button></div>;
 
