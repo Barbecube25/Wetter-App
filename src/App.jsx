@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Eye, Activity } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
 import { StatusBar } from '@capacitor/status-bar';
@@ -262,6 +262,7 @@ const TRANSLATIONS = {
     typicalForMonth: "typisch für diesen Monat",
     swipeHintLocations: "Karte wischen zum Ort wechseln",
     swipeHintTabs: "Wischen zum Tab wechseln",
+    trendTitle: "Verlauf",
 
   },
   en: {
@@ -471,6 +472,7 @@ const TRANSLATIONS = {
     typicalForMonth: "typical for this month",
     swipeHintLocations: "Swipe card to change location",
     swipeHintTabs: "Swipe to switch tab",
+    trendTitle: "Trend",
 
   },
   fr: {
@@ -6264,6 +6266,207 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
   );
 };
 
+// --- WEATHER DETAIL MODAL (Trend chart: 12h history + 24h forecast) ---
+const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData, airQualityChartData, lang, settings, formatTemp, getTempUnitSymbol, formatWind, getWindUnitLabel, isSmallScreen }) => {
+  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
+
+  if (!isOpen) return null;
+
+  const isImperial = settings?.windUnit === 'mph';
+
+  const configs = {
+    uv: {
+      key: 'uvIndex',
+      label: t('uv'),
+      unit: '',
+      color: '#f59e0b',
+      icon: <Sun size={18} className="text-amber-500" />,
+      format: (v) => (v != null ? (+v).toFixed(1) : '-'),
+      yDomain: ['auto', 'auto'],
+    },
+    humidity: {
+      key: 'humidity',
+      label: t('humidity'),
+      unit: '%',
+      color: '#3b82f6',
+      icon: <Waves size={18} className="text-blue-500" />,
+      format: (v) => (v != null ? Math.round(v) : '-'),
+      yDomain: [0, 100],
+    },
+    wind: {
+      key: 'wind',
+      label: t('wind'),
+      unit: getWindUnitLabel(),
+      color: '#6b7280',
+      icon: <Wind size={18} className="text-gray-500" />,
+      format: (v) => (v != null ? formatWind(v) : '-'),
+      extraKey: 'gust',
+      extraLabel: t('gusts'),
+      extraColor: '#ef4444',
+      yDomain: ['auto', 'auto'],
+    },
+    dewPoint: {
+      key: 'dewPoint',
+      label: t('dewPoint'),
+      unit: getTempUnitSymbol(),
+      color: '#06b6d4',
+      icon: <Thermometer size={18} className="text-cyan-500" />,
+      format: (v) => (v != null ? formatTemp(v) : '-'),
+      yDomain: ['auto', 'auto'],
+    },
+    pressure: {
+      key: 'pressure',
+      label: t('pressure'),
+      unit: 'hPa',
+      color: '#8b5cf6',
+      icon: <Gauge size={18} className="text-purple-500" />,
+      format: (v) => (v != null ? Math.round(v) : '-'),
+      yDomain: ['auto', 'auto'],
+    },
+    visibility: {
+      key: 'visibility',
+      label: t('visibility'),
+      unit: isImperial ? 'mi' : 'km',
+      color: '#10b981',
+      icon: <Eye size={18} className="text-emerald-500" />,
+      format: (v) => (v != null ? (isImperial ? (v / 1609.34).toFixed(1) : (v / 1000).toFixed(1)) : '-'),
+      yDomain: ['auto', 'auto'],
+    },
+    airQuality: {
+      key: 'value',
+      label: t('airQuality'),
+      unit: 'AQI',
+      color: '#f97316',
+      icon: <Activity size={18} className="text-orange-500" />,
+      format: (v) => (v != null ? Math.round(v) : '-'),
+      yDomain: ['auto', 'auto'],
+    },
+  };
+
+  const config = configs[metric];
+  if (!config) return null;
+
+  // Prepare chart data
+  let chartData = [];
+  if (metric === 'airQuality') {
+    chartData = airQualityChartData || [];
+  } else {
+    const transformVal = (item) => {
+      let val = item[config.key];
+      if (val == null) return null;
+      if (metric === 'visibility') {
+        return isImperial ? val / 1609.34 : val / 1000;
+      }
+      if (metric === 'dewPoint') return formatTemp(val);
+      return val;
+    };
+
+    chartData = [
+      ...historyData.map((item) => ({
+        displayTime: item.displayTime,
+        value: transformVal(item),
+        gust: metric === 'wind' ? item.gust : undefined,
+        isPast: true,
+      })),
+      ...forecastData.slice(0, 24).map((item) => ({
+        displayTime: item.displayTime,
+        value: transformVal(item),
+        gust: metric === 'wind' ? item.gust : undefined,
+        isPast: false,
+      })),
+    ];
+  }
+
+  // Index of the "now" boundary
+  const nowIndex = metric === 'airQuality'
+    ? chartData.findIndex((d) => !d.isPast)
+    : historyData.length;
+
+  const nowLabel = nowIndex > 0 && nowIndex < chartData.length
+    ? chartData[nowIndex]?.displayTime
+    : null;
+
+  // Show every ~4th label on x-axis
+  const tickInterval = Math.max(1, Math.floor(chartData.length / 9));
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (!active || !payload?.length) return null;
+    const formatDisplay = (val) => {
+      if (val == null) return '-';
+      // visibility and dewPoint values are pre-converted in transformVal – just add unit
+      if (metric === 'dewPoint') return `${val}${getTempUnitSymbol()}`;
+      if (metric === 'visibility') return `${(+val).toFixed(1)} ${config.unit}`;
+      // for wind, config.format applies formatWind to raw km/h values
+      if (metric === 'wind') return `${formatWind(val)} ${getWindUnitLabel()}`;
+      return `${config.format(val)}${config.unit ? (config.unit === '%' ? config.unit : ` ${config.unit}`) : ''}`;
+    };
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-2 text-xs border border-slate-100">
+        <div className="font-bold text-slate-600 mb-1">{label}</div>
+        {payload.map((p, i) => (
+          <div key={i} style={{ color: p.color }} className="font-medium">
+            {p.name}: {formatDisplay(p.value)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
+      <div className={`bg-white rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-lg'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
+        {/* Header */}
+        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 sticky top-0">
+          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+            {config.icon}
+            {config.label} – {t('trendTitle')}
+          </h3>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition">
+            <X size={20} className="text-slate-400" />
+          </button>
+        </div>
+
+        {/* Chart */}
+        <div className="p-4 overflow-y-auto">
+          {chartData.length === 0 ? (
+            <div className="text-center text-slate-400 py-8">–</div>
+          ) : (
+            <>
+              <div className="flex items-center gap-4 text-xs text-slate-400 mb-2 justify-between">
+                <span>← 12h</span>
+                {nowLabel && <span className="font-bold text-slate-600">{t('now')}</span>}
+                <span>24h →</span>
+              </div>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="displayTime" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} interval={tickInterval} />
+                  <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} unit={metric === 'humidity' ? '%' : ''} />
+                  <Tooltip content={<CustomTooltip />} />
+                  {nowLabel && (
+                    <ReferenceLine x={nowLabel} stroke="#64748b" strokeDasharray="4 2" strokeWidth={2} label={{ value: t('now'), position: 'top', fontSize: 10, fill: '#64748b' }} />
+                  )}
+                  <Line type="monotone" dataKey="value" stroke={config.color} strokeWidth={2} dot={false} name={config.label} connectNulls />
+                  {config.extraKey && (
+                    <Line type="monotone" dataKey={config.extraKey} stroke={config.extraColor} strokeWidth={1.5} dot={false} name={config.extraLabel} strokeDasharray="4 2" connectNulls />
+                  )}
+                </LineChart>
+              </ResponsiveContainer>
+              {/* Legend for wind */}
+              {config.extraKey && (
+                <div className="flex items-center gap-4 mt-2 justify-center text-xs">
+                  <span className="flex items-center gap-1"><span className="inline-block w-4 h-0.5 rounded" style={{ background: config.color }}></span>{config.label}</span>
+                  <span className="flex items-center gap-1"><span className="inline-block w-4 border-t-2 border-dashed" style={{ borderColor: config.extraColor }}></span>{config.extraLabel}</span>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- POLLEN DETAILS MODAL ---
 const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmallScreen = false }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
@@ -7324,6 +7527,7 @@ export default function WeatherApp() {
   const [shortTermData, setShortTermData] = useState(null);
   const [longTermData, setLongTermData] = useState(null);
   const [airQualityData, setAirQualityData] = useState(null);
+  const [airQualityHourlyData, setAirQualityHourlyData] = useState(null);
   const [dwdWarnings, setDwdWarnings] = useState([]);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
@@ -7341,6 +7545,7 @@ export default function WeatherApp() {
   const [showSettingsModal, setShowSettingsModal] = useState(false); // NEU
   const [showPrecipModal, setShowPrecipModal] = useState(false);
   const [showPollenModal, setShowPollenModal] = useState(false);
+  const [activeDetailModal, setActiveDetailModal] = useState(null);
   const [viewMode, setViewMode] = useState(null);
   const [showFabMenu, setShowFabMenu] = useState(false); // FAB menu state
 
@@ -7986,14 +8191,14 @@ export default function WeatherApp() {
       const { lat, lon } = currentLoc;
       
       const modelsShort = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless";
-      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,rain,snowfall,weathercode,windspeed_10m,relative_humidity_2m&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,cloud_cover,pressure_msl,visibility&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2`;
+      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,rain,snowfall,weathercode,windspeed_10m,relative_humidity_2m&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,cloud_cover,pressure_msl,visibility&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2&past_hours=12`;
       
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
       const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max&models=${modelsLong}&timezone=auto&forecast_days=14`;
       // Separate API call for sunrise/sunset without models parameter (astronomical data is location-based, not model-dependent)
       const urlSunriseSunset = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&timezone=auto&forecast_days=1`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
-      const urlAirQuality = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi,pm10,pm2_5,alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&timezone=auto`;
+      const urlAirQuality = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi,pm10,pm2_5,alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&hourly=european_aqi&past_days=1&forecast_days=2&timezone=auto`;
 
       // Climate normals: fetch same month last year from archive API for historical context
       const nowForClimate = new Date();
@@ -8046,6 +8251,7 @@ export default function WeatherApp() {
       if (resAirQuality.ok) {
         const aqJson = await resAirQuality.json();
         setAirQualityData(aqJson.current);
+        setAirQualityHourlyData(aqJson.hourly || null);
       }
 
       if (resClimate.ok) {
@@ -8806,6 +9012,76 @@ export default function WeatherApp() {
     return res.slice(0, 48);
   }, [shortTermData]);
 
+  // Past 12 hours for trend charts
+  const processedHistory = useMemo(() => {
+    if (!shortTermData?.hourly) return [];
+    const h = shortTermData.hourly;
+    const now = new Date();
+    const cutoff = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+    const res = [];
+
+    for (let i = 0; i < h.time.length; i++) {
+      const ts = parseLocalTime(h.time[i]);
+      if (ts >= now) break;
+      if (ts < cutoff) continue;
+
+      const getVal = (key) => {
+        if (key === 'visibility') return h[`${key}_gfs_seamless`]?.[i] ?? null;
+        const vals = [
+          h[`${key}_icon_seamless`]?.[i],
+          h[`${key}_gfs_seamless`]?.[i],
+          h[`${key}_arome_seamless`]?.[i],
+          h[`${key}_gem_seamless`]?.[i],
+        ].filter((v) => v !== undefined && v !== null);
+        if (vals.length > 0) return vals.reduce((a, b) => a + b, 0) / vals.length;
+        return h[key]?.[i] ?? 0;
+      };
+      const getMax = (key) => {
+        const vals = [
+          h[`${key}_icon_seamless`]?.[i],
+          h[`${key}_gfs_seamless`]?.[i],
+          h[`${key}_arome_seamless`]?.[i],
+          h[`${key}_gem_seamless`]?.[i],
+        ].filter((v) => v !== undefined && v !== null);
+        return vals.length > 0 ? Math.max(...vals) : 0;
+      };
+
+      res.push({
+        time: ts,
+        displayTime: ts.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
+        uvIndex: getVal('uv_index'),
+        humidity: Math.round(getVal('relative_humidity_2m')),
+        wind: Math.round(getMax('windspeed_10m')),
+        gust: Math.round(getMax('windgusts_10m')),
+        dewPoint: getVal('dewpoint_2m'),
+        pressure: getVal('pressure_msl'),
+        visibility: getVal('visibility'),
+      });
+    }
+    return res;
+  }, [shortTermData]);
+
+  // AQI hourly data for trend chart (past 12h + next 24h)
+  const airQualityChartData = useMemo(() => {
+    if (!airQualityHourlyData?.time || !airQualityHourlyData?.european_aqi) return [];
+    const now = new Date();
+    const cutoff = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+    const future = new Date(now.getTime() + 25 * 60 * 60 * 1000); // 25h to fully cover 24h window across hourly slots
+    const res = [];
+    for (let i = 0; i < airQualityHourlyData.time.length; i++) {
+      const ts = parseLocalTime(airQualityHourlyData.time[i]);
+      if (ts < cutoff || ts > future) continue;
+      const aqi = airQualityHourlyData.european_aqi[i];
+      if (aqi == null) continue;
+      res.push({
+        displayTime: ts.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
+        value: Math.round(aqi),
+        isPast: ts < now,
+      });
+    }
+    return res;
+  }, [airQualityHourlyData]);
+
   const processedLong = useMemo(() => {
     if (!longTermData?.daily) return [];
     const d = longTermData.daily;
@@ -9546,6 +9822,23 @@ export default function WeatherApp() {
       )}
       
       {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} currentTemp={current.temp} lang={lang} isSmallScreen={isSmallScreen} />}
+      {activeDetailModal && (
+        <WeatherDetailModal
+          isOpen={!!activeDetailModal}
+          onClose={() => setActiveDetailModal(null)}
+          metric={activeDetailModal}
+          historyData={processedHistory}
+          forecastData={processedShort}
+          airQualityChartData={airQualityChartData}
+          lang={lang}
+          settings={settings}
+          formatTemp={formatTemp}
+          getTempUnitSymbol={getTempUnitSymbol}
+          formatWind={formatWind}
+          getWindUnitLabel={getWindUnitLabel}
+          isSmallScreen={isSmallScreen}
+        />
+      )}
       {showPollenModal && (
         <PollenDetailsModal
           isOpen={showPollenModal}
@@ -9777,21 +10070,21 @@ export default function WeatherApp() {
         >
           {/* Weather Details Grid - First row (4 tiles) */}
           <div className={`grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'gap-1.5' : 'gap-2'}`}>
-          <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col`}>
+          <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('uv')}>
             <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Sun size={14} /> {t('uv')}
             </div>
             <div className={`text-m3-title-large font-bold ${getUvColorClass(current.uvIndex, isRealNight)}`}>{current.uvIndex}</div>
           </div>
           
-          <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col`}>
+          <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('humidity')}>
             <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Waves size={14} /> {t('humidity')}
             </div>
             <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{current.humidity}%</div>
           </div>
           
-          <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col`}>
+          <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('wind')}>
             <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }} /> {t('wind')}
             </div>
@@ -9805,7 +10098,7 @@ export default function WeatherApp() {
             )}
           </div>
           
-          <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col`}>
+          <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('dewPoint')}>
             <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Thermometer size={14} /> {t('dewPoint')}
             </div>
@@ -9816,7 +10109,7 @@ export default function WeatherApp() {
         {/* Additional Weather Details Grid - Second row (4 tiles) */}
         <div className={`grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'gap-1.5' : 'gap-2'}`}>
           {current.pressure !== null && current.pressure !== undefined && (
-            <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col`}>
+            <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('pressure')}>
               <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                 <Gauge size={14} /> {t('pressure')}
               </div>
@@ -9827,20 +10120,20 @@ export default function WeatherApp() {
           )}
           
           {current.visibility !== null && current.visibility !== undefined && current.visibility > 0 && (
-            <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col`}>
+            <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('visibility')}>
               <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                 <Eye size={14} /> {t('visibility')}
               </div>
               <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
-                {settings.units === 'imperial' 
-                  ? `${(current.visibility / 1609.34).toFixed(1)} mi` 
+                {settings.windUnit === 'mph'
+                  ? `${(current.visibility / 1609.34).toFixed(1)} mi`
                   : `${(current.visibility / 1000).toFixed(1)} km`}
               </div>
             </div>
           )}
           
           {airQualityData && airQualityData.european_aqi !== undefined && (
-            <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col`}>
+            <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('airQuality')}>
               <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                 <Activity size={14} /> {t('airQuality')}
               </div>
