@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts';
 import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Eye, Activity } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
 import { StatusBar } from '@capacitor/status-bar';
@@ -6474,9 +6474,12 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
     ? chartData.findIndex((d) => !d.isPast)
     : historyData.length;
 
-  const nowLabel = nowIndex > 0 && nowIndex < chartData.length
+  const nowLabel = nowIndex >= 0 && nowIndex < chartData.length
     ? chartData[nowIndex]?.displayTime
     : null;
+
+  // Label of the last past data point for shading the "past" region
+  const pastEndLabel = nowIndex > 0 ? chartData[nowIndex - 1]?.displayTime : null;
 
   // Show every ~4th label on x-axis
   const tickInterval = Math.max(1, Math.floor(chartData.length / 9));
@@ -6525,8 +6528,11 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
           ) : (
             <>
               <div className="flex items-center gap-4 text-xs text-slate-400 mb-2 justify-between">
-                <span>← 12h</span>
-                {nowLabel && <span className="font-bold text-slate-600">{t('now')}</span>}
+                {nowIndex > 0 ? <span>← 12h</span> : <span />}
+                {nowLabel && <span className="font-bold text-slate-500 flex items-center gap-1">
+                  <span className="inline-block w-2 h-2 rounded-full bg-violet-600" aria-hidden="true"></span>
+                  {t('now')}
+                </span>}
                 <span>24h →</span>
               </div>
               <ResponsiveContainer width="100%" height={200}>
@@ -6535,8 +6541,13 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
                   <XAxis dataKey="displayTime" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} interval={tickInterval} />
                   <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} unit={metric === 'humidity' ? '%' : ''} />
                   <Tooltip content={<CustomTooltip />} />
+                  {/* Shade the past region */}
+                  {pastEndLabel && (
+                    <ReferenceArea x1={chartData[0]?.displayTime} x2={pastEndLabel} fill="#e2e8f0" fillOpacity={0.5} />
+                  )}
+                  {/* Current time marker */}
                   {nowLabel && (
-                    <ReferenceLine x={nowLabel} stroke="#64748b" strokeDasharray="4 2" strokeWidth={2} label={{ value: t('now'), position: 'top', fontSize: 10, fill: '#64748b' }} />
+                    <ReferenceLine x={nowLabel} stroke="#6750A4" strokeWidth={2} label={{ value: t('now'), position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
                   )}
                   <Line type="monotone" dataKey="value" stroke={config.color} strokeWidth={2} dot={false} name={config.label} connectNulls />
                   {config.extraKey && (
