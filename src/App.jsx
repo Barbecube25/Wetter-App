@@ -241,6 +241,8 @@ const TRANSLATIONS = {
     pollenOlive: "Olive",
     pollenRagweed: "Ambrosie",
     pollenNow: "Pollenflug aktuell",
+    pollenDetails: "Pollenflug Details",
+    pollenNoActive: "Kein aktiver Pollenflug",
     pollenLow: "Niedrig",
     pollenModerate: "Mittel",
     pollenHigh: "Hoch",
@@ -448,6 +450,8 @@ const TRANSLATIONS = {
     pollenOlive: "Olive",
     pollenRagweed: "Ragweed",
     pollenNow: "Current pollen",
+    pollenDetails: "Pollen Details",
+    pollenNoActive: "No active pollen",
     pollenLow: "Low",
     pollenModerate: "Moderate",
     pollenHigh: "High",
@@ -2664,6 +2668,37 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
   const locale = lang === 'en' ? 'en-US' : 'de-DE';
 
+  // Helper: generate a pollen summary sentence from airQuality data
+  const getPollenText = (pollenData) => {
+    if (!pollenData) return null;
+    const types = [
+      { key: 'alder_pollen', label: t.pollenAlder },
+      { key: 'birch_pollen', label: t.pollenBirch },
+      { key: 'grass_pollen', label: t.pollenGrass },
+      { key: 'mugwort_pollen', label: t.pollenMugwort },
+      { key: 'olive_pollen', label: t.pollenOlive },
+      { key: 'ragweed_pollen', label: t.pollenRagweed },
+    ];
+    const active = types
+      .map(({ key, label }) => ({ label, val: pollenData[key] ?? 0 }))
+      .filter(({ val }) => val > 0)
+      .sort((a, b) => b.val - a.val);
+    if (active.length === 0) return null;
+    const getLevel = (val) => {
+      if (val >= POLLEN_VERY_HIGH_THRESHOLD) return t.pollenVeryHigh;
+      if (val >= POLLEN_HIGH_THRESHOLD) return t.pollenHigh;
+      if (val >= POLLEN_MODERATE_THRESHOLD) return t.pollenModerate;
+      return t.pollenLow;
+    };
+    const highOrAbove = active.filter(({ val }) => val >= POLLEN_HIGH_THRESHOLD);
+    const listed = active.slice(0, 3).map(({ label, val }) => `${label} (${getLevel(val)})`).join(', ');
+    if (lang === 'en') {
+      return `🌿 Pollen: ${listed}.${highOrAbove.length > 0 ? ' Allergy sufferers take care!' : ''}`;
+    } else {
+      return `🌿 Pollenflug: ${listed}.${highOrAbove.length > 0 ? ' Allergiker aufgepasst!' : ''}`;
+    }
+  };
+
   let title = "";
   let summary = "";
   let details = null; 
@@ -3347,10 +3382,12 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     else if (maxUVNow >= 8) warning = lang === 'en' ? "HIGH UV (Today)" : "HOHER UV (Heute)";
     
     // Add structured details for 3-day forecast if extraData (threeDayForecast) is provided
-    if (extraData && Array.isArray(extraData) && extraData.length > 0) {
+    const threeDayForecastArray = extraData && !Array.isArray(extraData) ? extraData.threeDayForecast : extraData;
+    const pollenDataDaily = extraData && !Array.isArray(extraData) ? extraData.pollenData : null;
+    if (threeDayForecastArray && Array.isArray(threeDayForecastArray) && threeDayForecastArray.length > 0) {
       structuredDetails = [{
         title: t.threeDayForecast,
-        items: extraData.map(d => ({
+        items: threeDayForecastArray.map(d => ({
           day: d.dayName,
           date: d.dateShort,
           code: d.code,
@@ -3360,6 +3397,11 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
           wind: d.wind
         }))
       }];
+    }
+    // Append pollen info to the daily report summary
+    const pollenTextDaily = getPollenText(pollenDataDaily);
+    if (pollenTextDaily) {
+      summary += `\n\n${pollenTextDaily}`;
     }
   }
 
@@ -3608,7 +3650,13 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         structuredDetails.push({ title: t.nextWeek, items: nextWeek.map(formatItem) });
     }
     // Set text details to null to force usage of structured view in UI
-    details = null; 
+    details = null;
+    // Append pollen info to longterm report summary
+    const pollenDataLongterm = extraData && !Array.isArray(extraData) ? extraData.pollenData : null;
+    const pollenTextLongterm = getPollenText(pollenDataLongterm);
+    if (pollenTextLongterm) {
+      summary += `\n\n${pollenTextLongterm}`;
+    }
   }
   
   if (type === 'model-hourly') {
@@ -6128,6 +6176,79 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
   );
 };
 
+// --- POLLEN DETAILS MODAL ---
+const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmallScreen = false }) => {
+  const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+
+  if (!isOpen || !airQualityData) return null;
+
+  const pollenTypes = [
+    { key: 'alder_pollen', label: t.pollenAlder },
+    { key: 'birch_pollen', label: t.pollenBirch },
+    { key: 'grass_pollen', label: t.pollenGrass },
+    { key: 'mugwort_pollen', label: t.pollenMugwort },
+    { key: 'olive_pollen', label: t.pollenOlive },
+    { key: 'ragweed_pollen', label: t.pollenRagweed },
+  ];
+
+  const getPollenLevel = (val) => {
+    if (val >= POLLEN_VERY_HIGH_THRESHOLD) return { label: t.pollenVeryHigh, color: 'text-red-600', bg: 'bg-red-50 border-red-200' };
+    if (val >= POLLEN_HIGH_THRESHOLD) return { label: t.pollenHigh, color: 'text-orange-500', bg: 'bg-orange-50 border-orange-200' };
+    if (val >= POLLEN_MODERATE_THRESHOLD) return { label: t.pollenModerate, color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-200' };
+    return { label: t.pollenLow, color: 'text-green-600', bg: 'bg-green-50 border-green-200' };
+  };
+
+  const activeTypes = pollenTypes
+    .map(({ key, label }) => ({ label, val: airQualityData[key] ?? 0 }))
+    .filter(({ val }) => val > 0)
+    .sort((a, b) => b.val - a.val);
+
+  return (
+    <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
+      <div className={`bg-white rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-md'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
+        {/* Header */}
+        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 sticky top-0">
+          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+            <Sparkles size={18} className="text-yellow-500" />
+            {t.pollenDetails}
+          </h3>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition">
+            <X size={20} className="text-slate-400" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="overflow-y-auto p-4 space-y-2">
+          {activeTypes.length === 0 ? (
+            <div className="text-center text-slate-500 py-6">{t.pollenNoActive}</div>
+          ) : (
+            activeTypes.map(({ label, val }) => {
+              const { color, bg } = getPollenLevel(val);
+              const barWidth = POLLEN_VERY_HIGH_THRESHOLD > 0 ? Math.min(100, (val / POLLEN_VERY_HIGH_THRESHOLD) * 100) : 0;
+              return (
+                <div key={label} className={`flex flex-col p-3 rounded-xl border ${bg}`}>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-medium text-slate-700">{label}</span>
+                    <span className={`text-sm font-bold ${color}`}>
+                      {getPollenLevel(val).label} ({Math.round(val)})
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all ${val >= POLLEN_VERY_HIGH_THRESHOLD ? 'bg-red-500' : val >= POLLEN_HIGH_THRESHOLD ? 'bg-orange-400' : val >= POLLEN_MODERATE_THRESHOLD ? 'bg-yellow-400' : 'bg-green-400'}`}
+                      style={{ width: `${barWidth}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- PRECIPITATION DETAILS MODAL ---
 const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', formatPrecip, getPrecipUnitLabel, setActiveTab, isSmallScreen = false }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
@@ -7131,6 +7252,7 @@ export default function WeatherApp() {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false); // NEU
   const [showPrecipModal, setShowPrecipModal] = useState(false);
+  const [showPollenModal, setShowPollenModal] = useState(false);
   const [viewMode, setViewMode] = useState(null);
   const [showFabMenu, setShowFabMenu] = useState(false); // FAB menu state
 
@@ -8897,9 +9019,9 @@ export default function WeatherApp() {
     return result;
   }, [processedShort, processedLong, lang, t]);
 
-  const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, threeDayForecast), [processedShort, lang, threeDayForecast]);
+  const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, { threeDayForecast, pollenData: airQualityData }), [processedShort, lang, threeDayForecast, airQualityData]);
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
-  const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang), [processedLong, lang]);
+  const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang, { pollenData: airQualityData }), [processedLong, lang, airQualityData]);
 
   // --- WIDGET VIEWS ---
   // Landscape mode: Automatically show animation demo mode
@@ -9336,6 +9458,15 @@ export default function WeatherApp() {
       )}
       
       {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} currentTemp={current.temp} lang={lang} isSmallScreen={isSmallScreen} />}
+      {showPollenModal && (
+        <PollenDetailsModal
+          isOpen={showPollenModal}
+          onClose={() => setShowPollenModal(false)}
+          airQualityData={airQualityData}
+          lang={lang}
+          isSmallScreen={isSmallScreen}
+        />
+      )}
       {showPrecipModal && (
         <PrecipitationDetailsModal 
           isOpen={showPrecipModal}
@@ -9647,7 +9778,10 @@ export default function WeatherApp() {
 
           {/* Pollen tile */}
           {getDominantPollen && (
-            <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col`}>
+            <div
+              className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col cursor-pointer active:scale-95 transition-transform`}
+              onClick={() => setShowPollenModal(true)}
+            >
               <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                 <Sparkles size={14} /> {t('pollen')}
               </div>
