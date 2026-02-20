@@ -2724,6 +2724,26 @@ const getMoonPhase = (d) => {
   return Math.round((currentSec / phaseSeconds) * 8) % 8;
 };
 
+// Returns SVG path for the illuminated portion of the moon disc (radius r).
+// phase 0 = new moon, 4 = full moon, 1-3 waxing, 5-7 waning.
+const getMoonPhaseSVGPath = (phase, r = 12) => {
+  const isWaning = phase > 4;
+  const waxPhase = isWaning ? 8 - phase : phase; // 1, 2, or 3
+  // Each phase step is 45° (π/4 rad) of the lunar cycle; cos maps that to terminator width.
+  // Positive kx = crescent (terminator curves toward lit side), negative = gibbous (curves away).
+  const kx = Math.cos(waxPhase * Math.PI / 4);
+  const termRx = Math.abs(kx) * r; // x-radius of terminator ellipse
+  // Outer semicircle: CW (sweep=1) for waxing (right side lit), CCW (sweep=0) for waning
+  const outerSweep = isWaning ? 0 : 1;
+  // Terminator sweep: same direction for crescent, opposite for gibbous
+  const termSweep = kx < 0 ? 1 - outerSweep : outerSweep;
+  if (waxPhase === 2) {
+    // Quarter moon: straight-line terminator
+    return `M 0,${-r} A ${r},${r} 0 0,${outerSweep} 0,${r} L 0,${-r}`;
+  }
+  return `M 0,${-r} A ${r},${r} 0 0,${outerSweep} 0,${r} A ${termRx},${r} 0 0,${termSweep} 0,${-r}`;
+};
+
 // --- 3. KI LOGIK (REVISED - MIT STRUKTURIERTEN DATEN & SPRACHE) ---
 const generateAIReport = (type, data, lang = 'de', extraData = null) => {
   if (!data) return { title: "Lade...", summary: "Warte auf Daten...", details: null, warning: null, confidence: null };
@@ -4658,10 +4678,20 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
 
       {celestialType === 'moon' && (
         <g transform={`translate(${celestialX}, ${celestialY})`}>
-           {/* Moon Glow */}
-           <circle r="20" fill="white" opacity="0.2" filter="blur(5px)" />
-           <circle r="12" fill="white" opacity="0.9" />
-           {moonPhase !== 4 && <circle r="12" fill="black" opacity="0.5" transform={`translate(${moonPhase < 4 ? -6 : 6}, 0)`} />}
+           {/* Moon glow – brighter for full moon, subtle for crescent/gibbous, none for new moon */}
+           {moonPhase !== 0 && (
+             <circle r="20" fill="white" opacity={moonPhase === 4 ? "0.35" : "0.15"} filter="blur(5px)" />
+           )}
+           {/* Dark moon disc background */}
+           <circle r="12" fill="#1a2744" />
+           {/* Lit portion rendered with proper phase geometry */}
+           {moonPhase === 4 ? (
+             /* Full moon */
+             <circle r="12" fill="white" opacity="0.9" />
+           ) : moonPhase !== 0 ? (
+             /* Crescent / quarter / gibbous */
+             <path d={getMoonPhaseSVGPath(moonPhase, 12)} fill="white" opacity="0.9" />
+           ) : null}
         </g>
       )}
       
