@@ -2661,7 +2661,7 @@ const getModelRunTime = (intervalHours, processingDelayHours) => {
 // Sleet codes: 56 (light freezing drizzle), 57 (dense freezing drizzle), 66 (light freezing rain), 67 (heavy freezing rain)
 const SNOW_WEATHER_CODES = [71, 73, 75, 77, 85, 86, 56, 57, 66, 67];
 const RELIABILITY_THRESHOLDS_PERCENT = { min: 10, max: 100, decayPerDay: 5 };
-const TEMPERATURE_THRESHOLDS_C = { freezing: 0, cold: 5, cool: 12, warm: 22, hot: 28 };
+const TEMPERATURE_THRESHOLDS_C = { freezing: 0, cold: 5, cool: 12, warm: 22, hot: 28, nearFreezingLow: -3, extremeHeat: 35 };
 const WEATHER_THRESHOLDS = { rainAmountMm: 1, rainChancePercent: 50, windSpeedKmh: 45 };
 const MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
 const RAIN_TO_SNOW_RATIO = 10;
@@ -2713,7 +2713,9 @@ const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvInd
   const isThunderstorm = [17, 95, 96, 99].includes(code);
   const isStorm = wind > 50;
   const isVeryCold = temp < TEMPERATURE_THRESHOLDS_C.freezing;
+  const isNearFreezing = temp >= TEMPERATURE_THRESHOLDS_C.nearFreezingLow && temp <= TEMPERATURE_THRESHOLDS_C.freezing + 1;
   const isCold = temp >= TEMPERATURE_THRESHOLDS_C.freezing && temp < TEMPERATURE_THRESHOLDS_C.cold;
+  const isExtremeHeat = temp >= TEMPERATURE_THRESHOLDS_C.extremeHeat;
   const isVeryHot = temp >= 32;
   const isHot = temp >= TEMPERATURE_THRESHOLDS_C.hot;
   const isUVHigh = uvIndex >= 6;
@@ -2725,8 +2727,11 @@ const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvInd
   if (isStorm) return { emoji: '🌪️', text: de ? 'Sturm – besser drinnen bleiben' : 'Storm – better stay indoors', color: 'text-red-500' };
   if (isVeryCold && wind > 20) return { emoji: '🤧', text: de ? 'Erkältungsrisiko hoch' : 'High cold risk', color: 'text-orange-500' };
   if (hasRain) return { emoji: '☂️', text: de ? 'Regenschirm einpacken' : 'Pack an umbrella', color: 'text-blue-500' };
-  if (isVeryCold) return { emoji: '🧊', text: de ? 'Frostiger Tag – warm anziehen' : 'Frosty – dress warmly', color: 'text-blue-400' };
+  // isNearFreezing overlaps with isVeryCold for -3..0 °C; slippery risk takes priority over generic frost warning in that range
+  if (isNearFreezing) return { emoji: '🧊', text: de ? 'Vorsicht, kann glatt werden' : 'Caution, may be icy', color: 'text-blue-400' };
+  if (isVeryCold) return { emoji: '❄️', text: de ? 'Frostiger Tag – warm anziehen' : 'Frosty – dress warmly', color: 'text-blue-400' };
   if (isCold) return { emoji: '🧥', text: de ? 'Kalt – Jacke empfohlen' : 'Cold – jacket recommended', color: 'text-blue-400' };
+  if (isExtremeHeat) return { emoji: '🥵', text: de ? 'Extrem heiß – ausreichend trinken' : 'Extreme heat – stay hydrated', color: 'text-red-500' };
   if (isVeryHot && isUVHigh) return { emoji: '☀️', text: de ? 'Sonnenschutz & viel trinken' : 'Sun protection & stay hydrated', color: 'text-orange-500' };
   if (isHot) return { emoji: '🏖️', text: de ? 'Perfektes Badewetter' : 'Perfect beach weather', color: 'text-green-500' };
   if (isGoodRun) return { emoji: '🏃', text: de ? 'Gutes Laufwetter' : 'Good running weather', color: 'text-green-500' };
@@ -6912,7 +6917,7 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
 };
 
 // --- ACTIVITY INDEX MODAL ---
-const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false }) => {
+const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null }) => {
   const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
   if (!isOpen) return null;
 
@@ -6939,6 +6944,39 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
     }
   }
 
+  // Compute active pollen for pollen section
+  const activeFilter = Array.isArray(pollenFilter) ? pollenFilter : DEFAULT_POLLEN_FILTER;
+  const tr = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+  const allPollenTypes = [
+    { key: 'hazel_pollen', label: tr.pollenHazel },
+    { key: 'alder_pollen', label: tr.pollenAlder },
+    { key: 'birch_pollen', label: tr.pollenBirch },
+    { key: 'ash_pollen', label: tr.pollenAsh },
+    { key: 'hornbeam_pollen', label: tr.pollenHornbeam },
+    { key: 'oak_pollen', label: tr.pollenOak },
+    { key: 'beech_pollen', label: tr.pollenBeech },
+    { key: 'grass_pollen', label: tr.pollenGrass },
+    { key: 'rye_pollen', label: tr.pollenRye },
+    { key: 'mugwort_pollen', label: tr.pollenMugwort },
+    { key: 'olive_pollen', label: tr.pollenOlive },
+    { key: 'ragweed_pollen', label: tr.pollenRagweed },
+    { key: 'plantain_pollen', label: tr.pollenPlantain },
+    { key: 'sorrel_pollen', label: tr.pollenSorrel },
+  ];
+  const activePollen = airQualityData
+    ? allPollenTypes
+        .filter(({ key }) => activeFilter.includes(key))
+        .map(({ key, label }) => ({ label, val: airQualityData[key] ?? 0 }))
+        .filter(({ val }) => val > 0)
+        .sort((a, b) => b.val - a.val)
+    : [];
+  const getPollenLevelLabel = (val) => {
+    if (val >= POLLEN_VERY_HIGH_THRESHOLD) return { label: tr.pollenVeryHigh, color: 'text-red-600' };
+    if (val >= POLLEN_HIGH_THRESHOLD) return { label: tr.pollenHigh, color: 'text-orange-500' };
+    if (val >= POLLEN_MODERATE_THRESHOLD) return { label: tr.pollenModerate, color: 'text-yellow-600' };
+    return { label: tr.pollenLow, color: 'text-green-600' };
+  };
+
   return (
     <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
       <div className={`bg-white rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-md'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
@@ -6960,22 +6998,56 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
 
         {/* Scrollable time-range list */}
         <div className="overflow-y-auto p-4 space-y-2">
-          {ranges.map((range, idx) => (
-            <div
-              key={idx}
-              className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/80 border border-slate-100"
-            >
-              <span className="text-xl flex-shrink-0">{range.advice.emoji}</span>
-              <div className="flex-1 min-w-0">
-                <div className={`text-sm font-bold ${range.advice.color} leading-tight`}>{range.advice.text}</div>
-                <div className="text-xs text-slate-400 mt-0.5">
-                  {range.from === range.to
-                    ? `${t('ab') || 'Ab'} ${range.from} ${t('oclock') || 'Uhr'}`
-                    : `${range.from} – ${range.to} ${t('oclock') || 'Uhr'}`}
+          {ranges.map((range, idx) => {
+            const isDanger = range.advice.color === 'text-red-500';
+            const isWarning = range.advice.color === 'text-orange-500';
+            const rangeBg = isDanger
+              ? 'bg-red-50 border-red-200'
+              : isWarning
+                ? 'bg-orange-50 border-orange-200'
+                : 'bg-slate-50/80 border-slate-100';
+            return (
+              <div
+                key={idx}
+                className={`flex items-center gap-3 p-3 rounded-xl border ${rangeBg}`}
+              >
+                <span className="text-xl flex-shrink-0">{range.advice.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <div className={`text-sm font-bold ${range.advice.color} leading-tight`}>{range.advice.text}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">
+                    {range.from === range.to
+                      ? `${t('ab') || 'Ab'} ${range.from} ${t('oclock') || 'Uhr'}`
+                      : `${range.from} – ${range.to} ${t('oclock') || 'Uhr'}`}
+                  </div>
                 </div>
               </div>
+            );
+          })}
+
+          {/* Pollen section */}
+          {activePollen.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-slate-100">
+              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-1">
+                <Sparkles size={12} /> {t('pollenNow')}
+              </div>
+              <div className="space-y-1.5">
+                {activePollen.slice(0, 5).map(({ label, val }) => {
+                  const { label: lvlLabel, color } = getPollenLevelLabel(val);
+                  return (
+                    <div key={label} className="flex items-center justify-between text-sm">
+                      <span className="text-slate-600">🌿 {label}</span>
+                      <span className={`font-semibold ${color}`}>{lvlLabel}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          ))}
+          )}
+          {airQualityData && activePollen.length === 0 && (
+            <div className="mt-3 pt-3 border-t border-slate-100 text-sm text-slate-400 text-center">
+              🌿 {t('pollenNoActive')}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -10213,6 +10285,8 @@ export default function WeatherApp() {
           hourlyData={processedShort}
           lang={lang}
           isSmallScreen={isSmallScreen}
+          airQualityData={airQualityData}
+          pollenFilter={settings.pollenFilter}
         />
       )}
       {showSettingsModal && (
@@ -10625,13 +10699,25 @@ export default function WeatherApp() {
           {/* Activity Index tile */}
           {(() => {
             const advice = getActivityAdvice(lang, current.temp, current.wind, next24HoursPrecip.total, current.uvIndex, current.code);
+            const isDanger = advice.color === 'text-red-500';
+            const isWarning = advice.color === 'text-orange-500';
+            const activityTileBg = isDanger
+              ? (isRealNight ? 'bg-red-950/40 border-red-900/40' : 'bg-red-50 border-red-200')
+              : isWarning
+                ? (isRealNight ? 'bg-orange-950/40 border-orange-900/40' : 'bg-orange-50 border-orange-200')
+                : tileBg;
             return (
-              <div className={`${tileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setShowActivityModal(true)}>
+              <div className={`${activityTileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setShowActivityModal(true)}>
                 <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                   <Zap size={14} /> {t('activityIndex')}
                 </div>
                 <div className="text-lg leading-none mb-1">{advice.emoji}</div>
                 <div className={`text-m3-label-medium font-bold ${advice.color} leading-tight`}>{advice.text}</div>
+                {getDominantPollen && !getDominantPollen.pausing && (
+                  <div className="text-xs mt-1 text-m3-on-surface-variant truncate">
+                    🌿 {getDominantPollen.label}: {getDominantPollen.level}
+                  </div>
+                )}
               </div>
             );
           })()}
