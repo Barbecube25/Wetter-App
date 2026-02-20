@@ -2669,7 +2669,8 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
   const locale = lang === 'en' ? 'en-US' : 'de-DE';
 
   // Helper: generate a pollen summary sentence from airQuality data
-  const getPollenText = (pollenData) => {
+  // context: 'today' | 'tomorrow' | 'thisweek' | 'nextweek'
+  const getPollenText = (pollenData, context = 'today') => {
     if (!pollenData) return null;
     const types = [
       { key: 'alder_pollen', label: t.pollenAlder },
@@ -2691,12 +2692,68 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
       return t.pollenLow;
     };
     const highOrAbove = active.filter(({ val }) => val >= POLLEN_HIGH_THRESHOLD);
-    const listed = active.slice(0, 3).map(({ label, val }) => `${label} (${getLevel(val)})`).join(', ');
-    if (lang === 'en') {
-      return `🌿 Pollen: ${listed}.${highOrAbove.length > 0 ? ' Allergy sufferers take care!' : ''}`;
-    } else {
-      return `🌿 Pollenflug: ${listed}.${highOrAbove.length > 0 ? ' Allergiker aufgepasst!' : ''}`;
+    const veryHigh = active.filter(({ val }) => val >= POLLEN_VERY_HIGH_THRESHOLD);
+
+    if (context === 'today') {
+      const unit = lang === 'en' ? 'grains/m³' : 'Körner/m³';
+      const listed = active.slice(0, 4).map(({ label, val }) => `${label} (${getLevel(val)}, ~${Math.round(val)} ${unit})`).join(', ');
+      if (veryHigh.length > 0) {
+        const vhNames = veryHigh.map(p => p.label).join(lang === 'en' ? ' and ' : ' und ');
+        return lang === 'en'
+          ? `🌿 Very high pollen today! ${vhNames} reached very high concentrations. Active pollen: ${listed}. Allergy sufferers should avoid outdoor activities and keep windows closed.`
+          : `🌿 Sehr hohe Pollenbelastung heute! Besonders ${vhNames} erreicht sehr hohe Konzentrationen. Aktiver Pollenflug: ${listed}. Allergiker sollten Außenaktivitäten meiden und Fenster geschlossen halten.`;
+      } else if (highOrAbove.length > 0) {
+        const hNames = highOrAbove.map(p => p.label).join(lang === 'en' ? ' and ' : ' und ');
+        const isAre = lang === 'en' ? (highOrAbove.length > 1 ? 'are' : 'is') : (highOrAbove.length > 1 ? 'sind' : 'ist');
+        return lang === 'en'
+          ? `🌿 High pollen today! ${hNames} ${isAre} particularly strong. Active pollen: ${listed}. Allergy sufferers should have antihistamines ready.`
+          : `🌿 Heute hoher Pollenflug! Besonders ${hNames} ${isAre} stark vertreten. Aktiver Pollenflug: ${listed}. Allergiker sollten Antihistaminika griffbereit haben.`;
+      } else {
+        const listedSimple = active.slice(0, 4).map(({ label, val }) => `${label} (${getLevel(val)})`).join(', ');
+        return lang === 'en'
+          ? `🌿 Low to moderate pollen today: ${listedSimple}.`
+          : `🌿 Heute geringer bis mäßiger Pollenflug: ${listedSimple}.`;
+      }
+    } else if (context === 'tomorrow') {
+      const listed = active.slice(0, 3).map(({ label, val }) => `${label} (${getLevel(val)})`).join(', ');
+      if (highOrAbove.length > 0) {
+        const hNames = highOrAbove.map(p => p.label).join(lang === 'en' ? ', ' : ', ');
+        return lang === 'en'
+          ? `🌿 Pollen tomorrow likely similar – elevated ${hNames} expected. Allergy sufferers take care!`
+          : `🌿 Pollenflug morgen voraussichtlich ähnlich – erhöhte ${hNames}-Werte erwartet. Allergiker aufgepasst!`;
+      } else {
+        return lang === 'en'
+          ? `🌿 Pollen tomorrow expected to remain low to moderate: ${listed}.`
+          : `🌿 Pollenflug morgen voraussichtlich weiterhin gering bis mäßig: ${listed}.`;
+      }
+    } else if (context === 'thisweek') {
+      const listed = active.slice(0, 3).map(({ label, val }) => `${label} (${getLevel(val)})`).join(', ');
+      if (highOrAbove.length > 0) {
+        return lang === 'en'
+          ? `🌿 Pollen alert this week: ${listed}. Allergy sufferers should be well prepared.`
+          : `🌿 Diese Woche erhöhter Pollenflug: ${listed}. Allergiker sollten gut vorbereitet sein.`;
+      } else {
+        return lang === 'en'
+          ? `🌿 Moderate pollen this week: ${listed}.`
+          : `🌿 Diese Woche mäßiger Pollenflug: ${listed}.`;
+      }
+    } else if (context === 'nextweek') {
+      const listed = active.slice(0, 3).map(({ label, val }) => `${label} (${getLevel(val)})`).join(', ');
+      if (highOrAbove.length > 0) {
+        return lang === 'en'
+          ? `🌿 Pollen likely to remain elevated next week: ${listed}.`
+          : `🌿 Auch nächste Woche erhöhter Pollenflug möglich: ${listed}.`;
+      } else {
+        return lang === 'en'
+          ? `🌿 Pollen next week: low to moderate expected (${listed}).`
+          : `🌿 Nächste Woche voraussichtlich geringer bis mäßiger Pollenflug (${listed}).`;
+      }
     }
+    // Fallback
+    const listed = active.slice(0, 3).map(({ label, val }) => `${label} (${getLevel(val)})`).join(', ');
+    return lang === 'en'
+      ? `🌿 Pollen: ${listed}.${highOrAbove.length > 0 ? ' Allergy sufferers take care!' : ''}`
+      : `🌿 Pollenflug: ${listed}.${highOrAbove.length > 0 ? ' Allergiker aufgepasst!' : ''}`;
   };
 
   let title = "";
@@ -2815,6 +2872,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     title = t.dailyReport;
     const now = new Date();
     const currentHour = now.getHours();
+    const pollenDataDaily = extraData && !Array.isArray(extraData) ? extraData.pollenData : null;
     
     const current = data[0];
     let intro = `${t.now} (${current.displayTime} ${t.oclock}): ${Math.round(current.temp)}°`;
@@ -3133,6 +3191,10 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
                 : ` ⚡ Gewitter im Anmarsch – Schutz suchen!`;
         }
         
+        // Pollen info for today
+        const pollenToday = getPollenText(pollenDataDaily, 'today');
+        if (pollenToday) todayText += `\n${pollenToday}`;
+        
         parts.push(todayText);
     }
     // Only add separate night section if we haven't already covered it in the evening/night temperature description (currentHour < 20)
@@ -3364,6 +3426,10 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
             if (!warning) warning = lang === 'en' ? "THUNDERSTORMS (Tomorrow)" : "GEWITTER (Morgen)";
         }
         
+        // Pollen info for tomorrow
+        const pollenTomorrow = getPollenText(pollenDataDaily, 'tomorrow');
+        if (pollenTomorrow) tomorrowText += `\n${pollenTomorrow}`;
+        
         parts.push(tomorrowText);
     }
     summary = parts.join("\n\n");
@@ -3383,7 +3449,6 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     
     // Add structured details for 3-day forecast if extraData (threeDayForecast) is provided
     const threeDayForecastArray = extraData && !Array.isArray(extraData) ? extraData.threeDayForecast : extraData;
-    const pollenDataDaily = extraData && !Array.isArray(extraData) ? extraData.pollenData : null;
     if (threeDayForecastArray && Array.isArray(threeDayForecastArray) && threeDayForecastArray.length > 0) {
       structuredDetails = [{
         title: t.threeDayForecast,
@@ -3398,15 +3463,11 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         }))
       }];
     }
-    // Append pollen info to the daily report summary
-    const pollenTextDaily = getPollenText(pollenDataDaily);
-    if (pollenTextDaily) {
-      summary += `\n\n${pollenTextDaily}`;
-    }
   }
 
   if (type === 'longterm') {
     title = t.trend;
+    const pollenDataLongterm = extraData && !Array.isArray(extraData) ? extraData.pollenData : null;
     const analysisData = data.slice(1); // Start tomorrow
     
     // Split Data
@@ -3531,6 +3592,10 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         
         twText += `\n(${lang === 'en' ? 'Certainty' : 'Prognosesicherheit'}: ${twRel}%)`;
         
+        // Pollen info for this week
+        const pollenThisWeek = getPollenText(pollenDataLongterm, 'thisweek');
+        if (pollenThisWeek) twText += `\n${pollenThisWeek}`;
+        
         parts.push(twText);
         overallConfidence += thisWeek.reduce((a,b)=>a+b.reliability,0) / thisWeek.length;
     }
@@ -3620,6 +3685,10 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         
         nwText += `\n(${lang === 'en' ? 'Certainty' : 'Prognosesicherheit'}: ${nwRel}%)`;
         
+        // Pollen info for next week
+        const pollenNextWeek = getPollenText(pollenDataLongterm, 'nextweek');
+        if (pollenNextWeek) nwText += `\n${pollenNextWeek}`;
+        
         parts.push(nwText);
         if (thisWeek.length > 0) overallConfidence = (overallConfidence + nwRel) / 2;
         else overallConfidence = nwRel;
@@ -3651,12 +3720,6 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     }
     // Set text details to null to force usage of structured view in UI
     details = null;
-    // Append pollen info to longterm report summary
-    const pollenDataLongterm = extraData && !Array.isArray(extraData) ? extraData.pollenData : null;
-    const pollenTextLongterm = getPollenText(pollenDataLongterm);
-    if (pollenTextLongterm) {
-      summary += `\n\n${pollenTextLongterm}`;
-    }
   }
   
   if (type === 'model-hourly') {
