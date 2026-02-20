@@ -7630,6 +7630,12 @@ export default function WeatherApp() {
   const [swipeStartX, setSwipeStartX] = useState(0);
   const [swipeStartY, setSwipeStartY] = useState(0);
   const cardSwipeStartX = useRef(0);
+  const cardSwipeStartYRef = useRef(0);
+  const isCardDragging = useRef(false);
+  const pendingLocChange = useRef(null);
+  const swipeInScrollable = useRef(false);
+  const [cardTransX, setCardTransX] = useState(0);
+  const [cardTransition, setCardTransition] = useState('none');
 
   // Model info tooltip
   const [showModelTooltip, setShowModelTooltip] = useState(false);
@@ -8347,6 +8353,17 @@ export default function WeatherApp() {
   const handleTouchStart = (e) => {
     setSwipeStartX(e.touches[0].clientX);
     setSwipeStartY(e.touches[0].clientY);
+    // Detect if touch started inside a horizontally scrollable element
+    let node = e.target;
+    swipeInScrollable.current = false;
+    while (node && node !== e.currentTarget) {
+      const ox = window.getComputedStyle(node).overflowX;
+      if ((ox === 'auto' || ox === 'scroll') && node.scrollWidth > node.clientWidth) {
+        swipeInScrollable.current = true;
+        break;
+      }
+      node = node.parentElement;
+    }
     // Only activate pull-to-refresh if we're at the top of the page
     if (window.scrollY === 0 && !isRefreshing) {
       setPullStartY(e.touches[0].clientY);
@@ -8375,11 +8392,13 @@ export default function WeatherApp() {
       const dx = touch.clientX - swipeStartX;
       const dy = touch.clientY - swipeStartY;
       if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > SWIPE_THRESHOLD_PX) {
-        const currentIdx = TAB_ORDER.indexOf(activeTab);
-        if (dx < 0 && currentIdx < TAB_ORDER.length - 1) {
-          setActiveTab(TAB_ORDER[currentIdx + 1]);
-        } else if (dx > 0 && currentIdx > 0) {
-          setActiveTab(TAB_ORDER[currentIdx - 1]);
+        if (!swipeInScrollable.current) {
+          const currentIdx = TAB_ORDER.indexOf(activeTab);
+          if (dx < 0 && currentIdx < TAB_ORDER.length - 1) {
+            setActiveTab(TAB_ORDER[currentIdx + 1]);
+          } else if (dx > 0 && currentIdx > 0) {
+            setActiveTab(TAB_ORDER[currentIdx - 1]);
+          }
         }
         setIsPulling(false);
         setPullDistance(0);
@@ -9981,19 +10000,46 @@ export default function WeatherApp() {
         <div className={`fixed left-0 right-0 z-20 ${isSmallScreen ? 'px-2' : 'px-4'}`} style={{ top: fixedTopOffset }}>
           <div className="max-w-4xl mx-auto">
             <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl ${getAnimationCardPadding()} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant backdrop-blur-md ${getAnimationCardMinHeight()}`}
-              onTouchStart={(e) => { cardSwipeStartX.current = e.touches[0].clientX; setSwipeStartY(e.touches[0].clientY); }}
+              onTouchStart={(e) => {
+                if (pendingLocChange.current !== null) return;
+                cardSwipeStartX.current = e.touches[0].clientX;
+                cardSwipeStartYRef.current = e.touches[0].clientY;
+                isCardDragging.current = true;
+                setCardTransition('none');
+                setCardTransX(0);
+              }}
+              onTouchMove={(e) => {
+                if (!isCardDragging.current || pendingLocChange.current !== null || allLocations.length <= 1) return;
+                const dx = e.touches[0].clientX - cardSwipeStartX.current;
+                const dy = e.touches[0].clientY - cardSwipeStartYRef.current;
+                if (Math.abs(dx) > Math.abs(dy) * 0.7) {
+                  const canGoNext = currentLocIdx < allLocations.length - 1;
+                  const canGoPrev = currentLocIdx > 0;
+                  let d = dx * 0.6;
+                  if ((dx > 0 && !canGoPrev) || (dx < 0 && !canGoNext)) d *= 0.25;
+                  setCardTransX(d);
+                }
+              }}
               onTouchEnd={(e) => {
+                isCardDragging.current = false;
                 const dx = e.changedTouches[0].clientX - cardSwipeStartX.current;
-                const dy = e.changedTouches[0].clientY - swipeStartY;
+                const dy = e.changedTouches[0].clientY - cardSwipeStartYRef.current;
                 if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > SWIPE_THRESHOLD_PX && allLocations.length > 1) {
-                  if (dx < 0 && currentLocIdx < allLocations.length - 1) {
-                    setCurrentLoc(allLocations[currentLocIdx + 1]);
-                  } else if (dx > 0 && currentLocIdx > 0) {
-                    setCurrentLoc(allLocations[currentLocIdx - 1]);
+                  const newIdx = dx < 0 ? currentLocIdx + 1 : currentLocIdx - 1;
+                  if (newIdx >= 0 && newIdx < allLocations.length) {
+                    pendingLocChange.current = allLocations[newIdx];
+                    setCardTransition('transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.28s ease');
+                    setCardTransX(dx < 0 ? -400 : 400);
+                  } else {
+                    setCardTransition('transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease');
+                    setCardTransX(0);
                   }
                   setIsPulling(false);
                   setPullDistance(0);
                   e.stopPropagation();
+                } else {
+                  setCardTransition('transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease');
+                  setCardTransX(0);
                 }
               }}
             >
@@ -10002,7 +10048,34 @@ export default function WeatherApp() {
                 <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} demoTerrain={demoTerrain} elevation={currentLoc?.elevation || 0} latitude={currentLoc?.lat} longitude={currentLoc?.lon} />
               </div>
               
-              <div className="relative z-10">
+              <div
+                className="relative z-10"
+                style={{
+                  transform: `translateX(${cardTransX}px)`,
+                  opacity: Math.max(0, 1 - Math.abs(cardTransX) / 300),
+                  transition: cardTransition,
+                  willChange: cardTransition !== 'none' ? 'transform, opacity' : 'auto',
+                }}
+                onTransitionEnd={(e) => {
+                  if (e.propertyName !== 'transform') return;
+                  if (pendingLocChange.current !== null) {
+                    const enterX = cardTransX < 0 ? 300 : -300;
+                    const loc = pendingLocChange.current;
+                    pendingLocChange.current = null;
+                    setCardTransition('none');
+                    setCardTransX(enterX);
+                    setCurrentLoc(loc);
+                    // Double rAF ensures the enter position is painted before starting the transition,
+                    // preventing the browser from skipping the initial off-screen state.
+                    requestAnimationFrame(() => requestAnimationFrame(() => {
+                      setCardTransition('transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease');
+                      setCardTransX(0);
+                    }));
+                  } else {
+                    setCardTransition('none');
+                  }
+                }}
+              >
                 {/* Location and Update Time at top */}
                 <div className="mb-2">
                   <h1 className={`${isLandscape ? 'text-m3-title-medium' : 'text-m3-headline-small'} font-bold text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]`}>
