@@ -156,6 +156,8 @@ const TRANSLATIONS = {
     rainSoon: "Regen beginnt bald",
     noRainExp: "In den nächsten 24h bleibt es trocken.",
     noPrecipExp: "Aktuell kein Niederschlag zu erwarten",
+    noPrecipSight: "Kein Niederschlag in Sicht",
+    activityIndex: "Aktivitäts-Index",
     startingNow: "beginnt jetzt",
     startingSoon: "beginnt bald",
     inMinutes: "in",
@@ -366,6 +368,8 @@ const TRANSLATIONS = {
     rainSoon: "Rain starting soon",
     noRainExp: "It will remain dry for the next 24h.",
     noPrecipExp: "Currently no precipitation expected",
+    noPrecipSight: "No Precipitation in Sight",
+    activityIndex: "Activity Index",
     startingNow: "starting now",
     startingSoon: "starting soon",
     inMinutes: "in",
@@ -576,6 +580,8 @@ const TRANSLATIONS = {
     rainSoon: "Pluie imminente",
     noRainExp: "Temps sec pour les prochaines 24h.",
     noPrecipExp: "Aucune précipitation attendue actuellement",
+    noPrecipSight: "Pas de précipitations en vue",
+    activityIndex: "Indice d'activité",
     startingNow: "commence maintenant",
     startingSoon: "commence bientôt",
     inMinutes: "dans",
@@ -757,6 +763,8 @@ const TRANSLATIONS = {
     rainSoon: "Lluvia inminente",
     noRainExp: "Permanecerá seco durante las próximas 24h.",
     noPrecipExp: "Actualmente no se esperan precipitaciones",
+    noPrecipSight: "Sin precipitaciones a la vista",
+    activityIndex: "Índice de actividad",
     startingNow: "comienza ahora",
     startingSoon: "comienza pronto",
     inMinutes: "en",
@@ -937,6 +945,8 @@ const TRANSLATIONS = {
     rainSoon: "Pioggia imminente",
     noRainExp: "Rimarrà asciutto per le prossime 24h.",
     noPrecipExp: "Attualmente non sono previste precipitazioni",
+    noPrecipSight: "Nessuna precipitazione in vista",
+    activityIndex: "Indice di attività",
     startingNow: "inizia ora",
     startingSoon: "inizia presto",
     inMinutes: "tra",
@@ -1117,6 +1127,8 @@ const TRANSLATIONS = {
     rainSoon: "Yağmur yakında başlayacak",
     noRainExp: "Önümüzdeki 24 saat kuru kalacak.",
     noPrecipExp: "Şu anda yağış beklenmemektedir",
+    noPrecipSight: "Görünürde yağış yok",
+    activityIndex: "Aktivite Endeksi",
     startingNow: "şimdi başlıyor",
     startingSoon: "yakında başlayacak",
     inMinutes: "içinde",
@@ -1297,6 +1309,8 @@ const TRANSLATIONS = {
     rainSoon: "Deszcz wkrótce",
     noRainExp: "Przez najbliższe 24h pozostanie sucho.",
     noPrecipExp: "Obecnie nie oczekuje się opadów",
+    noPrecipSight: "Brak opadów w zasięgu",
+    activityIndex: "Wskaźnik aktywności",
     startingNow: "zaczyna się teraz",
     startingSoon: "zaczyna się wkrótce",
     inMinutes: "za",
@@ -1477,6 +1491,8 @@ const TRANSLATIONS = {
     rainSoon: "Regen begint binnenkort",
     noRainExp: "Het blijft de komende 24u droog.",
     noPrecipExp: "Momenteel geen neerslag verwacht",
+    noPrecipSight: "Geen neerslag in zicht",
+    activityIndex: "Activiteitsindex",
     startingNow: "begint nu",
     startingSoon: "begint binnenkort",
     inMinutes: "over",
@@ -1657,6 +1673,8 @@ const TRANSLATIONS = {
     rainSoon: "Kiša uskoro počinje",
     noRainExp: "Ostat će suho sljedećih 24h.",
     noPrecipExp: "Trenutno se ne očekuje oborina",
+    noPrecipSight: "Nema oborina u vidiku",
+    activityIndex: "Indeks aktivnosti",
     startingNow: "počinje sada",
     startingSoon: "uskoro počinje",
     inMinutes: "za",
@@ -1837,6 +1855,8 @@ const TRANSLATIONS = {
     rainSoon: "Η βροχή ξεκινά σύντομα",
     noRainExp: "Θα παραμείνει στεγνό τις επόμενες 24 ώρες.",
     noPrecipExp: "Δεν αναμένονται επί του παρόντος κατακρημνίσματα",
+    noPrecipSight: "Δεν αναμένονται κατακρημνίσματα",
+    activityIndex: "Δείκτης δραστηριότητας",
     startingNow: "ξεκινά τώρα",
     startingSoon: "ξεκινά σύντομα",
     inMinutes: "σε",
@@ -2017,6 +2037,8 @@ const TRANSLATIONS = {
     rainSoon: "Regn starter snart",
     noRainExp: "Det forbliver tørt de næste 24 timer.",
     noPrecipExp: "I øjeblikket forventes ingen nedbør",
+    noPrecipSight: "Ingen nedbør i sigte",
+    activityIndex: "Aktivitetsindeks",
     startingNow: "starter nu",
     startingSoon: "starter snart",
     inMinutes: "om",
@@ -2198,6 +2220,8 @@ const TRANSLATIONS = {
     rainSoon: "Дождь скоро начнётся",
     noRainExp: "В ближайшие 24 часа будет сухо.",
     noPrecipExp: "В настоящее время осадков не ожидается",
+    noPrecipSight: "Осадков не предвидится",
+    activityIndex: "Индекс активности",
     startingNow: "начинается сейчас",
     startingSoon: "скоро начнётся",
     inMinutes: "через",
@@ -2631,6 +2655,44 @@ const getTripClothingTip = ({ lang = 'de', maxTemp = 0, minTemp = 0, rainChance 
 
   return `👕 ${lang === 'en' ? 'Clothing tip' : 'Kleidungstipp'}: ${tips.join(' ')}`;
 };
+
+/**
+ * Returns a lifestyle/activity recommendation based on current weather conditions.
+ * @param {string} lang - language code
+ * @param {number} temp - current temperature in °C
+ * @param {number} wind - wind speed in km/h
+ * @param {number} precip24h - expected precipitation in next 24h in mm
+ * @param {number} uvIndex - UV index
+ * @param {number} code - WMO weather code
+ * @returns {{ emoji: string, text: string, color: string }}
+ */
+const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvIndex = 0, code = 0) => {
+  const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+  const hasRain = precip24h > 1;
+  const isThunderstorm = [17, 95, 96, 99].includes(code);
+  const isStorm = wind > 50;
+  const isVeryCold = temp < TEMPERATURE_THRESHOLDS_C.freezing;
+  const isCold = temp >= TEMPERATURE_THRESHOLDS_C.freezing && temp < TEMPERATURE_THRESHOLDS_C.cold;
+  const isVeryHot = temp >= 32;
+  const isHot = temp >= TEMPERATURE_THRESHOLDS_C.hot;
+  const isUVHigh = uvIndex >= 6;
+  const isGoodRun = temp >= TEMPERATURE_THRESHOLDS_C.cold && temp <= 18 && wind < 25 && !hasRain;
+  const isGoodBike = temp >= TEMPERATURE_THRESHOLDS_C.cool && temp <= 25 && wind < 30 && !hasRain;
+
+  const de = lang === 'de';
+  if (isThunderstorm) return { emoji: '⛈️', text: de ? 'Gewitter – Outdoor-Aktivitäten meiden' : 'Thunderstorm – avoid outdoor activities', color: 'text-red-500' };
+  if (isStorm) return { emoji: '🌪️', text: de ? 'Sturm – besser drinnen bleiben' : 'Storm – better stay indoors', color: 'text-red-500' };
+  if (isVeryCold && wind > 20) return { emoji: '🤧', text: de ? 'Erkältungsrisiko hoch' : 'High cold risk', color: 'text-orange-500' };
+  if (hasRain) return { emoji: '☂️', text: de ? 'Regenschirm einpacken' : 'Pack an umbrella', color: 'text-blue-500' };
+  if (isVeryCold) return { emoji: '🧊', text: de ? 'Frostiger Tag – warm anziehen' : 'Frosty – dress warmly', color: 'text-blue-400' };
+  if (isCold) return { emoji: '🧥', text: de ? 'Kalt – Jacke empfohlen' : 'Cold – jacket recommended', color: 'text-blue-400' };
+  if (isVeryHot && isUVHigh) return { emoji: '☀️', text: de ? 'Sonnenschutz & viel trinken' : 'Sun protection & stay hydrated', color: 'text-orange-500' };
+  if (isHot) return { emoji: '🏖️', text: de ? 'Perfektes Badewetter' : 'Perfect beach weather', color: 'text-green-500' };
+  if (isGoodRun) return { emoji: '🏃', text: de ? 'Gutes Laufwetter' : 'Good running weather', color: 'text-green-500' };
+  if (isGoodBike) return { emoji: '🚴', text: de ? 'Gutes Radfahrwetter' : 'Good cycling weather', color: 'text-green-500' };
+  return { emoji: '✅', text: de ? 'Angenehmes Wetter' : 'Comfortable weather', color: 'text-green-500' };
+};
+
 
 const getWeatherConfig = (code, isDay = 1, lang = 'de') => {
   const isNight = isDay === 0;
@@ -10165,7 +10227,7 @@ export default function WeatherApp() {
           )}
           
 
-          {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) && (
+          {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) ? (
             <div 
               className="bg-m3-tertiary-container rounded-m3-xl p-2 border border-m3-tertiary shadow-m3-1 relative overflow-hidden min-h-[90px] flex flex-col"
             >
@@ -10193,7 +10255,32 @@ export default function WeatherApp() {
                 </button>
               </div>
             </div>
+          ) : (
+            <div className={`${tileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col`}>
+              <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                <CloudRain size={14}/> {t('precip24h')}
+              </div>
+              <div className="flex items-center gap-1 mt-1">
+                <Sun size={16} className="text-green-500 flex-shrink-0" />
+                <span className={`text-m3-label-medium font-bold text-green-600 leading-tight`}>{t('noPrecipSight')}</span>
+              </div>
+            </div>
           )}
+
+          {/* Activity Index tile */}
+          {(() => {
+            const advice = getActivityAdvice(lang, current.temp, current.wind, next24HoursPrecip.total, current.uvIndex, current.code);
+            return (
+              <div className={`${tileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col`}>
+                <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                  <Zap size={14} /> {t('activityIndex')}
+                </div>
+                <div className="text-lg leading-none mb-1">{advice.emoji}</div>
+                <div className={`text-m3-label-medium font-bold ${advice.color} leading-tight`}>{advice.text}</div>
+              </div>
+            );
+          })()}
+
         </div>
         {/* End of collapsible tiles */}
         </div>
