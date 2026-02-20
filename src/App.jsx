@@ -40,6 +40,8 @@ const BLUE_HOUR_DURATION_MS = 30 * 60 * 1000;   // 30 minutes
 const POLLEN_MODERATE_THRESHOLD = 5;
 const POLLEN_HIGH_THRESHOLD = 20;
 const POLLEN_VERY_HIGH_THRESHOLD = 50;
+// Default pollen filter: all pollen types requested by users (olive_pollen excluded from default as it is not relevant for Central Europe)
+const DEFAULT_POLLEN_FILTER = ['hazel_pollen', 'alder_pollen', 'birch_pollen', 'ash_pollen', 'hornbeam_pollen', 'oak_pollen', 'beech_pollen', 'grass_pollen', 'rye_pollen', 'mugwort_pollen', 'ragweed_pollen', 'plantain_pollen', 'sorrel_pollen'];
 
 // Historical context: minimum temperature difference to show anomaly banner (°C)
 const TEMP_ANOMALY_THRESHOLD = 0.5;
@@ -236,12 +238,20 @@ const TRANSLATIONS = {
     showMoreDetails: "Weitere Details anzeigen",
     hideMoreDetails: "Details verbergen",
     pollen: "Pollen",
-    pollenBirch: "Birke",
-    pollenGrass: "Gräser",
+    pollenHazel: "Hasel",
     pollenAlder: "Erle",
+    pollenBirch: "Birke",
+    pollenAsh: "Esche",
+    pollenHornbeam: "Hagebuche",
+    pollenOak: "Eiche",
+    pollenBeech: "Buche",
+    pollenGrass: "Gräser",
+    pollenRye: "Roggen",
     pollenMugwort: "Beifuß",
     pollenOlive: "Olive",
     pollenRagweed: "Ambrosie",
+    pollenPlantain: "Wegerich",
+    pollenSorrel: "Ampfer",
     pollenNow: "Pollenflug aktuell",
     pollenDetails: "Pollenflug Details",
     pollenNoActive: "Kein aktiver Pollenflug",
@@ -449,12 +459,20 @@ const TRANSLATIONS = {
     showMoreDetails: "Show more details",
     hideMoreDetails: "Hide details",
     pollen: "Pollen",
-    pollenBirch: "Birch",
-    pollenGrass: "Grass",
+    pollenHazel: "Hazel",
     pollenAlder: "Alder",
+    pollenBirch: "Birch",
+    pollenAsh: "Ash",
+    pollenHornbeam: "Hornbeam",
+    pollenOak: "Oak",
+    pollenBeech: "Beech",
+    pollenGrass: "Grass",
+    pollenRye: "Rye",
     pollenMugwort: "Mugwort",
     pollenOlive: "Olive",
     pollenRagweed: "Ragweed",
+    pollenPlantain: "Plantain",
+    pollenSorrel: "Sorrel",
     pollenNow: "Current pollen",
     pollenDetails: "Pollen Details",
     pollenNoActive: "No active pollen",
@@ -2335,7 +2353,7 @@ const getSavedSettings = () => {
             theme: 'auto',
             windUnit: 'kmh',
             precipUnit: 'mm',
-            pollenFilter: ['alder_pollen', 'birch_pollen', 'grass_pollen', 'mugwort_pollen', 'olive_pollen', 'ragweed_pollen']
+            pollenFilter: DEFAULT_POLLEN_FILTER
         };
         if (!saved) return defaults;
         const parsed = JSON.parse(saved);
@@ -2350,7 +2368,7 @@ const getSavedSettings = () => {
             merged.precipUnit = 'mm';
         }
         if (!Array.isArray(merged.pollenFilter)) {
-            merged.pollenFilter = ['alder_pollen', 'birch_pollen', 'grass_pollen', 'mugwort_pollen', 'olive_pollen', 'ragweed_pollen'];
+            merged.pollenFilter = DEFAULT_POLLEN_FILTER;
         }
         return merged;
     } catch (e) { 
@@ -2360,7 +2378,7 @@ const getSavedSettings = () => {
             theme: 'auto',
             windUnit: 'kmh',
             precipUnit: 'mm',
-            pollenFilter: ['alder_pollen', 'birch_pollen', 'grass_pollen', 'mugwort_pollen', 'olive_pollen', 'ragweed_pollen']
+            pollenFilter: DEFAULT_POLLEN_FILTER
         }; 
     }
 };
@@ -2764,12 +2782,20 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
   const getPollenText = (pollenData, context = 'today') => {
     if (!pollenData) return null;
     const types = [
+      { key: 'hazel_pollen', label: t.pollenHazel },
       { key: 'alder_pollen', label: t.pollenAlder },
       { key: 'birch_pollen', label: t.pollenBirch },
+      { key: 'ash_pollen', label: t.pollenAsh },
+      { key: 'hornbeam_pollen', label: t.pollenHornbeam },
+      { key: 'oak_pollen', label: t.pollenOak },
+      { key: 'beech_pollen', label: t.pollenBeech },
       { key: 'grass_pollen', label: t.pollenGrass },
+      { key: 'rye_pollen', label: t.pollenRye },
       { key: 'mugwort_pollen', label: t.pollenMugwort },
       { key: 'olive_pollen', label: t.pollenOlive },
       { key: 'ragweed_pollen', label: t.pollenRagweed },
+      { key: 'plantain_pollen', label: t.pollenPlantain },
+      { key: 'sorrel_pollen', label: t.pollenSorrel },
     ];
     const active = types
       .map(({ key, label }) => ({ label, val: pollenData[key] ?? 0 }))
@@ -4104,12 +4130,20 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                      </label>
                      <div className="grid grid-cols-2 gap-2 bg-m3-surface-container p-2 rounded-m3-md">
                          {[
+                             { key: 'hazel_pollen', label: t.pollenHazel },
                              { key: 'alder_pollen', label: t.pollenAlder },
                              { key: 'birch_pollen', label: t.pollenBirch },
+                             { key: 'ash_pollen', label: t.pollenAsh },
+                             { key: 'hornbeam_pollen', label: t.pollenHornbeam },
+                             { key: 'oak_pollen', label: t.pollenOak },
+                             { key: 'beech_pollen', label: t.pollenBeech },
                              { key: 'grass_pollen', label: t.pollenGrass },
+                             { key: 'rye_pollen', label: t.pollenRye },
                              { key: 'mugwort_pollen', label: t.pollenMugwort },
                              { key: 'olive_pollen', label: t.pollenOlive },
                              { key: 'ragweed_pollen', label: t.pollenRagweed },
+                             { key: 'plantain_pollen', label: t.pollenPlantain },
+                             { key: 'sorrel_pollen', label: t.pollenSorrel },
                          ].map(({ key, label }) => {
                              const filter = localSettings.pollenFilter || [];
                              const isActive = filter.includes(key);
@@ -6619,12 +6653,20 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
   if (!isOpen || !airQualityData) return null;
 
   const pollenTypes = [
+    { key: 'hazel_pollen', label: t.pollenHazel },
     { key: 'alder_pollen', label: t.pollenAlder },
     { key: 'birch_pollen', label: t.pollenBirch },
+    { key: 'ash_pollen', label: t.pollenAsh },
+    { key: 'hornbeam_pollen', label: t.pollenHornbeam },
+    { key: 'oak_pollen', label: t.pollenOak },
+    { key: 'beech_pollen', label: t.pollenBeech },
     { key: 'grass_pollen', label: t.pollenGrass },
+    { key: 'rye_pollen', label: t.pollenRye },
     { key: 'mugwort_pollen', label: t.pollenMugwort },
     { key: 'olive_pollen', label: t.pollenOlive },
     { key: 'ragweed_pollen', label: t.pollenRagweed },
+    { key: 'plantain_pollen', label: t.pollenPlantain },
+    { key: 'sorrel_pollen', label: t.pollenSorrel },
   ];
 
   const getPollenLevel = (val) => {
@@ -7915,14 +7957,22 @@ export default function WeatherApp() {
   // Helper to get dominant pollen type and level
   const getDominantPollen = useMemo(() => {
     if (!airQualityData) return null;
-    const activeFilter = settings.pollenFilter || ['alder_pollen', 'birch_pollen', 'grass_pollen', 'mugwort_pollen', 'olive_pollen', 'ragweed_pollen'];
+    const activeFilter = settings.pollenFilter || DEFAULT_POLLEN_FILTER;
     const types = [
+      { key: 'hazel_pollen', label: t('pollenHazel') },
       { key: 'alder_pollen', label: t('pollenAlder') },
       { key: 'birch_pollen', label: t('pollenBirch') },
+      { key: 'ash_pollen', label: t('pollenAsh') },
+      { key: 'hornbeam_pollen', label: t('pollenHornbeam') },
+      { key: 'oak_pollen', label: t('pollenOak') },
+      { key: 'beech_pollen', label: t('pollenBeech') },
       { key: 'grass_pollen', label: t('pollenGrass') },
+      { key: 'rye_pollen', label: t('pollenRye') },
       { key: 'mugwort_pollen', label: t('pollenMugwort') },
       { key: 'olive_pollen', label: t('pollenOlive') },
       { key: 'ragweed_pollen', label: t('pollenRagweed') },
+      { key: 'plantain_pollen', label: t('pollenPlantain') },
+      { key: 'sorrel_pollen', label: t('pollenSorrel') },
     ].filter(({ key }) => activeFilter.includes(key));
     let max = null;
     types.forEach(({ key, label }) => {
