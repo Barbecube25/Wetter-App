@@ -6706,49 +6706,65 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
         
         {/* Scrollable hourly list */}
         <div className="overflow-y-auto p-4 space-y-2">
-          {next24Hours.map((hour, idx) => (
-            <div 
-              key={idx}
-              className={`flex justify-between items-center p-3 rounded-xl transition-colors ${
-                hour.hasPrecip 
-                  ? 'bg-blue-50 border border-blue-100' 
-                  : 'bg-slate-50/50'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                {hour.hasPrecip ? (
-                  hour.hasSnow ? (
-                    <Snowflake size={18} className="text-cyan-500" />
+          {next24Hours.map((hour, idx) => {
+            // Show the "now" marker after the last past/in-progress hour and before the first future hour
+            const nowMs = Date.now();
+            const isLastPast = hour.time < nowMs && (idx + 1 >= next24Hours.length || next24Hours[idx + 1].time >= nowMs);
+            return (
+            <React.Fragment key={idx}>
+              <div
+                className={`flex justify-between items-center p-3 rounded-xl transition-colors ${
+                  hour.hasPrecip 
+                    ? 'bg-blue-50 border border-blue-100' 
+                    : 'bg-slate-50/50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {hour.hasPrecip ? (
+                    hour.hasSnow ? (
+                      <Snowflake size={18} className="text-cyan-500" />
+                    ) : (
+                      <CloudRain size={18} className="text-blue-500" />
+                    )
                   ) : (
-                    <CloudRain size={18} className="text-blue-500" />
-                  )
-                ) : (
-                  <Sun size={18} className="text-slate-300" />
-                )}
-                <span className="font-medium text-slate-700">
-                  {hour.displayTime}
-                </span>
-              </div>
-              <div className="text-right">
-                {hour.hasPrecip ? (
-                  <>
-                    <div className="font-bold text-slate-800">
-                      {formatPrecip ? formatPrecip(hour.amount) : hour.amount.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
-                    </div>
-                    {hour.hasRain && hour.hasSnow && (
-                      <div className="text-xs text-slate-500">
-                        <CloudRain className="inline w-3 h-3" /> {formatPrecip ? formatPrecip(hour.rain) : hour.rain.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
-                        {' '}
-                        <Snowflake className="inline w-3 h-3" /> {formatPrecip ? formatPrecip(hour.snow) : hour.snow.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
+                    <Sun size={18} className="text-slate-300" />
+                  )}
+                  <span className="font-medium text-slate-700">
+                    {hour.displayTime}
+                  </span>
+                </div>
+                <div className="text-right">
+                  {hour.hasPrecip ? (
+                    <>
+                      <div className="font-bold text-slate-800">
+                        {formatPrecip ? formatPrecip(hour.amount) : hour.amount.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                       </div>
-                    )}
-                  </>
-                ) : (
-                  <span className="text-sm text-slate-400">{t.noRain}</span>
-                )}
+                      {hour.hasRain && hour.hasSnow && (
+                        <div className="text-xs text-slate-500">
+                          <CloudRain className="inline w-3 h-3" /> {formatPrecip ? formatPrecip(hour.rain) : hour.rain.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
+                          {' '}
+                          <Snowflake className="inline w-3 h-3" /> {formatPrecip ? formatPrecip(hour.snow) : hour.snow.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-sm text-slate-400">{t.noRain}</span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+              {isLastPast && (
+                <div className="flex items-center gap-2 py-1">
+                  <div className="flex-1 h-px bg-violet-400/60"></div>
+                  <span className="flex items-center gap-1 text-xs font-bold text-violet-600">
+                    <span className="w-2 h-2 rounded-full bg-violet-500 inline-block" aria-hidden="true"></span>
+                    {t.now}
+                  </span>
+                  <div className="flex-1 h-px bg-violet-400/60"></div>
+                </div>
+              )}
+            </React.Fragment>
+          );
+        })}
         </div>
         
         {/* Footer with Radar link */}
