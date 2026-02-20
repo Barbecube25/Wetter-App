@@ -6913,7 +6913,7 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
 
 // --- ACTIVITY INDEX MODAL ---
 const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false }) => {
-  const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
   if (!isOpen) return null;
 
   const locale = LANG_LOCALE_MAP[lang] || 'de-DE';
