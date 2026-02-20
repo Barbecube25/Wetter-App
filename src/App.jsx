@@ -255,6 +255,8 @@ const TRANSLATIONS = {
     pollenNow: "Pollenflug aktuell",
     pollenDetails: "Pollenflug Details",
     pollenNoActive: "Kein aktiver Pollenflug",
+    pollenPause: "Tief durchatmen, deine Pollen pausieren",
+    pollenOthersFlying: "Andere Pollen in der Luft",
     pollenLow: "Niedrig",
     pollenModerate: "Mittel",
     pollenHigh: "Hoch",
@@ -476,6 +478,8 @@ const TRANSLATIONS = {
     pollenNow: "Current pollen",
     pollenDetails: "Pollen Details",
     pollenNoActive: "No active pollen",
+    pollenPause: "Take a deep breath, your pollen are pausing",
+    pollenOthersFlying: "Other pollen in the air",
     pollenLow: "Low",
     pollenModerate: "Moderate",
     pollenHigh: "High",
@@ -6657,7 +6661,7 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
 
   const activeFilter = Array.isArray(pollenFilter) ? pollenFilter : DEFAULT_POLLEN_FILTER;
 
-  const pollenTypes = [
+  const allPollenTypes = [
     { key: 'hazel_pollen', label: t.pollenHazel },
     { key: 'alder_pollen', label: t.pollenAlder },
     { key: 'birch_pollen', label: t.pollenBirch },
@@ -6672,7 +6676,7 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
     { key: 'ragweed_pollen', label: t.pollenRagweed },
     { key: 'plantain_pollen', label: t.pollenPlantain },
     { key: 'sorrel_pollen', label: t.pollenSorrel },
-  ].filter(({ key }) => activeFilter.includes(key));
+  ];
 
   const getPollenLevel = (val) => {
     if (val >= POLLEN_VERY_HIGH_THRESHOLD) return { label: t.pollenVeryHigh, color: 'text-red-600', bg: 'bg-red-50 border-red-200' };
@@ -6681,10 +6685,38 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
     return { label: t.pollenLow, color: 'text-green-600', bg: 'bg-green-50 border-green-200' };
   };
 
-  const activeTypes = pollenTypes
+  const userTypes = allPollenTypes
+    .filter(({ key }) => activeFilter.includes(key))
     .map(({ key, label }) => ({ label, val: airQualityData[key] ?? 0 }))
     .filter(({ val }) => val > 0)
     .sort((a, b) => b.val - a.val);
+
+  const otherTypes = allPollenTypes
+    .filter(({ key }) => !activeFilter.includes(key))
+    .map(({ key, label }) => ({ label, val: airQualityData[key] ?? 0 }))
+    .filter(({ val }) => val > 0)
+    .sort((a, b) => b.val - a.val);
+
+  const renderPollenItem = ({ label, val }) => {
+    const { color, bg } = getPollenLevel(val);
+    const barWidth = POLLEN_VERY_HIGH_THRESHOLD > 0 ? Math.min(100, (val / POLLEN_VERY_HIGH_THRESHOLD) * 100) : 0;
+    return (
+      <div key={label} className={`flex flex-col p-3 rounded-xl border ${bg}`}>
+        <div className="flex justify-between items-center mb-1">
+          <span className="font-medium text-slate-700">{label}</span>
+          <span className={`text-sm font-bold ${color}`}>
+            {getPollenLevel(val).label} ({Math.round(val)})
+          </span>
+        </div>
+        <div className="w-full bg-slate-200 rounded-full h-2">
+          <div
+            className={`h-2 rounded-full transition-all ${val >= POLLEN_VERY_HIGH_THRESHOLD ? 'bg-red-500' : val >= POLLEN_HIGH_THRESHOLD ? 'bg-orange-400' : val >= POLLEN_MODERATE_THRESHOLD ? 'bg-yellow-400' : 'bg-green-400'}`}
+            style={{ width: `${barWidth}%` }}
+          />
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
@@ -6702,29 +6734,20 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
 
         {/* Content */}
         <div className="overflow-y-auto p-4 space-y-2">
-          {activeTypes.length === 0 ? (
+          {userTypes.length === 0 && otherTypes.length === 0 ? (
             <div className="text-center text-slate-500 py-6">{t.pollenNoActive}</div>
           ) : (
-            activeTypes.map(({ label, val }) => {
-              const { color, bg } = getPollenLevel(val);
-              const barWidth = POLLEN_VERY_HIGH_THRESHOLD > 0 ? Math.min(100, (val / POLLEN_VERY_HIGH_THRESHOLD) * 100) : 0;
-              return (
-                <div key={label} className={`flex flex-col p-3 rounded-xl border ${bg}`}>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-medium text-slate-700">{label}</span>
-                    <span className={`text-sm font-bold ${color}`}>
-                      {getPollenLevel(val).label} ({Math.round(val)})
-                    </span>
+            <>
+              {userTypes.map(renderPollenItem)}
+              {otherTypes.length > 0 && (
+                <>
+                  <div className="pt-2 pb-1">
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{t.pollenOthersFlying}</span>
                   </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all ${val >= POLLEN_VERY_HIGH_THRESHOLD ? 'bg-red-500' : val >= POLLEN_HIGH_THRESHOLD ? 'bg-orange-400' : val >= POLLEN_MODERATE_THRESHOLD ? 'bg-yellow-400' : 'bg-green-400'}`}
-                      style={{ width: `${barWidth}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })
+                  {otherTypes.map(renderPollenItem)}
+                </>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -7986,7 +8009,7 @@ export default function WeatherApp() {
         max = { val, label };
       }
     });
-    if (!max || max.val === 0) return null;
+    if (!max || max.val === 0) return { pausing: true };
     let level = t('pollenLow');
     if (max.val >= POLLEN_VERY_HIGH_THRESHOLD) level = t('pollenVeryHigh');
     else if (max.val >= POLLEN_HIGH_THRESHOLD) level = t('pollenHigh');
@@ -10448,12 +10471,20 @@ export default function WeatherApp() {
               <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                 <Sparkles size={14} /> {t('pollen')}
               </div>
-              <div className={`text-m3-title-medium font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
-                {getDominantPollen.label}
-              </div>
-              <div className={`text-xs font-medium mt-1 ${getDominantPollen.val >= POLLEN_HIGH_THRESHOLD ? 'text-orange-500' : getDominantPollen.val >= POLLEN_MODERATE_THRESHOLD ? 'text-yellow-500' : (isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant')}`}>
-                {getDominantPollen.level} ({Math.round(getDominantPollen.val)})
-              </div>
+              {getDominantPollen.pausing ? (
+                <div className={`text-xs font-medium mt-1 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
+                  {t('pollenPause')}
+                </div>
+              ) : (
+                <>
+                  <div className={`text-m3-title-medium font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
+                    {getDominantPollen.label}
+                  </div>
+                  <div className={`text-xs font-medium mt-1 ${getDominantPollen.val >= POLLEN_HIGH_THRESHOLD ? 'text-orange-500' : getDominantPollen.val >= POLLEN_MODERATE_THRESHOLD ? 'text-yellow-500' : (isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant')}`}>
+                    {getDominantPollen.level} ({Math.round(getDominantPollen.val)})
+                  </div>
+                </>
+              )}
             </div>
           )}
           
