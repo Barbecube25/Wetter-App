@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Eye, Activity } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
@@ -28,6 +28,21 @@ const NIGHT_START_HOUR = 20;
 const LIGHT_PRECIP_THRESHOLD = 0.1;
 const STRONG_PRECIP_THRESHOLD = 0.5;
 const isAboveThreshold = (precipValue, snowValue, threshold) => precipValue > threshold || snowValue > threshold;
+
+// Swipe gesture threshold (pixels) for detecting intentional horizontal swipe
+const SWIPE_THRESHOLD_PX = 50;
+
+// Photography time durations (milliseconds)
+const GOLDEN_HOUR_DURATION_MS = 60 * 60 * 1000; // 60 minutes
+const BLUE_HOUR_DURATION_MS = 30 * 60 * 1000;   // 30 minutes
+
+// Pollen concentration thresholds (grains/m³, based on EAN standard)
+const POLLEN_MODERATE_THRESHOLD = 5;
+const POLLEN_HIGH_THRESHOLD = 20;
+const POLLEN_VERY_HIGH_THRESHOLD = 50;
+
+// Historical context: minimum temperature difference to show anomaly banner (°C)
+const TEMP_ANOMALY_THRESHOLD = 0.5;
 
 // Precipitation particle counts
 const HEAVY_SLEET_PARTICLES = 55;
@@ -218,6 +233,33 @@ const TRANSLATIONS = {
     releaseToRefresh: "Loslassen zum Aktualisieren",
     showMoreDetails: "Weitere Details anzeigen",
     hideMoreDetails: "Details verbergen",
+    pollen: "Pollen",
+    pollenBirch: "Birke",
+    pollenGrass: "Gräser",
+    pollenAlder: "Erle",
+    pollenMugwort: "Beifuß",
+    pollenOlive: "Olive",
+    pollenRagweed: "Ambrosie",
+    pollenNow: "Pollenflug aktuell",
+    pollenLow: "Niedrig",
+    pollenModerate: "Mittel",
+    pollenHigh: "Hoch",
+    pollenVeryHigh: "Sehr hoch",
+    goldenHour: "Goldene Stunde",
+    blueHour: "Blaue Stunde",
+    photographerWeather: "Fotograf",
+    morningLight: "Morgenlicht",
+    eveningLight: "Abendlicht",
+    modelInfoTitle: "Wettermodelle erklärt",
+    iconDesc: "ICON-D2 (Deutscher Wetterdienst) – hochauflösendes Modell, sehr präzise für Deutschland & Europa",
+    gfsDesc: "GFS (NOAA, USA) – globales Modell, stark bei großräumigen Wetterlagen weltweit",
+    aromeDesc: "AROME (Météo-France) – hochauflösendes Modell für Westeuropa, besonders präzise für Frankreich & Nachbarländer",
+    gemDesc: "GEM (Meteorological Service of Canada) – kanadisches Globalmodell mit eigenen Stärken weltweit",
+    warmerThanNorm: "wärmer als üblich",
+    colderThanNorm: "kälter als üblich",
+    typicalForMonth: "typisch für diesen Monat",
+    swipeHintLocations: "Karte wischen zum Ort wechseln",
+    swipeHintTabs: "Wischen zum Tab wechseln",
 
   },
   en: {
@@ -398,6 +440,33 @@ const TRANSLATIONS = {
     releaseToRefresh: "Release to refresh",
     showMoreDetails: "Show more details",
     hideMoreDetails: "Hide details",
+    pollen: "Pollen",
+    pollenBirch: "Birch",
+    pollenGrass: "Grass",
+    pollenAlder: "Alder",
+    pollenMugwort: "Mugwort",
+    pollenOlive: "Olive",
+    pollenRagweed: "Ragweed",
+    pollenNow: "Current pollen",
+    pollenLow: "Low",
+    pollenModerate: "Moderate",
+    pollenHigh: "High",
+    pollenVeryHigh: "Very high",
+    goldenHour: "Golden Hour",
+    blueHour: "Blue Hour",
+    photographerWeather: "Photographer",
+    morningLight: "Morning light",
+    eveningLight: "Evening light",
+    modelInfoTitle: "Weather Models Explained",
+    iconDesc: "ICON-D2 (German Weather Service) – high-resolution model, very accurate for Germany & Europe",
+    gfsDesc: "GFS (NOAA, USA) – global model, strong for large-scale weather patterns worldwide",
+    aromeDesc: "AROME (Météo-France) – high-resolution model for Western Europe, especially accurate for France & neighbors",
+    gemDesc: "GEM (Meteorological Service of Canada) – Canadian global model with worldwide strengths",
+    warmerThanNorm: "warmer than usual",
+    colderThanNorm: "colder than usual",
+    typicalForMonth: "typical for this month",
+    swipeHintLocations: "Swipe card to change location",
+    swipeHintTabs: "Swipe to switch tab",
 
   },
   fr: {
@@ -7080,6 +7149,18 @@ export default function WeatherApp() {
   const [isPulling, setIsPulling] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Swipe gesture state
+  const [swipeStartX, setSwipeStartX] = useState(0);
+  const [swipeStartY, setSwipeStartY] = useState(0);
+  const cardSwipeStartX = useRef(0);
+
+  // Model info tooltip
+  const [showModelTooltip, setShowModelTooltip] = useState(false);
+
+  // Climate normals for historical context
+  const [climateNormals, setClimateNormals] = useState(null);
+
+
   // Landscape mode detection
   const [isLandscape, setIsLandscape] = useState(false);
   
@@ -7139,6 +7220,20 @@ export default function WeatherApp() {
   useEffect(() => {
       localStorage.setItem('weather_settings', JSON.stringify(settings));
   }, [settings]);
+
+  // All navigable locations (home + saved), used for swipe navigation
+  const allLocations = useMemo(() => {
+    const locs = homeLoc ? [homeLoc] : [];
+    const extras = locations.filter(l => l.id !== homeLoc?.id);
+    return [...locs, ...extras];
+  }, [homeLoc, locations]);
+
+  const currentLocIdx = useMemo(() => {
+    if (!currentLoc) return 0;
+    const idx = allLocations.findIndex(l => l.lat === currentLoc.lat && l.lon === currentLoc.lon);
+    return idx >= 0 ? idx : 0;
+  }, [allLocations, currentLoc]);
+
 
   // --- Helpers for Display ---
   const t = (key) => TRANSLATIONS[settings.language]?.[key] || TRANSLATIONS['de'][key] || key;
@@ -7216,6 +7311,53 @@ export default function WeatherApp() {
       const d = new Date(dateStr);
       return d.toLocaleTimeString(lang === 'en' ? 'en-US' : 'de-DE', {hour: '2-digit', minute:'2-digit'});
   };
+
+  // Helper to calculate golden hour and blue hour times from sunrise/sunset
+  const getPhotographyTimes = useMemo(() => {
+    if (!sunriseSunset.sunrise || !sunriseSunset.sunset) return null;
+    const sr = new Date(sunriseSunset.sunrise);
+    const ss = new Date(sunriseSunset.sunset);
+    const min = (m) => new Date(m);
+    return {
+      morningBlueStart: min(sr.getTime() - BLUE_HOUR_DURATION_MS),
+      morningBlueEnd: sr,
+      morningGoldenStart: sr,
+      morningGoldenEnd: min(sr.getTime() + GOLDEN_HOUR_DURATION_MS),
+      eveningGoldenStart: min(ss.getTime() - GOLDEN_HOUR_DURATION_MS),
+      eveningGoldenEnd: ss,
+      eveningBlueStart: ss,
+      eveningBlueEnd: min(ss.getTime() + BLUE_HOUR_DURATION_MS),
+    };
+  }, [sunriseSunset]);
+
+  // Helper to get dominant pollen type and level
+  const getDominantPollen = useMemo(() => {
+    if (!airQualityData) return null;
+    const types = [
+      { key: 'alder_pollen', label: t('pollenAlder') },
+      { key: 'birch_pollen', label: t('pollenBirch') },
+      { key: 'grass_pollen', label: t('pollenGrass') },
+      { key: 'mugwort_pollen', label: t('pollenMugwort') },
+      { key: 'olive_pollen', label: t('pollenOlive') },
+      { key: 'ragweed_pollen', label: t('pollenRagweed') },
+    ];
+    let max = null;
+    types.forEach(({ key, label }) => {
+      const val = airQualityData[key];
+      if (val !== null && val !== undefined && (max === null || val > max.val)) {
+        max = { val, label };
+      }
+    });
+    if (!max || max.val === 0) return null;
+    let level = t('pollenLow');
+    if (max.val >= POLLEN_VERY_HIGH_THRESHOLD) level = t('pollenVeryHigh');
+    else if (max.val >= POLLEN_HIGH_THRESHOLD) level = t('pollenHigh');
+    else if (max.val >= POLLEN_MODERATE_THRESHOLD) level = t('pollenModerate');
+    return { ...max, level };
+  }, [airQualityData, lang]);
+
+
+
   
   const getCacheAgeText = () => {
     if (!isUsingCache || !lastUpdated) return '';
@@ -7641,14 +7783,22 @@ export default function WeatherApp() {
       // Separate API call for sunrise/sunset without models parameter (astronomical data is location-based, not model-dependent)
       const urlSunriseSunset = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&timezone=auto&forecast_days=1`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
-      const urlAirQuality = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi,pm10,pm2_5&timezone=auto`;
+      const urlAirQuality = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi,pm10,pm2_5,alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&timezone=auto`;
 
-      const [resShort, resLong, resSunriseSunset, resDwd, resAirQuality] = await Promise.all([
+      // Climate normals: fetch same month last year from archive API for historical context
+      const nowForClimate = new Date();
+      const lastYear = nowForClimate.getFullYear() - 1;
+      const climMonth = String(nowForClimate.getMonth() + 1).padStart(2, '0');
+      const climLastDay = new Date(lastYear, nowForClimate.getMonth() + 1, 0).getDate();
+      const urlClimate = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${lastYear}-${climMonth}-01&end_date=${lastYear}-${climMonth}-${climLastDay}&daily=temperature_2m_mean&timezone=auto`;
+
+      const [resShort, resLong, resSunriseSunset, resDwd, resAirQuality, resClimate] = await Promise.all([
         fetch(urlShort), 
         fetch(urlLong), 
         fetch(urlSunriseSunset).catch(() => ({ ok: false })),
         fetch(urlDwd).catch(() => ({ ok: false })),
-        fetch(urlAirQuality).catch(() => ({ ok: false }))
+        fetch(urlAirQuality).catch(() => ({ ok: false })),
+        fetch(urlClimate).catch(() => ({ ok: false }))
       ]);
       
       if (!resShort.ok) {
@@ -7688,8 +7838,18 @@ export default function WeatherApp() {
         setAirQualityData(aqJson.current);
       }
 
+      if (resClimate.ok) {
+        const climJson = await resClimate.json();
+        const means = climJson.daily?.temperature_2m_mean?.filter(v => v !== null) ?? [];
+        if (means.length > 0) {
+          const avg = means.reduce((a, b) => a + b, 0) / means.length;
+          setClimateNormals(Math.round(avg * 10) / 10);
+        }
+      }
+
       setLastUpdated(new Date());
       setModelRuns({ icon: getModelRunTime(3, 2.5), gfs: getModelRunTime(6, 4), arome: getModelRunTime(3, 2), gem: getModelRunTime(6, 3) });
+
 
     } catch (err) { 
         console.error("API Error:", err);
@@ -7705,8 +7865,10 @@ export default function WeatherApp() {
 
   useEffect(() => { fetchData(); }, [currentLoc]);
 
-  // --- PULL-TO-REFRESH HANDLERS ---
+  // --- PULL-TO-REFRESH & SWIPE GESTURE HANDLERS ---
   const handleTouchStart = (e) => {
+    setSwipeStartX(e.touches[0].clientX);
+    setSwipeStartY(e.touches[0].clientY);
     // Only activate pull-to-refresh if we're at the top of the page
     if (window.scrollY === 0 && !isRefreshing) {
       setPullStartY(e.touches[0].clientY);
@@ -7726,7 +7888,27 @@ export default function WeatherApp() {
     }
   };
 
-  const handleTouchEnd = () => {
+  const TAB_ORDER = ['overview', 'longterm', 'radar', 'chart', 'travel'];
+
+  const handleTouchEnd = (e) => {
+    // Detect horizontal swipe for tab navigation
+    const touch = e.changedTouches?.[0];
+    if (touch) {
+      const dx = touch.clientX - swipeStartX;
+      const dy = touch.clientY - swipeStartY;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > SWIPE_THRESHOLD_PX) {
+        const currentIdx = TAB_ORDER.indexOf(activeTab);
+        if (dx < 0 && currentIdx < TAB_ORDER.length - 1) {
+          setActiveTab(TAB_ORDER[currentIdx + 1]);
+        } else if (dx > 0 && currentIdx > 0) {
+          setActiveTab(TAB_ORDER[currentIdx - 1]);
+        }
+        setIsPulling(false);
+        setPullDistance(0);
+        return;
+      }
+    }
+
     if (!isPulling || isRefreshing) return;
     
     setIsPulling(false);
@@ -7751,6 +7933,7 @@ export default function WeatherApp() {
       setPullDistance(0);
     }
   };
+
 
   // --- TRAVEL SEARCH LOGIC ---
   const handleTravelSearch = async (overrideQuery = null, overrideData = null) => {
@@ -9223,7 +9406,23 @@ export default function WeatherApp() {
         {/* Fixed Animation Card Container - Matches main content width, extends to top edge */}
         <div className={`fixed left-0 right-0 z-20 ${isSmallScreen ? 'px-2' : 'px-4'}`} style={{ top: fixedTopOffset }}>
           <div className="max-w-4xl mx-auto">
-            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl ${getAnimationCardPadding()} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant backdrop-blur-md ${getAnimationCardMinHeight()}`}>
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl ${getAnimationCardPadding()} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant backdrop-blur-md ${getAnimationCardMinHeight()}`}
+              onTouchStart={(e) => { cardSwipeStartX.current = e.touches[0].clientX; setSwipeStartY(e.touches[0].clientY); }}
+              onTouchEnd={(e) => {
+                const dx = e.changedTouches[0].clientX - cardSwipeStartX.current;
+                const dy = e.changedTouches[0].clientY - swipeStartY;
+                if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > SWIPE_THRESHOLD_PX && allLocations.length > 1) {
+                  if (dx < 0 && currentLocIdx < allLocations.length - 1) {
+                    setCurrentLoc(allLocations[currentLocIdx + 1]);
+                  } else if (dx > 0 && currentLocIdx > 0) {
+                    setCurrentLoc(allLocations[currentLocIdx - 1]);
+                  }
+                  setIsPulling(false);
+                  setPullDistance(0);
+                  e.stopPropagation();
+                }
+              }}
+            >
               {/* Weather background animation */}
               <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
                 <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} demoTerrain={demoTerrain} elevation={currentLoc?.elevation || 0} latitude={currentLoc?.lat} longitude={currentLoc?.lon} />
@@ -9302,6 +9501,18 @@ export default function WeatherApp() {
                       <span>H: {formatTemp(processedLong[0]?.max)}{getTempUnitSymbol()}</span>
                       <span>•</span>
                       <span>T: {formatTemp(processedLong[0]?.min)}{getTempUnitSymbol()}</span>
+                    </div>
+                  )}
+                  {/* Location indicator dots - shown when multiple locations exist */}
+                  {allLocations.length > 1 && !isLandscape && (
+                    <div className="flex justify-center gap-1.5 mt-2">
+                      {allLocations.map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setCurrentLoc(allLocations[i])}
+                          className={`w-1.5 h-1.5 rounded-full transition-all ${i === currentLocIdx ? 'bg-white w-3' : 'bg-white/50'}`}
+                        />
+                      ))}
                     </div>
                   )}
                 </div>
@@ -9433,7 +9644,23 @@ export default function WeatherApp() {
               </div>
             </div>
           )}
+
+          {/* Pollen tile */}
+          {getDominantPollen && (
+            <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col`}>
+              <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                <Sparkles size={14} /> {t('pollen')}
+              </div>
+              <div className={`text-m3-title-medium font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
+                {getDominantPollen.label}
+              </div>
+              <div className={`text-xs font-medium mt-1 ${getDominantPollen.val >= POLLEN_HIGH_THRESHOLD ? 'text-orange-500' : getDominantPollen.val >= POLLEN_MODERATE_THRESHOLD ? 'text-yellow-500' : (isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant')}`}>
+                {getDominantPollen.level} ({Math.round(getDominantPollen.val)})
+              </div>
+            </div>
+          )}
           
+
           {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) && (
             <div 
               className="bg-m3-tertiary-container rounded-m3-xl p-2 border border-m3-tertiary shadow-m3-1 relative overflow-hidden min-h-[90px] flex flex-col"
@@ -9473,8 +9700,62 @@ export default function WeatherApp() {
           {activeTab === 'overview' && (
             <div className="space-y-4">
                <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
+               
+               {/* Historical context: temperature anomaly vs. last year's monthly average */}
+               {climateNormals !== null && processedShort.length > 0 && (() => {
+                 const todayTemp = processedShort[0]?.temp;
+                 if (todayTemp == null) return null;
+                 const diff = Math.round((todayTemp - climateNormals) * 10) / 10;
+                 if (Math.abs(diff) < TEMP_ANOMALY_THRESHOLD) return null;
+                 const isWarmer = diff > 0;
+                 return (
+                   <div className={`flex items-center gap-2 px-3 py-2 rounded-m3-xl text-xs font-medium ${isRealNight ? 'bg-m3-dark-surface-container-high text-m3-dark-on-surface-variant' : 'bg-m3-surface-container-high text-m3-on-surface-variant'}`}>
+                     <TrendingUp size={14} className={isWarmer ? 'text-orange-500' : 'text-blue-500'} />
+                     <span>
+                       {lang === 'en'
+                         ? `Today is ${Math.abs(diff)}° ${isWarmer ? t('warmerThanNorm') : t('colderThanNorm')} (${t('typicalForMonth')}: ${formatTemp(climateNormals)}°)`
+                         : `Heute ${Math.abs(diff)}° ${isWarmer ? t('warmerThanNorm') : t('colderThanNorm')} (${t('typicalForMonth')}: ${formatTemp(climateNormals)}°)`
+                       }
+                     </span>
+                   </div>
+                 );
+               })()}
+
                <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} />
                <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} currentData={shortTermData?.current} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} />
+
+               {/* Photographer's Weather: Golden Hour & Blue Hour */}
+               {getPhotographyTimes && !isLandscape && (
+                 <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container-high'} rounded-m3-xl p-3 shadow-m3-1`}>
+                   <div className={`flex items-center gap-2 text-m3-label-small font-bold uppercase opacity-70 mb-2`}>
+                     <Star size={14} /> {t('photographerWeather')}
+                   </div>
+                   <div className="grid grid-cols-2 gap-2 text-xs">
+                     <div className="space-y-1">
+                       <div className={`font-semibold ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>{t('morningLight')}</div>
+                       <div className="flex items-center gap-1">
+                         <span className="inline-block w-2 h-2 rounded-full bg-blue-400"></span>
+                         <span>{t('blueHour')}: {formatTime(getPhotographyTimes.morningBlueStart.toISOString())}–{formatTime(getPhotographyTimes.morningBlueEnd.toISOString())}</span>
+                       </div>
+                       <div className="flex items-center gap-1">
+                         <span className="inline-block w-2 h-2 rounded-full bg-yellow-400"></span>
+                         <span>{t('goldenHour')}: {formatTime(getPhotographyTimes.morningGoldenStart.toISOString())}–{formatTime(getPhotographyTimes.morningGoldenEnd.toISOString())}</span>
+                       </div>
+                     </div>
+                     <div className="space-y-1">
+                       <div className={`font-semibold ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>{t('eveningLight')}</div>
+                       <div className="flex items-center gap-1">
+                         <span className="inline-block w-2 h-2 rounded-full bg-yellow-400"></span>
+                         <span>{t('goldenHour')}: {formatTime(getPhotographyTimes.eveningGoldenStart.toISOString())}–{formatTime(getPhotographyTimes.eveningGoldenEnd.toISOString())}</span>
+                       </div>
+                       <div className="flex items-center gap-1">
+                         <span className="inline-block w-2 h-2 rounded-full bg-blue-400"></span>
+                         <span>{t('blueHour')}: {formatTime(getPhotographyTimes.eveningBlueStart.toISOString())}–{formatTime(getPhotographyTimes.eveningBlueEnd.toISOString())}</span>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+               )}
             </div>
           )}
 
@@ -9482,7 +9763,32 @@ export default function WeatherApp() {
             <div className="h-full flex flex-col">
                {/* AIReportBox removed per user request - detailed details not needed in compare view */}
                <div className="flex justify-between items-center mb-6">
-                 <h3 className="text-sm font-bold uppercase opacity-70">{t('modelCheck')}</h3>
+                 <div className="flex items-center gap-2">
+                   <h3 className="text-sm font-bold uppercase opacity-70">{t('modelCheck')}</h3>
+                   <div className="relative">
+                     <button
+                       onClick={() => setShowModelTooltip(!showModelTooltip)}
+                       className={`${isRealNight ? 'text-m3-dark-on-surface-variant hover:text-m3-dark-on-surface' : 'text-m3-on-surface-variant hover:text-m3-on-surface'} transition-colors`}
+                       aria-label={t('modelInfoTitle')}
+                     >
+                       <Info size={16} />
+                     </button>
+                     {showModelTooltip && (
+                       <div className={`absolute left-0 top-6 z-50 w-72 ${isRealNight ? 'bg-m3-dark-surface-container border-m3-dark-outline-variant text-m3-dark-on-surface' : 'bg-white border-m3-outline-variant text-m3-on-surface'} rounded-m3-xl shadow-m3-4 border p-4 text-xs`}>
+                         <div className="flex justify-between items-start mb-3">
+                           <span className="font-bold text-sm">{t('modelInfoTitle')}</span>
+                           <button onClick={() => setShowModelTooltip(false)} className="opacity-60 hover:opacity-100"><X size={14}/></button>
+                         </div>
+                         <div className="space-y-2">
+                           <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-blue-300 mt-1 flex-shrink-0"></span><span><b>ICON-D2:</b> {t('iconDesc')}</span></div>
+                           <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-purple-300 mt-1 flex-shrink-0"></span><span><b>GFS:</b> {t('gfsDesc')}</span></div>
+                           <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-green-300 mt-1 flex-shrink-0"></span><span><b>AROME:</b> {t('aromeDesc')}</span></div>
+                           <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-orange-400 mt-1 flex-shrink-0"></span><span><b>GEM:</b> {t('gemDesc')}</span></div>
+                         </div>
+                       </div>
+                     )}
+                   </div>
+                 </div>
                  <div className="flex bg-black/10 rounded-lg p-1">
                     <button onClick={() => setChartView('hourly')} className={`px-3 py-1 rounded-md text-xs font-bold transition ${chartView==='hourly' ? 'bg-white text-black shadow-sm' : 'opacity-60'}`}>48h</button>
                     <button onClick={() => setChartView('daily')} className={`px-3 py-1 rounded-md text-xs font-bold transition ${chartView==='daily' ? 'bg-white text-black shadow-sm' : 'opacity-60'}`}>6 Tage</button>
