@@ -14,7 +14,7 @@ const DEFAULT_LOC = null;
 const HEADER_HEIGHT = '100px';
 
 // Animation card height constant for fixed positioning and spacing calculations
-const ANIMATION_CARD_HEIGHT = '240px'; 
+const ANIMATION_CARD_HEIGHT = '210px'; 
 
 // Navigation bar height constant for spacing calculations (82px actual rendered height + 8px spacing)
 const NAV_BAR_HEIGHT = '90px'; 
@@ -9039,7 +9039,7 @@ export default function WeatherApp() {
   const getAnimationCardMinHeight = () => {
     if (isLandscape) return 'min-h-[100px]';
     if (isSmallScreen) return 'min-h-[160px]';
-    return 'min-h-[200px]';
+    return 'min-h-[210px]';
   };
 
   // Create a 3-day forecast: rest of today, tomorrow, and day after tomorrow
