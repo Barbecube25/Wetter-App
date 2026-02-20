@@ -2781,6 +2781,9 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
   // context: 'today' | 'tomorrow' | 'thisweek' | 'nextweek'
   const getPollenText = (pollenData, context = 'today') => {
     if (!pollenData) return null;
+    const pollenFilter = extraData && !Array.isArray(extraData) && Array.isArray(extraData.pollenFilter)
+      ? extraData.pollenFilter
+      : DEFAULT_POLLEN_FILTER;
     const types = [
       { key: 'hazel_pollen', label: t.pollenHazel },
       { key: 'alder_pollen', label: t.pollenAlder },
@@ -2796,7 +2799,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
       { key: 'ragweed_pollen', label: t.pollenRagweed },
       { key: 'plantain_pollen', label: t.pollenPlantain },
       { key: 'sorrel_pollen', label: t.pollenSorrel },
-    ];
+    ].filter(({ key }) => pollenFilter.includes(key));
     const active = types
       .map(({ key, label }) => ({ label, val: pollenData[key] ?? 0 }))
       .filter(({ val }) => val > 0)
@@ -6647,10 +6650,12 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
 };
 
 // --- POLLEN DETAILS MODAL ---
-const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmallScreen = false }) => {
+const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmallScreen = false, pollenFilter = null }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
 
   if (!isOpen || !airQualityData) return null;
+
+  const activeFilter = Array.isArray(pollenFilter) ? pollenFilter : DEFAULT_POLLEN_FILTER;
 
   const pollenTypes = [
     { key: 'hazel_pollen', label: t.pollenHazel },
@@ -6667,7 +6672,7 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
     { key: 'ragweed_pollen', label: t.pollenRagweed },
     { key: 'plantain_pollen', label: t.pollenPlantain },
     { key: 'sorrel_pollen', label: t.pollenSorrel },
-  ];
+  ].filter(({ key }) => activeFilter.includes(key));
 
   const getPollenLevel = (val) => {
     if (val >= POLLEN_VERY_HIGH_THRESHOLD) return { label: t.pollenVeryHigh, color: 'text-red-600', bg: 'bg-red-50 border-red-200' };
@@ -9614,9 +9619,9 @@ export default function WeatherApp() {
     return result;
   }, [processedShort, processedLong, lang, t]);
 
-  const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, { threeDayForecast, pollenData: airQualityData }), [processedShort, lang, threeDayForecast, airQualityData]);
+  const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, { threeDayForecast, pollenData: airQualityData, pollenFilter: settings.pollenFilter }), [processedShort, lang, threeDayForecast, airQualityData, settings.pollenFilter]);
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
-  const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang, { pollenData: airQualityData }), [processedLong, lang, airQualityData]);
+  const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter }), [processedLong, lang, airQualityData, settings.pollenFilter]);
 
   // --- WIDGET VIEWS ---
   // Only block rendering on initial load (no data yet); during location switches, keep existing data visible.
@@ -10079,6 +10084,7 @@ export default function WeatherApp() {
           airQualityData={airQualityData}
           lang={lang}
           isSmallScreen={isSmallScreen}
+          pollenFilter={settings.pollenFilter}
         />
       )}
       {showPrecipModal && (
