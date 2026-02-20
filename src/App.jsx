@@ -9683,40 +9683,29 @@ export default function WeatherApp() {
                         <span>{t('feelsLike')} {formatTemp(current.appTemp)}{getTempUnitSymbol()}</span>
                       </div>
                       {!isLandscape && (
-                        <>
-                          <div className="flex items-center gap-3 mt-1 text-m3-label-large text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
-                            <span>H: {formatTemp(processedLong[0]?.max)}{getTempUnitSymbol()}</span>
-                            <span>•</span>
-                            <span>T: {formatTemp(processedLong[0]?.min)}{getTempUnitSymbol()}</span>
-                          </div>
-                          <div className="mt-2 text-m3-title-medium text-white font-medium drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">{weatherConf.text}</div>
-                        </>
-                      )}
-                      
-                      {/* Sunrise and Sunset Times */}
-                      {!isLandscape && (
-                        <div className="flex items-center gap-4 mt-2 text-m3-label-large text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
-                          <div className="flex items-center gap-1.5">
-                            <Sunrise size={16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
-                            <span>{formatTime(sunriseSunset.sunrise)}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <Sunset size={16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
-                            <span>{formatTime(sunriseSunset.sunset)}</span>
-                          </div>
+                        <div className="flex items-center gap-3 mt-1 text-m3-label-large text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
+                          <span>H: {formatTemp(processedLong[0]?.max)}{getTempUnitSymbol()}</span>
+                          <span>•</span>
+                          <span>T: {formatTemp(processedLong[0]?.min)}{getTempUnitSymbol()}</span>
                         </div>
                       )}
                     </div>
                     
-                    {/* Weather Icon */}
-                    <div className={`${isLandscape ? 'text-4xl' : 'text-6xl'} opacity-90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]`}>
-                      {React.createElement(weatherConf.icon, { size: isLandscape ? 40 : 56 })}
+                    {/* Weather Info: condition, sunrise, sunset */}
+                    <div className={`flex flex-col items-end gap-2 ${isLandscape ? 'p-1' : 'p-2'} opacity-90`}>
+                      <div className={`${isLandscape ? 'text-m3-label-medium' : 'text-m3-title-medium'} font-medium text-white text-right drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]`}>{weatherConf.text}</div>
+                      <div className={`flex items-center gap-1.5 ${isLandscape ? 'text-m3-label-small' : 'text-m3-label-large'} text-white/90 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]`}>
+                        <Sunrise size={isLandscape ? 12 : 16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                        <span>{formatTime(sunriseSunset.sunrise)}</span>
+                      </div>
+                      <div className={`flex items-center gap-1.5 ${isLandscape ? 'text-m3-label-small' : 'text-m3-label-large'} text-white/90 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]`}>
+                        <Sunset size={isLandscape ? 12 : 16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                        <span>{formatTime(sunriseSunset.sunset)}</span>
+                      </div>
                     </div>
                   </div>
                   {isLandscape && (
                     <div className="flex items-center gap-3 mt-0.5 text-m3-label-small text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
-                      <span className="font-medium">{weatherConf.text}</span>
-                      <span>•</span>
                       <span>H: {formatTemp(processedLong[0]?.max)}{getTempUnitSymbol()}</span>
                       <span>•</span>
                       <span>T: {formatTemp(processedLong[0]?.min)}{getTempUnitSymbol()}</span>
