@@ -160,6 +160,7 @@ const TRANSLATIONS = {
     noPrecipExp: "Aktuell kein Niederschlag zu erwarten",
     noPrecipSight: "Kein Niederschlag in Sicht",
     activityIndex: "Aktivitäts-Index",
+    activityIndexToday: "Empfehlungen für heute",
     startingNow: "beginnt jetzt",
     startingSoon: "beginnt bald",
     inMinutes: "in",
@@ -383,6 +384,7 @@ const TRANSLATIONS = {
     noPrecipExp: "Currently no precipitation expected",
     noPrecipSight: "No Precipitation in Sight",
     activityIndex: "Activity Index",
+    activityIndexToday: "Recommendations for today",
     startingNow: "starting now",
     startingSoon: "starting soon",
     inMinutes: "in",
@@ -606,6 +608,7 @@ const TRANSLATIONS = {
     noPrecipExp: "Aucune précipitation attendue actuellement",
     noPrecipSight: "Pas de précipitations en vue",
     activityIndex: "Indice d'activité",
+    activityIndexToday: "Recommandations pour aujourd'hui",
     startingNow: "commence maintenant",
     startingSoon: "commence bientôt",
     inMinutes: "dans",
@@ -789,6 +792,7 @@ const TRANSLATIONS = {
     noPrecipExp: "Actualmente no se esperan precipitaciones",
     noPrecipSight: "Sin precipitaciones a la vista",
     activityIndex: "Índice de actividad",
+    activityIndexToday: "Recomendaciones para hoy",
     startingNow: "comienza ahora",
     startingSoon: "comienza pronto",
     inMinutes: "en",
@@ -971,6 +975,7 @@ const TRANSLATIONS = {
     noPrecipExp: "Attualmente non sono previste precipitazioni",
     noPrecipSight: "Nessuna precipitazione in vista",
     activityIndex: "Indice di attività",
+    activityIndexToday: "Consigli per oggi",
     startingNow: "inizia ora",
     startingSoon: "inizia presto",
     inMinutes: "tra",
@@ -1153,6 +1158,7 @@ const TRANSLATIONS = {
     noPrecipExp: "Şu anda yağış beklenmemektedir",
     noPrecipSight: "Görünürde yağış yok",
     activityIndex: "Aktivite Endeksi",
+    activityIndexToday: "Bugün için öneriler",
     startingNow: "şimdi başlıyor",
     startingSoon: "yakında başlayacak",
     inMinutes: "içinde",
@@ -1335,6 +1341,7 @@ const TRANSLATIONS = {
     noPrecipExp: "Obecnie nie oczekuje się opadów",
     noPrecipSight: "Brak opadów w zasięgu",
     activityIndex: "Wskaźnik aktywności",
+    activityIndexToday: "Zalecenia na dziś",
     startingNow: "zaczyna się teraz",
     startingSoon: "zaczyna się wkrótce",
     inMinutes: "za",
@@ -1517,6 +1524,7 @@ const TRANSLATIONS = {
     noPrecipExp: "Momenteel geen neerslag verwacht",
     noPrecipSight: "Geen neerslag in zicht",
     activityIndex: "Activiteitsindex",
+    activityIndexToday: "Aanbevelingen voor vandaag",
     startingNow: "begint nu",
     startingSoon: "begint binnenkort",
     inMinutes: "over",
@@ -1699,6 +1707,7 @@ const TRANSLATIONS = {
     noPrecipExp: "Trenutno se ne očekuje oborina",
     noPrecipSight: "Nema oborina u vidiku",
     activityIndex: "Indeks aktivnosti",
+    activityIndexToday: "Preporuke za danas",
     startingNow: "počinje sada",
     startingSoon: "uskoro počinje",
     inMinutes: "za",
@@ -1881,6 +1890,7 @@ const TRANSLATIONS = {
     noPrecipExp: "Δεν αναμένονται επί του παρόντος κατακρημνίσματα",
     noPrecipSight: "Δεν αναμένονται κατακρημνίσματα",
     activityIndex: "Δείκτης δραστηριότητας",
+    activityIndexToday: "Συστάσεις για σήμερα",
     startingNow: "ξεκινά τώρα",
     startingSoon: "ξεκινά σύντομα",
     inMinutes: "σε",
@@ -2063,6 +2073,7 @@ const TRANSLATIONS = {
     noPrecipExp: "I øjeblikket forventes ingen nedbør",
     noPrecipSight: "Ingen nedbør i sigte",
     activityIndex: "Aktivitetsindeks",
+    activityIndexToday: "Anbefalinger for i dag",
     startingNow: "starter nu",
     startingSoon: "starter snart",
     inMinutes: "om",
@@ -2246,6 +2257,7 @@ const TRANSLATIONS = {
     noPrecipExp: "В настоящее время осадков не ожидается",
     noPrecipSight: "Осадков не предвидится",
     activityIndex: "Индекс активности",
+    activityIndexToday: "Рекомендации на сегодня",
     startingNow: "начинается сейчас",
     startingSoon: "скоро начнётся",
     inMinutes: "через",
@@ -6899,6 +6911,77 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
   );
 };
 
+// --- ACTIVITY INDEX MODAL ---
+const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false }) => {
+  const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+  if (!isOpen) return null;
+
+  const locale = LANG_LOCALE_MAP[lang] || 'de-DE';
+
+  // Use today's hours from the hourly data (max 24h)
+  const todayHours = hourlyData.slice(0, 24).map(hour => {
+    const advice = getActivityAdvice(lang, hour.temp, hour.wind, hour.precip, hour.uvIndex, hour.code);
+    return {
+      time: hour.time,
+      displayTime: hour.time.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
+      advice,
+    };
+  });
+
+  // Group consecutive hours with the same advice text into time ranges
+  const ranges = [];
+  for (let i = 0; i < todayHours.length; i++) {
+    const current = todayHours[i];
+    if (ranges.length === 0 || ranges[ranges.length - 1].advice.text !== current.advice.text) {
+      ranges.push({ from: current.displayTime, to: current.displayTime, advice: current.advice });
+    } else {
+      ranges[ranges.length - 1].to = current.displayTime;
+    }
+  }
+
+  return (
+    <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
+      <div className={`bg-white rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-md'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
+        {/* Header */}
+        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 sticky top-0">
+          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+            <Zap size={18} className="text-yellow-500" />
+            {t('activityIndex')}
+          </h3>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition">
+            <X size={20} className="text-slate-400" />
+          </button>
+        </div>
+
+        {/* Subtitle */}
+        <div className="px-4 py-2 bg-yellow-50/50 border-b border-yellow-100">
+          <span className="text-sm text-slate-500">{t('activityIndexToday')}</span>
+        </div>
+
+        {/* Scrollable time-range list */}
+        <div className="overflow-y-auto p-4 space-y-2">
+          {ranges.map((range, idx) => (
+            <div
+              key={idx}
+              className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/80 border border-slate-100"
+            >
+              <span className="text-xl flex-shrink-0">{range.advice.emoji}</span>
+              <div className="flex-1 min-w-0">
+                <div className={`text-sm font-bold ${range.advice.color} leading-tight`}>{range.advice.text}</div>
+                <div className="text-xs text-slate-400 mt-0.5">
+                  {range.from === range.to
+                    ? `${t('ab') || 'Ab'} ${range.from} ${t('oclock') || 'Uhr'}`
+                    : `${range.from} – ${range.to} ${t('oclock') || 'Uhr'}`}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- LOCATION MODAL ---
 const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAddCurrentLocation, onDeleteLocation, currentLoc, onRenameLocation, onRenameHome, homeLoc, lang='de', isSmallScreen = false }) => {
     const [searchQuery, setSearchQuery] = useState("");
@@ -7775,6 +7858,7 @@ export default function WeatherApp() {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false); // NEU
   const [showPrecipModal, setShowPrecipModal] = useState(false);
+  const [showActivityModal, setShowActivityModal] = useState(false);
   const [showPollenModal, setShowPollenModal] = useState(false);
   const [activeDetailModal, setActiveDetailModal] = useState(null);
   const [viewMode, setViewMode] = useState(null);
@@ -10122,6 +10206,15 @@ export default function WeatherApp() {
           isSmallScreen={isSmallScreen}
         />
       )}
+      {showActivityModal && (
+        <ActivityIndexModal
+          isOpen={showActivityModal}
+          onClose={() => setShowActivityModal(false)}
+          hourlyData={processedShort}
+          lang={lang}
+          isSmallScreen={isSmallScreen}
+        />
+      )}
       {showSettingsModal && (
           <SettingsModal 
              isOpen={showSettingsModal}
@@ -10533,7 +10626,7 @@ export default function WeatherApp() {
           {(() => {
             const advice = getActivityAdvice(lang, current.temp, current.wind, next24HoursPrecip.total, current.uvIndex, current.code);
             return (
-              <div className={`${tileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col`}>
+              <div className={`${tileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setShowActivityModal(true)}>
                 <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                   <Zap size={14} /> {t('activityIndex')}
                 </div>
