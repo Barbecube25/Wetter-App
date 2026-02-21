@@ -6749,15 +6749,16 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
                 <LineChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="displayTime" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} interval={tickInterval} />
+                  <XAxis xAxisId="idx" type="number" domain={[0, chartData.length - 1]} hide />
                   <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} unit={metric === 'humidity' ? '%' : ''} />
                   <Tooltip content={<CustomTooltip />} />
-                  {/* Shade the past region */}
-                  {pastEndLabel && (
-                    <ReferenceArea x1={chartData[0]?.displayTime} x2={pastEndLabel} fill="#e2e8f0" fillOpacity={0.5} />
+                  {/* Shade the past region using numeric axis to avoid duplicate-label issues */}
+                  {nowIndex > 0 && (
+                    <ReferenceArea xAxisId="idx" x1={0} x2={nowIndex - 1} fill="#e2e8f0" fillOpacity={0.5} />
                   )}
-                  {/* Current time marker */}
-                  {nowLabel && (
-                    <ReferenceLine x={nowLabel} stroke="#6750A4" strokeWidth={2} label={{ value: `${t('now')} ${nowLabel}`, position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
+                  {/* Current time marker using numeric axis */}
+                  {nowLabel && nowIndex < chartData.length && (
+                    <ReferenceLine xAxisId="idx" x={nowIndex} stroke="#6750A4" strokeWidth={2} strokeDasharray="4 3" strokeOpacity={0.8} label={{ value: `${t('now')} ${nowLabel}`, position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
                   )}
                   <Line type="monotone" dataKey="value" stroke={config.color} strokeWidth={2} dot={false} name={config.label} connectNulls />
                   {config.extraKey && (
@@ -11079,10 +11080,11 @@ export default function WeatherApp() {
                         <LineChart data={processedShort} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
                           <XAxis dataKey="displayTime" tick={{fontSize:11, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={4} angle={0} />
+                          <XAxis xAxisId="idx" type="number" domain={[0, processedShort.length - 1]} hide />
                           <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
                           <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => formatTemp(value)} />
                           {processedShort[0]?.displayTime && (
-                            <ReferenceLine x={processedShort[0].displayTime} stroke="#6750A4" strokeWidth={2} label={{ value: t('now'), position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
+                            <ReferenceLine xAxisId="idx" x={0} stroke="#6750A4" strokeWidth={2} strokeDasharray="4 3" strokeOpacity={0.8} label={{ value: t('now'), position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
                           )}
                           <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={2} dot={false} name="ICON" />
                           <Line type="monotone" dataKey="temp_gfs" stroke="#d8b4fe" strokeWidth={2} dot={false} name="GFS" />
@@ -11095,8 +11097,12 @@ export default function WeatherApp() {
                         <LineChart data={processedLong.slice(0, 6)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
                           <XAxis dataKey="dateShort" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={0} />
+                          <XAxis xAxisId="idx" type="number" domain={[0, 5]} hide />
                           <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
                           <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => formatTemp(value)} />
+                          {processedLong[0]?.dateShort && (
+                            <ReferenceLine xAxisId="idx" x={0} stroke="#6750A4" strokeWidth={2} strokeDasharray="4 3" strokeOpacity={0.8} label={{ value: t('today'), position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
+                          )}
                           <Line type="monotone" dataKey="max_icon" stroke="#93c5fd" strokeWidth={3} dot={{r:3}} name="ICON Max" />
                           <Line type="monotone" dataKey="max_gfs" stroke="#d8b4fe" strokeWidth={3} dot={{r:3}} name="GFS Max" />
                           <Line type="monotone" dataKey="max_gem" stroke="#fca5a5" strokeWidth={3} dot={{r:3}} name="GEM Max" />
