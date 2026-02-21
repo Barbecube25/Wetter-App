@@ -2749,7 +2749,7 @@ const getWeatherConfig = (code, isDay = 1, lang = 'de') => {
   if (code === 2) return { text: t.cloudy, icon: Cloud };
   if (code === 3) return { text: t.overcast, icon: Cloud };
   if ([45, 48].includes(code)) return { text: t.fog, icon: CloudFog };
-  if ([51, 53, 55].includes(code)) return { text: t.drizzle, icon: CloudRain };
+  if ([51, 53, 55].includes(code)) return { text: t.drizzle, icon: CloudDrizzle };
   if ([61, 63].includes(code)) return { text: t.rain, icon: CloudRain };
   if ([80, 81].includes(code)) return { text: t.showers, icon: CloudRain };
   if ([65, 82].includes(code)) return { text: t.heavyRain, icon: CloudRain };
@@ -4313,7 +4313,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const isLightRain = [61, 80].includes(code);
   const isMediumRain = [63, 81].includes(code);
   const isHeavyRain = [65, 82].includes(code);
-  const isRain = isLightRain || isMediumRain || isHeavyRain;
+  // Code 95 = thunderstorm with slight/moderate rain (shows rain drops in addition to lightning)
+  const isRain = isLightRain || isMediumRain || isHeavyRain || code === 95;
   const isLightSnow = [71, 77, 85].includes(code);
   const isMediumSnow = [73].includes(code);
   const isHeavySnow = [75, 86].includes(code);
@@ -5604,11 +5605,10 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
     
     // Override with current API data if available (more accurate, radar-based)
     if (currentData && currentData.precipitation !== undefined) {
-      // Use total precipitation which includes all types (rain, snow, etc.)
-      // precipitation = total, rain = liquid only, snowfall = snow only
-      const totalPrecip = currentData.precipitation || 0;
-      // For rain display, use rain value if available, otherwise use total precipitation
-      currentPrecip = currentData.rain !== undefined ? currentData.rain : totalPrecip;
+      // Use total precipitation which includes all types (rain, showers, snow, etc.)
+      // precipitation = total, rain = stratiform rain only (excludes showers!), snowfall = snow only
+      // Using total precipitation ensures convective showers (codes 80-82) are correctly detected.
+      currentPrecip = currentData.precipitation || 0;
       currentSnow = currentData.snowfall || 0;
     }
     
@@ -9465,7 +9465,7 @@ export default function WeatherApp() {
         windAvg: Math.round(getAvg('windspeed_10m')), // Average wind across models – used for activity advice to avoid threshold oscillation
         gust: Math.round(getMax('windgusts_10m')), // Böen immer Max Warnung
         dir: h.winddirection_10m_icon_seamless?.[i] || 0,
-        code: h.weathercode_icon_seamless?.[i] || h.weathercode?.[i] || 0,
+        code: h.weathercode_icon_seamless?.[i] ?? h.weathercode?.[i] ?? 0,
         isDay: isDayArray?.[i] ?? (t.getHours() >= 6 && t.getHours() <= 21 ? 1 : 0),
         appTemp: getVal('apparent_temperature'),
         humidity: Math.round(getVal('relative_humidity_2m')),
@@ -9614,7 +9614,7 @@ export default function WeatherApp() {
           d.windgusts_10m_max_gem_seamless?.[i] || 0
         )),
         dir: d.winddirection_10m_dominant_icon_seamless?.[i] || 0,
-        code: d.weathercode_icon_seamless?.[i] || 0,
+        code: d.weathercode_icon_seamless?.[i] ?? d.weathercode_gfs_seamless?.[i] ?? d.weathercode_arome_seamless?.[i] ?? d.weathercode_gem_seamless?.[i] ?? 0,
         reliability: (() => {
           const relVals = [maxIcon, maxGfs, maxArome, maxGem].filter((val) => val !== null && val !== undefined);
           // Adjusted for 4-model ensemble: reduce penalty from 15 to 10 to account for natural spread with more models
@@ -9645,9 +9645,10 @@ export default function WeatherApp() {
       return {
         ...baseData,
         temp: curr.temperature_2m !== undefined ? curr.temperature_2m : baseData.temp,
-        // Match hourly data structure: precip = rain (liquid), snow = snowfall
-        // Note: API's current.precipitation is total, but we use rain for consistency
-        precip: curr.rain !== undefined ? curr.rain : baseData.precip,
+        // Match hourly data structure: precip = total precipitation (rain + showers), snow = snowfall
+        // Use current.precipitation (total) so convective showers (codes 80-82) are also captured,
+        // not just stratiform rain. curr.rain only covers large-scale rain and misses shower events.
+        precip: curr.precipitation !== undefined ? curr.precipitation : baseData.precip,
         snow: curr.snowfall !== undefined ? curr.snowfall : baseData.snow,
         wind: curr.windspeed_10m !== undefined ? curr.windspeed_10m : baseData.wind,
         humidity: curr.relative_humidity_2m !== undefined ? curr.relative_humidity_2m : baseData.humidity,
