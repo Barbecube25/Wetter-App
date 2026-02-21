@@ -5560,15 +5560,16 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
       
       <div className="overflow-x-auto pb-2 -mx-2 px-2" tabIndex="0">
         <div className="flex gap-3">
-          {hourlyData.map((hour) => {
+          {hourlyData.map((hour, idx) => {
             const WeatherIcon = getWeatherConfig(hour.code, hour.isDay, lang).icon;
+            const isNow = idx === 0;
             return (
               <div 
                 key={hour.time.toISOString()} 
-                className="flex flex-col items-center bg-m3-surface-container/80 backdrop-blur-sm rounded-m3-xl p-3 min-w-[70px] border border-m3-outline-variant/30 shadow-m3-1 hover:shadow-m3-2 transition-all"
+                className={`flex flex-col items-center backdrop-blur-sm rounded-m3-xl p-3 min-w-[70px] shadow-m3-1 hover:shadow-m3-2 transition-all ${isNow ? 'bg-m3-primary/15 border-2 border-m3-primary/60' : 'bg-m3-surface-container/80 border border-m3-outline-variant/30'}`}
               >
-                <span className="text-m3-label-small text-m3-on-surface-variant mb-1">
-                  {hour.displayTime}
+                <span className={`text-m3-label-small mb-1 font-bold ${isNow ? 'text-m3-primary' : 'text-m3-on-surface-variant'}`}>
+                  {isNow ? t.now : hour.displayTime}
                 </span>
                 <WeatherIcon size={24} className="text-m3-on-surface mb-2" />
                 <span className="text-m3-title-medium font-bold text-m3-on-surface">
@@ -8787,7 +8788,11 @@ export default function WeatherApp() {
   useEffect(() => { fetchData(); }, [currentLoc]);
 
   // --- PULL-TO-REFRESH & SWIPE GESTURE HANDLERS ---
+  const isAnyModalOpen = showFeedback || !!activeDetailModal || showPrecipModal || showActivityModal || showSettingsModal || showLocationModal || showPollenModal;
+
   const handleTouchStart = (e) => {
+    // Do not activate gestures when a modal/overlay is open
+    if (isAnyModalOpen) return;
     setSwipeStartX(e.touches[0].clientX);
     setSwipeStartY(e.touches[0].clientY);
     // Detect if touch started inside a horizontally scrollable element
@@ -8809,7 +8814,7 @@ export default function WeatherApp() {
   };
 
   const handleTouchMove = (e) => {
-    if (!isPulling || isRefreshing) return;
+    if (isAnyModalOpen || !isPulling || isRefreshing) return;
     
     const currentY = e.touches[0].clientY;
     const distance = currentY - pullStartY;
@@ -8823,6 +8828,8 @@ export default function WeatherApp() {
   const TAB_ORDER = ['overview', 'longterm', 'radar', 'chart', 'travel'];
 
   const handleTouchEnd = (e) => {
+    // Do not activate gestures when a modal/overlay is open
+    if (isAnyModalOpen) return;
     // Detect horizontal swipe for tab navigation
     const touch = e.changedTouches?.[0];
     if (touch) {
@@ -10939,6 +10946,9 @@ export default function WeatherApp() {
                           <XAxis dataKey="displayTime" tick={{fontSize:11, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={4} angle={0} />
                           <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
                           <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => formatTemp(value)} />
+                          {processedShort[0]?.displayTime && (
+                            <ReferenceLine x={processedShort[0].displayTime} stroke="#6750A4" strokeWidth={2} label={{ value: t('now'), position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
+                          )}
                           <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={2} dot={false} name="ICON" />
                           <Line type="monotone" dataKey="temp_gfs" stroke="#d8b4fe" strokeWidth={2} dot={false} name="GFS" />
                           <Line type="monotone" dataKey="temp_arome" stroke="#86efac" strokeWidth={2} dot={false} name="AROME" />
