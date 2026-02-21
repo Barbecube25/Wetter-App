@@ -6704,11 +6704,33 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
                   <Tooltip content={<CustomTooltip />} />
                   {/* Shade the past region */}
                   {pastEndLabel && (
-                    <ReferenceArea x1={chartData[0]?.displayTime} x2={pastEndLabel} fill="#e2e8f0" fillOpacity={0.5} />
+                    <ReferenceArea x1={chartData[0]?.displayTime} x2={pastEndLabel} fill="#e2e8f0" fillOpacity={0.65} />
                   )}
                   {/* Current time marker */}
                   {nowLabel && (
-                    <ReferenceLine x={nowLabel} stroke="#6750A4" strokeWidth={2} label={{ value: `${t('now')} ${nowLabel}`, position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
+                    <ReferenceLine
+                      x={nowLabel}
+                      stroke="#6750A4"
+                      strokeWidth={2}
+                      strokeDasharray="5 3"
+                      label={({ viewBox }) => {
+                        const { x, y } = viewBox;
+                        const text = t('now');
+                        // Approximate character width for fontSize=9 bold text
+                        const CHAR_WIDTH = 6.2;
+                        const BADGE_PAD_X = 5;
+                        const BADGE_OFFSET_X = 4;
+                        const BADGE_OFFSET_Y = 2;
+                        const BADGE_H = 16;
+                        const boxW = text.length * CHAR_WIDTH + BADGE_PAD_X * 2;
+                        return (
+                          <g>
+                            <rect x={x + BADGE_OFFSET_X} y={y + BADGE_OFFSET_Y} rx={4} ry={4} width={boxW} height={BADGE_H} fill="#6750A4" opacity={0.92} />
+                            <text x={x + BADGE_OFFSET_X + boxW / 2} y={y + BADGE_OFFSET_Y + BADGE_H / 2 + 4} textAnchor="middle" fill="white" fontSize={9} fontWeight="bold">{text}</text>
+                          </g>
+                        );
+                      }}
+                    />
                   )}
                   <Line type="monotone" dataKey="value" stroke={config.color} strokeWidth={2} dot={false} name={config.label} connectNulls />
                   {config.extraKey && (
