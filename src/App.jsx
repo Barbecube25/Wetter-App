@@ -27,6 +27,7 @@ const EVENING_START_HOUR = 16;
 const NIGHT_START_HOUR = 20;
 const LIGHT_PRECIP_THRESHOLD = 0.1;
 const STRONG_PRECIP_THRESHOLD = 0.5;
+const UMBRELLA_PRECIP_THRESHOLD = 1.0;
 const isAboveThreshold = (precipValue, snowValue, threshold) => precipValue > threshold || snowValue > threshold;
 
 // Swipe gesture threshold (pixels) for detecting intentional horizontal swipe
@@ -2710,7 +2711,7 @@ const getTripClothingTip = ({ lang = 'de', maxTemp = 0, minTemp = 0, rainChance 
  */
 const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvIndex = 0, code = 0) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
-  const hasRain = precip24h > LIGHT_PRECIP_THRESHOLD;
+  const hasRain = precip24h >= UMBRELLA_PRECIP_THRESHOLD;
   const isThunderstorm = [17, 95, 96, 99].includes(code);
   const isStorm = wind > 50;
   const isVeryCold = temp < TEMPERATURE_THRESHOLDS_C.freezing;
