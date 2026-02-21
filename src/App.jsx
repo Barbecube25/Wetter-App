@@ -2710,7 +2710,7 @@ const getTripClothingTip = ({ lang = 'de', maxTemp = 0, minTemp = 0, rainChance 
  */
 const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvIndex = 0, code = 0) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
-  const hasRain = precip24h > 1;
+  const hasRain = precip24h > LIGHT_PRECIP_THRESHOLD;
   const isThunderstorm = [17, 95, 96, 99].includes(code);
   const isStorm = wind > 50;
   const isVeryCold = temp < TEMPERATURE_THRESHOLDS_C.freezing;
@@ -5730,10 +5730,9 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
                result.hourlyForecast.push({ time: d.time, amount: hourlyAmount, rain: hourlyRain, snow: hourlySnow });
            }
        } else {
-            if (foundStart) {
-                // Regen hat aufgehört
-                result.endTime = d.time; 
-                break; 
+            if (foundStart && !result.endTime) {
+                // Regen hat aufgehört (erstes Ende merken, aber weitersuchen für hourlyForecast)
+                result.endTime = d.time;
             }
         }
     }
