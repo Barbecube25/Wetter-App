@@ -8697,10 +8697,10 @@ export default function WeatherApp() {
       const { lat, lon } = currentLoc;
       
       const modelsShort = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless";
-      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,rain,snowfall,weathercode,windspeed_10m,relative_humidity_2m&hourly=temperature_2m,precipitation,snowfall,weathercode,windspeed_10m,winddirection_10m,windgusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,cloud_cover,pressure_msl,visibility&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2&past_hours=12`;
+      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,rain,snowfall,weathercode,wind_speed_10m,relative_humidity_2m&hourly=temperature_2m,precipitation,snowfall,weathercode,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,cloud_cover,pressure_msl,visibility&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2&past_hours=12`;
       
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
-      const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,windspeed_10m_max,windgusts_10m_max,winddirection_10m_dominant,precipitation_probability_max&models=${modelsLong}&timezone=auto&forecast_days=14`;
+      const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,precipitation_probability_max&models=${modelsLong}&timezone=auto&forecast_days=14`;
       // Separate API call for sunrise/sunset without models parameter (astronomical data is location-based, not model-dependent)
       const urlSunriseSunset = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&timezone=auto&forecast_days=1`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
@@ -8913,7 +8913,7 @@ export default function WeatherApp() {
         const lat = loc.latitude || loc.lat;
         const lon = loc.longitude || loc.lon;
         // Fetch comparing data to calculate reliability
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,windspeed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,precipitation_sum,windgusts_10m_max&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&forecast_days=16`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weathercode,precipitation_probability,wind_speed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,precipitation_sum,wind_gusts_10m_max&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&forecast_days=16`;
         
         const wRes = await fetch(url);
         if(!wRes.ok) throw new Error("Wetterdaten konnten nicht geladen werden.");
@@ -8997,7 +8997,7 @@ export default function WeatherApp() {
                     const code = getSafeValue(daily, i, 'weathercode', false) ?? 0;
                     const prob = getSafeValue(daily, i, 'precipitation_probability_max', false) ?? 0;
                     const sum = getSafeValue(daily, i, 'precipitation_sum') ?? 0;
-                    const gust = getSafeValue(daily, i, 'windgusts_10m_max') ?? 0;
+                    const gust = getSafeValue(daily, i, 'wind_gusts_10m_max') ?? 0;
 
                     const d = new Date(dayDateStr).getTime();
                     const daysInFuture = (d - new Date().getTime()) / MILLISECONDS_PER_DAY;
@@ -9058,7 +9058,7 @@ export default function WeatherApp() {
                     if (h >= startH && h <= endH) {
                         const temp = getSafeValue(hourly, i, 'temperature_2m');
                         const precip = getSafeValue(hourly, i, 'precipitation');
-                        const wind = getSafeValue(hourly, i, 'windspeed_10m');
+                        const wind = getSafeValue(hourly, i, 'wind_speed_10m');
                         const code = getSafeValue(hourly, i, 'weathercode', false);
                         const prob = getSafeValue(hourly, i, 'precipitation_probability', false);
 
@@ -9302,7 +9302,7 @@ export default function WeatherApp() {
           setTripDetails(prev => ({ ...prev, [trip.id]: { loading: true } }));
           
           const endDate = trip.endDate || trip.startDate;
-          const url = `https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,precipitation_probability_max,windspeed_10m_max&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${endDate}`;
+          const url = `https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,precipitation_probability_max,wind_speed_10m_max&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${endDate}`;
           
           const res = await fetch(url);
           const data = await res.json();
@@ -9364,10 +9364,10 @@ export default function WeatherApp() {
                   rain: rainAmount.toFixed(1),
                   snow: avgSnow.toFixed(1),
                   wind: Math.round(Math.max(
-                      data.daily.windspeed_10m_max_icon_seamless?.[i] || 0,
-                      data.daily.windspeed_10m_max_gfs_seamless?.[i] || 0,
-                      data.daily.windspeed_10m_max_arome_seamless?.[i] || 0,
-                      data.daily.windspeed_10m_max_gem_seamless?.[i] || 0
+                      data.daily.wind_speed_10m_max_icon_seamless?.[i] || 0,
+                      data.daily.wind_speed_10m_max_gfs_seamless?.[i] || 0,
+                      data.daily.wind_speed_10m_max_arome_seamless?.[i] || 0,
+                      data.daily.wind_speed_10m_max_gem_seamless?.[i] || 0
                   )),
                   code: data.daily.weathercode_icon_seamless?.[i] || 0,
                   prob: probVals.length > 0 ? Math.round(probVals.reduce((a, b) => a + b, 0) / probVals.length) : 0
@@ -9519,10 +9519,10 @@ export default function WeatherApp() {
         // FIX: Add precipProb field
         precipProb: getVal('precipitation_probability'),
         snow: getMax('snowfall'), // Use max across models to show snowfall if any model predicts it
-        wind: Math.round(getMax('windspeed_10m')), // Use max across models for accurate wind forecast (consistent with daily forecast)
-        windAvg: Math.round(getAvg('windspeed_10m')), // Average wind across models – used for activity advice to avoid threshold oscillation
-        gust: Math.round(getMax('windgusts_10m')), // Böen immer Max Warnung
-        dir: h.winddirection_10m_icon_seamless?.[i] || 0,
+        wind: Math.round(getMax('wind_speed_10m')), // Use max across models for accurate wind forecast (consistent with daily forecast)
+        windAvg: Math.round(getAvg('wind_speed_10m')), // Average wind across models – used for activity advice to avoid threshold oscillation
+        gust: Math.round(getMax('wind_gusts_10m')), // Böen immer Max Warnung
+        dir: h.wind_direction_10m_icon_seamless?.[i] || 0,
         code: h.weathercode_icon_seamless?.[i] ?? h.weathercode?.[i] ?? 0,
         isDay: isDayArray?.[i] ?? (t.getHours() >= 6 && t.getHours() <= 21 ? 1 : 0),
         appTemp: getVal('apparent_temperature'),
@@ -9577,8 +9577,8 @@ export default function WeatherApp() {
         displayTime: ts.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
         uvIndex: getVal('uv_index'),
         humidity: Math.round(getVal('relative_humidity_2m')),
-        wind: Math.round(getMax('windspeed_10m')),
-        gust: Math.round(getMax('windgusts_10m')),
+        wind: Math.round(getMax('wind_speed_10m')),
+        gust: Math.round(getMax('wind_gusts_10m')),
         dewPoint: getVal('dewpoint_2m'),
         pressure: getVal('pressure_msl'),
         visibility: getVal('visibility'),
@@ -9660,18 +9660,18 @@ export default function WeatherApp() {
         rain: rainAmount.toFixed(1),
         snow: avgSnow.toFixed(1),
         wind: Math.round(Math.max(
-          d.windspeed_10m_max_icon_seamless?.[i] || 0,
-          d.windspeed_10m_max_gfs_seamless?.[i] || 0,
-          d.windspeed_10m_max_arome_seamless?.[i] || 0,
-          d.windspeed_10m_max_gem_seamless?.[i] || 0
+          d.wind_speed_10m_max_icon_seamless?.[i] || 0,
+          d.wind_speed_10m_max_gfs_seamless?.[i] || 0,
+          d.wind_speed_10m_max_arome_seamless?.[i] || 0,
+          d.wind_speed_10m_max_gem_seamless?.[i] || 0
         )),
         gust: Math.round(Math.max(
-          d.windgusts_10m_max_icon_seamless?.[i] || 0,
-          d.windgusts_10m_max_gfs_seamless?.[i] || 0,
-          d.windgusts_10m_max_arome_seamless?.[i] || 0,
-          d.windgusts_10m_max_gem_seamless?.[i] || 0
+          d.wind_gusts_10m_max_icon_seamless?.[i] || 0,
+          d.wind_gusts_10m_max_gfs_seamless?.[i] || 0,
+          d.wind_gusts_10m_max_arome_seamless?.[i] || 0,
+          d.wind_gusts_10m_max_gem_seamless?.[i] || 0
         )),
-        dir: d.winddirection_10m_dominant_icon_seamless?.[i] || 0,
+        dir: d.wind_direction_10m_dominant_icon_seamless?.[i] || 0,
         code: d.weathercode_icon_seamless?.[i] ?? d.weathercode_gfs_seamless?.[i] ?? d.weathercode_arome_seamless?.[i] ?? d.weathercode_gem_seamless?.[i] ?? 0,
         reliability: (() => {
           const relVals = [maxIcon, maxGfs, maxArome, maxGem].filter((val) => val !== null && val !== undefined);
@@ -9708,7 +9708,7 @@ export default function WeatherApp() {
         // not just stratiform rain. curr.rain only covers large-scale rain and misses shower events.
         precip: curr.precipitation !== undefined ? curr.precipitation : baseData.precip,
         snow: curr.snowfall !== undefined ? curr.snowfall : baseData.snow,
-        wind: curr.windspeed_10m !== undefined ? curr.windspeed_10m : baseData.wind,
+        wind: curr.wind_speed_10m !== undefined ? curr.wind_speed_10m : baseData.wind,
         humidity: curr.relative_humidity_2m !== undefined ? curr.relative_humidity_2m : baseData.humidity,
         code: curr.weathercode !== undefined ? curr.weathercode : baseData.code,
         cloudCover: baseData.cloudCover // Preserve cloudCover from hourly data
