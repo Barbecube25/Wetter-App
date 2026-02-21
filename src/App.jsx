@@ -6977,7 +6977,7 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
 
   // Use today's hours from the hourly data (max 24h)
   const todayHours = hourlyData.slice(0, 24).map(hour => {
-    const advice = getActivityAdvice(lang, hour.temp, hour.wind, hour.precip, hour.uvIndex, hour.code);
+    const advice = getActivityAdvice(lang, hour.temp, hour.windAvg ?? hour.wind, hour.precip, hour.uvIndex, hour.code);
     return {
       time: hour.time,
       displayTime: hour.time.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
@@ -9462,6 +9462,7 @@ export default function WeatherApp() {
         precipProb: getVal('precipitation_probability'),
         snow: getMax('snowfall'), // Use max across models to show snowfall if any model predicts it
         wind: Math.round(getMax('windspeed_10m')), // Use max across models for accurate wind forecast (consistent with daily forecast)
+        windAvg: Math.round(getAvg('windspeed_10m')), // Average wind across models – used for activity advice to avoid threshold oscillation
         gust: Math.round(getMax('windgusts_10m')), // Böen immer Max Warnung
         dir: h.winddirection_10m_icon_seamless?.[i] || 0,
         code: h.weathercode_icon_seamless?.[i] || h.weathercode?.[i] || 0,
