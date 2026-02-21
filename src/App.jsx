@@ -6511,6 +6511,28 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
   );
 };
 
+// --- TILE MINI CHART (compact sparkline with "now" marker used inside detail tiles) ---
+const TileMiniChart = ({ data, nowIndex, color }) => {
+  if (!data || data.length < 2) return null;
+  const nowLabel = nowIndex >= 0 && nowIndex < data.length ? data[nowIndex]?.displayTime : null;
+  const pastEndLabel = nowIndex > 0 ? data[nowIndex - 1]?.displayTime : null;
+  return (
+    <div className="w-full mt-auto pt-1" style={{ height: 36 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
+          {pastEndLabel && (
+            <ReferenceArea x1={data[0].displayTime} x2={pastEndLabel} fill="#94a3b8" fillOpacity={0.2} />
+          )}
+          {nowLabel && (
+            <ReferenceLine x={nowLabel} stroke="#6750A4" strokeWidth={1.5} />
+          )}
+          <Line type="monotone" dataKey="value" stroke={color} strokeWidth={1.5} dot={false} connectNulls isAnimationActive={false} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
 // --- WEATHER DETAIL MODAL (Trend chart: 12h history + 24h forecast) ---
 const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData, airQualityChartData, lang, settings, formatTemp, getTempUnitSymbol, formatWind, getWindUnitLabel, isSmallScreen }) => {
   const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
@@ -9594,6 +9616,32 @@ export default function WeatherApp() {
     return res;
   }, [airQualityHourlyData]);
 
+  // Mini sparkline data for the weather detail tiles (12h history + 12h forecast)
+  const tileMiniData = useMemo(() => {
+    const nowIdx = processedHistory.length;
+    const isImperial = settings?.windUnit === 'mph';
+    const build = (histKey, transform = v => v) => ({
+      data: [
+        ...processedHistory.map(d => ({ displayTime: d.displayTime, value: transform(d[histKey]) })),
+        ...processedShort.slice(0, 12).map(d => ({ displayTime: d.displayTime, value: transform(d[histKey]) })),
+      ],
+      nowIndex: nowIdx,
+    });
+    const aqiNowIdx = airQualityChartData.findIndex(d => !d.isPast); // isPast is set in the airQualityChartData memo above
+    return {
+      uv: build('uvIndex'),
+      humidity: build('humidity'),
+      wind: build('wind'),
+      dewPoint: build('dewPoint'),
+      pressure: build('pressure'),
+      visibility: build('visibility', v => v != null ? (isImperial ? v / 1609.34 : v / 1000) : null),
+      airQuality: {
+        data: airQualityChartData.slice(0, 24),
+        nowIndex: aqiNowIdx < 0 ? 0 : aqiNowIdx,
+      },
+    };
+  }, [processedHistory, processedShort, airQualityChartData, settings?.windUnit]);
+
   const processedLong = useMemo(() => {
     if (!longTermData?.daily) return [];
     const d = longTermData.daily;
@@ -10656,6 +10704,7 @@ export default function WeatherApp() {
               <Sun size={14} /> {t('uv')}
             </div>
             <div className={`text-m3-title-large font-bold ${getUvColorClass(current.uvIndex, isRealNight)}`}>{current.uvIndex}</div>
+            <TileMiniChart data={tileMiniData.uv.data} nowIndex={tileMiniData.uv.nowIndex} color="#f59e0b" />
           </div>
           
           <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('humidity')}>
@@ -10663,6 +10712,7 @@ export default function WeatherApp() {
               <Waves size={14} /> {t('humidity')}
             </div>
             <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{current.humidity}%</div>
+            <TileMiniChart data={tileMiniData.humidity.data} nowIndex={tileMiniData.humidity.nowIndex} color="#3b82f6" />
           </div>
           
           <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('wind')}>
@@ -10677,6 +10727,7 @@ export default function WeatherApp() {
                 {t('gusts')} {formatWind(current.gust)} {getWindUnitLabel()}
               </div>
             )}
+            <TileMiniChart data={tileMiniData.wind.data} nowIndex={tileMiniData.wind.nowIndex} color="#6b7280" />
           </div>
           
           <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('dewPoint')}>
@@ -10684,6 +10735,7 @@ export default function WeatherApp() {
               <Thermometer size={14} /> {t('dewPoint')}
             </div>
             <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{formatTemp(current.dewPoint)}{getTempUnitSymbol()}</div>
+            <TileMiniChart data={tileMiniData.dewPoint.data} nowIndex={tileMiniData.dewPoint.nowIndex} color="#06b6d4" />
           </div>
         </div>
         
@@ -10697,6 +10749,7 @@ export default function WeatherApp() {
               <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
                 {Math.round(current.pressure)} <span className="text-m3-body-small">hPa</span>
               </div>
+              <TileMiniChart data={tileMiniData.pressure.data} nowIndex={tileMiniData.pressure.nowIndex} color="#8b5cf6" />
             </div>
           )}
           
@@ -10710,6 +10763,7 @@ export default function WeatherApp() {
                   ? `${(current.visibility / 1609.34).toFixed(1)} mi`
                   : `${(current.visibility / 1000).toFixed(1)} km`}
               </div>
+              <TileMiniChart data={tileMiniData.visibility.data} nowIndex={tileMiniData.visibility.nowIndex} color="#10b981" />
             </div>
           )}
           
@@ -10724,6 +10778,7 @@ export default function WeatherApp() {
               <div className={`text-xs font-medium ${getAQIColor(airQualityData.european_aqi, isRealNight)} mt-1`}>
                 {getAQILabel(airQualityData.european_aqi)}
               </div>
+              <TileMiniChart data={tileMiniData.airQuality.data} nowIndex={tileMiniData.airQuality.nowIndex} color="#f97316" />
             </div>
           )}
 
