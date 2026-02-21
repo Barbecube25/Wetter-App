@@ -3855,7 +3855,29 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     
     summary = parts.join("\n\n");
     confidence = Math.round(overallConfidence);
-    
+
+    // Build TL;DR summary line for longterm report
+    const allLongtermDays = [...thisWeek, ...nextWeek];
+    if (allLongtermDays.length > 0) {
+        const longtermCodeFreq = {};
+        allLongtermDays.forEach(d => { longtermCodeFreq[d.code] = (longtermCodeFreq[d.code] || 0) + 1; });
+        const longtermDomCode = parseInt(Object.entries(longtermCodeFreq).sort(([,a],[,b]) => b - a)[0]?.[0] ?? 0) || 0;
+        const longtermEmoji = longtermDomCode === 0 ? '☀️' : longtermDomCode === 1 ? '🌤️' :
+            [2,3].includes(longtermDomCode) ? '☁️' : [45,48].includes(longtermDomCode) ? '🌫️' :
+            [51,53,55].includes(longtermDomCode) ? '🌦️' : [61,63,80,81].includes(longtermDomCode) ? '🌧️' :
+            [65,82].includes(longtermDomCode) ? '🌧️' : SNOW_WEATHER_CODES.includes(longtermDomCode) ? '❄️' :
+            [17,95,96,99].includes(longtermDomCode) ? '⛈️' : '🌤️';
+        const longtermWeatherLabel = getWeatherConfig(longtermDomCode, 1, lang).text;
+        const longtermAvgMax = Math.round(allLongtermDays.reduce((a, b) => a + b.max, 0) / allLongtermDays.length);
+        const longtermTempLabel = lang === 'en'
+            ? (longtermAvgMax > 30 ? 'Hot' : longtermAvgMax > 20 ? 'Warm' : longtermAvgMax > 10 ? 'Mild' : longtermAvgMax > 0 ? 'Cool' : 'Cold')
+            : (longtermAvgMax > 30 ? 'Heiß' : longtermAvgMax > 20 ? 'Warm' : longtermAvgMax > 10 ? 'Mild' : longtermAvgMax > 0 ? 'Kühl' : 'Kalt');
+        const longtermRain = allLongtermDays.reduce((a, b) => a + parseFloat(b.rain || 0), 0);
+        const longtermMaxWind = Math.max(...allLongtermDays.map(d => d.wind || 0));
+        const longtermActivity = getActivityAdvice(lang, longtermAvgMax, longtermMaxWind, longtermRain, 0, longtermDomCode);
+        summary = `${longtermEmoji} ${longtermWeatherLabel} & ${longtermTempLabel} | ${longtermAvgMax}° | ${longtermActivity.text}` + "\n\n" + summary;
+    }
+
     // STRUCTURED DETAILS for List View
     structuredDetails = [];
     const formatItem = (d) => ({
@@ -6349,7 +6371,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
             
             {/* Hinzugefügt: whitespace-pre-line für korrekte Zeilenumbrüche im Daily Report */}
             {/* NOTE: We might need to run temp conversion on summary string but that's complex with regex. For now summary remains as generated (mostly C) unless we rebuild AI report completely with units. */}
-            {report.type === 'daily' ? (
+            {report.type === 'daily' || report.type === 'longterm' ? (
               <div className="relative z-10">
                 {summary.split('\n\n').map((section, idx) => (
                   <div key={idx}>
@@ -6359,7 +6381,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                       </div>
                     ) : (
                       <>
-                        {idx > 1 && <hr className="border-m3-outline-variant/40 my-3" />}
+                        {(report.type === 'daily' ? idx > 1 : idx > 0) && <hr className="border-m3-outline-variant/40 my-3" />}
                         <p className="text-m3-body-large text-m3-on-surface leading-relaxed font-semibold whitespace-pre-line">
                           {renderWithColoredTemps(section)}
                         </p>
