@@ -4,4 +4,7 @@
     <string name="title_activity_main">WetterScoutAI</string>
     <string name="package_name">com.barbecubewetterscoutai.app</string>
     <string name="custom_url_scheme">com.barbecubewetterscoutai.app</string>
+    <string name="ai_report_read_details">KI-Detaillanalyse lesen</string>
+    <string name="ai_report_expand">Details ausklappen</string>
+    <string name="ai_report_collapse">Details einklappen</string>
 </resources>

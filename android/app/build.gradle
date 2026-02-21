@@ -97,6 +97,8 @@ dependencies {
     implementation "androidx.compose.material3:material3:$material3Version"
     implementation "androidx.compose.material3:material3-window-size-class:$material3WindowSizeVersion"
     implementation "androidx.compose.material3:material3-adaptive-navigation-suite:$material3AdaptiveNavVersion"
+    implementation "androidx.compose.material:material-icons-extended:$composeUiVersion"
+    implementation "androidx.compose.animation:animation:$composeUiVersion"
     
 }
 
