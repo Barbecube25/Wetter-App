@@ -5029,9 +5029,9 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
 
       {/* Flatland: Windmill */}
       {terrainType === 'flatland' && (
-        <g transform="translate(300, 110)">
+        <g transform="translate(300, 80)">
           {/* Windmill tower */}
-          <path d="M15 20 L18 50 L12 50 Z" fill={isNight ? "#57534e" : "#78350f"} />
+          <path d="M15 20 L18 80 L12 80 Z" fill={isNight ? "#57534e" : "#78350f"} />
           {/* Windmill blades */}
           <g transform="translate(15, 20)" className={isWindy ? "animate-spin" : "animate-spin-slow"}>
             <rect x="-1" y="-15" width="2" height="15" fill={isNight ? "#e2e8f0" : "white"} />
@@ -5413,12 +5413,12 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       {/* Spring Blossoms */}
       {season === 'spring' && !isSnow && (
          <g>
-            <circle cx="45" cy="108" r="2" fill="#fecdd3" />
-            <circle cx="50" cy="105" r="1.5" fill="#fda4af" />
-            <circle cx="102" cy="121" r="2" fill="#fecdd3" />
-            <circle cx="107" cy="118" r="1.5" fill="#fda4af" />
-            <circle cx="285" cy="125" r="2" fill="#fecdd3" />
-            <circle cx="325" cy="123" r="1.5" fill="#fda4af" />
+            <circle cx="45" cy="113" r="2" fill="#fecdd3" />
+            <circle cx="50" cy="116" r="1.5" fill="#fda4af" />
+            <circle cx="102" cy="124" r="2" fill="#fecdd3" />
+            <circle cx="107" cy="126" r="1.5" fill="#fda4af" />
+            <circle cx="285" cy="129" r="2" fill="#fecdd3" />
+            <circle cx="325" cy="128" r="1.5" fill="#fda4af" />
             {/* Ground flowers */}
             <circle cx="80" cy="155" r="2" fill="#fda4af" />
             <circle cx="120" cy="153" r="2" fill="#fecdd3" />
@@ -5458,9 +5458,9 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       {season === 'winter' && (isSnow || isDeepFreeze) && (
          <g>
             {/* Snow on tree branches */}
-            <ellipse cx="45" cy="110" rx="4" ry="2" fill="white" opacity="0.8" />
-            <ellipse cx="102" cy="123" rx="4" ry="2" fill="white" opacity="0.8" />
-            <ellipse cx="285" cy="127" rx="4" ry="2" fill="white" opacity="0.8" />
+            <ellipse cx="45" cy="120" rx="4" ry="2" fill="white" opacity="0.8" />
+            <ellipse cx="102" cy="129" rx="4" ry="2" fill="white" opacity="0.8" />
+            <ellipse cx="285" cy="134" rx="4" ry="2" fill="white" opacity="0.8" />
             <ellipse cx="325" cy="126" rx="3" ry="1.5" fill="white" opacity="0.8" />
          </g>
       )}
@@ -5470,11 +5470,11 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
          <g>
             {/* Ornaments on trees */}
             <circle cx="42" cy="112" r="2" fill="#dc2626" />
-            <circle cx="48" cy="108" r="2" fill="#eab308" />
+            <circle cx="48" cy="113" r="2" fill="#eab308" />
             <circle cx="99" cy="125" r="2" fill="#dc2626" />
-            <circle cx="105" cy="121" r="2" fill="#3b82f6" />
+            <circle cx="105" cy="124" r="2" fill="#3b82f6" />
             <circle cx="283" cy="129" r="2" fill="#eab308" />
-            <circle cx="287" cy="125" r="2" fill="#dc2626" />
+            <circle cx="287" cy="127" r="2" fill="#dc2626" />
          </g>
       )}
 
@@ -5482,10 +5482,10 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       {event === 'easter' && (
          <g>
             {/* Easter bunny near house */}
-            <ellipse cx="175" cy="137" rx="3" ry="4" fill="#d4d4d4" />
-            <circle cx="175" cy="133" r="2" fill="#d4d4d4" />
-            <ellipse cx="174" cy="131" rx="0.5" ry="1.5" fill="#d4d4d4" />
-            <ellipse cx="176" cy="131" rx="0.5" ry="1.5" fill="#d4d4d4" />
+            <ellipse cx="155" cy="152" rx="3" ry="4" fill="#d4d4d4" />
+            <circle cx="155" cy="148" r="2" fill="#d4d4d4" />
+            <ellipse cx="154" cy="146" rx="0.5" ry="1.5" fill="#d4d4d4" />
+            <ellipse cx="156" cy="146" rx="0.5" ry="1.5" fill="#d4d4d4" />
             {/* Hidden eggs */}
             <ellipse cx="100" cy="153" rx="2" ry="2.5" fill="#fda4af" />
             <ellipse cx="260" cy="156" rx="2" ry="2.5" fill="#93c5fd" />
@@ -5496,10 +5496,10 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       {/* Halloween Pumpkins */}
       {event === 'halloween' && (
          <g>
-            <ellipse cx="170" cy="138" rx="4" ry="3.5" fill="#f97316" />
-            <rect x="169" y="135" width="2" height="1" fill="#451a03" />
-            <ellipse cx="240" cy="139" rx="3" ry="2.5" fill="#f97316" />
-            <rect x="239" y="137" width="2" height="1" fill="#451a03" />
+            <ellipse cx="155" cy="152" rx="4" ry="3.5" fill="#f97316" />
+            <rect x="154" y="147" width="2" height="2" fill="#451a03" />
+            <ellipse cx="240" cy="152" rx="3" ry="2.5" fill="#f97316" />
+            <rect x="239" y="148" width="2" height="2" fill="#451a03" />
          </g>
       )}
 
