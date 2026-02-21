@@ -6255,7 +6255,7 @@ const renderWithColoredTemps = (text) => {
     const m = part.match(/^(-?\d+(?:[.,]\d+)?)°$/);
     if (m) {
       const val = parseFloat(m[1].replace(',', '.'));
-      const cls = val <= 0 ? 'text-blue-500 font-bold' : val <= 10 ? 'text-sky-400 font-bold' : val >= 30 ? 'text-red-500 font-bold' : val >= 25 ? 'text-orange-400 font-bold' : '';
+      const cls = val <= 0 ? 'text-blue-500 font-bold' : val <= 10 ? 'text-sky-400 font-bold' : val < 15 ? 'text-teal-400 font-bold' : val < 20 ? 'text-green-400 font-bold' : val < 25 ? 'text-yellow-400 font-bold' : val < 30 ? 'text-orange-400 font-bold' : 'text-red-500 font-bold';
       return cls ? <span key={i} className={cls}>{part}</span> : part;
     }
     return part;
