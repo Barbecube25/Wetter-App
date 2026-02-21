@@ -216,7 +216,11 @@ const TRANSLATIONS = {
     tutorialHomeTitle: "Setze deinen Heimatort",
     tutorialHomeDesc: "Dein Heimatort wird als Standard-Standort verwendet.",
     tutorialOverviewTitle: "Übersicht Tab",
-    tutorialOverviewDesc: "Hier findest du eine detaillierte Übersicht mit Tagesbericht, Niederschlags-Prognose und 7-Tage-Trend.",
+    tutorialOverviewDesc: "Hier findest du den KI-Tagesbericht, Niederschlags-Prognose, 7-Tage-Trend sowie die Goldene und Blaue Stunde für Fotografen.",
+    tutorialWeatherTilesTitle: "Wetter-Kacheln",
+    tutorialWeatherTilesDesc: "Auf der Hauptseite siehst du Kacheln für Luftqualität (AQI), Pollen, Aktivitäts-Index und Niederschlag. Tippe auf eine Kachel für Details.",
+    tutorialPollenFilterTitle: "Pollen-Filter",
+    tutorialPollenFilterDesc: "Wähle, welche Pollenarten du in der Pollen-Kachel und im Aktivitäts-Index sehen möchtest.",
     tutorialLongtermTitle: "14-Tage Prognose",
     tutorialLongtermDesc: "Plane voraus mit der erweiterten 14-Tage Wettervorhersage.",
     tutorialRadarTitle: "Niederschlags-Radar",
@@ -226,7 +230,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Reiseplaner",
     tutorialTravelDesc: "Plane deine Reisen und überprüfe die Wetterwahrscheinlichkeit für deinen Ausflug.",
     tutorialSettingsTitle: "Einstellungen",
-    tutorialSettingsDesc: "Hier kannst du die Sprache, Einheiten (Temperatur: °C/°F/K, Wind: km/h/m/s/mph/Beaufort, Niederschlag: mm/in), das Design (Hell/Dunkel/Auto) und deinen Heimatort anpassen.",
+    tutorialSettingsDesc: "Hier kannst du die Sprache, Einheiten (Temperatur: °C/°F/K, Wind: km/h/m/s/mph/Beaufort, Niederschlag: mm/in), das Design (Hell/Dunkel/Auto), den Pollen-Filter und deinen Heimatort anpassen.",
     tutorialComplete: "Tutorial abgeschlossen! Du kannst jederzeit in den Einstellungen Änderungen vornehmen.",
     noGpsAvailable: "GPS nicht verfügbar",
     locationDenied: "Standortzugriff verweigert",
@@ -440,7 +444,11 @@ const TRANSLATIONS = {
     tutorialHomeTitle: "Set your home location",
     tutorialHomeDesc: "Your home location will be used as the default location.",
     tutorialOverviewTitle: "Overview Tab",
-    tutorialOverviewDesc: "Here you'll find a detailed overview with daily report, precipitation forecast and 7-day trend.",
+    tutorialOverviewDesc: "Here you'll find the AI daily report, precipitation forecast, 7-day trend and Golden/Blue Hour times for photographers.",
+    tutorialWeatherTilesTitle: "Weather Tiles",
+    tutorialWeatherTilesDesc: "The main screen shows tiles for Air Quality (AQI), Pollen, Activity Index and Precipitation. Tap a tile to see details.",
+    tutorialPollenFilterTitle: "Pollen Filter",
+    tutorialPollenFilterDesc: "Choose which pollen types to display in the Pollen tile and Activity Index.",
     tutorialLongtermTitle: "14-Day Forecast",
     tutorialLongtermDesc: "Plan ahead with the extended 14-day weather forecast.",
     tutorialRadarTitle: "Precipitation Radar",
@@ -450,7 +458,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Travel Planner",
     tutorialTravelDesc: "Plan your trips and check weather probability for your excursion.",
     tutorialSettingsTitle: "Settings",
-    tutorialSettingsDesc: "Here you can customize language, units (Temperature: °C/°F/K, Wind: km/h/m/s/mph/Beaufort, Precipitation: mm/in), theme (Light/Dark/Auto) and your home location.",
+    tutorialSettingsDesc: "Here you can customize language, units (Temperature: °C/°F/K, Wind: km/h/m/s/mph/Beaufort, Precipitation: mm/in), theme (Light/Dark/Auto), pollen filter and your home location.",
     tutorialComplete: "Tutorial complete! You can make changes in settings at any time.",
     noGpsAvailable: "GPS not available",
     locationDenied: "Location access denied",
@@ -664,7 +672,11 @@ const TRANSLATIONS = {
     tutorialHomeTitle: "Définir votre lieu principal",
     tutorialHomeDesc: "Votre lieu principal sera utilisé comme emplacement par défaut.",
     tutorialOverviewTitle: "Onglet Historique",
-    tutorialOverviewDesc: "Vous trouverez ici un aperçu détaillé avec rapport quotidien, prévisions de précipitations et tendance sur 7 jours.",
+    tutorialOverviewDesc: "Vous trouverez ici le rapport IA quotidien, les prévisions de précipitations, la tendance sur 7 jours et les heures dorées/bleues pour les photographes.",
+    tutorialWeatherTilesTitle: "Tuiles Météo",
+    tutorialWeatherTilesDesc: "L'écran principal affiche des tuiles pour la Qualité de l'air (IQA), Pollen, Indice d'activité et Précipitations. Appuyez sur une tuile pour les détails.",
+    tutorialPollenFilterTitle: "Filtre Pollen",
+    tutorialPollenFilterDesc: "Choisissez les types de pollen à afficher dans la tuile Pollen et l'Indice d'activité.",
     tutorialLongtermTitle: "Prévisions 14 jours",
     tutorialLongtermDesc: "Planifiez à l'avance avec les prévisions météo étendues sur 14 jours.",
     tutorialRadarTitle: "Radar de précipitations",
@@ -674,7 +686,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Planificateur de voyage",
     tutorialTravelDesc: "Planifiez vos voyages et vérifiez la probabilité météo pour votre sortie.",
     tutorialSettingsTitle: "Paramètres",
-    tutorialSettingsDesc: "Ici vous pouvez personnaliser la langue, les unités (Température: °C/°F/K, Vent: km/h/m/s/mph/Beaufort, Précipitations: mm/in), le thème (Clair/Sombre/Auto) et votre lieu principal.",
+    tutorialSettingsDesc: "Ici vous pouvez personnaliser la langue, les unités (Température: °C/°F/K, Vent: km/h/m/s/mph/Beaufort, Précipitations: mm/in), le thème (Clair/Sombre/Auto), le filtre pollen et votre lieu principal.",
     tutorialComplete: "Tutoriel terminé ! Vous pouvez modifier les paramètres à tout moment.",
     noGpsAvailable: "GPS non disponible",
     locationDenied: "Accès à la localisation refusé",
@@ -848,7 +860,11 @@ const TRANSLATIONS = {
     tutorialHomeTitle: "Establece tu ubicación principal",
     tutorialHomeDesc: "Tu ubicación principal se utilizará como ubicación predeterminada.",
     tutorialOverviewTitle: "Pestaña Resumen",
-    tutorialOverviewDesc: "Aquí encontrarás un resumen detallado con informe diario, pronóstico de precipitaciones y tendencia de 7 días.",
+    tutorialOverviewDesc: "Aquí encontrarás el informe IA diario, pronóstico de precipitaciones, tendencia de 7 días y horas doradas/azules para fotógrafos.",
+    tutorialWeatherTilesTitle: "Fichas del Tiempo",
+    tutorialWeatherTilesDesc: "La pantalla principal muestra fichas para Calidad del aire (ICA), Polen, Índice de actividad y Precipitaciones. Toca una ficha para ver los detalles.",
+    tutorialPollenFilterTitle: "Filtro de Polen",
+    tutorialPollenFilterDesc: "Elige qué tipos de polen mostrar en la ficha Polen e Índice de actividad.",
     tutorialLongtermTitle: "Pronóstico de 14 días",
     tutorialLongtermDesc: "Planifica con anticipación con el pronóstico meteorológico extendido de 14 días.",
     tutorialRadarTitle: "Radar de precipitaciones",
@@ -858,7 +874,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Planificador de viajes",
     tutorialTravelDesc: "Planifica tus viajes y verifica la probabilidad meteorológica para tu excursión.",
     tutorialSettingsTitle: "Ajustes",
-    tutorialSettingsDesc: "Aquí puedes personalizar el idioma, unidades (Temperatura: °C/°F/K, Viento: km/h/m/s/mph/Beaufort, Precipitación: mm/in), tema (Claro/Oscuro/Auto) y tu ubicación principal.",
+    tutorialSettingsDesc: "Aquí puedes personalizar el idioma, unidades (Temperatura: °C/°F/K, Viento: km/h/m/s/mph/Beaufort, Precipitación: mm/in), tema (Claro/Oscuro/Auto), filtro de polen y tu ubicación principal.",
     tutorialComplete: "¡Tutorial completo! Puedes realizar cambios en los ajustes en cualquier momento.",
     noGpsAvailable: "GPS no disponible",
     locationDenied: "Acceso a ubicación denegado",
@@ -1031,7 +1047,11 @@ const TRANSLATIONS = {
     tutorialHomeTitle: "Imposta il tuo luogo principale",
     tutorialHomeDesc: "Il tuo luogo principale verrà utilizzato come posizione predefinita.",
     tutorialOverviewTitle: "Scheda Panoramica",
-    tutorialOverviewDesc: "Qui troverai una panoramica dettagliata con rapporto giornaliero, previsioni precipitazioni e tendenza 7 giorni.",
+    tutorialOverviewDesc: "Qui troverai il rapporto IA giornaliero, previsioni precipitazioni, tendenza 7 giorni e le ore d'oro/blu per i fotografi.",
+    tutorialWeatherTilesTitle: "Riquadri Meteo",
+    tutorialWeatherTilesDesc: "La schermata principale mostra riquadri per Qualità dell'aria (IQA), Polline, Indice di attività e Precipitazioni. Tocca un riquadro per i dettagli.",
+    tutorialPollenFilterTitle: "Filtro Polline",
+    tutorialPollenFilterDesc: "Scegli quali tipi di polline visualizzare nel riquadro Polline e nell'Indice di attività.",
     tutorialLongtermTitle: "Previsioni a 14 giorni",
     tutorialLongtermDesc: "Pianifica in anticipo con le previsioni meteo estese a 14 giorni.",
     tutorialRadarTitle: "Radar precipitazioni",
@@ -1041,7 +1061,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Pianificatore di viaggio",
     tutorialTravelDesc: "Pianifica i tuoi viaggi e controlla la probabilità meteo per la tua escursione.",
     tutorialSettingsTitle: "Impostazioni",
-    tutorialSettingsDesc: "Qui puoi personalizzare lingua, unità (Temperatura: °C/°F/K, Vento: km/h/m/s/mph/Beaufort, Precipitazioni: mm/in), tema (Chiaro/Scuro/Auto) e il tuo luogo principale.",
+    tutorialSettingsDesc: "Qui puoi personalizzare lingua, unità (Temperatura: °C/°F/K, Vento: km/h/m/s/mph/Beaufort, Precipitazioni: mm/in), tema (Chiaro/Scuro/Auto), filtro polline e il tuo luogo principale.",
     tutorialComplete: "Tutorial completato! Puoi apportare modifiche nelle impostazioni in qualsiasi momento.",
     noGpsAvailable: "GPS non disponibile",
     locationDenied: "Accesso alla posizione negato",
@@ -1214,7 +1234,11 @@ const TRANSLATIONS = {
     tutorialHomeTitle: "Ana konumunuzu ayarlayın",
     tutorialHomeDesc: "Ana konumunuz varsayılan konum olarak kullanılacaktır.",
     tutorialOverviewTitle: "Genel Bakış Sekmesi",
-    tutorialOverviewDesc: "Burada günlük rapor, yağış tahmini ve 7 günlük trend ile ayrıntılı bir genel bakış bulacaksınız.",
+    tutorialOverviewDesc: "Burada yapay zeka günlük raporu, yağış tahmini, 7 günlük trend ve fotoğrafçılar için altın/mavi saat bilgilerini bulacaksınız.",
+    tutorialWeatherTilesTitle: "Hava Durumu Karoları",
+    tutorialWeatherTilesDesc: "Ana ekran, Hava Kalitesi (AQI), Polen, Aktivite İndeksi ve Yağış için karolar gösterir. Ayrıntılar için bir karoya dokunun.",
+    tutorialPollenFilterTitle: "Polen Filtresi",
+    tutorialPollenFilterDesc: "Polen karosunda ve Aktivite İndeksinde hangi polen türlerinin gösterileceğini seçin.",
     tutorialLongtermTitle: "14 Günlük Tahmin",
     tutorialLongtermDesc: "Genişletilmiş 14 günlük hava durumu tahmini ile önceden planlayın.",
     tutorialRadarTitle: "Yağış Radarı",
@@ -1224,7 +1248,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Seyahat Planlayıcı",
     tutorialTravelDesc: "Seyahatlerinizi planlayın ve geziniz için hava durumu olasılığını kontrol edin.",
     tutorialSettingsTitle: "Ayarlar",
-    tutorialSettingsDesc: "Burada dil, birimler (Sıcaklık: °C/°F/K, Rüzgar: km/h/m/s/mph/Beaufort, Yağış: mm/in), tema (Açık/Koyu/Otomatik) ve ana konumunuzu özelleştirebilirsiniz.",
+    tutorialSettingsDesc: "Burada dil, birimler (Sıcaklık: °C/°F/K, Rüzgar: km/h/m/s/mph/Beaufort, Yağış: mm/in), tema (Açık/Koyu/Otomatik), polen filtresi ve ana konumunuzu özelleştirebilirsiniz.",
     tutorialComplete: "Öğretici tamamlandı! Ayarlarda istediğiniz zaman değişiklik yapabilirsiniz.",
     noGpsAvailable: "GPS mevcut değil",
     locationDenied: "Konum erişimi reddedildi",
@@ -1397,7 +1421,11 @@ const TRANSLATIONS = {
     tutorialHomeTitle: "Ustaw swoją lokalizację domową",
     tutorialHomeDesc: "Twoja lokalizacja domowa będzie używana jako domyślna lokalizacja.",
     tutorialOverviewTitle: "Karta Przegląd",
-    tutorialOverviewDesc: "Tutaj znajdziesz szczegółowy przegląd z raportem dziennym, prognozą opadów i trendem 7-dniowym.",
+    tutorialOverviewDesc: "Tutaj znajdziesz raport dzienny AI, prognozę opadów, trend 7-dniowy oraz godziny złote/niebieskie dla fotografów.",
+    tutorialWeatherTilesTitle: "Kafelki Pogodowe",
+    tutorialWeatherTilesDesc: "Ekran główny pokazuje kafelki Jakości powietrza (AQI), Pyłku, Indeksu aktywności i Opadów. Naciśnij kafelek, aby zobaczyć szczegóły.",
+    tutorialPollenFilterTitle: "Filtr Pyłku",
+    tutorialPollenFilterDesc: "Wybierz, które rodzaje pyłku wyświetlać w kafelku Pyłek i Indeksie aktywności.",
     tutorialLongtermTitle: "Prognoza 14-dniowa",
     tutorialLongtermDesc: "Planuj z wyprzedzeniem dzięki rozszerzonej prognozie pogody na 14 dni.",
     tutorialRadarTitle: "Radar opadów",
@@ -1407,7 +1435,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Planowanie podróży",
     tutorialTravelDesc: "Zaplanuj swoje podróże i sprawdź prawdopodobieństwo pogody dla swojej wycieczki.",
     tutorialSettingsTitle: "Ustawienia",
-    tutorialSettingsDesc: "Tutaj możesz dostosować język, jednostki (Temperatura: °C/°F/K, Wiatr: km/h/m/s/mph/Beaufort, Opady: mm/in), motyw (Jasny/Ciemny/Auto) i swoją lokalizację domową.",
+    tutorialSettingsDesc: "Tutaj możesz dostosować język, jednostki (Temperatura: °C/°F/K, Wiatr: km/h/m/s/mph/Beaufort, Opady: mm/in), motyw (Jasny/Ciemny/Auto), filtr pyłku i swoją lokalizację domową.",
     tutorialComplete: "Samouczek ukończony! Możesz wprowadzać zmiany w ustawieniach w dowolnym momencie.",
     noGpsAvailable: "GPS niedostępny",
     locationDenied: "Dostęp do lokalizacji został odrzucony",
@@ -1580,7 +1608,11 @@ const TRANSLATIONS = {
     tutorialHomeTitle: "Stel uw thuislocatie in",
     tutorialHomeDesc: "Uw thuislocatie wordt gebruikt als standaardlocatie.",
     tutorialOverviewTitle: "Overzicht-tabblad",
-    tutorialOverviewDesc: "Hier vindt u een gedetailleerd overzicht met dagrapport, neerslagverwachting en 7-daagse trend.",
+    tutorialOverviewDesc: "Hier vindt u het AI-dagrapport, neerslagverwachting, 7-daagse trend en gouden/blauwe uurtijden voor fotografen.",
+    tutorialWeatherTilesTitle: "Weertegels",
+    tutorialWeatherTilesDesc: "Het hoofdscherm toont tegels voor Luchtkwaliteit (AQI), Pollen, Activiteitsindex en Neerslag. Tik op een tegel voor details.",
+    tutorialPollenFilterTitle: "Pollenfilter",
+    tutorialPollenFilterDesc: "Kies welke pollensoorten worden weergegeven in de Pollentegel en de Activiteitsindex.",
     tutorialLongtermTitle: "14-daagse voorspelling",
     tutorialLongtermDesc: "Plan vooruit met de uitgebreide weersvoorspelling van 14 dagen.",
     tutorialRadarTitle: "Neerslag Radar",
@@ -1590,7 +1622,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Reisplanner",
     tutorialTravelDesc: "Plan uw reizen en controleer de weerskans voor uw excursie.",
     tutorialSettingsTitle: "Instellingen",
-    tutorialSettingsDesc: "Hier kunt u de taal, eenheden (Temperatuur: °C/°F/K, Wind: km/h/m/s/mph/Beaufort, Neerslag: mm/in), thema (Licht/Donker/Auto) en uw thuislocatie aanpassen.",
+    tutorialSettingsDesc: "Hier kunt u de taal, eenheden (Temperatuur: °C/°F/K, Wind: km/h/m/s/mph/Beaufort, Neerslag: mm/in), thema (Licht/Donker/Auto), pollenfilter en uw thuislocatie aanpassen.",
     tutorialComplete: "Handleiding voltooid! U kunt op elk moment wijzigingen aanbrengen in de instellingen.",
     noGpsAvailable: "GPS niet beschikbaar",
     locationDenied: "Toegang tot locatie geweigerd",
@@ -1763,7 +1795,11 @@ const TRANSLATIONS = {
     tutorialHomeTitle: "Postavite svoju osnovnu lokaciju",
     tutorialHomeDesc: "Vaša osnovna lokacija će se koristiti kao zadana lokacija.",
     tutorialOverviewTitle: "Kartica pregleda",
-    tutorialOverviewDesc: "Ovdje ćete pronaći detaljan pregled s dnevnim izvješćem, prognozom oborina i 7-dnevnim trendom.",
+    tutorialOverviewDesc: "Ovdje ćete pronaći AI dnevno izvješće, prognozu oborina, 7-dnevni trend i zlatno/plavo doba za fotografe.",
+    tutorialWeatherTilesTitle: "Vremenski blokovi",
+    tutorialWeatherTilesDesc: "Glavni zaslon prikazuje blokove za Kvalitetu zraka (AQI), Polen, Indeks aktivnosti i Oborine. Dodirnite blok za detalje.",
+    tutorialPollenFilterTitle: "Filter polena",
+    tutorialPollenFilterDesc: "Odaberite koje vrste polena prikazati u bloku Polen i Indeksu aktivnosti.",
     tutorialLongtermTitle: "14-dnevna prognoza",
     tutorialLongtermDesc: "Planirajte unaprijed s proširenom vremenskom prognozom od 14 dana.",
     tutorialRadarTitle: "Radar oborina",
@@ -1773,7 +1809,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Planer putovanja",
     tutorialTravelDesc: "Planirajte svoja putovanja i provjerite vremensku vjerojatnost za vaš izlet.",
     tutorialSettingsTitle: "Postavke",
-    tutorialSettingsDesc: "Ovdje možete prilagoditi jezik, jedinice (Temperatura: °C/°F/K, Vjetar: km/h/m/s/mph/Beaufort, Oborine: mm/in), temu (Svijetla/Tamna/Auto) i svoju osnovnu lokaciju.",
+    tutorialSettingsDesc: "Ovdje možete prilagoditi jezik, jedinice (Temperatura: °C/°F/K, Vjetar: km/h/m/s/mph/Beaufort, Oborine: mm/in), temu (Svijetla/Tamna/Auto), filter polena i svoju osnovnu lokaciju.",
     tutorialComplete: "Vodič završen! Možete napraviti promjene u postavkama u bilo kojem trenutku.",
     noGpsAvailable: "GPS nije dostupan",
     locationDenied: "Pristup lokaciji odbijen",
@@ -1946,7 +1982,11 @@ const TRANSLATIONS = {
     tutorialHomeTitle: "Ορίστε την κύρια τοποθεσία σας",
     tutorialHomeDesc: "Η κύρια τοποθεσία σας θα χρησιμοποιηθεί ως προεπιλεγμένη τοποθεσία.",
     tutorialOverviewTitle: "Καρτέλα Επισκόπησης",
-    tutorialOverviewDesc: "Εδώ θα βρείτε μια λεπτομερή επισκόπηση με ημερήσια αναφορά, πρόβλεψη βροχόπτωσης και 7ήμερη τάση.",
+    tutorialOverviewDesc: "Εδώ θα βρείτε την ημερήσια αναφορά ΑΙ, πρόβλεψη βροχόπτωσης, 7ήμερη τάση και ώρες χρυσής/μπλε ώρας για φωτογράφους.",
+    tutorialWeatherTilesTitle: "Πλακίδια Καιρού",
+    tutorialWeatherTilesDesc: "Η κύρια οθόνη εμφανίζει πλακίδια για Ποιότητα αέρα (AQI), Γύρη, Δείκτη δραστηριότητας και Βροχόπτωση. Πατήστε σε ένα πλακίδιο για λεπτομέρειες.",
+    tutorialPollenFilterTitle: "Φίλτρο Γύρης",
+    tutorialPollenFilterDesc: "Επιλέξτε ποιους τύπους γύρης να εμφανίζετε στο πλακίδιο Γύρη και στον Δείκτη δραστηριότητας.",
     tutorialLongtermTitle: "Πρόβλεψη 14 ημερών",
     tutorialLongtermDesc: "Σχεδιάστε εκ των προτέρων με την εκτεταμένη πρόβλεψη καιρού 14 ημερών.",
     tutorialRadarTitle: "Ραντάρ βροχόπτωσης",
@@ -1956,7 +1996,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Σχεδιαστής ταξιδιού",
     tutorialTravelDesc: "Σχεδιάστε τα ταξίδια σας και ελέγξτε την πιθανότητα καιρού για την εκδρομή σας.",
     tutorialSettingsTitle: "Ρυθμίσεις",
-    tutorialSettingsDesc: "Εδώ μπορείτε να προσαρμόσετε τη γλώσσα, τις μονάδες (Θερμοκρασία: °C/°F/K, Άνεμος: km/h/m/s/mph/Beaufort, Βροχόπτωση: mm/in), το θέμα (Φωτεινό/Σκοτεινό/Αυτόματο) και την κύρια τοποθεσία σας.",
+    tutorialSettingsDesc: "Εδώ μπορείτε να προσαρμόσετε τη γλώσσα, τις μονάδες (Θερμοκρασία: °C/°F/K, Άνεμος: km/h/m/s/mph/Beaufort, Βροχόπτωση: mm/in), το θέμα (Φωτεινό/Σκοτεινό/Αυτόματο), φίλτρο γύρης και την κύρια τοποθεσία σας.",
     tutorialComplete: "Το σεμινάριο ολοκληρώθηκε! Μπορείτε να κάνετε αλλαγές στις ρυθμίσεις ανά πάσα στιγμή.",
     noGpsAvailable: "Το GPS δεν είναι διαθέσιμο",
     locationDenied: "Η πρόσβαση στην τοποθεσία απορρίφθηκε",
@@ -2129,7 +2169,11 @@ const TRANSLATIONS = {
     tutorialHomeTitle: "Indstil din hjemmeplacering",
     tutorialHomeDesc: "Din hjemmeplacering vil blive brugt som standardplacering.",
     tutorialOverviewTitle: "Oversigtsfane",
-    tutorialOverviewDesc: "Her finder du en detaljeret oversigt med daglig rapport, nedbørsprognose og 7-dages tendens.",
+    tutorialOverviewDesc: "Her finder du AI-dagsrapporten, nedbørsprognose, 7-dages tendens og gyldne/blå time-tider for fotografer.",
+    tutorialWeatherTilesTitle: "Vejrfliser",
+    tutorialWeatherTilesDesc: "Hovedskærmen viser fliser for Luftkvalitet (AQI), Pollen, Aktivitetsindeks og Nedbør. Tryk på en flise for detaljer.",
+    tutorialPollenFilterTitle: "Pollenfilter",
+    tutorialPollenFilterDesc: "Vælg hvilke pollentyper der vises i pollenflisen og aktivitetsindekset.",
     tutorialLongtermTitle: "14-dages prognose",
     tutorialLongtermDesc: "Planlæg forud med den udvidede vejrudsigt på 14 dage.",
     tutorialRadarTitle: "Nedbørsradar",
@@ -2139,7 +2183,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Rejseplanlægger",
     tutorialTravelDesc: "Planlæg dine ture og tjek vejrsandsynligheden for din udflugt.",
     tutorialSettingsTitle: "Indstillinger",
-    tutorialSettingsDesc: "Her kan du tilpasse sprog, enheder (Temperatur: °C/°F/K, Vind: km/h/m/s/mph/Beaufort, Nedbør: mm/in), tema (Lys/Mørk/Auto) og din hjemmeplacering.",
+    tutorialSettingsDesc: "Her kan du tilpasse sprog, enheder (Temperatur: °C/°F/K, Vind: km/h/m/s/mph/Beaufort, Nedbør: mm/in), tema (Lys/Mørk/Auto), pollenfilter og din hjemmeplacering.",
     tutorialComplete: "Vejledning fuldført! Du kan foretage ændringer i indstillingerne når som helst.",
     noGpsAvailable: "GPS ikke tilgængelig",
     locationDenied: "Adgang til placering nægtet",
@@ -2313,7 +2357,11 @@ const TRANSLATIONS = {
     tutorialHomeTitle: "Установите домашнее местоположение",
     tutorialHomeDesc: "Ваше домашнее местоположение будет использоваться по умолчанию.",
     tutorialOverviewTitle: "Вкладка Обзор",
-    tutorialOverviewDesc: "Здесь вы найдете подробный обзор с ежедневным отчетом, прогнозом осадков и 7-дневным трендом.",
+    tutorialOverviewDesc: "Здесь вы найдете ежедневный отчет ИИ, прогноз осадков, 7-дневный тренд и время золотого/синего часа для фотографов.",
+    tutorialWeatherTilesTitle: "Погодные плитки",
+    tutorialWeatherTilesDesc: "Главный экран показывает плитки Качества воздуха (AQI), Пыльцы, Индекса активности и Осадков. Нажмите на плитку для просмотра деталей.",
+    tutorialPollenFilterTitle: "Фильтр пыльцы",
+    tutorialPollenFilterDesc: "Выберите, какие виды пыльцы отображать в плитке Пыльца и Индексе активности.",
     tutorialLongtermTitle: "Прогноз на 14 дней",
     tutorialLongtermDesc: "Планируйте заранее с расширенным прогнозом погоды на 14 дней.",
     tutorialRadarTitle: "Радар осадков",
@@ -2323,7 +2371,7 @@ const TRANSLATIONS = {
     tutorialTravelTitle: "Планировщик путешествий",
     tutorialTravelDesc: "Планируйте свои поездки и проверяйте вероятность погоды для вашей экскурсии.",
     tutorialSettingsTitle: "Настройки",
-    tutorialSettingsDesc: "Здесь вы можете настроить язык, единицы измерения (Температура: °C/°F/K, Ветер: км/ч/м/с/миль/ч/Бофорт, Осадки: мм/дюймы), тему (Светлая/Темная/Авто) и ваше домашнее местоположение.",
+    tutorialSettingsDesc: "Здесь вы можете настроить язык, единицы измерения (Температура: °C/°F/K, Ветер: км/ч/м/с/миль/ч/Бофорт, Осадки: мм/дюймы), тему (Светлая/Темная/Авто), фильтр пыльцы и ваше домашнее местоположение.",
     tutorialComplete: "Руководство завершено! Вы можете вносить изменения в настройках в любое время.",
     noGpsAvailable: "GPS недоступен",
     locationDenied: "Доступ к местоположению запрещён",
@@ -7689,6 +7737,18 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
             content: 'tab'
         },
         {
+            title: t.tutorialWeatherTilesTitle,
+            desc: t.tutorialWeatherTilesDesc,
+            icon: TrendingUp,
+            content: 'weatherTiles'
+        },
+        {
+            title: t.tutorialPollenFilterTitle,
+            desc: t.tutorialPollenFilterDesc,
+            icon: Sparkles,
+            content: 'pollenFilter'
+        },
+        {
             title: t.tutorialLongtermTitle,
             desc: t.tutorialLongtermDesc,
             icon: CalendarDays,
@@ -7904,6 +7964,72 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                         </div>
                     )}
                     
+                    {currentStep.content === 'weatherTiles' && (
+                        <div className="space-y-3">
+                            <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
+                                <div className="flex items-center gap-3 mb-1">
+                                    <Activity size={20} className="text-m3-primary" />
+                                    <span className="font-bold text-m3-on-surface">{t.airQuality}</span>
+                                </div>
+                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.airQualityIndex || 'AQI – European Air Quality Index'}</p>
+                            </div>
+                            <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
+                                <div className="flex items-center gap-3 mb-1">
+                                    <Sparkles size={20} className="text-yellow-500" />
+                                    <span className="font-bold text-m3-on-surface">{t.pollen}</span>
+                                </div>
+                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.pollenNow}</p>
+                            </div>
+                            <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
+                                <div className="flex items-center gap-3 mb-1">
+                                    <Zap size={20} className="text-orange-500" />
+                                    <span className="font-bold text-m3-on-surface">{t.activityIndex}</span>
+                                </div>
+                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.activityIndexToday}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {currentStep.content === 'pollenFilter' && (
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-2 bg-m3-surface-container p-2 rounded-m3-md">
+                                {[
+                                    { key: 'hazel_pollen', label: t.pollenHazel },
+                                    { key: 'alder_pollen', label: t.pollenAlder },
+                                    { key: 'birch_pollen', label: t.pollenBirch },
+                                    { key: 'ash_pollen', label: t.pollenAsh },
+                                    { key: 'hornbeam_pollen', label: t.pollenHornbeam },
+                                    { key: 'oak_pollen', label: t.pollenOak },
+                                    { key: 'beech_pollen', label: t.pollenBeech },
+                                    { key: 'grass_pollen', label: t.pollenGrass },
+                                    { key: 'rye_pollen', label: t.pollenRye },
+                                    { key: 'mugwort_pollen', label: t.pollenMugwort },
+                                    { key: 'ragweed_pollen', label: t.pollenRagweed },
+                                    { key: 'plantain_pollen', label: t.pollenPlantain },
+                                    { key: 'sorrel_pollen', label: t.pollenSorrel },
+                                ].map(({ key, label }) => {
+                                    const filter = settings.pollenFilter || [];
+                                    const isActive = filter.includes(key);
+                                    return (
+                                        <button
+                                            key={key}
+                                            onClick={() => {
+                                                const updated = isActive
+                                                    ? filter.filter(k => k !== key)
+                                                    : [...filter, key];
+                                                setSettings({ ...settings, pollenFilter: updated });
+                                            }}
+                                            className={`py-2 px-3 rounded-m3-sm text-sm font-bold transition flex items-center justify-between gap-1 ${isActive ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                                        >
+                                            <span>{label}</span>
+                                            {isActive && <Check size={14} />}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
                     {currentStep.content === 'settings' && (
                         <div className="space-y-4">
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
@@ -7928,6 +8054,14 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                                     <span className="font-bold text-m3-on-surface">{t.theme}</span>
                                 </div>
                                 <p className="text-xs text-m3-on-surface-variant ml-8">{t.themeLight} / {t.themeDark} / {t.themeAuto}</p>
+                            </div>
+
+                            <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <Sparkles size={20} className="text-yellow-500" />
+                                    <span className="font-bold text-m3-on-surface">{t.pollen}</span>
+                                </div>
+                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.pollenFilter}</p>
                             </div>
                             
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
