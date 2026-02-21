@@ -27,7 +27,7 @@ const EVENING_START_HOUR = 16;
 const NIGHT_START_HOUR = 20;
 const LIGHT_PRECIP_THRESHOLD = 0.1;
 const STRONG_PRECIP_THRESHOLD = 0.5;
-const UMBRELLA_PRECIP_THRESHOLD = 1.0;
+const UMBRELLA_PRECIP_THRESHOLD = 0.5;
 const isAboveThreshold = (precipValue, snowValue, threshold) => precipValue > threshold || snowValue > threshold;
 
 // Swipe gesture threshold (pixels) for detecting intentional horizontal swipe
