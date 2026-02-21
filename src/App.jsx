@@ -33,6 +33,16 @@ const isAboveThreshold = (precipValue, snowValue, threshold) => precipValue > th
 // Swipe gesture threshold (pixels) for detecting intentional horizontal swipe
 const SWIPE_THRESHOLD_PX = 50;
 
+// Location indicator dot dimensions (pixels) and opacity values
+const DOT_ACTIVE_WIDTH_PX = 12;
+const DOT_INACTIVE_WIDTH_PX = 6;
+const DOT_ACTIVE_OPACITY = 1;
+const DOT_INACTIVE_OPACITY = 0.5;
+// Swipe distance (pixels) over which dot animation is fully interpolated
+const DOT_SWIPE_DISTANCE_PX = 300;
+// Minimum swipe offset (pixels) before dot animation begins responding
+const DOT_MIN_SWIPE_PX = 2;
+
 // Photography time durations (milliseconds)
 const GOLDEN_HOUR_DURATION_MS = 60 * 60 * 1000; // 60 minutes
 const BLUE_HOUR_DURATION_MS = 30 * 60 * 1000;   // 30 minutes
@@ -10735,20 +10745,41 @@ export default function WeatherApp() {
                       <span>T: {formatTemp(processedLong[0]?.min)}{getTempUnitSymbol()}</span>
                     </div>
                   )}
-                  {/* Location indicator dots - shown when multiple locations exist */}
-                  {allLocations.length > 1 && !isLandscape && (
-                    <div className="flex justify-center gap-1.5 mt-2">
-                      {allLocations.map((_, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setCurrentLoc(allLocations[i])}
-                          className={`w-1.5 h-1.5 rounded-full transition-all ${i === currentLocIdx ? 'bg-white w-3' : 'bg-white/50'}`}
-                        />
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
+              {/* Location indicator dots - permanent, outside the swipe translateX div */}
+              {allLocations.length > 1 && !isLandscape && (
+                <div className="relative z-10 flex justify-center gap-1.5 pb-2 pt-1">
+                  {allLocations.map((_, i) => {
+                    const swipeProgress = Math.min(1, Math.abs(cardTransX) / DOT_SWIPE_DISTANCE_PX);
+                    const isSwiping = Math.abs(cardTransX) > DOT_MIN_SWIPE_PX;
+                    let dotWidth = DOT_INACTIVE_WIDTH_PX;
+                    let dotOpacity = DOT_INACTIVE_OPACITY;
+                    if (i === currentLocIdx) {
+                      dotWidth = isSwiping ? DOT_ACTIVE_WIDTH_PX - DOT_INACTIVE_WIDTH_PX * swipeProgress : DOT_ACTIVE_WIDTH_PX;
+                      dotOpacity = isSwiping ? DOT_ACTIVE_OPACITY - DOT_INACTIVE_OPACITY * swipeProgress : DOT_ACTIVE_OPACITY;
+                    } else if (
+                      (cardTransX < 0 && i === currentLocIdx + 1) ||
+                      (cardTransX > 0 && i === currentLocIdx - 1)
+                    ) {
+                      dotWidth = DOT_INACTIVE_WIDTH_PX + DOT_INACTIVE_WIDTH_PX * swipeProgress;
+                      dotOpacity = DOT_INACTIVE_OPACITY + DOT_INACTIVE_OPACITY * swipeProgress;
+                    }
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentLoc(allLocations[i])}
+                        style={{
+                          width: `${dotWidth}px`,
+                          opacity: dotOpacity,
+                          transition: isSwiping ? 'none' : 'width 0.3s ease, opacity 0.3s ease',
+                        }}
+                        className="h-1.5 rounded-full bg-white"
+                      />
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>
