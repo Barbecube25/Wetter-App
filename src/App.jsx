@@ -6631,8 +6631,15 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
     ? chartData[nowIndex]?.displayTime
     : null;
 
-  // Label of the last past data point for shading the "past" region
-  const pastEndLabel = nowIndex > 0 ? chartData[nowIndex - 1]?.displayTime : null;
+  // Label of the last past data point for shading the "past" region.
+  // When history and forecast share the same displayTime at the boundary (duplicate),
+  // step back one extra entry so the grey area ends before the "now" line.
+  const pastEndLabel = (() => {
+    if (nowIndex <= 0) return null;
+    const prev = chartData[nowIndex - 1]?.displayTime;
+    if (prev === nowLabel && nowIndex > 1) return chartData[nowIndex - 2]?.displayTime;
+    return prev;
+  })();
 
   // Show every ~4th label on x-axis
   const tickInterval = Math.max(1, Math.floor(chartData.length / 9));
@@ -6682,9 +6689,9 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
             <>
               <div className="flex items-center gap-4 text-xs text-slate-400 mb-2 justify-between">
                 {nowIndex > 0 ? <span>← 12h</span> : <span />}
-                {nowLabel && <span className="font-bold text-slate-500 flex items-center gap-1">
+                {nowLabel && <span className="font-bold text-violet-600 flex items-center gap-1">
                   <span className="inline-block w-2 h-2 rounded-full bg-violet-600" aria-hidden="true"></span>
-                  {t('now')}
+                  {t('now')} {nowLabel}
                 </span>}
                 <span>24h →</span>
               </div>
@@ -6700,7 +6707,7 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
                   )}
                   {/* Current time marker */}
                   {nowLabel && (
-                    <ReferenceLine x={nowLabel} stroke="#6750A4" strokeWidth={2} label={{ value: t('now'), position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
+                    <ReferenceLine x={nowLabel} stroke="#6750A4" strokeWidth={2} label={{ value: `${t('now')} ${nowLabel}`, position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
                   )}
                   <Line type="monotone" dataKey="value" stroke={config.color} strokeWidth={2} dot={false} name={config.label} connectNulls />
                   {config.extraKey && (
