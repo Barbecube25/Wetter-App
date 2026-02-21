@@ -6349,7 +6349,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
             
             {/* Hinzugefügt: whitespace-pre-line für korrekte Zeilenumbrüche im Daily Report */}
             {/* NOTE: We might need to run temp conversion on summary string but that's complex with regex. For now summary remains as generated (mostly C) unless we rebuild AI report completely with units. */}
-            {report.type === 'daily' ? (
+            {(report.type === 'daily' || report.type === 'longterm') ? (
               <div className="relative z-10">
                 {summary.split('\n\n').map((section, idx) => (
                   <div key={idx}>
