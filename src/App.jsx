@@ -3021,6 +3021,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     else intro += `.`;
     
     let parts = [intro];
+    let tldrLine = "";
     
     // Show forecast for remaining hours of today (after current hour).
     // This naturally provides time-appropriate forecasts:
@@ -3052,6 +3053,22 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         const maxWind = Math.max(...todayData.map(d => d.gust));
         const maxUV = Math.max(...todayData.map(d => d.uvIndex || 0));
         const hasThunderstorm = todayData.some(d => [17, 95, 96, 99].includes(d.code));
+        
+        // Build TL;DR summary line
+        const tldrCodeFreq = {};
+        todayData.forEach(d => { tldrCodeFreq[d.code] = (tldrCodeFreq[d.code] || 0) + 1; });
+        const tldrDomCode = parseInt(Object.entries(tldrCodeFreq).sort(([,a],[,b]) => b - a)[0]?.[0] ?? current.code) || 0;
+        const tldrEmoji = tldrDomCode === 0 ? '☀️' : tldrDomCode === 1 ? '🌤️' :
+            [2,3].includes(tldrDomCode) ? '☁️' : [45,48].includes(tldrDomCode) ? '🌫️' :
+            [51,53,55].includes(tldrDomCode) ? '🌦️' : [61,63,80,81].includes(tldrDomCode) ? '🌧️' :
+            [65,82].includes(tldrDomCode) ? '🌧️' : SNOW_WEATHER_CODES.includes(tldrDomCode) ? '❄️' :
+            [17,95,96,99].includes(tldrDomCode) ? '⛈️' : '🌤️';
+        const tldrWeatherLabel = getWeatherConfig(tldrDomCode, 1, lang).text;
+        const tldrTempLabel = lang === 'en'
+            ? (maxToday > 30 ? 'Hot' : maxToday > 20 ? 'Warm' : maxToday > 10 ? 'Mild' : maxToday > 0 ? 'Cool' : 'Cold')
+            : (maxToday > 30 ? 'Heiß' : maxToday > 20 ? 'Warm' : maxToday > 10 ? 'Mild' : maxToday > 0 ? 'Kühl' : 'Kalt');
+        const tldrActivity = getActivityAdvice(lang, Math.round(maxToday), maxWind, rainSumToday + snowSumToday, maxUV, tldrDomCode);
+        tldrLine = `${tldrEmoji} ${tldrWeatherLabel} & ${tldrTempLabel} | ${Math.round(maxToday)}° | ${tldrActivity.text}`;
         
         // Calculate snow probability (average of hours with snow > 0.1mm)
         const hoursWithSnow = todayData.filter(d => parseFloat(d.snow || 0) > 0.1);
@@ -3574,6 +3591,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         parts.push(tomorrowText);
     }
     summary = parts.join("\n\n");
+    if (tldrLine) summary = tldrLine + "\n\n" + summary;
     confidence = 90; 
     const maxGustNow = Math.max(...(todayData.map(d=>d.gust)||[]), 0);
     const maxUVNow = Math.max(...(todayData.map(d=>d.uvIndex||0)), 0);
@@ -6231,6 +6249,19 @@ const DwdAlertItem = ({ alert, lang='de' }) => {
   );
 };
 
+const renderWithColoredTemps = (text) => {
+  const parts = text.split(/(-?\d+(?:[.,]\d+)?°)/g);
+  return parts.map((part, i) => {
+    const m = part.match(/^(-?\d+(?:[.,]\d+)?)°$/);
+    if (m) {
+      const val = parseFloat(m[1].replace(',', '.'));
+      const cls = val <= 0 ? 'text-blue-500 font-bold' : val <= 10 ? 'text-sky-400 font-bold' : val >= 30 ? 'text-red-500 font-bold' : val >= 25 ? 'text-orange-400 font-bold' : '';
+      return cls ? <span key={i} className={cls}>{part}</span> : part;
+    }
+    return part;
+  });
+};
+
 const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, getWindUnitLabel, formatPrecip, getPrecipUnitLabel, getTempUnitSymbol }) => {
   const [expanded, setExpanded] = useState(false);
   if (!report) return null;
@@ -6318,7 +6349,28 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
             
             {/* Hinzugefügt: whitespace-pre-line für korrekte Zeilenumbrüche im Daily Report */}
             {/* NOTE: We might need to run temp conversion on summary string but that's complex with regex. For now summary remains as generated (mostly C) unless we rebuild AI report completely with units. */}
-            <p className="text-m3-body-large text-m3-on-surface leading-relaxed font-semibold relative z-10 whitespace-pre-line">{summary}</p>
+            {report.type === 'daily' ? (
+              <div className="relative z-10">
+                {summary.split('\n\n').map((section, idx) => (
+                  <div key={idx}>
+                    {idx === 0 ? (
+                      <div className="bg-m3-primary/10 rounded-lg px-3 py-2 mb-3 text-m3-body-medium font-bold text-m3-on-surface">
+                        {renderWithColoredTemps(section)}
+                      </div>
+                    ) : (
+                      <>
+                        {idx > 1 && <hr className="border-m3-outline-variant/40 my-3" />}
+                        <p className="text-m3-body-large text-m3-on-surface leading-relaxed font-semibold whitespace-pre-line">
+                          {renderWithColoredTemps(section)}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-m3-body-large text-m3-on-surface leading-relaxed font-semibold relative z-10 whitespace-pre-line">{summary}</p>
+            )}
             
             {/* Toggle Button */}
             {showDetails && (details || structuredDetails || showTripDetails) && (
