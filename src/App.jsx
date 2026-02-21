@@ -161,6 +161,7 @@ const TRANSLATIONS = {
     noPrecipSight: "Kein Niederschlag in Sicht",
     activityIndex: "Aktivitäts-Index",
     activityIndexToday: "Empfehlungen für heute",
+    activityIndex24h: "24-Stunden-Übersicht",
     startingNow: "beginnt jetzt",
     startingSoon: "beginnt bald",
     inMinutes: "in",
@@ -385,7 +386,7 @@ const TRANSLATIONS = {
     noPrecipSight: "No Precipitation in Sight",
     activityIndex: "Activity Index",
     activityIndexToday: "Recommendations for today",
-    startingNow: "starting now",
+    activityIndex24h: "24-hour overview",
     startingSoon: "starting soon",
     inMinutes: "in",
     currentIntensity: "Current Intensity",
@@ -609,7 +610,7 @@ const TRANSLATIONS = {
     noPrecipSight: "Pas de précipitations en vue",
     activityIndex: "Indice d'activité",
     activityIndexToday: "Recommandations pour aujourd'hui",
-    startingNow: "commence maintenant",
+    activityIndex24h: "Aperçu sur 24 heures",
     startingSoon: "commence bientôt",
     inMinutes: "dans",
     currentIntensity: "Intensité actuelle",
@@ -793,7 +794,7 @@ const TRANSLATIONS = {
     noPrecipSight: "Sin precipitaciones a la vista",
     activityIndex: "Índice de actividad",
     activityIndexToday: "Recomendaciones para hoy",
-    startingNow: "comienza ahora",
+    activityIndex24h: "Vista general de 24 horas",
     startingSoon: "comienza pronto",
     inMinutes: "en",
     currentIntensity: "Intensidad actual",
@@ -976,7 +977,7 @@ const TRANSLATIONS = {
     noPrecipSight: "Nessuna precipitazione in vista",
     activityIndex: "Indice di attività",
     activityIndexToday: "Consigli per oggi",
-    startingNow: "inizia ora",
+    activityIndex24h: "Panoramica 24 ore",
     startingSoon: "inizia presto",
     inMinutes: "tra",
     currentIntensity: "Intensità attuale",
@@ -1159,7 +1160,7 @@ const TRANSLATIONS = {
     noPrecipSight: "Görünürde yağış yok",
     activityIndex: "Aktivite Endeksi",
     activityIndexToday: "Bugün için öneriler",
-    startingNow: "şimdi başlıyor",
+    activityIndex24h: "24 saatlik genel bakış",
     startingSoon: "yakında başlayacak",
     inMinutes: "içinde",
     currentIntensity: "Mevcut yoğunluk",
@@ -1342,7 +1343,7 @@ const TRANSLATIONS = {
     noPrecipSight: "Brak opadów w zasięgu",
     activityIndex: "Wskaźnik aktywności",
     activityIndexToday: "Zalecenia na dziś",
-    startingNow: "zaczyna się teraz",
+    activityIndex24h: "Przegląd 24 godzin",
     startingSoon: "zaczyna się wkrótce",
     inMinutes: "za",
     currentIntensity: "Obecna intensywność",
@@ -1525,7 +1526,7 @@ const TRANSLATIONS = {
     noPrecipSight: "Geen neerslag in zicht",
     activityIndex: "Activiteitsindex",
     activityIndexToday: "Aanbevelingen voor vandaag",
-    startingNow: "begint nu",
+    activityIndex24h: "24-uurs overzicht",
     startingSoon: "begint binnenkort",
     inMinutes: "over",
     currentIntensity: "Huidige intensiteit",
@@ -1708,7 +1709,7 @@ const TRANSLATIONS = {
     noPrecipSight: "Nema oborina u vidiku",
     activityIndex: "Indeks aktivnosti",
     activityIndexToday: "Preporuke za danas",
-    startingNow: "počinje sada",
+    activityIndex24h: "Pregled 24 sata",
     startingSoon: "uskoro počinje",
     inMinutes: "za",
     currentIntensity: "Trenutni intenzitet",
@@ -1891,7 +1892,7 @@ const TRANSLATIONS = {
     noPrecipSight: "Δεν αναμένονται κατακρημνίσματα",
     activityIndex: "Δείκτης δραστηριότητας",
     activityIndexToday: "Συστάσεις για σήμερα",
-    startingNow: "ξεκινά τώρα",
+    activityIndex24h: "Επισκόπηση 24 ωρών",
     startingSoon: "ξεκινά σύντομα",
     inMinutes: "σε",
     currentIntensity: "Τρέχουσα ένταση",
@@ -2074,7 +2075,7 @@ const TRANSLATIONS = {
     noPrecipSight: "Ingen nedbør i sigte",
     activityIndex: "Aktivitetsindeks",
     activityIndexToday: "Anbefalinger for i dag",
-    startingNow: "starter nu",
+    activityIndex24h: "24-timers oversigt",
     startingSoon: "starter snart",
     inMinutes: "om",
     currentIntensity: "Nuværende intensitet",
@@ -2258,7 +2259,7 @@ const TRANSLATIONS = {
     noPrecipSight: "Осадков не предвидится",
     activityIndex: "Индекс активности",
     activityIndexToday: "Рекомендации на сегодня",
-    startingNow: "начинается сейчас",
+    activityIndex24h: "Обзор за 24 часа",
     startingSoon: "скоро начнётся",
     inMinutes: "через",
     currentIntensity: "Текущая интенсивность",
@@ -6980,10 +6981,24 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
     const advice = getActivityAdvice(lang, hour.temp, hour.windAvg ?? hour.wind, hour.precip, hour.uvIndex, hour.code);
     return {
       time: hour.time,
+      hour: hour.time.getHours(),
       displayTime: hour.time.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
+      temp: Math.round(hour.temp),
       advice,
     };
   });
+
+  // Current hour for highlighting
+  const currentHour = new Date().getHours();
+
+  // Map advice color to background color classes for the grid cells
+  const COLOR_TO_BG = {
+    'text-red-500': 'bg-red-100 border-red-300',
+    'text-orange-500': 'bg-orange-100 border-orange-300',
+    'text-blue-500': 'bg-blue-100 border-blue-300',
+    'text-blue-400': 'bg-sky-100 border-sky-300',
+  };
+  const colorToBg = (color) => COLOR_TO_BG[color] || 'bg-green-100 border-green-300';
 
   // Group consecutive hours with the same advice text into time ranges
   const ranges = [];
@@ -7048,58 +7063,87 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
           <span className="text-sm text-slate-500">{t('activityIndexToday')}</span>
         </div>
 
-        {/* Scrollable time-range list */}
-        <div className="overflow-y-auto p-4 space-y-2">
-          {ranges.map((range, idx) => {
-            const isDanger = range.advice.color === 'text-red-500';
-            const isWarning = range.advice.color === 'text-orange-500';
-            const rangeBg = isDanger
-              ? 'bg-red-50 border-red-200'
-              : isWarning
-                ? 'bg-orange-50 border-orange-200'
-                : 'bg-slate-50/80 border-slate-100';
-            return (
-              <div
-                key={idx}
-                className={`flex items-center gap-3 p-3 rounded-xl border ${rangeBg}`}
-              >
-                <span className="text-xl flex-shrink-0">{range.advice.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <div className={`text-sm font-bold ${range.advice.color} leading-tight`}>{range.advice.text}</div>
-                  <div className="text-xs text-slate-400 mt-0.5">
-                    {range.from === range.to
-                      ? `${t('ab') || 'Ab'} ${range.from} ${t('oclock') || 'Uhr'}`
-                      : `${range.from} – ${range.to} ${t('oclock') || 'Uhr'}`}
+        {/* Scrollable content */}
+        <div className="overflow-y-auto">
+          {/* 24-hour grid overview */}
+          <div className="p-4 border-b border-slate-100">
+            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3 flex items-center gap-1">
+              <Zap size={11} className="text-yellow-400" /> {t('activityIndex24h')}
+            </div>
+            <div className="grid grid-cols-12 gap-1">
+              {todayHours.map((h, idx) => {
+                const isNow = h.hour === currentHour;
+                const cellBg = colorToBg(h.advice.color);
+                return (
+                  <div
+                    key={idx}
+                    className={`flex flex-col items-center rounded-lg border py-1 px-0.5 ${cellBg} ${isNow ? 'ring-2 ring-yellow-400 ring-offset-1' : ''}`}
+                    title={`${h.displayTime} – ${h.advice.text}`}
+                  >
+                    <span className={`text-[10px] font-semibold leading-none ${isNow ? 'text-yellow-600' : 'text-slate-500'}`}>
+                      {String(h.hour).padStart(2, '0')}
+                    </span>
+                    <span className="text-sm leading-none mt-0.5">{h.advice.emoji}</span>
+                    <span className="text-[9px] text-slate-500 leading-none mt-0.5">{h.temp}°</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Grouped time-range list */}
+          <div className="p-4 space-y-2">
+            {ranges.map((range, idx) => {
+              const isDanger = range.advice.color === 'text-red-500';
+              const isWarning = range.advice.color === 'text-orange-500';
+              const rangeBg = isDanger
+                ? 'bg-red-50 border-red-200'
+                : isWarning
+                  ? 'bg-orange-50 border-orange-200'
+                  : 'bg-slate-50/80 border-slate-100';
+              return (
+                <div
+                  key={idx}
+                  className={`flex items-center gap-3 p-3 rounded-xl border ${rangeBg}`}
+                >
+                  <span className="text-xl flex-shrink-0">{range.advice.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className={`text-sm font-bold ${range.advice.color} leading-tight`}>{range.advice.text}</div>
+                    <div className="text-xs text-slate-400 mt-0.5">
+                      {range.from === range.to
+                        ? `${t('ab') || 'Ab'} ${range.from} ${t('oclock') || 'Uhr'}`
+                        : `${range.from} – ${range.to} ${t('oclock') || 'Uhr'}`}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
-          {/* Pollen section */}
-          {activePollen.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-slate-100">
-              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-1">
-                <Sparkles size={12} /> {t('pollenNow')}
+            {/* Pollen section */}
+            {activePollen.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-slate-100">
+                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-1">
+                  <Sparkles size={12} /> {t('pollenNow')}
+                </div>
+                <div className="space-y-1.5">
+                  {activePollen.slice(0, 5).map(({ label, val }) => {
+                    const { label: lvlLabel, color } = getPollenLevelLabel(val);
+                    return (
+                      <div key={label} className="flex items-center justify-between text-sm">
+                        <span className="text-slate-600">🌿 {label}</span>
+                        <span className={`font-semibold ${color}`}>{lvlLabel}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="space-y-1.5">
-                {activePollen.slice(0, 5).map(({ label, val }) => {
-                  const { label: lvlLabel, color } = getPollenLevelLabel(val);
-                  return (
-                    <div key={label} className="flex items-center justify-between text-sm">
-                      <span className="text-slate-600">🌿 {label}</span>
-                      <span className={`font-semibold ${color}`}>{lvlLabel}</span>
-                    </div>
-                  );
-                })}
+            )}
+            {airQualityData && activePollen.length === 0 && (
+              <div className="mt-3 pt-3 border-t border-slate-100 text-sm text-slate-400 text-center">
+                🌿 {t('pollenNoActive')}
               </div>
-            </div>
-          )}
-          {airQualityData && activePollen.length === 0 && (
-            <div className="mt-3 pt-3 border-t border-slate-100 text-sm text-slate-400 text-center">
-              🌿 {t('pollenNoActive')}
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
