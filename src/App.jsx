@@ -9530,11 +9530,14 @@ export default function WeatherApp() {
     const h = shortTermData.hourly;
     const now = new Date();
     const cutoff = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+    // Stop before the current hour so the current interval only appears in forecastData,
+    // avoiding duplicate x-axis labels that push the "now" ReferenceLine into the shaded past region.
+    const currentHourStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), 0, 0, 0);
     const res = [];
 
     for (let i = 0; i < h.time.length; i++) {
       const ts = parseLocalTime(h.time[i]);
-      if (ts >= now) break;
+      if (ts >= currentHourStart) break;
       if (ts < cutoff) continue;
 
       const getVal = (key) => {
@@ -9579,6 +9582,8 @@ export default function WeatherApp() {
     const now = new Date();
     const cutoff = new Date(now.getTime() - 12 * 60 * 60 * 1000);
     const future = new Date(now.getTime() + 25 * 60 * 60 * 1000); // 25h to fully cover 24h window across hourly slots
+    // Use the start of the current hour as the past/present boundary, consistent with processedHistory.
+    const currentHourStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), 0, 0, 0);
     const res = [];
     for (let i = 0; i < airQualityHourlyData.time.length; i++) {
       const ts = parseLocalTime(airQualityHourlyData.time[i]);
@@ -9588,7 +9593,7 @@ export default function WeatherApp() {
       res.push({
         displayTime: ts.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
         value: Math.round(aqi),
-        isPast: ts < now,
+        isPast: ts < currentHourStart,
       });
     }
     return res;
