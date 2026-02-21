@@ -6607,8 +6607,17 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
       return val;
     };
 
+    // Remove the last history entry if it duplicates the first forecast entry's displayTime.
+    // Without this, recharts resolves ReferenceLine x to the first (history) occurrence and
+    // renders the "now" marker one position too far to the left.
+    const forecastStart = forecastData.length > 0 ? forecastData[0].displayTime : null;
+    const deduplicatedHistory = historyData.filter(
+      (item, idx) =>
+        !(forecastStart && idx === historyData.length - 1 && item.displayTime === forecastStart)
+    );
+
     chartData = [
-      ...historyData.map((item) => ({
+      ...deduplicatedHistory.map((item) => ({
         displayTime: item.displayTime,
         value: transformVal(item),
         gust: metric === 'wind' ? item.gust : undefined,
@@ -6623,24 +6632,16 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
     ];
   }
 
-  // Index of the "now" boundary
-  const nowIndex = metric === 'airQuality'
-    ? chartData.findIndex((d) => !d.isPast)
-    : historyData.length;
+  // Index of the "now" boundary – works uniformly for all metrics since every chart
+  // marks forecast (present/future) entries with isPast: false.
+  const nowIndex = chartData.findIndex((d) => !d.isPast);
 
   const nowLabel = nowIndex >= 0 && nowIndex < chartData.length
     ? chartData[nowIndex]?.displayTime
     : null;
 
   // Label of the last past data point for shading the "past" region.
-  // When history and forecast share the same displayTime at the boundary (duplicate),
-  // step back one extra entry so the grey area ends before the "now" line.
-  const pastEndLabel = (() => {
-    if (nowIndex <= 0) return null;
-    const prev = chartData[nowIndex - 1]?.displayTime;
-    if (prev === nowLabel && nowIndex > 1) return chartData[nowIndex - 2]?.displayTime;
-    return prev;
-  })();
+  const pastEndLabel = nowIndex > 0 ? chartData[nowIndex - 1]?.displayTime : null;
 
   // Show every ~4th label on x-axis
   const tickInterval = Math.max(1, Math.floor(chartData.length / 9));
@@ -6706,9 +6707,9 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
                   {pastEndLabel && (
                     <ReferenceArea x1={chartData[0]?.displayTime} x2={pastEndLabel} fill="#e2e8f0" fillOpacity={0.5} />
                   )}
-                  {/* Current time marker */}
+                  {/* Current time marker – always visible, not hover-only */}
                   {nowLabel && (
-                    <ReferenceLine x={nowLabel} stroke="#6750A4" strokeWidth={2} label={{ value: `${t('now')} ${nowLabel}`, position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
+                    <ReferenceLine x={nowLabel} stroke="#6750A4" strokeWidth={2} strokeDasharray="4 3" ifOverflow="extendDomain" label={{ value: t('now'), position: 'insideTopLeft', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
                   )}
                   <Line type="monotone" dataKey="value" stroke={config.color} strokeWidth={2} dot={false} name={config.label} connectNulls />
                   {config.extraKey && (
@@ -10947,7 +10948,7 @@ export default function WeatherApp() {
                           <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
                           <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => formatTemp(value)} />
                           {processedShort[0]?.displayTime && (
-                            <ReferenceLine x={processedShort[0].displayTime} stroke="#6750A4" strokeWidth={2} label={{ value: t('now'), position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
+                            <ReferenceLine x={processedShort[0].displayTime} stroke="#6750A4" strokeWidth={2} strokeDasharray="4 3" ifOverflow="extendDomain" label={{ value: t('now'), position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
                           )}
                           <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={2} dot={false} name="ICON" />
                           <Line type="monotone" dataKey="temp_gfs" stroke="#d8b4fe" strokeWidth={2} dot={false} name="GFS" />
@@ -10962,6 +10963,9 @@ export default function WeatherApp() {
                           <XAxis dataKey="dateShort" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={0} />
                           <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
                           <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => formatTemp(value)} />
+                          {processedLong[0]?.dateShort && (
+                            <ReferenceLine x={processedLong[0].dateShort} stroke="#6750A4" strokeWidth={2} strokeDasharray="4 3" ifOverflow="extendDomain" label={{ value: t('today'), position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
+                          )}
                           <Line type="monotone" dataKey="max_icon" stroke="#93c5fd" strokeWidth={3} dot={{r:3}} name="ICON Max" />
                           <Line type="monotone" dataKey="max_gfs" stroke="#d8b4fe" strokeWidth={3} dot={{r:3}} name="GFS Max" />
                           <Line type="monotone" dataKey="max_gem" stroke="#fca5a5" strokeWidth={3} dot={{r:3}} name="GEM Max" />
