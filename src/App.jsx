@@ -3052,6 +3052,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         const rainSumToday = todayData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
         const snowSumToday = todayData.reduce((acc, c) => acc + parseFloat(c.snow || 0), 0);
         const maxWind = Math.max(...todayData.map(d => d.gust));
+        const maxWindAvg = Math.max(...todayData.map(d => d.windAvg ?? d.wind));
         const maxUV = Math.max(...todayData.map(d => d.uvIndex || 0));
         const hasThunderstorm = todayData.some(d => [17, 95, 96, 99].includes(d.code));
         
@@ -3068,7 +3069,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         const tldrTempLabel = lang === 'en'
             ? (maxToday > 30 ? 'Hot' : maxToday > 20 ? 'Warm' : maxToday > 10 ? 'Mild' : maxToday > 0 ? 'Cool' : 'Cold')
             : (maxToday > 30 ? 'Heiß' : maxToday > 20 ? 'Warm' : maxToday > 10 ? 'Mild' : maxToday > 0 ? 'Kühl' : 'Kalt');
-        const tldrActivity = getActivityAdvice(lang, Math.round(maxToday), maxWind, rainSumToday + snowSumToday, maxUV, tldrDomCode);
+        const tldrActivity = getActivityAdvice(lang, Math.round(maxToday), maxWindAvg, rainSumToday + snowSumToday, maxUV, tldrDomCode);
         tldrLine = `${tldrEmoji} ${tldrWeatherLabel} & ${tldrTempLabel} | ${Math.round(maxToday)}° | ${tldrActivity.text}`;
         
         // Calculate snow probability (average of hours with snow > 0.1mm)
