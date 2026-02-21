@@ -55,6 +55,9 @@ const LIGHT_SLEET_PARTICLES = 30;
 const LANDSCAPE_HEIGHT_THRESHOLD = 600; // Landscape mode detection threshold - devices with height less than this are considered landscape
 const SMALL_SCREEN_WIDTH_THRESHOLD = 375; // Small screen detection threshold - devices with width less than this need tighter spacing
 
+// Linear interpolation helper: returns a + (b - a) * t, or whichever operand is non-null if the other is null
+const lerpNullable = (a, b, t) => (a != null && b != null) ? a + (b - a) * t : (a ?? b ?? null);
+
 // TEXT RESSOURCEN
 const TRANSLATIONS = {
   de: {
@@ -6610,12 +6613,14 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
     chartData = [
       ...historyData.map((item) => ({
         displayTime: item.displayTime,
+        time: item.time,
         value: transformVal(item),
         gust: metric === 'wind' ? item.gust : undefined,
         isPast: true,
       })),
       ...forecastData.slice(0, 24).map((item) => ({
         displayTime: item.displayTime,
+        time: item.time,
         value: transformVal(item),
         gust: metric === 'wind' ? item.gust : undefined,
         isPast: false,
@@ -6623,24 +6628,51 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
     ];
   }
 
-  // Index of the "now" boundary
+  // Index of the "now" boundary (history/forecast split)
   const nowIndex = metric === 'airQuality'
     ? chartData.findIndex((d) => !d.isPast)
     : historyData.length;
 
-  const nowLabel = nowIndex >= 0 && nowIndex < chartData.length
-    ? chartData[nowIndex]?.displayTime
-    : null;
-
   // Label of the last past data point for shading the "past" region.
   // When history and forecast share the same displayTime at the boundary (duplicate),
   // step back one extra entry so the grey area ends before the "now" line.
+  const boundaryLabel = nowIndex >= 0 && nowIndex < chartData.length
+    ? chartData[nowIndex]?.displayTime
+    : null;
   const pastEndLabel = (() => {
     if (nowIndex <= 0) return null;
     const prev = chartData[nowIndex - 1]?.displayTime;
-    if (prev === nowLabel && nowIndex > 1) return chartData[nowIndex - 2]?.displayTime;
+    if (prev === boundaryLabel && nowIndex > 1) return chartData[nowIndex - 2]?.displayTime;
     return prev;
   })();
+
+  // Insert an interpolated data point at the exact current time for precise line positioning
+  const nowExactLabel = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  if (metric !== 'airQuality' && !chartData.some(d => d.displayTime === nowExactLabel)) {
+    const nowDate = new Date();
+    const insertIdx = chartData.findIndex(d => d.time && d.time > nowDate);
+    if (insertIdx > 0) {
+      const prev = chartData[insertIdx - 1];
+      const next = chartData[insertIdx];
+      const frac = (nowDate.getTime() - prev.time.getTime()) / (next.time.getTime() - prev.time.getTime());
+      chartData = [
+        ...chartData.slice(0, insertIdx),
+        {
+          displayTime: nowExactLabel,
+          time: nowDate,
+          value: lerpNullable(prev.value, next.value, frac),
+          gust: metric === 'wind' ? lerpNullable(prev.gust, next.gust, frac) : undefined,
+          isPast: false,
+        },
+        ...chartData.slice(insertIdx),
+      ];
+    }
+  }
+
+  // Use exact current time as the now label (fallback to boundary label for airQuality)
+  const nowLabel = metric === 'airQuality'
+    ? boundaryLabel
+    : (chartData.some(d => d.displayTime === nowExactLabel) ? nowExactLabel : boundaryLabel);
 
   // Show every ~4th label on x-axis
   const tickInterval = Math.max(1, Math.floor(chartData.length / 9));
@@ -9914,6 +9946,37 @@ export default function WeatherApp() {
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter }), [processedLong, lang, airQualityData, settings.pollenFilter]);
 
+  // Model comparison chart data with exact current-time data point inserted for precise indicator
+  const { modelChartData, modelNowLabel } = useMemo(() => {
+    const nowExactLabel = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    if (!processedShort.length) return { modelChartData: processedShort, modelNowLabel: processedShort[0]?.displayTime };
+    if (processedShort.some(d => d.displayTime === nowExactLabel)) {
+      return { modelChartData: processedShort, modelNowLabel: nowExactLabel };
+    }
+    const nowDate = new Date();
+    const insertIdx = processedShort.findIndex(d => d.time && d.time > nowDate);
+    if (insertIdx <= 0) return { modelChartData: processedShort, modelNowLabel: processedShort[0]?.displayTime };
+    const prev = processedShort[insertIdx - 1];
+    const next = processedShort[insertIdx];
+    const frac = (nowDate.getTime() - prev.time.getTime()) / (next.time.getTime() - prev.time.getTime());
+    return {
+      modelChartData: [
+        ...processedShort.slice(0, insertIdx),
+        {
+          displayTime: nowExactLabel,
+          time: nowDate,
+          temp: lerpNullable(prev.temp, next.temp, frac),
+          temp_icon: lerpNullable(prev.temp_icon, next.temp_icon, frac),
+          temp_gfs: lerpNullable(prev.temp_gfs, next.temp_gfs, frac),
+          temp_arome: lerpNullable(prev.temp_arome, next.temp_arome, frac),
+          temp_gem: lerpNullable(prev.temp_gem, next.temp_gem, frac),
+        },
+        ...processedShort.slice(insertIdx),
+      ],
+      modelNowLabel: nowExactLabel,
+    };
+  }, [processedShort]);
+
   // --- WIDGET VIEWS ---
   // Only block rendering on initial load (no data yet); during location switches, keep existing data visible.
   const isInitialLoading = loading && !shortTermData;
@@ -10941,13 +11004,13 @@ export default function WeatherApp() {
                <div className="w-full h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                       {chartView === 'hourly' ? (
-                        <LineChart data={processedShort} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <LineChart data={modelChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
                           <XAxis dataKey="displayTime" tick={{fontSize:11, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} interval={4} angle={0} />
                           <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
                           <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => formatTemp(value)} />
-                          {processedShort[0]?.displayTime && (
-                            <ReferenceLine x={processedShort[0].displayTime} stroke="#6750A4" strokeWidth={2} label={{ value: t('now'), position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
+                          {modelNowLabel && (
+                            <ReferenceLine x={modelNowLabel} stroke="#6750A4" strokeWidth={2} label={{ value: `${t('now')} ${modelNowLabel}`, position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
                           )}
                           <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={2} dot={false} name="ICON" />
                           <Line type="monotone" dataKey="temp_gfs" stroke="#d8b4fe" strokeWidth={2} dot={false} name="GFS" />
