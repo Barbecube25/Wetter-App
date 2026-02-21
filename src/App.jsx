@@ -6369,7 +6369,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                 ))}
               </div>
             ) : (
-              <p className="text-m3-body-large text-m3-on-surface leading-relaxed font-semibold relative z-10 whitespace-pre-line">{summary}</p>
+              <p className="text-m3-body-large text-m3-on-surface leading-relaxed font-semibold relative z-10 whitespace-pre-line">{renderWithColoredTemps(summary)}</p>
             )}
             
             {/* Toggle Button */}
