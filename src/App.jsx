@@ -4581,6 +4581,11 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   if (month >= 2 && month <= 4) detectedSeason = 'spring'; // Mar-May (2-4)
   else if (month >= 5 && month <= 7) detectedSeason = 'summer'; // Jun-Aug (5-7)
   else if (month >= 8 && month <= 10) detectedSeason = 'autumn'; // Sep-Nov (8-10)
+  // Southern Hemisphere: seasons are reversed
+  if (latitude != null && latitude < 0) {
+    const flip = { winter: 'summer', summer: 'winter', spring: 'autumn', autumn: 'spring' };
+    detectedSeason = flip[detectedSeason];
+  }
   const season = demoSeason || detectedSeason;
 
   // --- SEASONAL EVENTS ---
