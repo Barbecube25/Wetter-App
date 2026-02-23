@@ -8205,6 +8205,7 @@ export default function WeatherApp() {
   const [pullDistance, setPullDistance] = useState(0);
   const [isPulling, setIsPulling] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showPullHint, setShowPullHint] = useState(false);
 
   // Swipe gesture state
   const [swipeStartX, setSwipeStartX] = useState(0);
@@ -8937,6 +8938,15 @@ export default function WeatherApp() {
   };
 
   useEffect(() => { fetchData(); }, [currentLoc]);
+
+  // Show pull-to-refresh hint briefly after data finishes loading
+  useEffect(() => {
+    if (!loading && lastUpdated && !isRefreshing) {
+      setShowPullHint(true);
+      const timer = setTimeout(() => setShowPullHint(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, lastUpdated, isRefreshing]);
 
   // --- PULL-TO-REFRESH & SWIPE GESTURE HANDLERS ---
   const isAnyModalOpen = showFeedback || !!activeDetailModal || showPrecipModal || showActivityModal || showSettingsModal || showLocationModal || showPollenModal;
@@ -10708,6 +10718,17 @@ export default function WeatherApp() {
                     <div className="flex items-center gap-2 text-m3-label-small text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)] mt-1">
                       <Clock size={12} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
                       <span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}{getCacheAgeText()}</span>
+                    </div>
+                  )}
+                  {/* Pull-to-refresh hint */}
+                  {!isLandscape && !isPulling && !isRefreshing && (
+                    <div
+                      className="flex items-center gap-1 text-m3-label-small text-white/75 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)] mt-1 transition-opacity duration-500"
+                      style={{ opacity: showPullHint ? 1 : 0 }}
+                      aria-hidden={!showPullHint}
+                    >
+                      <ChevronDown size={12} className={showPullHint ? 'animate-bounce' : ''} />
+                      <span>{t('pullToRefresh')}</span>
                     </div>
                   )}
                 </div>
