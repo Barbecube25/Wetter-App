@@ -8988,7 +8988,7 @@ export default function WeatherApp() {
     }
   };
 
-  const TAB_ORDER = ['overview', 'longterm', 'radar', 'chart', 'travel'];
+  const TAB_ORDER = ['overview', 'longterm', 'precipitation', 'radar', 'chart', 'travel'];
 
   const handleTouchEnd = (e) => {
     // Do not activate gestures when a modal/overlay is open
@@ -10817,8 +10817,8 @@ export default function WeatherApp() {
         <div className={`fixed left-0 right-0 z-30 ${isSmallScreen ? 'px-2' : 'px-4'}`} style={{ top: `calc(${animationCardHeight} + ${fixedElementsGap} + ${fixedTopOffset})` }}>
           <div className="max-w-4xl mx-auto">
             <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl ${isLandscape ? 'p-1' : (isSmallScreen ? 'p-1.5' : 'p-2')} shadow-m3-2 border border-m3-outline-variant`}>
-          <div className={`grid grid-cols-5 ${isSmallScreen ? 'gap-0.5' : 'gap-1'}`}>
-            {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
+          <div className={`grid grid-cols-6 ${isSmallScreen ? 'gap-0.5' : 'gap-1'}`}>
+            {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'precipitation', label:t('precip'), icon: Droplets}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
               <button 
                 key={tab.id} 
                 onClick={() => setActiveTab(tab.id)} 
@@ -11061,7 +11061,6 @@ export default function WeatherApp() {
                })()}
 
                <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} />
-               <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} currentData={shortTermData?.current} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} />
 
                {/* Photographer's Weather: Golden Hour & Blue Hour */}
                {getPhotographyTimes && !isLandscape && (
@@ -11260,6 +11259,12 @@ export default function WeatherApp() {
                   </div>
                </div>
              </div>
+          )}
+
+          {activeTab === 'precipitation' && (
+            <div className="space-y-4">
+              <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} currentData={shortTermData?.current} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} />
+            </div>
           )}
 
           {activeTab === 'radar' && (
