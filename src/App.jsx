@@ -10043,12 +10043,13 @@ export default function WeatherApp() {
     return 'pt-4 px-4 pb-4';
   };
 
-  // Helper function to get animation card min-height
+  // Helper function to get animation card height
   // Landscape mode takes precedence when both isLandscape and isSmallScreen are true
-  const getAnimationCardMinHeight = () => {
-    if (isLandscape) return 'min-h-[100px]';
-    if (isSmallScreen) return 'min-h-[160px]';
-    return 'min-h-[210px]';
+  // Fixed height (h-) instead of min-height (min-h-) prevents the card from changing size
+  const getAnimationCardHeight = () => {
+    if (isLandscape) return 'h-[100px]';
+    if (isSmallScreen) return 'h-[180px]';
+    return 'h-[210px]';
   };
 
   // Create a 3-day forecast: rest of today, tomorrow, and day after tomorrow
@@ -10665,7 +10666,7 @@ export default function WeatherApp() {
         {/* Fixed Animation Card Container - Matches main content width, extends to top edge */}
         <div className={`fixed left-0 right-0 z-20 ${isSmallScreen ? 'px-2' : 'px-4'}`} style={{ top: fixedTopOffset }}>
           <div className="max-w-4xl mx-auto">
-            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl ${getAnimationCardPadding()} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant backdrop-blur-md ${getAnimationCardMinHeight()}`}
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl ${getAnimationCardPadding()} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant backdrop-blur-md ${getAnimationCardHeight()}`}
               onTouchStart={(e) => {
                 if (pendingLocChange.current !== null) return;
                 cardSwipeStartX.current = e.touches[0].clientX;
