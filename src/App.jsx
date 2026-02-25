@@ -5618,26 +5618,22 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
   const hourlyData = data.slice(0, 24);
   
   return (
-    <div className="bg-m3-surface-container-high/60 backdrop-blur-sm rounded-m3-2xl p-4 border border-m3-outline-variant/40 shadow-m3-2">
-      <div className="flex items-center gap-2 mb-3">
-        <Clock size={18} className="text-m3-on-surface-variant" />
-        <span className="text-m3-label-large font-bold text-m3-on-surface">{t.nextHours}</span>
-      </div>
-      
-      <div className="overflow-x-auto pb-2 -mx-2 px-2" tabIndex="0">
-        <div className="flex gap-3">
+    <div>
+      <h3 className="text-sm font-bold uppercase tracking-wide opacity-90 ml-2 mb-3">{t.nextHours}</h3>
+      <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide" tabIndex="0">
+        <div className="flex gap-3 w-max">
           {hourlyData.map((hour, idx) => {
             const WeatherIcon = getWeatherConfig(hour.code, hour.isDay, lang).icon;
             const isNow = idx === 0;
             return (
               <div 
                 key={hour.time.toISOString()} 
-                className={`flex flex-col items-center backdrop-blur-sm rounded-m3-xl p-3 min-w-[70px] shadow-m3-1 hover:shadow-m3-2 transition-all ${isNow ? 'bg-m3-primary/15 border-2 border-m3-primary/60' : 'bg-m3-surface-container/80 border border-m3-outline-variant/30'}`}
+                className={`flex flex-col items-center backdrop-blur-sm rounded-m3-xl p-3 min-w-[80px] w-[80px] shadow-m3-1 hover:shadow-m3-2 transition-all ${isNow ? 'bg-m3-primary/15 border-2 border-m3-primary/60' : 'bg-m3-surface-container/80 border border-m3-outline-variant/30'}`}
               >
                 <span className={`text-m3-label-small mb-1 font-bold ${isNow ? 'text-m3-primary' : 'text-m3-on-surface-variant'}`}>
                   {isNow ? t.now : hour.displayTime}
                 </span>
-                <WeatherIcon size={24} className="text-m3-on-surface mb-2" />
+                <WeatherIcon size={32} className="text-m3-on-surface mb-2" />
                 <span className="text-m3-title-medium font-bold text-m3-on-surface">
                   {formatTemp(hour.temp)}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}
                 </span>
