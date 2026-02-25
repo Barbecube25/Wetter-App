@@ -19,8 +19,8 @@ const ANIMATION_CARD_HEIGHT = '210px';
 // Navigation bar height constant for spacing calculations (82px actual rendered height + 8px spacing)
 const NAV_BAR_HEIGHT = '90px'; 
 
-// Gap between fixed elements for consistent spacing (24px to prevent tiles from overlapping with navigation bar)
-const FIXED_ELEMENTS_GAP = '24px'; 
+// Gap between fixed elements for consistent spacing (12px – symmetric and tight between animation tile, navigation and content)
+const FIXED_ELEMENTS_GAP = '12px'; 
 
 // Time and precipitation thresholds
 const EVENING_START_HOUR = 16;
@@ -10015,7 +10015,7 @@ export default function WeatherApp() {
       return {
         animationCardHeight: '180px',
         navBarHeight: '70px',
-        fixedElementsGap: '16px',
+        fixedElementsGap: '12px',
         fixedTopOffset: 'calc(env(safe-area-inset-top, 0px) + 12px)'
       };
     }
@@ -10662,7 +10662,7 @@ export default function WeatherApp() {
         </button>
       )}
 
-      <main className={`max-w-4xl mx-auto ${isSmallScreen ? 'px-2' : 'px-4'} pb-4 z-10 relative space-y-2`} style={{ paddingTop: `calc(${animationCardHeight} + ${navBarHeight} + ${fixedElementsGap} + ${fixedTopOffset})` }}>
+      <main className={`max-w-4xl mx-auto ${isSmallScreen ? 'px-2' : 'px-4'} pb-4 z-10 relative space-y-3`} style={{ paddingTop: `calc(${animationCardHeight} + ${navBarHeight} + 2 * ${fixedElementsGap} + ${fixedTopOffset})` }}>
         {/* Fixed Animation Card Container - Matches main content width, extends to top edge */}
         <div className={`fixed left-0 right-0 z-20 ${isSmallScreen ? 'px-2' : 'px-4'}`} style={{ top: fixedTopOffset }}>
           <div className="max-w-4xl mx-auto">
