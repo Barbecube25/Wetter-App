@@ -9965,7 +9965,7 @@ export default function WeatherApp() {
         animationCardHeight: '100px',
         navBarHeight: '56px',
         fixedElementsGap: '12px',
-        fixedTopOffset: '12px'
+        fixedTopOffset: 'calc(env(safe-area-inset-top, 0px) + 12px)'
       };
     }
     if (isSmallScreen) {
@@ -9973,14 +9973,14 @@ export default function WeatherApp() {
         animationCardHeight: '180px',
         navBarHeight: '70px',
         fixedElementsGap: '16px',
-        fixedTopOffset: '12px'
+        fixedTopOffset: 'calc(env(safe-area-inset-top, 0px) + 12px)'
       };
     }
     return {
       animationCardHeight: ANIMATION_CARD_HEIGHT,
       navBarHeight: NAV_BAR_HEIGHT,
       fixedElementsGap: FIXED_ELEMENTS_GAP,
-      fixedTopOffset: '12px'
+      fixedTopOffset: 'calc(env(safe-area-inset-top, 0px) + 12px)'
     };
   };
 
