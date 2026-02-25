@@ -5609,7 +5609,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
 };
 
 // --- NEU: HOURLY TEMPERATURE TILES (Horizontal tiles with next hours temps) ---
-const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol }) => {
+const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol, formatWind, getWindUnitLabel, formatPrecip, getPrecipUnitLabel, isRealNight = false }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
   
   if (!data || data.length === 0) return null;
@@ -5624,23 +5624,66 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
         <span className="text-m3-label-large font-bold text-m3-on-surface">{t.nextHours}</span>
       </div>
       
-      <div className="overflow-x-auto pb-2 -mx-2 px-2" tabIndex="0">
-        <div className="flex gap-3">
+      <div className="overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
+        <div className="flex gap-3 w-max">
           {hourlyData.map((hour, idx) => {
             const WeatherIcon = getWeatherConfig(hour.code, hour.isDay, lang).icon;
             const isNow = idx === 0;
+            const isDaySnow = SNOW_WEATHER_CODES.includes(hour.code);
+            const rainValue = hour.precip || 0;
+            const snowValue = hour.snow || 0;
+            const appTempVal = hour.appTemp !== null && hour.appTemp !== undefined ? hour.appTemp : hour.temp;
+            const minTemp = Math.min(appTempVal, hour.temp);
+            const maxTemp = Math.max(appTempVal, hour.temp);
+            const dateStr = formatDateShort(hour.time, lang);
             return (
               <div 
                 key={hour.time.toISOString()} 
-                className={`flex flex-col items-center backdrop-blur-sm rounded-m3-xl p-3 min-w-[70px] shadow-m3-1 hover:shadow-m3-2 transition-all ${isNow ? 'bg-m3-primary/15 border-2 border-m3-primary/60' : 'bg-m3-surface-container/80 border border-m3-outline-variant/30'}`}
+                className={`flex flex-col items-center backdrop-blur-sm rounded-m3-xl p-3 min-w-[160px] w-[160px] shadow-m3-1 hover:shadow-m3-2 transition-all ${isNow ? 'bg-m3-primary/15 border-2 border-m3-primary/60' : 'bg-m3-surface-container/80 border border-m3-outline-variant/30'}`}
               >
-                <span className={`text-m3-label-small mb-1 font-bold ${isNow ? 'text-m3-primary' : 'text-m3-on-surface-variant'}`}>
+                {/* Time & Date */}
+                <div className={`text-base font-bold mb-0.5 ${isNow ? 'text-m3-primary' : 'text-m3-on-surface'}`}>
                   {isNow ? t.now : hour.displayTime}
-                </span>
-                <WeatherIcon size={24} className="text-m3-on-surface mb-2" />
-                <span className="text-m3-title-medium font-bold text-m3-on-surface">
-                  {formatTemp(hour.temp)}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}
-                </span>
+                </div>
+                <div className="text-xs mb-2 font-medium text-m3-on-surface-variant">{dateStr}</div>
+
+                {/* Icon */}
+                <WeatherIcon size={48} className="mb-2 text-m3-on-surface" />
+
+                {/* Temp Range */}
+                <div className="flex items-center gap-2 mb-2 w-full justify-center">
+                  <span className="text-2xl font-bold text-blue-400">{formatTemp(minTemp)}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}</span>
+                  <div className="h-1 w-6 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
+                  </div>
+                  <span className="text-2xl font-bold text-red-400">{formatTemp(maxTemp)}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}</span>
+                </div>
+
+                {/* Precipitation Badge */}
+                <div className="mb-1 min-h-[16px] flex flex-col items-center justify-center w-full gap-0.5">
+                  {rainValue > 0.1 && snowValue > 0.1 ? (
+                    <>
+                      <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><CloudRain size={10}/> {formatPrecip ? formatPrecip(rainValue) : rainValue.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}</span>
+                      <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {formatPrecip ? formatPrecip(snowValue) : snowValue.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}</span>
+                    </>
+                  ) : isDaySnow ? (
+                    rainValue > 0.1 || snowValue > 0.1 ? (
+                      <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {formatPrecip ? formatPrecip(snowValue > 0 ? snowValue : (rainValue / RAIN_TO_SNOW_RATIO)) : (snowValue > 0 ? snowValue : (rainValue / RAIN_TO_SNOW_RATIO)).toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}</span>
+                    ) : ( <span className="opacity-20 text-xs">-</span> )
+                  ) : rainValue > 0.1 ? (
+                    <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {formatPrecip ? formatPrecip(rainValue) : rainValue.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}</span>
+                  ) : ( <span className="opacity-20 text-xs">-</span> )}
+                </div>
+
+                {/* Wind Badge */}
+                {formatWind && getWindUnitLabel && (
+                  <div className="flex flex-col items-center gap-0.5 mb-1 w-full">
+                    <div className="flex items-center justify-center gap-1 w-full">
+                      <Navigation size={12} style={{ transform: `rotate(${hour.dir || 0}deg)` }} />
+                      <span className={`text-sm font-bold ${getWindColorClass(hour.wind || 0, isRealNight)}`}>{formatWind(hour.wind || 0)} {getWindUnitLabel()}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -11060,7 +11103,7 @@ export default function WeatherApp() {
                  );
                })()}
 
-               <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} />
+               <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} isRealNight={isRealNight} />
 
 
             </div>
