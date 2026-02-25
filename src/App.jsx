@@ -11062,38 +11062,7 @@ export default function WeatherApp() {
 
                <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} />
 
-               {/* Photographer's Weather: Golden Hour & Blue Hour */}
-               {getPhotographyTimes && !isLandscape && (
-                 <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container-high'} rounded-m3-xl p-3 shadow-m3-1`}>
-                   <div className={`flex items-center gap-2 text-m3-label-small font-bold uppercase opacity-70 mb-2`}>
-                     <Star size={14} /> {t('photographerWeather')}
-                   </div>
-                   <div className="grid grid-cols-2 gap-2 text-xs">
-                     <div className="space-y-1">
-                       <div className={`font-semibold ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>{t('morningLight')}</div>
-                       <div className="flex items-center gap-1">
-                         <span className="inline-block w-2 h-2 rounded-full bg-blue-400"></span>
-                         <span>{t('blueHour')}: {formatTime(getPhotographyTimes.morningBlueStart.toISOString())}–{formatTime(getPhotographyTimes.morningBlueEnd.toISOString())}</span>
-                       </div>
-                       <div className="flex items-center gap-1">
-                         <span className="inline-block w-2 h-2 rounded-full bg-yellow-400"></span>
-                         <span>{t('goldenHour')}: {formatTime(getPhotographyTimes.morningGoldenStart.toISOString())}–{formatTime(getPhotographyTimes.morningGoldenEnd.toISOString())}</span>
-                       </div>
-                     </div>
-                     <div className="space-y-1">
-                       <div className={`font-semibold ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>{t('eveningLight')}</div>
-                       <div className="flex items-center gap-1">
-                         <span className="inline-block w-2 h-2 rounded-full bg-yellow-400"></span>
-                         <span>{t('goldenHour')}: {formatTime(getPhotographyTimes.eveningGoldenStart.toISOString())}–{formatTime(getPhotographyTimes.eveningGoldenEnd.toISOString())}</span>
-                       </div>
-                       <div className="flex items-center gap-1">
-                         <span className="inline-block w-2 h-2 rounded-full bg-blue-400"></span>
-                         <span>{t('blueHour')}: {formatTime(getPhotographyTimes.eveningBlueStart.toISOString())}–{formatTime(getPhotographyTimes.eveningBlueEnd.toISOString())}</span>
-                       </div>
-                     </div>
-                   </div>
-                 </div>
-               )}
+
             </div>
           )}
 
