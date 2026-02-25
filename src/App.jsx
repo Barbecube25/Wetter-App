@@ -10898,12 +10898,12 @@ export default function WeatherApp() {
         {/* Collapsible Weather Details Container */}
         <div 
           id="weather-details-tiles"
-          className={`transition-all duration-300 ease-in-out overflow-hidden space-y-2 ${
+          className={`transition-all duration-300 ease-in-out overflow-hidden ${isSmallScreen ? 'space-y-2' : 'space-y-4'} ${
             tilesExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
           {/* Weather Details Grid - First row (4 tiles) */}
-          <div className={`grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'gap-1.5' : 'gap-2'}`}>
+          <div className={`grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'gap-2' : 'gap-4'}`}>
           <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('uv')}>
             <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Sun size={14} /> {t('uv')}
@@ -10941,7 +10941,7 @@ export default function WeatherApp() {
         </div>
         
         {/* Additional Weather Details Grid - Second row (4 tiles) */}
-        <div className={`grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'gap-1.5' : 'gap-2'}`}>
+        <div className={`grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'gap-2' : 'gap-4'}`}>
           {current.pressure !== null && current.pressure !== undefined && (
             <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('pressure')}>
               <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
