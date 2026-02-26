@@ -10810,14 +10810,14 @@ export default function WeatherApp() {
                       <span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}{getCacheAgeText()}</span>
                     </div>
                   )}
-                  {/* Pull-to-refresh hint */}
-                  {!isLandscape && !isPulling && !isRefreshing && (
+                  {/* Pull-to-refresh hint - always rendered when not landscape to prevent layout shifts */}
+                  {!isLandscape && (
                     <div
                       className="flex items-center gap-1 text-m3-label-small text-white/75 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)] mt-1 transition-opacity duration-500"
-                      style={{ opacity: showPullHint ? 1 : 0 }}
-                      aria-hidden={!showPullHint}
+                      style={{ opacity: (!isPulling && !isRefreshing && showPullHint) ? 1 : 0 }}
+                      aria-hidden={isPulling || isRefreshing || !showPullHint}
                     >
-                      <ChevronDown size={12} className={showPullHint ? 'animate-bounce' : ''} />
+                      <ChevronDown size={12} className={(!isPulling && !isRefreshing && showPullHint) ? 'animate-bounce' : ''} />
                       <span>{t('pullToRefresh')}</span>
                     </div>
                   )}
