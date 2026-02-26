@@ -4704,6 +4704,10 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
        // Stars fade in during extended evening twilight
        const timeUntilSunset = sunsetHour - currentHour;
        starOpacity = Math.max(0, 1 - (timeUntilSunset / EXTENDED_TWILIGHT_DURATION));
+       // Blue hour sky fades in as sunset approaches (continuous with night branch at sunset)
+       if (timeUntilSunset < TWILIGHT_EXTENSION) {
+         blueHourSkyOpacity = Math.max(0, 1 - timeUntilSunset / TWILIGHT_EXTENSION);
+       }
      } else {
        // Full day - no stars
        skyTransitionFactor = 1;
@@ -4725,18 +4729,18 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
      
      // Calculate blue hour sky and star opacity during twilight periods
      if (timeSinceSunset < TWILIGHT_EXTENSION) {
-       // Post-sunset blue hour: deep blue sky fades out, stars fade in
+       // Post-sunset blue hour: deep blue sky fades out, stars already at full opacity from dusk transition
        blueHourSkyOpacity = Math.max(0, 1 - timeSinceSunset / TWILIGHT_EXTENSION);
-       starOpacity = Math.min(1, timeSinceSunset / TWILIGHT_EXTENSION);
+       starOpacity = 1;
      } else {
        // Calculate time before sunrise for morning twilight
        const timeBeforeSunrise = sunriseHour - currentHour;
        const adjustedTimeBeforeSunrise = timeBeforeSunrise < 0 ? timeBeforeSunrise + 24 : timeBeforeSunrise;
        
        if (adjustedTimeBeforeSunrise < TWILIGHT_EXTENSION) {
-         // Pre-sunrise blue hour: deep blue sky fades in, stars fade out
+         // Pre-sunrise blue hour: deep blue sky fades in, stars at full opacity (dawn branch handles fade-out)
          blueHourSkyOpacity = Math.max(0, 1 - adjustedTimeBeforeSunrise / TWILIGHT_EXTENSION);
-         starOpacity = Math.min(1, adjustedTimeBeforeSunrise / TWILIGHT_EXTENSION);
+         starOpacity = 1;
        } else {
          // Full night - stars at full opacity, no blue hour sky
          starOpacity = 1;
