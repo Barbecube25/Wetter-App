@@ -11155,6 +11155,49 @@ export default function WeatherApp() {
 
                <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} isRealNight={isRealNight} />
 
+               {/* Golden Hour / Blue Hour for Photographers */}
+               {getPhotographyTimes?.morningBlueStart && (
+                 <div className={`px-4 py-3 rounded-m3-xl ${isRealNight ? 'bg-m3-dark-surface-container-high text-m3-dark-on-surface' : 'bg-m3-surface-container-high text-m3-on-surface'}`}>
+                   <div className="text-xs font-semibold uppercase opacity-60 mb-2 flex items-center gap-1">
+                     <Sparkles size={12} />
+                     <span>{t('photographerWeather')}</span>
+                   </div>
+                   <div className="grid grid-cols-2 gap-3 text-xs">
+                     <div>
+                       <div className="flex items-center gap-1 mb-1">
+                         <Sunrise size={12} className="text-amber-400" />
+                         <span className="font-medium">{t('morningLight')}</span>
+                       </div>
+                       <div className="flex items-center gap-1 text-blue-400 mb-0.5">
+                         <Moon size={10} />
+                         <span className="opacity-80">{t('blueHour')}:</span>
+                         <span>{formatTime(getPhotographyTimes.morningBlueStart)} – {formatTime(getPhotographyTimes.morningBlueEnd)}</span>
+                       </div>
+                       <div className="flex items-center gap-1 text-amber-400">
+                         <Sun size={10} />
+                         <span className="opacity-80">{t('goldenHour')}:</span>
+                         <span>{formatTime(getPhotographyTimes.morningGoldenStart)} – {formatTime(getPhotographyTimes.morningGoldenEnd)}</span>
+                       </div>
+                     </div>
+                     <div>
+                       <div className="flex items-center gap-1 mb-1">
+                         <Sunset size={12} className="text-orange-400" />
+                         <span className="font-medium">{t('eveningLight')}</span>
+                       </div>
+                       <div className="flex items-center gap-1 text-amber-400 mb-0.5">
+                         <Sun size={10} />
+                         <span className="opacity-80">{t('goldenHour')}:</span>
+                         <span>{formatTime(getPhotographyTimes.eveningGoldenStart)} – {formatTime(getPhotographyTimes.eveningGoldenEnd)}</span>
+                       </div>
+                       <div className="flex items-center gap-1 text-blue-400">
+                         <Moon size={10} />
+                         <span className="opacity-80">{t('blueHour')}:</span>
+                         <span>{formatTime(getPhotographyTimes.eveningBlueStart)} – {formatTime(getPhotographyTimes.eveningBlueEnd)}</span>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+               )}
 
             </div>
           )}
