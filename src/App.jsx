@@ -297,6 +297,7 @@ const TRANSLATIONS = {
     swipeHintLocations: "Karte wischen zum Ort wechseln",
     swipeHintTabs: "Wischen zum Tab wechseln",
     trendTitle: "Verlauf",
+    homeLandscape: "Heimat-Landschaft",
 
   },
   en: {
@@ -525,6 +526,7 @@ const TRANSLATIONS = {
     swipeHintLocations: "Swipe card to change location",
     swipeHintTabs: "Swipe to switch tab",
     trendTitle: "Trend",
+    homeLandscape: "Home Landscape",
 
   },
   fr: {
@@ -712,6 +714,7 @@ const TRANSLATIONS = {
     releaseToRefresh: "Relâcher pour actualiser",
     showMoreDetails: "Afficher plus de détails",
     hideMoreDetails: "Masquer les détails",
+    homeLandscape: "Paysage d'accueil",
 
 
   },
@@ -900,6 +903,7 @@ const TRANSLATIONS = {
     releaseToRefresh: "Suelta para actualizar",
     showMoreDetails: "Mostrar más detalles",
     hideMoreDetails: "Ocultar detalles",
+    homeLandscape: "Paisaje de inicio",
 
   },
   it: {
@@ -1087,6 +1091,7 @@ const TRANSLATIONS = {
     releaseToRefresh: "Rilascia per aggiornare",
     showMoreDetails: "Mostra più dettagli",
     hideMoreDetails: "Nascondi dettagli",
+    homeLandscape: "Paesaggio principale",
 
   },
   tr: {
@@ -1274,6 +1279,7 @@ const TRANSLATIONS = {
     releaseToRefresh: "Yenilemek için bırakın",
     showMoreDetails: "Daha fazla ayrıntı göster",
     hideMoreDetails: "Ayrıntıları gizle",
+    homeLandscape: "Ana konum manzarası",
 
   },
   pl: {
@@ -1461,6 +1467,7 @@ const TRANSLATIONS = {
     releaseToRefresh: "Puść, aby odświeżyć",
     showMoreDetails: "Pokaż więcej szczegółów",
     hideMoreDetails: "Ukryj szczegóły",
+    homeLandscape: "Krajobraz domowy",
 
   },
   nl: {
@@ -1648,6 +1655,7 @@ const TRANSLATIONS = {
     releaseToRefresh: "Loslaten om te vernieuwen",
     showMoreDetails: "Meer details tonen",
     hideMoreDetails: "Details verbergen",
+    homeLandscape: "Thuislandschap",
 
   },
   hr: {
@@ -1835,6 +1843,7 @@ const TRANSLATIONS = {
     releaseToRefresh: "Pustite za osvježavanje",
     showMoreDetails: "Prikaži više detalja",
     hideMoreDetails: "Sakrij detalje",
+    homeLandscape: "Pejzaž doma",
 
   },
   el: {
@@ -2022,6 +2031,7 @@ const TRANSLATIONS = {
     releaseToRefresh: "Αφήστε για ανανέωση",
     showMoreDetails: "Εμφάνιση περισσότερων λεπτομερειών",
     hideMoreDetails: "Απόκρυψη λεπτομερειών",
+    homeLandscape: "Τοπίο κατοικίας",
 
   },
   da: {
@@ -2209,6 +2219,7 @@ const TRANSLATIONS = {
     releaseToRefresh: "Slip for at opdatere",
     showMoreDetails: "Vis flere detaljer",
     hideMoreDetails: "Skjul detaljer",
+    homeLandscape: "Hjemlandskab",
 
   },
   ru: {
@@ -2396,6 +2407,7 @@ const TRANSLATIONS = {
     releaseToRefresh: "Отпустите для обновления",
     showMoreDetails: "Показать больше деталей",
     hideMoreDetails: "Скрыть детали",
+    homeLandscape: "Пейзаж дома",
 
   }
 };
@@ -2431,7 +2443,8 @@ const getSavedSettings = () => {
             theme: 'auto',
             windUnit: 'kmh',
             precipUnit: 'mm',
-            pollenFilter: DEFAULT_POLLEN_FILTER
+            pollenFilter: DEFAULT_POLLEN_FILTER,
+            homeTerrain: null
         };
         if (!saved) return defaults;
         const parsed = JSON.parse(saved);
@@ -2456,7 +2469,8 @@ const getSavedSettings = () => {
             theme: 'auto',
             windUnit: 'kmh',
             precipUnit: 'mm',
-            pollenFilter: DEFAULT_POLLEN_FILTER
+            pollenFilter: DEFAULT_POLLEN_FILTER,
+            homeTerrain: null
         }; 
     }
 };
@@ -4037,6 +4051,29 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                      >
                          <Edit2 size={16}/> {t.changeHome}
                      </button>
+                 </div>
+
+                 {/* HOME LANDSCAPE */}
+                 <div className="mb-6">
+                     <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <Sparkles size={16}/> {t.homeLandscape || 'Heimat-Landschaft'}
+                     </label>
+                     <select
+                         value={localSettings.homeTerrain || ''}
+                         onChange={(e) => setLocalSettings({ ...localSettings, homeTerrain: e.target.value || null })}
+                         className="w-full py-2 px-3 bg-m3-surface-container text-m3-on-surface font-medium rounded-m3-md border border-m3-outline-variant text-sm"
+                     >
+                         <option value="">🌍 Auto</option>
+                         <option value="mountains">🏔️ Berge / Mountains</option>
+                         <option value="valley">🏞️ Tal / Valley</option>
+                         <option value="forest">🌲 Wald / Forest</option>
+                         <option value="hills">🏕️ Hügel / Hills</option>
+                         <option value="flatland">🌾 Flachland / Flatland</option>
+                         <option value="lakeside">🏖️ See / Lakeside</option>
+                         <option value="sea">🌊 Meer / Sea</option>
+                         <option value="desert">🏜️ Wüste / Desert</option>
+                         <option value="city">🏙️ Stadt / City</option>
+                     </select>
                  </div>
 
                  {/* LANGUAGE */}
@@ -10052,6 +10089,9 @@ export default function WeatherApp() {
     return 'h-[210px]';
   };
 
+  // Effective terrain: manual demo override takes priority, then home terrain setting when at home location
+  const effectiveTerrain = demoTerrain || (currentLocIdx === 0 ? settings.homeTerrain : null);
+
   // Create a 3-day forecast: rest of today, tomorrow, and day after tomorrow
   const threeDayForecast = useMemo(() => {
     if (!processedShort.length || !processedLong.length) return [];
@@ -10152,7 +10192,7 @@ export default function WeatherApp() {
               demoEvent={demoEvent}
               demoTime={demoTime}
               demoWindSpeed={demoWindSpeed}
-              demoTerrain={demoTerrain}
+              demoTerrain={effectiveTerrain}
               elevation={currentLoc?.elevation || 0}
               latitude={currentLoc?.lat}
               longitude={currentLoc?.lon}
@@ -10712,7 +10752,7 @@ export default function WeatherApp() {
             >
               {/* Weather background animation */}
               <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
-                <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} demoTerrain={demoTerrain} elevation={currentLoc?.elevation || 0} latitude={currentLoc?.lat} longitude={currentLoc?.lon} />
+                <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} demoTerrain={effectiveTerrain} elevation={currentLoc?.elevation || 0} latitude={currentLoc?.lat} longitude={currentLoc?.lon} />
               </div>
               
               <div
@@ -10819,9 +10859,18 @@ export default function WeatherApp() {
                   )}
                 </div>
               </div>
-              {/* Location indicator dots - permanent, outside the swipe translateX div */}
+              {/* Location indicator dots - absolute positioned at bottom of card */}
               {allLocations.length > 1 && !isLandscape && (
-                <div className="relative z-10 flex justify-center gap-1.5 pb-2 pt-1">
+                <div className="absolute bottom-2 left-0 right-0 z-10 flex justify-center items-center gap-1.5">
+                  {currentLocIdx !== 0 && (
+                    <button
+                      onClick={() => setCurrentLoc(allLocations[0])}
+                      className="flex items-center justify-center w-5 h-5 rounded-full bg-white/20 hover:bg-white/40 text-white mr-1 transition-colors"
+                      aria-label="Home"
+                    >
+                      <Home size={10} />
+                    </button>
+                  )}
                   {allLocations.map((_, i) => {
                     const swipeProgress = Math.min(1, Math.abs(cardTransX) / DOT_SWIPE_DISTANCE_PX);
                     const isSwiping = Math.abs(cardTransX) > DOT_MIN_SWIPE_PX;
