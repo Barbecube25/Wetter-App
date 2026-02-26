@@ -4670,6 +4670,9 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   let starOpacity = 0;
   // Blue hour sky opacity: deep blue twilight sky before sunrise and after sunset
   let blueHourSkyOpacity = 0;
+  // Golden hour sky opacity: warm amber/golden glow near horizon at sunrise and sunset
+  let goldenHourMorningOpacity = 0;
+  let goldenHourEveningOpacity = 0;
   const EXTENDED_TWILIGHT_DURATION = TRANSITION_DURATION + TWILIGHT_EXTENSION;
 
   // ÄNDERUNG: < sunsetHour (nicht <=), damit bei Sonnenuntergang die Sonne sofort verschwindet
@@ -4697,6 +4700,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
        // Stars fade out during extended morning twilight
        const timeSinceSunrise = currentHour - sunriseHour;
        starOpacity = Math.max(0, 1 - (timeSinceSunrise / EXTENDED_TWILIGHT_DURATION));
+       // Morning golden hour: strongest at sunrise, fades linearly as day brightens
+       goldenHourMorningOpacity = Math.max(0, 1 - skyTransitionFactor) * 0.85;
      } else if (sunsetHour - currentHour < TRANSITION_DURATION) {
        isDusk = true;
        // Smooth transition from 1 (day) to 0 (night) during dusk
@@ -4708,6 +4713,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
        if (timeUntilSunset < TWILIGHT_EXTENSION) {
          blueHourSkyOpacity = Math.max(0, 1 - timeUntilSunset / TWILIGHT_EXTENSION);
        }
+       // Evening golden hour: builds from 0 (60 min before sunset) to peak at sunset
+       goldenHourEveningOpacity = Math.max(0, 1 - skyTransitionFactor) * 0.85;
      } else {
        // Full day - no stars
        skyTransitionFactor = 1;
@@ -4731,6 +4738,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
      if (timeSinceSunset < TWILIGHT_EXTENSION) {
        // Post-sunset blue hour: deep blue sky fades out, stars already at full opacity from dusk transition
        blueHourSkyOpacity = Math.max(0, 1 - timeSinceSunset / TWILIGHT_EXTENSION);
+       // Evening golden hour continues briefly after sunset before fading into blue hour
+       goldenHourEveningOpacity = Math.max(0, 1 - timeSinceSunset / TWILIGHT_EXTENSION) * 0.85;
        starOpacity = 1;
      } else {
        // Calculate time before sunrise for morning twilight
@@ -4740,6 +4749,8 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
        if (adjustedTimeBeforeSunrise < TWILIGHT_EXTENSION) {
          // Pre-sunrise blue hour: deep blue sky fades in, stars at full opacity (dawn branch handles fade-out)
          blueHourSkyOpacity = Math.max(0, 1 - adjustedTimeBeforeSunrise / TWILIGHT_EXTENSION);
+         // Morning golden hour begins before sunrise as a warm horizon glow
+         goldenHourMorningOpacity = Math.max(0, 1 - adjustedTimeBeforeSunrise / TWILIGHT_EXTENSION) * 0.85;
          starOpacity = 1;
        } else {
          // Full night - stars at full opacity, no blue hour sky
@@ -4816,8 +4827,15 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
           <stop offset="100%" stopColor="#dc2626" stopOpacity="0.9" />
         </linearGradient>
         <linearGradient id="blueHourGradient" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#0c1445" />
-          <stop offset="100%" stopColor="#1e3a8a" />
+          <stop offset="0%" stopColor="#1e1b4b" />
+          <stop offset="50%" stopColor="#1e3a8a" />
+          <stop offset="100%" stopColor="#1d4ed8" />
+        </linearGradient>
+        <linearGradient id="goldenHourGradient" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor="#92400e" stopOpacity="0.05" />
+          <stop offset="40%" stopColor="#f59e0b" stopOpacity="0.5" />
+          <stop offset="75%" stopColor="#f97316" stopOpacity="0.75" />
+          <stop offset="100%" stopColor="#ea580c" stopOpacity="0.9" />
         </linearGradient>
         <linearGradient id="fogGradient" x1="0" x2="1" y1="0" y2="0">
            <stop offset="0%" stopColor="white" stopOpacity="0.1" />
@@ -4848,6 +4866,30 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
           height="160"
           fill="url(#blueHourGradient)"
           opacity={blueHourSkyOpacity}
+          style={{ transition: `opacity ${CSS_TRANSITION_DURATION} ease-in-out` }}
+        />
+      )}
+
+      {/* Golden hour sky - warm amber/golden glow at horizon during morning and evening golden hour */}
+      {goldenHourMorningOpacity > 0 && (
+        <rect
+          x="0"
+          y="0"
+          width="360"
+          height="160"
+          fill="url(#goldenHourGradient)"
+          opacity={goldenHourMorningOpacity}
+          style={{ transition: `opacity ${CSS_TRANSITION_DURATION} ease-in-out` }}
+        />
+      )}
+      {goldenHourEveningOpacity > 0 && (
+        <rect
+          x="0"
+          y="0"
+          width="360"
+          height="160"
+          fill="url(#goldenHourGradient)"
+          opacity={goldenHourEveningOpacity}
           style={{ transition: `opacity ${CSS_TRANSITION_DURATION} ease-in-out` }}
         />
       )}
