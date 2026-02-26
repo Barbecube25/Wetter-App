@@ -2857,8 +2857,11 @@ const getMoonPhaseSVGPath = (phase, r = 12) => {
   const termRx = Math.abs(kx) * r; // x-radius of terminator ellipse
   // Outer semicircle: CW (sweep=1) for waxing (right side lit), CCW (sweep=0) for waning
   const outerSweep = isWaning ? 0 : 1;
-  // Terminator sweep: same direction for crescent, opposite for gibbous
-  const termSweep = kx < 0 ? 1 - outerSweep : outerSweep;
+  // Terminator sweep: In SVG, CW (sweep=1) from the bottom point (0,r) goes through the LEFT (negative-x)
+  // side, and CCW (sweep=0) goes through the RIGHT (positive-x) side.
+  // For crescent (kx>0): terminator curves toward the lit side → same x-side as outer arc → 1 - outerSweep
+  // For gibbous (kx<0): terminator curves away from the lit side → opposite x-side → outerSweep
+  const termSweep = kx < 0 ? outerSweep : 1 - outerSweep;
   if (waxPhase === 2) {
     // Quarter moon: straight-line terminator
     return `M 0,${-r} A ${r},${r} 0 0,${outerSweep} 0,${r} L 0,${-r}`;
