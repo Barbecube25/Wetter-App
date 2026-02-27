@@ -10833,72 +10833,71 @@ export default function WeatherApp() {
                   }
                 }}
               >
-                {/* Location and Update Time at top */}
-                <div className="mb-2">
-                  <h1 className={`${isLandscape ? 'text-m3-title-medium' : 'text-m3-headline-small'} font-bold text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]`}>
-                    {currentLoc.name}
-                    {currentLoc.type === 'gps' && <span className="ml-2">📍</span>}
-                  </h1>
-                  {(currentLoc.region || currentLoc.country) && !isLandscape && (
-                    <div className="flex items-center gap-1 text-m3-body-small text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)] mt-0.5">
-                      <MapPin size={12} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
-                      <span>
-                        {currentLoc.region}
-                        {currentLoc.region && currentLoc.country ? ', ' : ''}
-                        {currentLoc.country}
-                      </span>
-                    </div>
-                  )}
-                  {/* Update Time Display */}
-                  {!isLandscape && (
-                    <div className="flex items-center gap-2 text-m3-label-small text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)] mt-1">
-                      <Clock size={12} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
-                      <span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}{getCacheAgeText()}</span>
-                    </div>
-                  )}
-                  {/* Pull-to-refresh hint - always rendered when not landscape to prevent layout shifts */}
-                  {!isLandscape && (
-                    <div
-                      className="flex items-center gap-1 text-m3-label-small text-white/75 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)] mt-1 transition-opacity duration-500"
-                      style={{ opacity: (!isPulling && !isRefreshing && showPullHint) ? 1 : 0 }}
-                      aria-hidden={isPulling || isRefreshing || !showPullHint}
-                    >
-                      <ChevronDown size={12} className={(!isPulling && !isRefreshing && showPullHint) ? 'animate-bounce' : ''} />
-                      <span>{t('pullToRefresh')}</span>
-                    </div>
-                  )}
+                {/* Location and Update Time at top, Temperature top-right */}
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <h1 className={`${isLandscape ? 'text-m3-title-medium' : 'text-m3-headline-small'} font-bold text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]`}>
+                      {currentLoc.name}
+                      {currentLoc.type === 'gps' && <span className="ml-2">📍</span>}
+                    </h1>
+                    {(currentLoc.region || currentLoc.country) && !isLandscape && (
+                      <div className="flex items-center gap-1 text-m3-body-small text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)] mt-0.5">
+                        <MapPin size={12} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                        <span>
+                          {currentLoc.region}
+                          {currentLoc.region && currentLoc.country ? ', ' : ''}
+                          {currentLoc.country}
+                        </span>
+                      </div>
+                    )}
+                    {/* Update Time Display */}
+                    {!isLandscape && (
+                      <div className="flex items-center gap-2 text-m3-label-small text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)] mt-1">
+                        <Clock size={12} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                        <span>{t('updated')}: {lastUpdated ? lastUpdated.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'}) : '--:--'} {t('oclock')}{getCacheAgeText()}</span>
+                      </div>
+                    )}
+                    {/* Pull-to-refresh hint - always rendered when not landscape to prevent layout shifts */}
+                    {!isLandscape && (
+                      <div
+                        className="flex items-center gap-1 text-m3-label-small text-white/75 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)] mt-1 transition-opacity duration-500"
+                        style={{ opacity: (!isPulling && !isRefreshing && showPullHint) ? 1 : 0 }}
+                        aria-hidden={isPulling || isRefreshing || !showPullHint}
+                      >
+                        <ChevronDown size={12} className={(!isPulling && !isRefreshing && showPullHint) ? 'animate-bounce' : ''} />
+                        <span>{t('pullToRefresh')}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Temperature – top right */}
+                  <div className={`flex flex-col items-end ${isLandscape ? 'p-1' : 'p-2'}`}>
+                    <span className={`${isLandscape ? 'text-m3-display-small' : 'text-m3-display-large'} font-light text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]`}>{formatTemp(current.temp)}{getTempUnitSymbol()}</span>
+                  </div>
                 </div>
 
-                {/* Main Temperature Display */}
+                {/* Weather Info: condition, feels like, H/T, sunrise, sunset */}
                 <div>
-                  <div className="flex items-start justify-between">
-                    {/* Weather Info: condition, feels like, sunrise, sunset */}
-                    <div className={`flex flex-col gap-1 ${isLandscape ? 'p-1 pr-2' : 'p-2 pr-4'} opacity-90`}>
-                      <div className={`${isLandscape ? 'text-m3-label-medium' : 'text-m3-title-medium'} font-medium text-white drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]`}>{weatherConf.text}</div>
-                      <div className={`flex items-center gap-2 ${isLandscape ? 'text-m3-body-small' : 'text-m3-body-medium'} text-white/95 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]`}>
-                        <Thermometer size={isLandscape ? 14 : 16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
-                        <span>{t('feelsLike')} {formatTemp(current.appTemp)}{getTempUnitSymbol()}</span>
-                      </div>
-                      {!isLandscape && (
-                        <div className="flex items-center gap-3 text-m3-label-large text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
-                          <span>H: {formatTemp(processedLong[0]?.max)}{getTempUnitSymbol()}</span>
-                          <span>•</span>
-                          <span>T: {formatTemp(processedLong[0]?.min)}{getTempUnitSymbol()}</span>
-                        </div>
-                      )}
-                      <div className={`flex items-center gap-1.5 ${isLandscape ? 'text-m3-label-small' : 'text-m3-label-large'} text-white/90 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]`}>
-                        <Sunrise size={isLandscape ? 12 : 16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
-                        <span>{formatTime(sunriseSunset.sunrise)}</span>
-                      </div>
-                      <div className={`flex items-center gap-1.5 ${isLandscape ? 'text-m3-label-small' : 'text-m3-label-large'} text-white/90 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]`}>
-                        <Sunset size={isLandscape ? 12 : 16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
-                        <span>{formatTime(sunriseSunset.sunset)}</span>
-                      </div>
+                  <div className={`flex flex-col gap-1 ${isLandscape ? 'p-1 pr-2' : 'p-2 pr-4'} opacity-90`}>
+                    <div className={`${isLandscape ? 'text-m3-label-medium' : 'text-m3-title-medium'} font-medium text-white drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]`}>{weatherConf.text}</div>
+                    <div className={`flex items-center gap-2 ${isLandscape ? 'text-m3-body-small' : 'text-m3-body-medium'} text-white/95 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]`}>
+                      <Thermometer size={isLandscape ? 14 : 16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                      <span>{t('feelsLike')} {formatTemp(current.appTemp)}{getTempUnitSymbol()}</span>
                     </div>
-
-                    {/* Temperature – upper right, slightly larger */}
-                    <div className={`flex flex-col items-end ${isLandscape ? 'p-1' : 'p-2'}`}>
-                      <span className={`${isLandscape ? 'text-m3-display-small' : 'text-m3-display-large'} font-light text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]`}>{formatTemp(current.temp)}{getTempUnitSymbol()}</span>
+                    {!isLandscape && (
+                      <div className="flex items-center gap-3 text-m3-label-large text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
+                        <span>H: {formatTemp(processedLong[0]?.max)}{getTempUnitSymbol()}</span>
+                        <span>•</span>
+                        <span>T: {formatTemp(processedLong[0]?.min)}{getTempUnitSymbol()}</span>
+                      </div>
+                    )}
+                    <div className={`flex items-center gap-1.5 ${isLandscape ? 'text-m3-label-small' : 'text-m3-label-large'} text-white/90 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]`}>
+                      <Sunrise size={isLandscape ? 12 : 16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                      <span>{formatTime(sunriseSunset.sunrise)}</span>
+                    </div>
+                    <div className={`flex items-center gap-1.5 ${isLandscape ? 'text-m3-label-small' : 'text-m3-label-large'} text-white/90 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]`}>
+                      <Sunset size={isLandscape ? 12 : 16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                      <span>{formatTime(sunriseSunset.sunset)}</span>
                     </div>
                   </div>
                   {isLandscape && (
