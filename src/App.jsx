@@ -9414,8 +9414,23 @@ export default function WeatherApp() {
              return;
         }
 
-        if (isMultiDay) {
-            // MULTI DAY LOGIC
+        // Read time inputs (used in both single-day and overnight/multi-day-with-time logic)
+        const startTimeStr = overrideData ? overrideData.startTime : travelStartTime;
+        const endTimeStr = overrideData ? overrideData.endTime : travelEndTime;
+        const useTimeWindow = startTimeStr || endTimeStr;
+        let startH = 0;
+        let endH = 23;
+        if (useTimeWindow) {
+            if (startTimeStr) startH = parseInt(startTimeStr.split(':')[0]);
+            if (endTimeStr) endH = parseInt(endTimeStr.split(':')[0]);
+        }
+
+        // Detect overnight scenario: the end time is earlier than the start time on a
+        // 24-hour clock (e.g. 19:00 → 08:00), meaning the trip spans midnight.
+        const isOvernightWithTime = useTimeWindow && startH > endH;
+
+        if (isMultiDay && !isOvernightWithTime) {
+            // MULTI DAY LOGIC (no time window – show per-day summaries)
             const daily = wData.daily;
             const dailyItems = [];
             let totalRel = 0;
@@ -9459,50 +9474,53 @@ export default function WeatherApp() {
             result.reliability = count > 0 ? Math.round(totalRel / count) : 50;
 
         } else {
-            // SINGLE DAY LOGIC
-            const startTimeStr = overrideData ? overrideData.startTime : travelStartTime;
-            const endTimeStr = overrideData ? overrideData.endTime : travelEndTime;
-            
-            const useTimeWindow = startTimeStr || endTimeStr;
-            let startH = 0; 
-            let endH = 23;
+            // SINGLE DAY or OVERNIGHT/TIME-WINDOWED LOGIC
+            // For overnight trips (startH > endH) or trips spanning multiple days with a
+            // time window, we filter hourly data by the full datetime range:
+            //   start: startDateStr at startH
+            //   end:   endDateStr (or next day if single-date overnight) at endH
 
-            if (useTimeWindow) {
-                if (startTimeStr) startH = parseInt(startTimeStr.split(':')[0]);
-                if (endTimeStr) endH = parseInt(endTimeStr.split(':')[0]);
-            }
+            // Ensure mode is 'single' so the summary is rendered (not per-day items)
+            result.mode = 'single';
 
-            // Filter hourly data for that day and time window
             const hourly = wData.hourly;
             let temps = [];
             let precips = [];
             let winds = [];
             let codes = [];
             let probs = [];
-            
-            // Use the date string for matching
-            const targetDateStr = startDateStr; 
+
+            // Compute the effective end date string for filtering
+            let effectiveEndDateStr = endDateStr;
+            if (!isMultiDay && startH > endH) {
+                // Single-date overnight: end is the calendar day after startDateStr
+                const nextDay = new Date(startDateStr);
+                nextDay.setDate(nextDay.getDate() + 1);
+                effectiveEndDateStr = nextDay.toISOString().split('T')[0];
+            }
 
             for(let i=0; i<hourly.time.length; i++) {
                 // hourly.time is usually ISO string "YYYY-MM-DDTHH:mm"
                 const tStr = hourly.time[i];
-                if (tStr.startsWith(targetDateStr)) {
-                    // Extract hour from ISO string "2023-10-27T14:00" -> 14
-                    const h = parseInt(tStr.split('T')[1].split(':')[0]);
-                    
-                    if (h >= startH && h <= endH) {
-                        const temp = getSafeValue(hourly, i, 'temperature_2m');
-                        const precip = getSafeValue(hourly, i, 'precipitation');
-                        const wind = getSafeValue(hourly, i, 'wind_speed_10m');
-                        const code = getSafeValue(hourly, i, 'weathercode', false);
-                        const prob = getSafeValue(hourly, i, 'precipitation_probability', false);
+                const [datePart, timePart] = tStr.split('T');
+                const h = parseInt(timePart.split(':')[0]);
 
-                        if (temp !== null) temps.push(temp);
-                        if (precip !== null) precips.push(precip);
-                        if (wind !== null) winds.push(wind);
-                        if (code !== null) codes.push(code);
-                        if (prob !== null) probs.push(prob);
-                    }
+                // Include entry if it falls within [startDateStr+startH, effectiveEndDateStr+endH]
+                const afterStart = datePart > startDateStr || (datePart === startDateStr && h >= startH);
+                const beforeEnd = datePart < effectiveEndDateStr || (datePart === effectiveEndDateStr && h <= endH);
+
+                if (afterStart && beforeEnd) {
+                    const temp = getSafeValue(hourly, i, 'temperature_2m');
+                    const precip = getSafeValue(hourly, i, 'precipitation');
+                    const wind = getSafeValue(hourly, i, 'wind_speed_10m');
+                    const code = getSafeValue(hourly, i, 'weathercode', false);
+                    const prob = getSafeValue(hourly, i, 'precipitation_probability', false);
+
+                    if (temp !== null) temps.push(temp);
+                    if (precip !== null) precips.push(precip);
+                    if (wind !== null) winds.push(wind);
+                    if (code !== null) codes.push(code);
+                    if (prob !== null) probs.push(prob);
                 }
             }
 
@@ -9512,8 +9530,8 @@ export default function WeatherApp() {
                     maxTemp: Math.max(...temps),
                     minTemp: Math.min(...temps),
                     totalPrecip: precips.reduce((a,b)=>a+b,0),
-                    maxWind: Math.max(...winds),
-                    avgProb: Math.round(probs.reduce((a,b)=>a+b,0)/probs.length),
+                    maxWind: winds.length > 0 ? Math.max(...winds) : 0,
+                    avgProb: probs.length > 0 ? Math.round(probs.reduce((a,b)=>a+b,0)/probs.length) : 0,
                     code: codes[Math.floor(codes.length/2)], // approximate
                     isTimeWindow: !!useTimeWindow,
                     startH, endH
