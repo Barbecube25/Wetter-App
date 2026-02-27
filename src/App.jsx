@@ -10886,7 +10886,13 @@ export default function WeatherApp() {
                   {/* Temperature – top right */}
                   <div className={`flex flex-col items-end ${isLandscape ? 'p-1' : 'p-2'}`}>
                     <span className={`${isLandscape ? 'text-m3-display-small' : 'text-m3-display-large'} font-light text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]`}>{formatTemp(current.temp)}{getTempUnitSymbol()}</span>
-                    {/* Feels-like temperature below temp */}
+                    {/* High/Low temperature below temp */}
+                    <div className={`flex items-center gap-2 ${isLandscape ? 'text-m3-label-small' : 'text-m3-label-medium'} text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)] mt-0.5`}>
+                      <span>H: {formatTemp(processedLong[0]?.max)}{getTempUnitSymbol()}</span>
+                      <span>•</span>
+                      <span>T: {formatTemp(processedLong[0]?.min)}{getTempUnitSymbol()}</span>
+                    </div>
+                    {/* Feels-like temperature below H/T */}
                     <div className={`flex items-center gap-1 ${isLandscape ? 'text-m3-label-small' : 'text-m3-body-small'} text-white/95 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)] mt-0.5`}>
                       <Thermometer size={isLandscape ? 12 : 14} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
                       <span>{t('feelsLike')} {formatTemp(current.appTemp)}{getTempUnitSymbol()}</span>
@@ -10896,26 +10902,6 @@ export default function WeatherApp() {
                       {weatherConf.text}
                     </div>
                   </div>
-                </div>
-
-                {/* Weather Info: H/T */}
-                <div>
-                  <div className={`flex flex-col gap-1 ${isLandscape ? 'p-1 pr-2' : 'p-2 pr-4'} opacity-90`}>
-                    {!isLandscape && (
-                      <div className="flex items-center gap-3 text-m3-label-large text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
-                        <span>H: {formatTemp(processedLong[0]?.max)}{getTempUnitSymbol()}</span>
-                        <span>•</span>
-                        <span>T: {formatTemp(processedLong[0]?.min)}{getTempUnitSymbol()}</span>
-                      </div>
-                    )}
-                  </div>
-                  {isLandscape && (
-                    <div className="flex items-center gap-3 mt-0.5 text-m3-label-small text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
-                      <span>H: {formatTemp(processedLong[0]?.max)}{getTempUnitSymbol()}</span>
-                      <span>•</span>
-                      <span>T: {formatTemp(processedLong[0]?.min)}{getTempUnitSymbol()}</span>
-                    </div>
-                  )}
                 </div>
               </div>
               {/* Location indicator dots - absolute positioned at bottom of card */}
