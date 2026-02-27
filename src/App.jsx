@@ -3123,6 +3123,123 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     // Damit wird alles ab 6 Uhr morgens bis zum Ende des Tages (23 Uhr) berücksichtigt.
     const tomorrowDayData = data.filter(d => d.time.getDate() === tomorrowDate.getDate() && d.time.getHours() >= 6);
 
+    // Helper: classify a time-of-day precipitation block
+    // Returns: 'dry' | 'maybe' | 'light' | 'moderate' | 'heavy'
+    const precipCls = (amt, prob) =>
+        amt > 5 ? 'heavy' : amt > 2 ? 'moderate' : amt >= STRONG_PRECIP_THRESHOLD ? 'light' :
+        (amt > LIGHT_PRECIP_THRESHOLD || prob >= 40) ? 'maybe' : 'dry';
+
+    // Helper: pick the highest severity from a list of precipitation classes
+    const maxPrecipCls = (classes) => {
+        const order = ['heavy', 'moderate', 'light', 'maybe'];
+        return order.find(c => classes.includes(c)) ?? 'dry';
+    };
+
+    // Helper: generate time-aware precipitation description from morning/afternoon/evening blocks
+    // hasMorn/hasAft/hasEve indicate whether that time block has remaining forecast data
+    // Returns a natural language string, or null if all blocks are dry
+    const precipTimingText = (mC, aC, eC, mPre, aPre, ePre, hasMorn, hasAft, hasEve) => {
+        const m = hasMorn && mC !== 'dry';
+        const a = hasAft && aC !== 'dry';
+        const e = hasEve && eC !== 'dry';
+        if (!m && !a && !e) return null;
+
+        const rLbl = (cls, amt) =>
+            cls === 'heavy' ? (lang === 'en' ? `heavy rain (${amt.toFixed(1)}mm)` : `starker Regen (${amt.toFixed(1)}mm)`) :
+            cls === 'moderate' ? (lang === 'en' ? `rain (${amt.toFixed(1)}mm)` : `Regen (${amt.toFixed(1)}mm)`) :
+            cls === 'light' ? (lang === 'en' ? `light rain (${amt.toFixed(1)}mm)` : `leichter Regen (${amt.toFixed(1)}mm)`) :
+            (lang === 'en' ? 'some rain' : 'etwas Regen');
+        const cap1 = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+        const umbr = (tot) => tot >= 2 ? (lang === 'en' ? ' Bring an umbrella!' : ' Schirm einpacken!') : '';
+        const and = lang === 'en' ? ' and ' : ' und ';
+
+        if (!m && !a && e) {
+            if (eC === 'maybe') {
+                return lang === 'en'
+                    ? 'Dry until evening, slight chance of some rain later.'
+                    : 'Bis zum Abend trocken, am Abend vielleicht etwas Regen.';
+            }
+            const dryParts = [hasMorn && (lang === 'en' ? 'morning' : 'morgens'), hasAft && (lang === 'en' ? 'afternoon' : 'nachmittags')].filter(Boolean);
+            if (dryParts.length > 0) {
+                return lang === 'en'
+                    ? `${cap1(dryParts.join(and))} dry, ${rLbl(eC, ePre)} in the evening.${umbr(ePre)}`
+                    : `${cap1(dryParts.join(and))} trocken, am Abend ${rLbl(eC, ePre)}.${umbr(ePre)}`;
+            }
+            return lang === 'en' ? `${cap1(rLbl(eC, ePre))} in the evening.` : `Am Abend ${rLbl(eC, ePre)}.`;
+        }
+
+        if (!m && a && !e) {
+            if (aC === 'maybe') {
+                return lang === 'en'
+                    ? 'Mostly dry, slight chance of afternoon showers.'
+                    : 'Größtenteils trocken, nachmittags vielleicht etwas Regen.';
+            }
+            const pre = hasMorn ? (lang === 'en' ? 'Dry morning, ' : 'Morgens trocken, ') : '';
+            const suf = hasEve ? (lang === 'en' ? ', dry evening.' : ', abends wieder trocken.') : '.';
+            return lang === 'en'
+                ? `${pre}${rLbl(aC, aPre)} in the afternoon${suf}${umbr(aPre)}`
+                : `${pre}nachmittags ${rLbl(aC, aPre)}${suf}${umbr(aPre)}`;
+        }
+
+        if (m && !a && !e) {
+            if (mC === 'maybe') {
+                return lang === 'en'
+                    ? 'Slight chance of morning showers, mostly dry later.'
+                    : 'Morgens vielleicht etwas Regen, danach meist trocken.';
+            }
+            const laterParts = [hasAft && (lang === 'en' ? 'afternoon' : 'nachmittags'), hasEve && (lang === 'en' ? 'evening' : 'abends')].filter(Boolean);
+            const suf = laterParts.length > 0 ? (lang === 'en' ? `, ${laterParts.join(and)} dry.` : `, ${laterParts.join(and)} trocken.`) : '.';
+            return lang === 'en'
+                ? `${cap1(rLbl(mC, mPre))} in the morning${suf}`
+                : `Morgens ${rLbl(mC, mPre)}${suf}`;
+        }
+
+        if (!m && a && e) {
+            if (aC === 'maybe' && eC === 'maybe') {
+                return lang === 'en'
+                    ? 'Dry morning, slight chance of rain in the afternoon and evening.'
+                    : 'Morgens trocken, nachmittags und abends vielleicht etwas Regen.';
+            }
+            const cls = maxPrecipCls([aC, eC]);
+            const tot = aPre + ePre;
+            const pre = hasMorn ? (lang === 'en' ? 'Dry in the morning, ' : 'Morgens trocken, ') : '';
+            return lang === 'en'
+                ? `${pre}${rLbl(cls, tot)} from afternoon onwards.${umbr(tot)}`
+                : `${pre}ab nachmittags ${rLbl(cls, tot)}.${umbr(tot)}`;
+        }
+
+        if (m && a && !e) {
+            if (mC === 'maybe' && aC === 'maybe') {
+                return lang === 'en'
+                    ? 'Slight chance of morning and afternoon showers, dry evening.'
+                    : 'Morgens und nachmittags vielleicht etwas Regen, abends trocken.';
+            }
+            const cls = maxPrecipCls([mC, aC]);
+            const tot = mPre + aPre;
+            const suf = hasEve ? (lang === 'en' ? ', dry evening.' : ', abends trocken.') : '.';
+            return lang === 'en'
+                ? `${cap1(rLbl(cls, tot))} in the morning and afternoon${suf}${umbr(tot)}`
+                : `Morgens und nachmittags ${rLbl(cls, tot)}${suf}${umbr(tot)}`;
+        }
+
+        if (m && !a && e) {
+            const tot = mPre + ePre;
+            return lang === 'en'
+                ? `Showers in the morning (${mPre.toFixed(1)}mm) and evening (${ePre.toFixed(1)}mm), dry afternoon.${umbr(tot)}`
+                : `Morgens (${mPre.toFixed(1)}mm) und abends (${ePre.toFixed(1)}mm) Regen, nachmittags trocken.${umbr(tot)}`;
+        }
+
+        // All present blocks have rain
+        const tot = mPre + aPre + ePre;
+        const cls = maxPrecipCls([mC, aC, eC]);
+        if (cls === 'maybe') {
+            return lang === 'en' ? 'Showers possible at times.' : 'Hin und wieder Regen möglich.';
+        }
+        return lang === 'en'
+            ? `${cap1(rLbl(cls, tot))} expected throughout the day.${umbr(tot)}`
+            : `Den ganzen Tag ${rLbl(cls, tot)}.${umbr(tot)}`;
+    };
+
     if (todayData.length > 0) {
         let todayText = `📅 ${t.today}:\n`;
         const maxToday = Math.max(...todayData.map(d => d.temp));
@@ -3223,6 +3340,20 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         const afternoonData = todayData.filter(d => d.time.getHours() >= 14 && d.time.getHours() < 18);
         const eveningData = todayData.filter(d => d.time.getHours() >= 18 && d.time.getHours() < 22);
         const tonightData = todayData.filter(d => d.time.getHours() >= 22);
+
+        // Time-of-day precipitation analysis for today (remaining hours only)
+        const todayMornHrs = todayData.filter(d => d.time.getHours() < 12);
+        const todayAftHrs = todayData.filter(d => { const h = d.time.getHours(); return h >= 12 && h < 18; });
+        const todayEveHrs = todayData.filter(d => d.time.getHours() >= 18);
+        const todayMornPre = todayMornHrs.reduce((a,b) => a + parseFloat(b.precip||0) + parseFloat(b.snow||0), 0);
+        const todayAftPre = todayAftHrs.reduce((a,b) => a + parseFloat(b.precip||0) + parseFloat(b.snow||0), 0);
+        const todayEvePre = todayEveHrs.reduce((a,b) => a + parseFloat(b.precip||0) + parseFloat(b.snow||0), 0);
+        const todayMornProb = todayMornHrs.length > 0 ? Math.max(...todayMornHrs.map(d => d.precipProb || 0)) : 0;
+        const todayAftProb = todayAftHrs.length > 0 ? Math.max(...todayAftHrs.map(d => d.precipProb || 0)) : 0;
+        const todayEveProb = todayEveHrs.length > 0 ? Math.max(...todayEveHrs.map(d => d.precipProb || 0)) : 0;
+        const todayMC = precipCls(todayMornPre, todayMornProb);
+        const todayAC = precipCls(todayAftPre, todayAftProb);
+        const todayEC = precipCls(todayEvePre, todayEveProb);
         
         // Temperature text with time-aware natural language based on current hour
         const tempRange = Math.round(maxToday) - Math.round(minToday);
@@ -3326,9 +3457,8 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
                         : ` Könnte aber auch wieder wegtauen (Taupunkt: ${Math.round(minDewPoint)}°C).`;
                 }
             } else {
-                todayText += lang === 'en' 
-                    ? `Rainy day (${rainSumToday.toFixed(1)}mm), bring an umbrella.`
-                    : `Wird heute regnerisch (${rainSumToday.toFixed(1)}mm) – Schirm nicht vergessen!`;
+                todayText += precipTimingText(todayMC, todayAC, todayEC, todayMornPre, todayAftPre, todayEvePre, todayMornHrs.length > 0, todayAftHrs.length > 0, todayEveHrs.length > 0)
+                    ?? (lang === 'en' ? `Rainy day (${rainSumToday.toFixed(1)}mm), bring an umbrella.` : `Wird heute regnerisch (${rainSumToday.toFixed(1)}mm) – Schirm nicht vergessen!`);
             }
         } else if (rainSumToday + snowSumToday > 0.1) {
             if (snowSumToday > 0.1) {
@@ -3341,22 +3471,26 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
                         : ` Der Schnee könnte liegen bleiben.`;
                 }
             } else {
-                todayText += lang === 'en' 
-                    ? "Isolated showers possible, mostly dry."
-                    : "Ab und zu könnte es mal ein paar Tropfen geben, bleibt aber größtenteils trocken.";
+                todayText += precipTimingText(todayMC, todayAC, todayEC, todayMornPre, todayAftPre, todayEvePre, todayMornHrs.length > 0, todayAftHrs.length > 0, todayEveHrs.length > 0)
+                    ?? (lang === 'en' ? "Isolated showers possible, mostly dry." : "Ab und zu könnte es mal ein paar Tropfen geben, bleibt aber größtenteils trocken.");
             }
         } else {
-            let dryText = "";
-            if (lang === 'en') {
-                if (currentHour >= NIGHT_START_HOUR) dryText = "The rest of the night stays nice and dry.";
-                else if (currentHour >= EVENING_START_HOUR) dryText = "It will be a nice, dry evening.";
-                else dryText = "It will be a nice, dry day.";
+            const maybeRainText = precipTimingText(todayMC, todayAC, todayEC, todayMornPre, todayAftPre, todayEvePre, todayMornHrs.length > 0, todayAftHrs.length > 0, todayEveHrs.length > 0);
+            if (maybeRainText) {
+                todayText += maybeRainText;
             } else {
-                if (currentHour >= NIGHT_START_HOUR) dryText = "Der Rest der Nacht bleibt schön trocken!";
-                else if (currentHour >= EVENING_START_HOUR) dryText = "Ein schöner, trockener Abend!";
-                else dryText = "Ein schöner, trockener Tag!";
+                let dryText = "";
+                if (lang === 'en') {
+                    if (currentHour >= NIGHT_START_HOUR) dryText = "The rest of the night stays nice and dry.";
+                    else if (currentHour >= EVENING_START_HOUR) dryText = "It will be a nice, dry evening.";
+                    else dryText = "It will be a nice, dry day.";
+                } else {
+                    if (currentHour >= NIGHT_START_HOUR) dryText = "Der Rest der Nacht bleibt schön trocken!";
+                    else if (currentHour >= EVENING_START_HOUR) dryText = "Ein schöner, trockener Abend!";
+                    else dryText = "Ein schöner, trockener Tag!";
+                }
+                todayText += dryText;
             }
-            todayText += dryText;
         }
         
         // Add rain/snow timing details if present (filter out trace amounts < 0.5mm)
@@ -3544,6 +3678,18 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
                 : `Morgens um die ${Math.round(tMin)}°, nachmittags steigt's auf ${Math.round(tMax)}°. `;
         }
         
+        // Time-of-day precipitation analysis for tomorrow
+        const tMornHrs = tomorrowDayData.filter(d => { const h = d.time.getHours(); return h >= 6 && h < 12; });
+        const tAftHrs = tomorrowDayData.filter(d => { const h = d.time.getHours(); return h >= 12 && h < 18; });
+        const tEveHrs = tomorrowDayData.filter(d => d.time.getHours() >= 18);
+        const tMornPre = tMornHrs.reduce((a,b) => a + parseFloat(b.precip||0) + parseFloat(b.snow||0), 0);
+        const tAftPre = tAftHrs.reduce((a,b) => a + parseFloat(b.precip||0) + parseFloat(b.snow||0), 0);
+        const tEvePre = tEveHrs.reduce((a,b) => a + parseFloat(b.precip||0) + parseFloat(b.snow||0), 0);
+        const tMornProb = tMornHrs.length > 0 ? Math.max(...tMornHrs.map(d => d.precipProb || 0)) : 0;
+        const tAftProb = tAftHrs.length > 0 ? Math.max(...tAftHrs.map(d => d.precipProb || 0)) : 0;
+        const tEveProb = tEveHrs.length > 0 ? Math.max(...tEveHrs.map(d => d.precipProb || 0)) : 0;
+        const tMC = precipCls(tMornPre, tMornProb), tAC = precipCls(tAftPre, tAftProb), tEC = precipCls(tEvePre, tEveProb);
+
         // Precipitation text with snow details
         if (tRain + tSnow > 2.0) {
             if (tSnow > tRain) {
@@ -3567,9 +3713,8 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
                         : ` Kann aber auch wieder wegtauen (Taupunkt: ${Math.round(minDewPointTomorrow)}°C).`;
                 }
             } else {
-                tomorrowText += lang === 'en' 
-                    ? `Rainy day (${tRain.toFixed(1)}mm), bring an umbrella.` 
-                    : `Wird regnerisch (${tRain.toFixed(1)}mm) – Schirm einpacken!`;
+                tomorrowText += precipTimingText(tMC, tAC, tEC, tMornPre, tAftPre, tEvePre, tMornHrs.length > 0, tAftHrs.length > 0, tEveHrs.length > 0)
+                    ?? (lang === 'en' ? `Rainy day (${tRain.toFixed(1)}mm), bring an umbrella.` : `Wird regnerisch (${tRain.toFixed(1)}mm) – Schirm einpacken!`);
             }
         } else if (tRain + tSnow > 0.1) {
             if (tSnow > 0.1) {
@@ -3582,14 +3727,12 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
                         : ` Könnte liegen bleiben.`;
                 }
             } else {
-                tomorrowText += lang === 'en' 
-                    ? "Isolated showers possible, mostly dry." 
-                    : "Kann mal kurz regnen, bleibt aber größtenteils trocken.";
+                tomorrowText += precipTimingText(tMC, tAC, tEC, tMornPre, tAftPre, tEvePre, tMornHrs.length > 0, tAftHrs.length > 0, tEveHrs.length > 0)
+                    ?? (lang === 'en' ? "Isolated showers possible, mostly dry." : "Kann mal kurz regnen, bleibt aber größtenteils trocken.");
             }
         } else {
-            tomorrowText += lang === 'en' 
-                ? "It will be a nice, sunny day." 
-                : "Ein schöner, sonniger Tag!";
+            tomorrowText += precipTimingText(tMC, tAC, tEC, tMornPre, tAftPre, tEvePre, tMornHrs.length > 0, tAftHrs.length > 0, tEveHrs.length > 0)
+                ?? (lang === 'en' ? "It will be a nice, sunny day." : "Ein schöner, sonniger Tag!");
         }
         
         // Add precipitation timing details if present (filter out trace amounts < 0.5mm)
