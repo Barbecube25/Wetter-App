@@ -10805,12 +10805,13 @@ export default function WeatherApp() {
               </div>
               
               <div
-                className="relative z-10"
+                className="relative z-10 overflow-hidden"
                 style={{
                   transform: `translateX(${cardTransX}px)`,
                   opacity: Math.max(0, 1 - Math.abs(cardTransX) / 300),
                   transition: cardTransition,
                   willChange: cardTransition !== 'none' ? 'transform, opacity' : 'auto',
+                  maxHeight: isLandscape ? undefined : `calc(${animationCardHeight} - 70px)`,
                 }}
                 onTransitionEnd={(e) => {
                   if (e.propertyName !== 'transform') return;
