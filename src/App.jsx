@@ -10872,24 +10872,20 @@ export default function WeatherApp() {
                 {/* Main Temperature Display */}
                 <div>
                   <div className="flex items-start justify-between">
-                    <div className={isLandscape ? 'p-1 pr-2' : 'p-2 pr-4'}>
-                      <span className={`${isLandscape ? 'text-m3-headline-large' : 'text-m3-display-medium'} font-light text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]`}>{formatTemp(current.temp)}{getTempUnitSymbol()}</span>
-                      <div className={`flex items-center gap-2 ${isLandscape ? 'mt-0.5' : 'mt-1'} ${isLandscape ? 'text-m3-body-small' : 'text-m3-body-medium'} text-white/95 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]`}>
+                    {/* Weather Info: condition, feels like, sunrise, sunset */}
+                    <div className={`flex flex-col gap-1 ${isLandscape ? 'p-1 pr-2' : 'p-2 pr-4'} opacity-90`}>
+                      <div className={`${isLandscape ? 'text-m3-label-medium' : 'text-m3-title-medium'} font-medium text-white drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]`}>{weatherConf.text}</div>
+                      <div className={`flex items-center gap-2 ${isLandscape ? 'text-m3-body-small' : 'text-m3-body-medium'} text-white/95 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]`}>
                         <Thermometer size={isLandscape ? 14 : 16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
                         <span>{t('feelsLike')} {formatTemp(current.appTemp)}{getTempUnitSymbol()}</span>
                       </div>
                       {!isLandscape && (
-                        <div className="flex items-center gap-3 mt-1 text-m3-label-large text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
+                        <div className="flex items-center gap-3 text-m3-label-large text-white/90 drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
                           <span>H: {formatTemp(processedLong[0]?.max)}{getTempUnitSymbol()}</span>
                           <span>•</span>
                           <span>T: {formatTemp(processedLong[0]?.min)}{getTempUnitSymbol()}</span>
                         </div>
                       )}
-                    </div>
-                    
-                    {/* Weather Info: condition, sunrise, sunset */}
-                    <div className={`flex flex-col items-end gap-2 ${isLandscape ? 'p-1' : 'p-2'} opacity-90`}>
-                      <div className={`${isLandscape ? 'text-m3-label-medium' : 'text-m3-title-medium'} font-medium text-white text-right drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]`}>{weatherConf.text}</div>
                       <div className={`flex items-center gap-1.5 ${isLandscape ? 'text-m3-label-small' : 'text-m3-label-large'} text-white/90 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]`}>
                         <Sunrise size={isLandscape ? 12 : 16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
                         <span>{formatTime(sunriseSunset.sunrise)}</span>
@@ -10898,6 +10894,11 @@ export default function WeatherApp() {
                         <Sunset size={isLandscape ? 12 : 16} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
                         <span>{formatTime(sunriseSunset.sunset)}</span>
                       </div>
+                    </div>
+
+                    {/* Temperature – upper right, slightly larger */}
+                    <div className={`flex flex-col items-end ${isLandscape ? 'p-1' : 'p-2'}`}>
+                      <span className={`${isLandscape ? 'text-m3-display-small' : 'text-m3-display-large'} font-light text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]`}>{formatTemp(current.temp)}{getTempUnitSymbol()}</span>
                     </div>
                   </div>
                   {isLandscape && (
