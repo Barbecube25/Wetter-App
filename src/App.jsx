@@ -11595,6 +11595,69 @@ export default function WeatherApp() {
 
           {activeTab === 'travel' && (
             <div className="space-y-6">
+
+                {/* Saved Trips – horizontal scrollable tiles at the top */}
+                {savedTrips.length > 0 && (
+                   <div>
+                     <h3 className="text-sm font-bold uppercase opacity-70 mb-3 ml-2">{t('myTrips')}</h3>
+                     <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide">
+                       <div className="flex gap-3 w-max">
+                         {savedTrips.map(trip => {
+                             const isExpanded = expandedTripId === trip.id;
+                             return (
+                               <div key={trip.id} className="flex flex-col bg-m3-surface-container/80 backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl shadow-m3-1 hover:shadow-m3-2 transition-all min-w-[180px] w-[180px] overflow-hidden">
+                                 <button onClick={() => loadTrip(trip)} className="text-left p-3 flex-1">
+                                   <div className="font-bold text-m3-on-surface text-sm mb-1 truncate">{trip.name}</div>
+                                   <div className="text-xs text-m3-on-surface-variant mb-2">
+                                     {formatDateShort(new Date(trip.startDate), lang)} – {formatDateShort(new Date(trip.endDate || trip.startDate), lang)}
+                                   </div>
+                                   {trip.customName && (
+                                     <div className="text-xs font-semibold text-blue-600 mb-2 truncate">📝 {trip.customName}</div>
+                                   )}
+                                   <div className="flex justify-center my-2">
+                                     <TripWeatherPreview trip={trip} />
+                                   </div>
+                                 </button>
+                                 <div className="flex items-center justify-between border-t border-m3-outline-variant/20 px-2 py-1">
+                                   <button
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       toggleTripExpansion(trip);
+                                     }}
+                                     className="p-1.5 text-m3-on-surface-variant hover:text-blue-600 transition"
+                                     title={isExpanded ? t('collapseDetails') : t('expandDetails')}
+                                   >
+                                     {isExpanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
+                                   </button>
+                                   <button
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       handleDeleteTrip(trip.id);
+                                     }}
+                                     className="p-1.5 text-m3-on-surface-variant hover:text-red-500 transition"
+                                   >
+                                     <Trash2 size={16}/>
+                                   </button>
+                                 </div>
+                                 {activeTripId === trip.id && (
+                                   <div className="px-3 pb-3">
+                                     {savedTripReports[trip.id] ? (
+                                       <AIReportBox report={savedTripReports[trip.id]} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
+                                     ) : travelLoading ? (
+                                       <div className="p-4 text-center"><RefreshCw className="animate-spin inline" size={20}/></div>
+                                     ) : null}
+                                   </div>
+                                 )}
+                                 {isExpanded && <TripDetailedView trip={trip} />}
+                               </div>
+                             );
+                         })}
+                       </div>
+                     </div>
+                   </div>
+                )}
+
+                {/* New Trip Form */}
                 <div className="bg-white/50 rounded-2xl p-4 border border-white/40">
                    <h3 className="text-sm font-bold uppercase opacity-70 mb-4 flex items-center gap-2"><Plane size={16}/> {t('travelPlanner')}</h3>
                    
@@ -11706,60 +11769,6 @@ export default function WeatherApp() {
                          </button>
                        )}
                     </div>
-                )}
-
-                {/* Saved Trips */}
-                {savedTrips.length > 0 && (
-                   <div>
-                     <h3 className="text-sm font-bold uppercase opacity-70 mb-3 ml-2 mt-6">{t('myTrips')}</h3>
-                     <div className="space-y-2">
-                        {savedTrips.map(trip => {
-                            const isExpanded = expandedTripId === trip.id;
-                            return (
-                               <div key={trip.id} className="bg-white/40 border border-white/40 rounded-xl overflow-hidden">
-                                  <div className="p-3 flex items-center justify-between">
-                                     <button onClick={() => loadTrip(trip)} className="text-left flex-1">
-                                        <div className="font-bold text-slate-800">{trip.name}</div>
-                                        <div className="text-xs text-slate-500">{formatDateShort(new Date(trip.startDate), lang)} - {formatDateShort(new Date(trip.endDate || trip.startDate), lang)}</div>
-                                        {trip.customName && (
-                                           <div className="text-xs font-semibold text-blue-600 mt-1">📝 {trip.customName}</div>
-                                        )}
-                                     </button>
-                                     <div className="flex items-center gap-2">
-                                        <TripWeatherPreview trip={trip} />
-                                        <button 
-                                           onClick={(e) => {
-                                              e.stopPropagation();
-                                              toggleTripExpansion(trip);
-                                           }} 
-                                           className="p-2 text-slate-600 hover:text-blue-600 transition"
-                                           title={isExpanded ? t('collapseDetails') : t('expandDetails')}
-                                        >
-                                           {isExpanded ? <ChevronUp size={18}/> : <ChevronDown size={18}/>}
-                                        </button>
-                                        <button onClick={(e) => {
-                                           e.stopPropagation();
-                                           handleDeleteTrip(trip.id);
-                                        }} className="p-2 text-slate-400 hover:text-red-500 transition"><Trash2 size={16}/></button>
-                                     </div>
-                                  </div>
-                                  
-                                  {activeTripId === trip.id && (
-                                    <div className="px-3 pb-3">
-                                      {savedTripReports[trip.id] ? (
-                                        <AIReportBox report={savedTripReports[trip.id]} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
-                                      ) : travelLoading ? (
-                                        <div className="p-4 text-center"><RefreshCw className="animate-spin inline" size={20}/></div>
-                                      ) : null}
-                                    </div>
-                                  )}
-
-                                  {isExpanded && <TripDetailedView trip={trip} />}
-                                </div>
-                             );
-                         })}
-                     </div>
-                   </div>
                 )}
             </div>
           )}
