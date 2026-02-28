@@ -8427,6 +8427,141 @@ const checkAndRequestLocationPermission = async () => {
 };
 
 
+// --- TRIP PREVIEW COMPONENT (defined outside WeatherApp to prevent remounting on parent re-render) ---
+const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, formatTemp, getTempUnitSymbol, lang }) => {
+    const cachedWeather = tripPreviewCache[trip.id];
+    const [weather, setWeather] = useState(cachedWeather || null);
+    const [loading, setLoading] = useState(!cachedWeather);
+
+    useEffect(() => {
+        if (cachedWeather) {
+            setWeather(cachedWeather);
+            setLoading(false);
+        }
+    }, [cachedWeather]);
+
+    useEffect(() => {
+        if (cachedWeather) {
+            setWeather(cachedWeather);
+            setLoading(false);
+            return;
+        }
+        const fetchPreview = async () => {
+            try {
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${trip.startDate}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.daily && data.daily.time.length > 0) {
+                    const nextWeather = {
+                        code: data.daily.weathercode[0],
+                        max: data.daily.temperature_2m_max[0]
+                    };
+                    setWeather(nextWeather);
+                    setTripPreviewCache(prev => ({ ...prev, [trip.id]: nextWeather }));
+                }
+            } catch (e) {
+                // silent fail or retry
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchPreview();
+    }, [trip]);
+
+    if (loading) return <div className="w-8 h-8 rounded-full bg-m3-surface-container animate-pulse"></div>;
+    if (!weather) return <div className="text-[10px] text-m3-on-surface-variant">--</div>;
+
+    const Icon = getWeatherConfig(weather.code, 1, lang).icon;
+    return (
+        <div className="flex items-center gap-2 bg-blue-50 px-2 py-1 rounded-lg">
+            <Icon size={16} className="text-blue-600"/>
+            <span className="font-bold text-slate-700 text-xs">{formatTemp(weather.max)}{getTempUnitSymbol()}</span>
+        </div>
+    );
+};
+
+// --- TRIP DETAILED VIEW COMPONENT (defined outside WeatherApp to prevent remounting on parent re-render) ---
+const TripDetailedView = ({ trip, tripDetails, lang, formatTemp, getTempUnitSymbol, formatPrecip, getPrecipUnitLabel, formatWind, getWindUnitLabel }) => {
+    const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
+    const details = tripDetails[trip.id];
+
+    if (!details || details.loading) {
+        return <div className="p-4 text-center"><RefreshCw className="animate-spin inline" size={20}/></div>;
+    }
+
+    if (details.error) {
+        return <div className="p-4 text-center text-red-500">{details.error}</div>;
+    }
+
+    const dailyData = details.data;
+
+    return (
+        <div className="mt-3 pt-3 border-t border-white/40">
+            <div className="overflow-x-auto -mx-3 px-3 pb-2 scrollbar-hide">
+                <div className="flex gap-3 w-max">
+                    {dailyData.map((day, idx) => {
+                        const Icon = getWeatherConfig(day.code, 1, lang).icon;
+                        return (
+                            <div key={idx} className="min-w-[160px] w-[160px] bg-white/60 backdrop-blur-sm border border-white/40 rounded-xl p-3">
+                                <div className="text-center mb-2">
+                                    <div className="font-bold text-slate-800 text-sm">{day.dayName}</div>
+                                    <div className="text-xs text-slate-500">{day.dateShort}</div>
+                                </div>
+
+                                <div className="flex justify-center my-3">
+                                    <Icon size={48} className="text-blue-600"/>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="text-slate-600">Max:</span>
+                                        <span className="font-bold text-red-600">{formatTemp(day.max)}{getTempUnitSymbol()}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="text-slate-600">Min:</span>
+                                        <span className="font-bold text-blue-600">{formatTemp(day.min)}{getTempUnitSymbol()}</span>
+                                    </div>
+
+                                    {(parseFloat(day.rain) > 0 || parseFloat(day.snow) > 0) && (
+                                        <div className="pt-2 border-t border-white/40">
+                                            {parseFloat(day.rain) > 0 && (
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <span className="text-blue-500">💧 {t('rain')}</span>
+                                                    <span className="font-bold">{formatPrecip(day.rain)}{getPrecipUnitLabel()}</span>
+                                                </div>
+                                            )}
+                                            {parseFloat(day.snow) > 0 && (
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <span className="text-cyan-500">❄️ {t('snow')}</span>
+                                                    <span className="font-bold">{formatPrecip(day.snow)}{getPrecipUnitLabel()}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {day.prob > 0 && (
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="text-slate-600">{t('probability')}</span>
+                                            <span className="font-bold">{day.prob}%</span>
+                                        </div>
+                                    )}
+
+                                    {day.wind > 0 && (
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="text-slate-600">💨 Wind</span>
+                                            <span className="font-bold">{formatWind(day.wind)} {getWindUnitLabel()}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- 4. MAIN APP COMPONENT ---
 
 export default function WeatherApp() {
@@ -9613,140 +9748,6 @@ export default function WeatherApp() {
       setTravelEndTime(trip.endTime || "");
       // Trigger search
       handleTravelSearch(trip.name, trip);
-  };
-
-  // --- PREVIEW COMPONENT FOR TRIP LIST ---
-  const TripWeatherPreview = ({ trip }) => {
-      const cachedWeather = tripPreviewCache[trip.id];
-      const [weather, setWeather] = useState(cachedWeather || null);
-      const [loading, setLoading] = useState(!cachedWeather);
-
-      useEffect(() => {
-          if (cachedWeather) {
-              setWeather(cachedWeather);
-              setLoading(false);
-          }
-      }, [cachedWeather]);
-
-      useEffect(() => {
-          if (cachedWeather) {
-              setWeather(cachedWeather);
-              setLoading(false);
-              return;
-          }
-          const fetchPreview = async () => {
-              try {
-                  const url = `https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${trip.startDate}`;
-                  const res = await fetch(url);
-                  const data = await res.json();
-                  if (data.daily && data.daily.time.length > 0) {
-                      const nextWeather = {
-                          code: data.daily.weathercode[0],
-                          max: data.daily.temperature_2m_max[0]
-                      };
-                      setWeather(nextWeather);
-                      setTripPreviewCache(prev => ({ ...prev, [trip.id]: nextWeather }));
-                  }
-              } catch (e) {
-                  // silent fail or retry
-              } finally {
-                  setLoading(false);
-              }
-          };
-          fetchPreview();
-      }, [trip]);
-
-      if (loading) return <div className="w-8 h-8 rounded-full bg-m3-surface-container animate-pulse"></div>;
-      if (!weather) return <div className="text-[10px] text-m3-on-surface-variant">--</div>;
-
-      const Icon = getWeatherConfig(weather.code, 1, lang).icon;
-      return (
-          <div className="flex items-center gap-2 bg-blue-50 px-2 py-1 rounded-lg">
-              <Icon size={16} className="text-blue-600"/>
-              <span className="font-bold text-slate-700 text-xs">{formatTemp(weather.max)}{getTempUnitSymbol()}</span>
-          </div>
-      );
-  };
-
-  // --- EXPANDED TRIP DETAILS COMPONENT ---
-  const TripDetailedView = ({ trip }) => {
-      const details = tripDetails[trip.id];
-      
-      if (!details || details.loading) {
-          return <div className="p-4 text-center"><RefreshCw className="animate-spin inline" size={20}/></div>;
-      }
-      
-      if (details.error) {
-          return <div className="p-4 text-center text-red-500">{details.error}</div>;
-      }
-
-      const dailyData = details.data;
-      
-      return (
-          <div className="mt-3 pt-3 border-t border-white/40">
-              <div className="overflow-x-auto -mx-3 px-3 pb-2 scrollbar-hide">
-                  <div className="flex gap-3 w-max">
-                      {dailyData.map((day, idx) => {
-                          const Icon = getWeatherConfig(day.code, 1, lang).icon;
-                          return (
-                              <div key={idx} className="min-w-[160px] w-[160px] bg-white/60 backdrop-blur-sm border border-white/40 rounded-xl p-3">
-                                  <div className="text-center mb-2">
-                                      <div className="font-bold text-slate-800 text-sm">{day.dayName}</div>
-                                      <div className="text-xs text-slate-500">{day.dateShort}</div>
-                                  </div>
-                                  
-                                  <div className="flex justify-center my-3">
-                                      <Icon size={48} className="text-blue-600"/>
-                                  </div>
-                                  
-                                  <div className="space-y-2">
-                                      <div className="flex items-center justify-between text-xs">
-                                          <span className="text-slate-600">Max:</span>
-                                          <span className="font-bold text-red-600">{formatTemp(day.max)}{getTempUnitSymbol()}</span>
-                                      </div>
-                                      <div className="flex items-center justify-between text-xs">
-                                          <span className="text-slate-600">Min:</span>
-                                          <span className="font-bold text-blue-600">{formatTemp(day.min)}{getTempUnitSymbol()}</span>
-                                      </div>
-                                      
-                                      {(parseFloat(day.rain) > 0 || parseFloat(day.snow) > 0) && (
-                                          <div className="pt-2 border-t border-white/40">
-                                              {parseFloat(day.rain) > 0 && (
-                                                  <div className="flex items-center justify-between text-xs">
-                                                      <span className="text-blue-500">💧 {t('rain')}</span>
-                                                      <span className="font-bold">{formatPrecip(day.rain)}{getPrecipUnitLabel()}</span>
-                                                  </div>
-                                              )}
-                                              {parseFloat(day.snow) > 0 && (
-                                                  <div className="flex items-center justify-between text-xs">
-                                                      <span className="text-cyan-500">❄️ {t('snow')}</span>
-                                                      <span className="font-bold">{formatPrecip(day.snow)}{getPrecipUnitLabel()}</span>
-                                                  </div>
-                                              )}
-                                          </div>
-                                      )}
-                                      
-                                      {day.prob > 0 && (
-                                          <div className="flex items-center justify-between text-xs">
-                                              <span className="text-slate-600">{t('probability')}</span>
-                                              <span className="font-bold">{day.prob}%</span>
-                                          </div>
-                                      )}
-                                      
-                                      {day.wind > 0 && (
-                                          <div className="flex items-center justify-between text-xs">
-                                              <span className="text-slate-600">💨 Wind</span>
-                                              <span className="font-bold">{formatWind(day.wind)} {getWindUnitLabel()}</span>
-                                          </div>
-                                      )}
-                                  </div>
-                              </div>
-                          );
-                      })}
-                  </div>
-              </div>
-          </div>
-      );
   };
 
   // --- FETCH DETAILED TRIP WEATHER ---
@@ -11615,7 +11616,7 @@ export default function WeatherApp() {
                                      <div className="text-xs font-semibold text-blue-600 mb-2 truncate">📝 {trip.customName}</div>
                                    )}
                                    <div className="flex justify-center my-2">
-                                     <TripWeatherPreview trip={trip} />
+                                     <TripWeatherPreview trip={trip} tripPreviewCache={tripPreviewCache} setTripPreviewCache={setTripPreviewCache} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} lang={lang} />
                                    </div>
                                  </button>
                                  <div className="flex items-center justify-between border-t border-m3-outline-variant/20 px-2 py-1">
@@ -11648,7 +11649,7 @@ export default function WeatherApp() {
                                      ) : null}
                                    </div>
                                  )}
-                                 {isExpanded && <TripDetailedView trip={trip} />}
+                                 {isExpanded && <TripDetailedView trip={trip} tripDetails={tripDetails} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} />}
                                </div>
                              );
                          })}
