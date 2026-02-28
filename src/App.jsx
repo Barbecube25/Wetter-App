@@ -3085,6 +3085,12 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
           });
           summary += `\n\n${clothingTip}`;
 
+          if (data.startH !== undefined && data.endH !== undefined) {
+              summary += lang === 'en'
+                ? `\nTime window per day: ${data.startH}-${data.endH}h.`
+                : `\nZeitfenster je Tag: ${data.startH}-${data.endH} Uhr.`;
+          }
+
           tripDetails = items.map((item) => ({
              date: item.date,
              dayName: new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(item.date),
@@ -9650,24 +9656,40 @@ export default function WeatherApp() {
         const isOvernightWithTime = useTimeWindow && startH > endH;
 
         if (isMultiDay && !isOvernightWithTime) {
-            // MULTI DAY LOGIC (no time window – show per-day summaries)
-            const daily = wData.daily;
             const dailyItems = [];
             let totalRel = 0;
             let count = 0;
 
-            for(let i=0; i<daily.time.length; i++) {
-                const dayDateStr = daily.time[i]; // "YYYY-MM-DD"
-                
-                // Compare strings directly: "2023-10-01" >= "2023-10-01"
-                if (dayDateStr >= startDateStr && dayDateStr <= endDateStr) {
-                    
-                    const maxT = getSafeValue(daily, i, 'temperature_2m_max') ?? 0;
-                    const minT = getSafeValue(daily, i, 'temperature_2m_min') ?? 0;
-                    const code = getSafeValue(daily, i, 'weathercode', false) ?? 0;
-                    const prob = getSafeValue(daily, i, 'precipitation_probability_max', false) ?? 0;
-                    const sum = getSafeValue(daily, i, 'precipitation_sum') ?? 0;
-                    const gust = getSafeValue(daily, i, 'wind_gusts_10m_max') ?? 0;
+            if (useTimeWindow) {
+                // MULTI DAY WITH TIME WINDOW: filter hourly data per-day to the specified hours
+                const hourly = wData.hourly;
+                const daily = wData.daily;
+                for (let di = 0; di < daily.time.length; di++) {
+                    const dayDateStr = daily.time[di];
+                    if (dayDateStr < startDateStr || dayDateStr > endDateStr) continue;
+
+                    let dayTemps = [], dayPrecips = [], dayWinds = [], dayCodes = [], dayProbs = [];
+                    for (let i = 0; i < hourly.time.length; i++) {
+                        const tStr = hourly.time[i];
+                        const [datePart, timePart] = tStr.split('T');
+                        if (datePart !== dayDateStr) continue;
+                        const h = parseInt(timePart.split(':')[0]);
+                        if (h < startH || h > endH) continue;
+
+                        const temp = getSafeValue(hourly, i, 'temperature_2m');
+                        const precip = getSafeValue(hourly, i, 'precipitation');
+                        const wind = getSafeValue(hourly, i, 'wind_speed_10m');
+                        const code = getSafeValue(hourly, i, 'weathercode', false);
+                        const prob = getSafeValue(hourly, i, 'precipitation_probability', false);
+
+                        if (temp !== null) dayTemps.push(temp);
+                        if (precip !== null) dayPrecips.push(precip);
+                        if (wind !== null) dayWinds.push(wind);
+                        if (code !== null) dayCodes.push(code);
+                        if (prob !== null) dayProbs.push(prob);
+                    }
+
+                    if (dayTemps.length === 0) continue;
 
                     const d = new Date(dayDateStr).getTime();
                     const daysInFuture = (d - new Date().getTime()) / MILLISECONDS_PER_DAY;
@@ -9678,16 +9700,55 @@ export default function WeatherApp() {
                     const relRounded = Math.round(rel);
                     dailyItems.push({
                         date: new Date(dayDateStr),
-                        max: maxT,
-                        min: minT,
-                        code: code,
-                        precipProb: prob,
-                        precipSum: sum,
-                        wind: gust,
+                        max: Math.max(...dayTemps),
+                        min: Math.min(...dayTemps),
+                        code: dayCodes[Math.floor(dayCodes.length / 2)] ?? 0,
+                        precipProb: dayProbs.length > 0 ? Math.round(dayProbs.reduce((a, b) => a + b, 0) / dayProbs.length) : 0,
+                        precipSum: dayPrecips.reduce((a, b) => a + b, 0),
+                        wind: dayWinds.length > 0 ? Math.max(...dayWinds) : 0,
                         reliability: relRounded
                     });
                     totalRel += relRounded;
                     count++;
+                }
+                result.startH = startH;
+                result.endH = endH;
+            } else {
+                // MULTI DAY LOGIC (no time window – show per-day summaries using daily data)
+                const daily = wData.daily;
+                for(let i=0; i<daily.time.length; i++) {
+                    const dayDateStr = daily.time[i]; // "YYYY-MM-DD"
+
+                    // Compare strings directly: "2023-10-01" >= "2023-10-01"
+                    if (dayDateStr >= startDateStr && dayDateStr <= endDateStr) {
+
+                        const maxT = getSafeValue(daily, i, 'temperature_2m_max') ?? 0;
+                        const minT = getSafeValue(daily, i, 'temperature_2m_min') ?? 0;
+                        const code = getSafeValue(daily, i, 'weathercode', false) ?? 0;
+                        const prob = getSafeValue(daily, i, 'precipitation_probability_max', false) ?? 0;
+                        const sum = getSafeValue(daily, i, 'precipitation_sum') ?? 0;
+                        const gust = getSafeValue(daily, i, 'wind_gusts_10m_max') ?? 0;
+
+                        const d = new Date(dayDateStr).getTime();
+                        const daysInFuture = (d - new Date().getTime()) / MILLISECONDS_PER_DAY;
+                        const rel = Math.max(
+                            RELIABILITY_THRESHOLDS_PERCENT.min,
+                            RELIABILITY_THRESHOLDS_PERCENT.max - (daysInFuture * RELIABILITY_THRESHOLDS_PERCENT.decayPerDay)
+                        );
+                        const relRounded = Math.round(rel);
+                        dailyItems.push({
+                            date: new Date(dayDateStr),
+                            max: maxT,
+                            min: minT,
+                            code: code,
+                            precipProb: prob,
+                            precipSum: sum,
+                            wind: gust,
+                            reliability: relRounded
+                        });
+                        totalRel += relRounded;
+                        count++;
+                    }
                 }
             }
             result.items = dailyItems;
