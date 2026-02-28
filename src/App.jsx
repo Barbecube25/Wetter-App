@@ -157,6 +157,10 @@ const TRANSLATIONS = {
     noTripsYet: "Noch keine Reisen gespeichert",
     noTripsYetDesc: "Plane deine erste Reise und checke das Wetter!",
     tripWeatherDetails: "Reisewetter-Details",
+    editTrip: "Reise bearbeiten",
+    saveChanges: "Änderungen speichern",
+    tripTooFarFuture: "Noch zu weit weg! 🔮",
+    tripTooFarFutureHint: "Daten gibts bald...",
     radarCredit: "Radarbild bereitgestellt von Windy.com", // Radar data from Windy.com
     noRain: "Trocken",
     rain: "Regen",
@@ -390,6 +394,10 @@ const TRANSLATIONS = {
     noTripsYet: "No trips saved yet",
     noTripsYetDesc: "Plan your first trip and check the weather!",
     tripWeatherDetails: "Trip Weather Details",
+    editTrip: "Edit Trip",
+    saveChanges: "Save Changes",
+    tripTooFarFuture: "Too far ahead! 🔮",
+    tripTooFarFutureHint: "Data coming soon...",
     radarCredit: "Radar image provided by Windy.com", // Radar data from Windy.com
     noRain: "Dry",
     rain: "Rain",
@@ -8434,10 +8442,16 @@ const checkAndRequestLocationPermission = async () => {
 
 
 // --- TRIP PREVIEW COMPONENT (defined outside WeatherApp to prevent remounting on parent re-render) ---
+const TRIP_FORECAST_LIMIT_DAYS = 16;
 const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, formatTemp, getTempUnitSymbol, lang }) => {
+    const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
     const cachedWeather = tripPreviewCache[trip.id];
     const [weather, setWeather] = useState(cachedWeather || null);
     const [loading, setLoading] = useState(!cachedWeather);
+
+    // Check if trip is too far in the future for forecast data
+    const daysUntilTrip = Math.ceil((new Date(trip.startDate) - new Date()) / (1000 * 60 * 60 * 24));
+    const isTooFarFuture = daysUntilTrip > TRIP_FORECAST_LIMIT_DAYS;
 
     useEffect(() => {
         if (cachedWeather) {
@@ -8447,6 +8461,7 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
     }, [cachedWeather]);
 
     useEffect(() => {
+        if (isTooFarFuture) { setLoading(false); return; }
         if (cachedWeather) {
             setWeather(cachedWeather);
             setLoading(false);
@@ -8454,13 +8469,14 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
         }
         const fetchPreview = async () => {
             try {
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${trip.startDate}`;
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${trip.startDate}`;
                 const res = await fetch(url);
                 const data = await res.json();
                 if (data.daily && data.daily.time.length > 0) {
                     const nextWeather = {
                         code: data.daily.weathercode[0],
-                        max: data.daily.temperature_2m_max[0]
+                        max: data.daily.temperature_2m_max[0],
+                        min: data.daily.temperature_2m_min[0]
                     };
                     setWeather(nextWeather);
                     setTripPreviewCache(prev => ({ ...prev, [trip.id]: nextWeather }));
@@ -8472,16 +8488,33 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
             }
         };
         fetchPreview();
-    }, [trip]);
+    }, [trip, isTooFarFuture]);
+
+    if (isTooFarFuture) {
+        return (
+            <div className="flex flex-col items-center gap-1 bg-purple-50 px-2 py-1.5 rounded-lg w-full">
+                <span className="text-2xl">🔮</span>
+                <span className="font-bold text-purple-700 text-[10px] text-center leading-tight">{t('tripTooFarFuture')}</span>
+                <span className="text-[9px] text-purple-500 text-center">{t('tripTooFarFutureHint')}</span>
+            </div>
+        );
+    }
 
     if (loading) return <div className="w-8 h-8 rounded-full bg-m3-surface-container animate-pulse"></div>;
     if (!weather) return <div className="text-[10px] text-m3-on-surface-variant">--</div>;
 
-    const Icon = getWeatherConfig(weather.code, 1, lang).icon;
+    const conf = getWeatherConfig(weather.code, 1, lang);
+    const Icon = conf.icon;
     return (
-        <div className="flex items-center gap-2 bg-blue-50 px-2 py-1 rounded-lg">
-            <Icon size={16} className="text-blue-600"/>
-            <span className="font-bold text-slate-700 text-xs">{formatTemp(weather.max)}{getTempUnitSymbol()}</span>
+        <div className="flex flex-col items-center gap-1 bg-blue-50 px-2 py-1.5 rounded-lg w-full">
+            <div className="flex items-center gap-1.5">
+                <Icon size={18} className="text-blue-600 flex-shrink-0"/>
+                <span className="font-bold text-slate-700 text-sm">{formatTemp(weather.max)}{getTempUnitSymbol()}</span>
+            </div>
+            <span className="text-[10px] text-slate-500 text-center leading-tight truncate w-full">{conf.text}</span>
+            {weather.min !== null && weather.min !== undefined && (
+                <span className="text-[9px] text-blue-500">▼ {formatTemp(weather.min)}{getTempUnitSymbol()}</span>
+            )}
         </div>
     );
 };
@@ -8958,6 +8991,8 @@ export default function WeatherApp() {
   const [tripReport, setTripReport] = useState(null);
   const [savedTripReports, setSavedTripReports] = useState({});
   const [activeTripId, setActiveTripId] = useState(null);
+  // Edit trip modal state
+  const [editingTrip, setEditingTrip] = useState(null);
   const [tripPreviewCache, setTripPreviewCache] = useState({});
   const [selectedTripForPopup, setSelectedTripForPopup] = useState(null);
 
@@ -9788,6 +9823,15 @@ export default function WeatherApp() {
       if (expandedTripId === id) {
           setExpandedTripId(null);
       }
+  };
+
+  const handleSaveEditTrip = (updatedTrip) => {
+      setSavedTrips(savedTrips.map(tr => tr.id === updatedTrip.id ? updatedTrip : tr));
+      // Invalidate cached preview and details so they refresh with new dates
+      setTripPreviewCache(prev => { const next = { ...prev }; delete next[updatedTrip.id]; return next; });
+      setTripDetails(prev => { const next = { ...prev }; delete next[updatedTrip.id]; return next; });
+      setSavedTripReports(prev => { const next = { ...prev }; delete next[updatedTrip.id]; return next; });
+      setEditingTrip(null);
   };
 
   const loadTrip = (trip) => {
@@ -11714,6 +11758,16 @@ export default function WeatherApp() {
                                    <button
                                      onClick={(e) => {
                                        e.stopPropagation();
+                                       setEditingTrip({ ...trip });
+                                     }}
+                                     className="p-1.5 text-m3-on-surface-variant hover:text-blue-500 transition"
+                                     title={t('editTrip')}
+                                   >
+                                     <Edit2 size={16}/>
+                                   </button>
+                                   <button
+                                     onClick={(e) => {
+                                       e.stopPropagation();
                                        handleDeleteTrip(trip.id);
                                      }}
                                      className="p-1.5 text-m3-on-surface-variant hover:text-red-500 transition"
@@ -11851,6 +11905,69 @@ export default function WeatherApp() {
                          </button>
                        )}
                     </div>
+                )}
+
+                {/* Edit Trip Modal */}
+                {editingTrip && (
+                  <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setEditingTrip(null)}>
+                    <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-200" onClick={e => e.stopPropagation()}>
+                      <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+                        <div className="flex items-center gap-2">
+                          <Edit2 size={18}/>
+                          <span className="font-bold">{t('editTrip')}</span>
+                        </div>
+                        <button onClick={() => setEditingTrip(null)} className="p-1.5 hover:bg-white/20 rounded-full transition"><X size={18}/></button>
+                      </div>
+                      <div className="p-4 space-y-3">
+                        <div>
+                          <label htmlFor="edit-trip-name" className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('tripName')}</label>
+                          <input id="edit-trip-name" type="text" value={editingTrip.customName || ''} onChange={e => setEditingTrip(prev => ({ ...prev, customName: e.target.value }))}
+                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
+                            placeholder={lang === 'en' ? "e.g., Summer Vacation..." : "z.B. Sommerurlaub..."} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label htmlFor="edit-trip-start" className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('startDate')}</label>
+                            <div className="relative">
+                              <Calendar className="absolute left-3 top-2.5 text-slate-400" size={14}/>
+                              <input id="edit-trip-start" type="date" value={editingTrip.startDate} onChange={e => setEditingTrip(prev => ({ ...prev, startDate: e.target.value }))}
+                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700" />
+                            </div>
+                          </div>
+                          <div>
+                            <label htmlFor="edit-trip-end" className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('endDate')}</label>
+                            <div className="relative">
+                              <Calendar className="absolute left-3 top-2.5 text-slate-400" size={14}/>
+                              <input id="edit-trip-end" type="date" value={editingTrip.endDate || ''} onChange={e => setEditingTrip(prev => ({ ...prev, endDate: e.target.value }))}
+                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700" />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label htmlFor="edit-trip-starttime" className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('startTime')} <span className="opacity-50 font-normal">(Opt.)</span></label>
+                            <div className="relative">
+                              <Clock className="absolute left-3 top-2.5 text-slate-400" size={14}/>
+                              <input id="edit-trip-starttime" type="time" value={editingTrip.startTime || ''} onChange={e => setEditingTrip(prev => ({ ...prev, startTime: e.target.value }))}
+                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700" />
+                            </div>
+                          </div>
+                          <div>
+                            <label htmlFor="edit-trip-endtime" className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('endTime')} <span className="opacity-50 font-normal">(Opt.)</span></label>
+                            <div className="relative">
+                              <Clock className="absolute left-3 top-2.5 text-slate-400" size={14}/>
+                              <input id="edit-trip-endtime" type="time" value={editingTrip.endTime || ''} onChange={e => setEditingTrip(prev => ({ ...prev, endTime: e.target.value }))}
+                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700" />
+                            </div>
+                          </div>
+                        </div>
+                        <button onClick={() => handleSaveEditTrip(editingTrip)}
+                          className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition flex items-center justify-center gap-2">
+                          <Check size={18}/> {t('saveChanges')}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 )}
             </div>
           )}
