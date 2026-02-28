@@ -154,6 +154,9 @@ const TRANSLATIONS = {
     tripName: "Reisename (Optional)",
     expandDetails: "Details anzeigen",
     collapseDetails: "Details verbergen",
+    noTripsYet: "Noch keine Reisen gespeichert",
+    noTripsYetDesc: "Plane deine erste Reise und checke das Wetter!",
+    tripWeatherDetails: "Reisewetter-Details",
     radarCredit: "Radarbild bereitgestellt von Windy.com", // Radar data from Windy.com
     noRain: "Trocken",
     rain: "Regen",
@@ -384,6 +387,9 @@ const TRANSLATIONS = {
     tripName: "Trip Name (Optional)",
     expandDetails: "Show Details",
     collapseDetails: "Hide Details",
+    noTripsYet: "No trips saved yet",
+    noTripsYetDesc: "Plan your first trip and check the weather!",
+    tripWeatherDetails: "Trip Weather Details",
     radarCredit: "Radar image provided by Windy.com", // Radar data from Windy.com
     noRain: "Dry",
     rain: "Rain",
@@ -8562,6 +8568,49 @@ const TripDetailedView = ({ trip, tripDetails, lang, formatTemp, getTempUnitSymb
     );
 };
 
+// --- TRIP WEATHER POPUP MODAL ---
+const TripWeatherPopupModal = ({ trip, tripDetails, onClose, lang, formatTemp, getTempUnitSymbol, formatPrecip, getPrecipUnitLabel, formatWind, getWindUnitLabel, isSmallScreen }) => {
+    const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
+    if (!trip) return null;
+    return (
+        <div className={`fixed inset-0 z-[60] flex items-end sm:items-center justify-center ${isSmallScreen ? 'p-0' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`} onClick={onClose}>
+            <div
+                className={`bg-white ${isSmallScreen ? 'rounded-t-3xl w-full max-h-[92vh]' : 'rounded-3xl max-w-2xl w-full max-h-[90vh]'} shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-200`}
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Header */}
+                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-blue-500 to-indigo-500 text-white sticky top-0">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <Plane size={20} className="flex-shrink-0"/>
+                        <div className="min-w-0">
+                            <div className="font-bold text-base truncate">{trip.name}</div>
+                            <div className="text-xs opacity-80">{trip.startDate}{trip.endDate && trip.endDate !== trip.startDate ? ` – ${trip.endDate}` : ''}</div>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition flex-shrink-0">
+                        <X size={20}/>
+                    </button>
+                </div>
+                {/* Content */}
+                <div className="overflow-y-auto p-4">
+                    <h4 className="text-sm font-bold text-slate-600 uppercase mb-3">{t('tripWeatherDetails')}</h4>
+                    <TripDetailedView
+                        trip={trip}
+                        tripDetails={tripDetails}
+                        lang={lang}
+                        formatTemp={formatTemp}
+                        getTempUnitSymbol={getTempUnitSymbol}
+                        formatPrecip={formatPrecip}
+                        getPrecipUnitLabel={getPrecipUnitLabel}
+                        formatWind={formatWind}
+                        getWindUnitLabel={getWindUnitLabel}
+                    />
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- 4. MAIN APP COMPONENT ---
 
 export default function WeatherApp() {
@@ -8910,6 +8959,7 @@ export default function WeatherApp() {
   const [savedTripReports, setSavedTripReports] = useState({});
   const [activeTripId, setActiveTripId] = useState(null);
   const [tripPreviewCache, setTripPreviewCache] = useState({});
+  const [selectedTripForPopup, setSelectedTripForPopup] = useState(null);
 
   // Initial Location Logic / Home Check
   useEffect(() => {
@@ -9358,7 +9408,7 @@ export default function WeatherApp() {
   }, [loading, lastUpdated, isRefreshing]);
 
   // --- PULL-TO-REFRESH & SWIPE GESTURE HANDLERS ---
-  const isAnyModalOpen = showFeedback || !!activeDetailModal || showPrecipModal || showActivityModal || showSettingsModal || showLocationModal || showPollenModal;
+  const isAnyModalOpen = showFeedback || !!activeDetailModal || showPrecipModal || showActivityModal || showSettingsModal || showLocationModal || showPollenModal || !!selectedTripForPopup;
 
   const handleTouchStart = (e) => {
     // Do not activate gestures when a modal/overlay is open
@@ -9852,6 +9902,14 @@ export default function WeatherApp() {
       requestAnimationFrame(() => {
           window.scrollTo(0, scrollY);
       });
+  };
+
+
+  const openTripPopup = (trip) => {
+      setSelectedTripForPopup(trip);
+      if (!tripDetails[trip.id]) {
+          fetchTripDetails(trip);
+      }
   };
 
 
@@ -10890,6 +10948,22 @@ export default function WeatherApp() {
           />
       )}
 
+      {/* Trip Weather Popup Modal */}
+      {selectedTripForPopup && (
+        <TripWeatherPopupModal
+          trip={selectedTripForPopup}
+          tripDetails={tripDetails}
+          onClose={() => setSelectedTripForPopup(null)}
+          lang={lang}
+          formatTemp={formatTemp}
+          getTempUnitSymbol={getTempUnitSymbol}
+          formatPrecip={formatPrecip}
+          getPrecipUnitLabel={getPrecipUnitLabel}
+          formatWind={formatWind}
+          getWindUnitLabel={getWindUnitLabel}
+          isSmallScreen={isSmallScreen}
+        />
+      )}
       {/* iOS Install Tip */}
       {showIosInstall && (
         <div className={`fixed top-4 left-4 right-4 z-50 ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-sm'} mx-auto`}>
@@ -11598,7 +11672,14 @@ export default function WeatherApp() {
             <div className="space-y-6">
 
                 {/* Saved Trips – horizontal scrollable tiles at the top */}
-                {savedTrips.length > 0 && (
+                {savedTrips.length === 0 ? (
+                   <div className="flex flex-col items-center justify-center py-10 px-4 text-center bg-white/40 rounded-2xl border border-white/40">
+                     <div className="text-6xl mb-4">🏖️</div>
+                     <div className="text-4xl mb-2">🔜</div>
+                     <p className="font-bold text-slate-700 text-base mb-1">{t('noTripsYet')}</p>
+                     <p className="text-sm text-slate-500">{t('noTripsYetDesc')}</p>
+                   </div>
+                ) : (
                    <div>
                      <h3 className="text-sm font-bold uppercase opacity-70 mb-3 ml-2">{t('myTrips')}</h3>
                      <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide">
@@ -11607,7 +11688,7 @@ export default function WeatherApp() {
                              const isExpanded = expandedTripId === trip.id;
                              return (
                                <div key={trip.id} className="flex flex-col bg-m3-surface-container/80 backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl shadow-m3-1 hover:shadow-m3-2 transition-all min-w-[180px] w-[180px] overflow-hidden">
-                                 <button onClick={() => loadTrip(trip)} className="text-left p-3 flex-1">
+                                 <button onClick={() => openTripPopup(trip)} className="text-left p-3 flex-1">
                                    <div className="font-bold text-m3-on-surface text-sm mb-1 truncate">{trip.name}</div>
                                    <div className="text-xs text-m3-on-surface-variant mb-2">
                                      {formatDateShort(new Date(trip.startDate), lang)} – {formatDateShort(new Date(trip.endDate || trip.startDate), lang)}
