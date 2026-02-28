@@ -9593,8 +9593,8 @@ export default function WeatherApp() {
              return;
         }
 
-        const startDate = new Date(startDateStr); // Keep Date object for display formatting
-        const endDate = new Date(endDateStr);
+        const startDate = parseLocalTime(startDateStr); // parseLocalTime avoids UTC-midnight off-by-one in local timezones
+        const endDate = parseLocalTime(endDateStr);
         
         // Determine Mode: Single Day or Multi Day
         const isMultiDay = startDateStr !== endDateStr;
@@ -9699,7 +9699,7 @@ export default function WeatherApp() {
                     );
                     const relRounded = Math.round(rel);
                     dailyItems.push({
-                        date: new Date(dayDateStr),
+                        date: parseLocalTime(dayDateStr),
                         max: Math.max(...dayTemps),
                         min: Math.min(...dayTemps),
                         code: dayCodes[Math.floor(dayCodes.length / 2)] ?? 0,
@@ -9737,7 +9737,7 @@ export default function WeatherApp() {
                         );
                         const relRounded = Math.round(rel);
                         dailyItems.push({
-                            date: new Date(dayDateStr),
+                            date: parseLocalTime(dayDateStr),
                             max: maxT,
                             min: minT,
                             code: code,
@@ -9922,7 +9922,7 @@ export default function WeatherApp() {
           
           const locale = lang === 'en' ? 'en-US' : 'de-DE';
           const dailyData = data.daily.time.map((t, i) => {
-              const date = new Date(t);
+              const date = parseLocalTime(t);
               
               // Average temperatures from all models
               const maxVals = [
