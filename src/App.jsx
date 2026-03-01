@@ -53,8 +53,8 @@ const BLUE_HOUR_DURATION_MS = 30 * 60 * 1000;   // 30 minutes
 const POLLEN_MODERATE_THRESHOLD = 5;
 const POLLEN_HIGH_THRESHOLD = 20;
 const POLLEN_VERY_HIGH_THRESHOLD = 50;
-// Default pollen filter: all pollen types requested by users (olive_pollen excluded from default as it is not relevant for Central Europe)
-const DEFAULT_POLLEN_FILTER = ['hazel_pollen', 'alder_pollen', 'birch_pollen', 'ash_pollen', 'hornbeam_pollen', 'oak_pollen', 'beech_pollen', 'grass_pollen', 'rye_pollen', 'mugwort_pollen', 'ragweed_pollen', 'plantain_pollen', 'sorrel_pollen'];
+// Default pollen filter: OpenWeatherMap pollen categories
+const DEFAULT_POLLEN_FILTER = ['grass_pollen', 'tree_pollen', 'weed_pollen'];
 
 // Historical context: minimum temperature difference to show anomaly banner (°C)
 const TEMP_ANOMALY_THRESHOLD = 0.5;
@@ -278,6 +278,9 @@ const TRANSLATIONS = {
     pollenRagweed: "Ambrosie",
     pollenPlantain: "Wegerich",
     pollenSorrel: "Ampfer",
+    pollenTree: "Baumpollen",
+    pollenWeed: "Kräuterpollen",
+    owmApiKey: "OpenWeatherMap API-Schlüssel",
     pollenNow: "Pollenflug aktuell",
     pollenDetails: "Pollenflug Details",
     pollenNoActive: "Kein aktiver Pollenflug",
@@ -514,6 +517,9 @@ const TRANSLATIONS = {
     pollenRagweed: "Ragweed",
     pollenPlantain: "Plantain",
     pollenSorrel: "Sorrel",
+    pollenTree: "Tree pollen",
+    pollenWeed: "Weed pollen",
+    owmApiKey: "OpenWeatherMap API key",
     pollenNow: "Current pollen",
     pollenDetails: "Pollen Details",
     pollenNoActive: "No active pollen",
@@ -2458,7 +2464,8 @@ const getSavedSettings = () => {
             windUnit: 'kmh',
             precipUnit: 'mm',
             pollenFilter: DEFAULT_POLLEN_FILTER,
-            homeTerrain: null
+            homeTerrain: null,
+            owmApiKey: ''
         };
         if (!saved) return defaults;
         const parsed = JSON.parse(saved);
@@ -2484,7 +2491,8 @@ const getSavedSettings = () => {
             windUnit: 'kmh',
             precipUnit: 'mm',
             pollenFilter: DEFAULT_POLLEN_FILTER,
-            homeTerrain: null
+            homeTerrain: null,
+            owmApiKey: ''
         }; 
     }
 };
@@ -2899,20 +2907,9 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
       ? extraData.pollenFilter
       : DEFAULT_POLLEN_FILTER;
     const types = [
-      { key: 'hazel_pollen', label: t.pollenHazel },
-      { key: 'alder_pollen', label: t.pollenAlder },
-      { key: 'birch_pollen', label: t.pollenBirch },
-      { key: 'ash_pollen', label: t.pollenAsh },
-      { key: 'hornbeam_pollen', label: t.pollenHornbeam },
-      { key: 'oak_pollen', label: t.pollenOak },
-      { key: 'beech_pollen', label: t.pollenBeech },
       { key: 'grass_pollen', label: t.pollenGrass },
-      { key: 'rye_pollen', label: t.pollenRye },
-      { key: 'mugwort_pollen', label: t.pollenMugwort },
-      { key: 'olive_pollen', label: t.pollenOlive },
-      { key: 'ragweed_pollen', label: t.pollenRagweed },
-      { key: 'plantain_pollen', label: t.pollenPlantain },
-      { key: 'sorrel_pollen', label: t.pollenSorrel },
+      { key: 'tree_pollen', label: t.pollenTree },
+      { key: 'weed_pollen', label: t.pollenWeed },
     ].filter(({ key }) => pollenFilter.includes(key));
     const active = types
       .map(({ key, label }) => ({ label, val: pollenData[key] ?? 0 }))
@@ -4434,24 +4431,13 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                  {/* POLLEN FILTER */}
                  <div className="mb-8">
                      <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
-                        <Sparkles size={16}/> {t.pollenFilter}
+                         <Sparkles size={16}/> {t.pollenFilter}
                      </label>
-                     <div className="grid grid-cols-2 gap-2 bg-m3-surface-container p-2 rounded-m3-md">
+                     <div className="grid grid-cols-1 gap-2 bg-m3-surface-container p-2 rounded-m3-md">
                          {[
-                             { key: 'hazel_pollen', label: t.pollenHazel },
-                             { key: 'alder_pollen', label: t.pollenAlder },
-                             { key: 'birch_pollen', label: t.pollenBirch },
-                             { key: 'ash_pollen', label: t.pollenAsh },
-                             { key: 'hornbeam_pollen', label: t.pollenHornbeam },
-                             { key: 'oak_pollen', label: t.pollenOak },
-                             { key: 'beech_pollen', label: t.pollenBeech },
                              { key: 'grass_pollen', label: t.pollenGrass },
-                             { key: 'rye_pollen', label: t.pollenRye },
-                             { key: 'mugwort_pollen', label: t.pollenMugwort },
-                             { key: 'olive_pollen', label: t.pollenOlive },
-                             { key: 'ragweed_pollen', label: t.pollenRagweed },
-                             { key: 'plantain_pollen', label: t.pollenPlantain },
-                             { key: 'sorrel_pollen', label: t.pollenSorrel },
+                             { key: 'tree_pollen', label: t.pollenTree },
+                             { key: 'weed_pollen', label: t.pollenWeed },
                          ].map(({ key, label }) => {
                              const filter = localSettings.pollenFilter || [];
                              const isActive = filter.includes(key);
@@ -4472,6 +4458,20 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                              );
                          })}
                      </div>
+                 </div>
+
+                 {/* OWM API KEY */}
+                 <div className="mb-8">
+                     <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <Sparkles size={16}/> {t.owmApiKey}
+                     </label>
+                     <input
+                         type="password"
+                         value={localSettings.owmApiKey || ''}
+                         onChange={(e) => setLocalSettings({ ...localSettings, owmApiKey: e.target.value })}
+                         placeholder="API key..."
+                         className="w-full py-2 px-3 bg-m3-surface-container text-m3-on-surface font-medium rounded-m3-md border border-m3-outline-variant text-sm"
+                     />
                  </div>
 
                  </div>
@@ -7106,28 +7106,17 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
 };
 
 // --- POLLEN DETAILS MODAL ---
-const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmallScreen = false, pollenFilter = null }) => {
+const PollenDetailsModal = ({ isOpen, onClose, pollenData, lang='de', isSmallScreen = false, pollenFilter = null }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
 
-  if (!isOpen || !airQualityData) return null;
+  if (!isOpen || !pollenData) return null;
 
   const activeFilter = Array.isArray(pollenFilter) ? pollenFilter : DEFAULT_POLLEN_FILTER;
 
   const allPollenTypes = [
-    { key: 'hazel_pollen', label: t.pollenHazel },
-    { key: 'alder_pollen', label: t.pollenAlder },
-    { key: 'birch_pollen', label: t.pollenBirch },
-    { key: 'ash_pollen', label: t.pollenAsh },
-    { key: 'hornbeam_pollen', label: t.pollenHornbeam },
-    { key: 'oak_pollen', label: t.pollenOak },
-    { key: 'beech_pollen', label: t.pollenBeech },
     { key: 'grass_pollen', label: t.pollenGrass },
-    { key: 'rye_pollen', label: t.pollenRye },
-    { key: 'mugwort_pollen', label: t.pollenMugwort },
-    { key: 'olive_pollen', label: t.pollenOlive },
-    { key: 'ragweed_pollen', label: t.pollenRagweed },
-    { key: 'plantain_pollen', label: t.pollenPlantain },
-    { key: 'sorrel_pollen', label: t.pollenSorrel },
+    { key: 'tree_pollen', label: t.pollenTree },
+    { key: 'weed_pollen', label: t.pollenWeed },
   ];
 
   const getPollenLevel = (val) => {
@@ -7139,13 +7128,13 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
 
   const userTypes = allPollenTypes
     .filter(({ key }) => activeFilter.includes(key))
-    .map(({ key, label }) => ({ label, val: airQualityData[key] ?? 0 }))
+    .map(({ key, label }) => ({ label, val: pollenData[key] ?? 0 }))
     .filter(({ val }) => val > 0)
     .sort((a, b) => b.val - a.val);
 
   const otherTypes = allPollenTypes
     .filter(({ key }) => !activeFilter.includes(key))
-    .map(({ key, label }) => ({ label, val: airQualityData[key] ?? 0 }))
+    .map(({ key, label }) => ({ label, val: pollenData[key] ?? 0 }))
     .filter(({ val }) => val > 0)
     .sort((a, b) => b.val - a.val);
 
@@ -7352,7 +7341,7 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
 };
 
 // --- ACTIVITY INDEX MODAL ---
-const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null }) => {
+const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, pollenData = null, pollenFilter = null }) => {
   const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
   if (!isOpen) return null;
 
@@ -7397,25 +7386,14 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
   const activeFilter = Array.isArray(pollenFilter) ? pollenFilter : DEFAULT_POLLEN_FILTER;
   const tr = TRANSLATIONS[lang] || TRANSLATIONS['de'];
   const allPollenTypes = [
-    { key: 'hazel_pollen', label: tr.pollenHazel },
-    { key: 'alder_pollen', label: tr.pollenAlder },
-    { key: 'birch_pollen', label: tr.pollenBirch },
-    { key: 'ash_pollen', label: tr.pollenAsh },
-    { key: 'hornbeam_pollen', label: tr.pollenHornbeam },
-    { key: 'oak_pollen', label: tr.pollenOak },
-    { key: 'beech_pollen', label: tr.pollenBeech },
     { key: 'grass_pollen', label: tr.pollenGrass },
-    { key: 'rye_pollen', label: tr.pollenRye },
-    { key: 'mugwort_pollen', label: tr.pollenMugwort },
-    { key: 'olive_pollen', label: tr.pollenOlive },
-    { key: 'ragweed_pollen', label: tr.pollenRagweed },
-    { key: 'plantain_pollen', label: tr.pollenPlantain },
-    { key: 'sorrel_pollen', label: tr.pollenSorrel },
+    { key: 'tree_pollen', label: tr.pollenTree },
+    { key: 'weed_pollen', label: tr.pollenWeed },
   ];
-  const activePollen = airQualityData
+  const activePollen = pollenData
     ? allPollenTypes
         .filter(({ key }) => activeFilter.includes(key))
-        .map(({ key, label }) => ({ label, val: airQualityData[key] ?? 0 }))
+        .map(({ key, label }) => ({ label, val: pollenData[key] ?? 0 }))
         .filter(({ val }) => val > 0)
         .sort((a, b) => b.val - a.val)
     : [];
@@ -7520,7 +7498,7 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
                 </div>
               </div>
             )}
-            {airQualityData && activePollen.length === 0 && (
+            {pollenData && activePollen.length === 0 && (
               <div className="mt-3 pt-3 border-t border-slate-100 text-sm text-slate-400 text-center">
                 🌿 {t('pollenNoActive')}
               </div>
@@ -8317,21 +8295,11 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
 
                     {currentStep.content === 'pollenFilter' && (
                         <div className="space-y-3">
-                            <div className="grid grid-cols-2 gap-2 bg-m3-surface-container p-2 rounded-m3-md">
+                            <div className="grid grid-cols-1 gap-2 bg-m3-surface-container p-2 rounded-m3-md">
                                 {[
-                                    { key: 'hazel_pollen', label: t.pollenHazel },
-                                    { key: 'alder_pollen', label: t.pollenAlder },
-                                    { key: 'birch_pollen', label: t.pollenBirch },
-                                    { key: 'ash_pollen', label: t.pollenAsh },
-                                    { key: 'hornbeam_pollen', label: t.pollenHornbeam },
-                                    { key: 'oak_pollen', label: t.pollenOak },
-                                    { key: 'beech_pollen', label: t.pollenBeech },
                                     { key: 'grass_pollen', label: t.pollenGrass },
-                                    { key: 'rye_pollen', label: t.pollenRye },
-                                    { key: 'mugwort_pollen', label: t.pollenMugwort },
-                                    { key: 'ragweed_pollen', label: t.pollenRagweed },
-                                    { key: 'plantain_pollen', label: t.pollenPlantain },
-                                    { key: 'sorrel_pollen', label: t.pollenSorrel },
+                                    { key: 'tree_pollen', label: t.pollenTree },
+                                    { key: 'weed_pollen', label: t.pollenWeed },
                                 ].map(({ key, label }) => {
                                     const filter = settings.pollenFilter || [];
                                     const isActive = filter.includes(key);
@@ -8681,6 +8649,7 @@ export default function WeatherApp() {
   const [longTermData, setLongTermData] = useState(null);
   const [airQualityData, setAirQualityData] = useState(null);
   const [airQualityHourlyData, setAirQualityHourlyData] = useState(null);
+  const [pollenData, setPollenData] = useState(null);
   const [dwdWarnings, setDwdWarnings] = useState([]);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
@@ -8908,27 +8877,16 @@ export default function WeatherApp() {
 
   // Helper to get dominant pollen type and level
   const getDominantPollen = useMemo(() => {
-    if (!airQualityData) return null;
+    if (!pollenData) return null;
     const activeFilter = settings.pollenFilter || DEFAULT_POLLEN_FILTER;
     const types = [
-      { key: 'hazel_pollen', label: t('pollenHazel') },
-      { key: 'alder_pollen', label: t('pollenAlder') },
-      { key: 'birch_pollen', label: t('pollenBirch') },
-      { key: 'ash_pollen', label: t('pollenAsh') },
-      { key: 'hornbeam_pollen', label: t('pollenHornbeam') },
-      { key: 'oak_pollen', label: t('pollenOak') },
-      { key: 'beech_pollen', label: t('pollenBeech') },
       { key: 'grass_pollen', label: t('pollenGrass') },
-      { key: 'rye_pollen', label: t('pollenRye') },
-      { key: 'mugwort_pollen', label: t('pollenMugwort') },
-      { key: 'olive_pollen', label: t('pollenOlive') },
-      { key: 'ragweed_pollen', label: t('pollenRagweed') },
-      { key: 'plantain_pollen', label: t('pollenPlantain') },
-      { key: 'sorrel_pollen', label: t('pollenSorrel') },
+      { key: 'tree_pollen', label: t('pollenTree') },
+      { key: 'weed_pollen', label: t('pollenWeed') },
     ].filter(({ key }) => activeFilter.includes(key));
     let max = null;
     types.forEach(({ key, label }) => {
-      const val = airQualityData[key];
+      const val = pollenData[key];
       if (val !== null && val !== undefined && (max === null || val > max.val)) {
         max = { val, label };
       }
@@ -8939,7 +8897,7 @@ export default function WeatherApp() {
     else if (max.val >= POLLEN_HIGH_THRESHOLD) level = t('pollenHigh');
     else if (max.val >= POLLEN_MODERATE_THRESHOLD) level = t('pollenModerate');
     return { ...max, level };
-  }, [airQualityData, lang, settings.pollenFilter]);
+  }, [pollenData, lang, settings.pollenFilter]);
 
 
 
@@ -9371,7 +9329,11 @@ export default function WeatherApp() {
       // Separate API call for sunrise/sunset without models parameter (astronomical data is location-based, not model-dependent)
       const urlSunriseSunset = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&timezone=auto&forecast_days=1`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
-      const urlAirQuality = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi,pm10,pm2_5,alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&hourly=european_aqi&past_days=1&forecast_days=2&timezone=auto`;
+      const urlAirQuality = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi,pm10,pm2_5&hourly=european_aqi&past_days=1&forecast_days=2&timezone=auto`;
+      const owmApiKey = settings.owmApiKey || '';
+      const urlPollen = owmApiKey
+        ? `https://api.openweathermap.org/pollen/1.0/current?lat=${lat}&lon=${lon}&appid=${owmApiKey}`
+        : null;
 
       // Climate normals: fetch same month last year from archive API for historical context
       const nowForClimate = new Date();
@@ -9380,13 +9342,14 @@ export default function WeatherApp() {
       const climLastDay = new Date(lastYear, nowForClimate.getMonth() + 1, 0).getDate();
       const urlClimate = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${lastYear}-${climMonth}-01&end_date=${lastYear}-${climMonth}-${climLastDay}&daily=temperature_2m_mean&timezone=auto`;
 
-      const [resShort, resLong, resSunriseSunset, resDwd, resAirQuality, resClimate] = await Promise.all([
+      const [resShort, resLong, resSunriseSunset, resDwd, resAirQuality, resClimate, resPollen] = await Promise.all([
         fetch(urlShort), 
         fetch(urlLong), 
         fetch(urlSunriseSunset).catch(() => ({ ok: false })),
         fetch(urlDwd).catch(() => ({ ok: false })),
         fetch(urlAirQuality).catch(() => ({ ok: false })),
-        fetch(urlClimate).catch(() => ({ ok: false }))
+        fetch(urlClimate).catch(() => ({ ok: false })),
+        urlPollen ? fetch(urlPollen).catch(() => ({ ok: false })) : Promise.resolve({ ok: false })
       ]);
       
       if (!resShort.ok) {
@@ -9425,6 +9388,19 @@ export default function WeatherApp() {
         const aqJson = await resAirQuality.json();
         setAirQualityData(aqJson.current);
         setAirQualityHourlyData(aqJson.hourly || null);
+      }
+
+      if (resPollen.ok) {
+        const pollenJson = await resPollen.json();
+        // OWM API returns 'Count' with capital C (API convention)
+        const counts = pollenJson.data?.[0]?.Count;
+        if (counts) {
+          setPollenData({
+            grass_pollen: counts.grass_pollen ?? 0,
+            tree_pollen: counts.tree_pollen ?? 0,
+            weed_pollen: counts.weed_pollen ?? 0,
+          });
+        }
       }
 
       if (resClimate.ok) {
@@ -10546,9 +10522,9 @@ export default function WeatherApp() {
     return result;
   }, [processedShort, processedLong, lang, t]);
 
-  const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, { threeDayForecast, pollenData: airQualityData, pollenFilter: settings.pollenFilter }), [processedShort, lang, threeDayForecast, airQualityData, settings.pollenFilter]);
+  const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, { threeDayForecast, pollenData, pollenFilter: settings.pollenFilter }), [processedShort, lang, threeDayForecast, pollenData, settings.pollenFilter]);
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
-  const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter }), [processedLong, lang, airQualityData, settings.pollenFilter]);
+  const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang, { pollenData, pollenFilter: settings.pollenFilter }), [processedLong, lang, pollenData, settings.pollenFilter]);
 
   // --- WIDGET VIEWS ---
   // Only block rendering on initial load (no data yet); during location switches, keep existing data visible.
@@ -11008,7 +10984,7 @@ export default function WeatherApp() {
         <PollenDetailsModal
           isOpen={showPollenModal}
           onClose={() => setShowPollenModal(false)}
-          airQualityData={airQualityData}
+          pollenData={pollenData}
           lang={lang}
           isSmallScreen={isSmallScreen}
           pollenFilter={settings.pollenFilter}
@@ -11033,7 +11009,7 @@ export default function WeatherApp() {
           hourlyData={processedShort}
           lang={lang}
           isSmallScreen={isSmallScreen}
-          airQualityData={airQualityData}
+          pollenData={pollenData}
           pollenFilter={settings.pollenFilter}
         />
       )}
