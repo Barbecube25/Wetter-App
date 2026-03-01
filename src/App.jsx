@@ -152,6 +152,7 @@ const TRANSLATIONS = {
     saveTrip: "Reise speichern",
     myTrips: "Meine Reisen",
     tripSaved: "Reise gespeichert!",
+    days: "Tage",
     tripName: "Reisename (Optional)",
     expandDetails: "Details anzeigen",
     collapseDetails: "Details verbergen",
@@ -390,6 +391,7 @@ const TRANSLATIONS = {
     saveTrip: "Save Trip",
     myTrips: "My Trips",
     tripSaved: "Trip saved!",
+    days: "days",
     tripName: "Trip Name (Optional)",
     expandDetails: "Show Details",
     collapseDetails: "Hide Details",
@@ -627,6 +629,7 @@ const TRANSLATIONS = {
     saveTrip: "Enregistrer le voyage",
     myTrips: "Mes voyages",
     tripSaved: "Voyage enregistré !",
+    days: "jours",
     tripName: "Nom du voyage (Optionnel)",
     expandDetails: "Afficher les détails",
     collapseDetails: "Masquer les détails",
@@ -817,6 +820,7 @@ const TRANSLATIONS = {
     saveTrip: "Guardar viaje",
     myTrips: "Mis viajes",
     tripSaved: "¡Viaje guardado!",
+    days: "días",
     tripName: "Nombre del viaje (Opcional)",
     expandDetails: "Mostrar detalles",
     collapseDetails: "Ocultar detalles",
@@ -1006,6 +1010,7 @@ const TRANSLATIONS = {
     saveTrip: "Salva viaggio",
     myTrips: "I miei viaggi",
     tripSaved: "Viaggio salvato!",
+    days: "giorni",
     tripName: "Nome del viaggio (Opzionale)",
     expandDetails: "Mostra dettagli",
     collapseDetails: "Nascondi dettagli",
@@ -1195,6 +1200,7 @@ const TRANSLATIONS = {
     saveTrip: "Seyahati kaydet",
     myTrips: "Seyahatlerim",
     tripSaved: "Seyahat kaydedildi!",
+    days: "gün",
     tripName: "Seyahat Adı (İsteğe bağlı)",
     expandDetails: "Detayları göster",
     collapseDetails: "Detayları gizle",
@@ -1384,6 +1390,7 @@ const TRANSLATIONS = {
     saveTrip: "Zapisz podróż",
     myTrips: "Moje podróże",
     tripSaved: "Podróż zapisana!",
+    days: "dni",
     tripName: "Nazwa podróży (Opcjonalne)",
     expandDetails: "Pokaż szczegóły",
     collapseDetails: "Ukryj szczegóły",
@@ -1573,6 +1580,7 @@ const TRANSLATIONS = {
     saveTrip: "Reis opslaan",
     myTrips: "Mijn reizen",
     tripSaved: "Reis opgeslagen!",
+    days: "dagen",
     tripName: "Reisnaam (Optioneel)",
     expandDetails: "Details tonen",
     collapseDetails: "Details verbergen",
@@ -1762,6 +1770,7 @@ const TRANSLATIONS = {
     saveTrip: "Spremi putovanje",
     myTrips: "Moja putovanja",
     tripSaved: "Putovanje spremljeno!",
+    days: "dana",
     tripName: "Naziv putovanja (Opcionalno)",
     expandDetails: "Prikaži detalje",
     collapseDetails: "Sakrij detalje",
@@ -1951,6 +1960,7 @@ const TRANSLATIONS = {
     saveTrip: "Αποθήκευση ταξιδιού",
     myTrips: "Τα ταξίδια μου",
     tripSaved: "Το ταξίδι αποθηκεύτηκε!",
+    days: "ημέρες",
     tripName: "Όνομα ταξιδιού (Προαιρετικό)",
     expandDetails: "Εμφάνιση λεπτομερειών",
     collapseDetails: "Απόκρυψη λεπτομερειών",
@@ -2140,6 +2150,7 @@ const TRANSLATIONS = {
     saveTrip: "Gem rejse",
     myTrips: "Mine rejser",
     tripSaved: "Rejse gemt!",
+    days: "dage",
     tripName: "Rejsenavn (Valgfrit)",
     expandDetails: "Vis detaljer",
     collapseDetails: "Skjul detaljer",
@@ -2330,6 +2341,7 @@ const TRANSLATIONS = {
     saveTrip: "Сохранить поездку",
     myTrips: "Мои поездки",
     tripSaved: "Поездка сохранена!",
+    days: "дней",
     tripName: "Название поездки (Необязательно)",
     expandDetails: "Показать детали",
     collapseDetails: "Скрыть детали",
@@ -8525,29 +8537,33 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
 
     if (isTooFarFuture) {
         return (
-            <div className="flex flex-col items-center gap-1 bg-purple-50 px-2 py-1.5 rounded-lg w-full">
-                <span className="text-2xl">🔮</span>
-                <span className="font-bold text-purple-700 text-[10px] text-center leading-tight">{t('tripTooFarFuture')}</span>
-                <span className="text-[9px] text-purple-500 text-center">{t('tripTooFarFutureHint')}</span>
+            <div className="flex items-center gap-2 bg-m3-tertiary-container/40 px-2 py-2 rounded-xl w-full">
+                <span className="text-xl flex-shrink-0">🔮</span>
+                <div className="min-w-0">
+                  <div className="font-semibold text-m3-on-tertiary-container text-[10px] leading-tight">{t('tripTooFarFuture')}</div>
+                  <div className="text-[9px] text-m3-on-tertiary-container/60">{t('tripTooFarFutureHint')}</div>
+                </div>
             </div>
         );
     }
 
-    if (loading) return <div className="w-8 h-8 rounded-full bg-m3-surface-container animate-pulse"></div>;
+    if (loading) return <div className="w-full h-10 rounded-xl bg-m3-surface-container animate-pulse"></div>;
     if (!weather) return <div className="text-[10px] text-m3-on-surface-variant">--</div>;
 
     const conf = getWeatherConfig(weather.code, 1, lang);
     const Icon = conf.icon;
     return (
-        <div className="flex flex-col items-center gap-1 bg-blue-50 px-2 py-1.5 rounded-lg w-full">
-            <div className="flex items-center gap-1.5">
-                <Icon size={18} className="text-blue-600 flex-shrink-0"/>
-                <span className="font-bold text-slate-700 text-sm">{formatTemp(weather.max)}{getTempUnitSymbol()}</span>
+        <div className="flex items-center gap-2 bg-m3-primary-container/40 px-2 py-2 rounded-xl w-full">
+            <Icon size={24} className="text-m3-primary flex-shrink-0"/>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-bold text-m3-on-surface text-sm">{formatTemp(weather.max)}{getTempUnitSymbol()}</span>
+                {weather.min !== null && weather.min !== undefined && (
+                  <span className="text-[10px] text-m3-on-surface-variant">{formatTemp(weather.min)}{getTempUnitSymbol()}</span>
+                )}
+              </div>
+              <div className="text-[10px] text-m3-on-surface-variant truncate leading-tight">{conf.text}</div>
             </div>
-            <span className="text-[10px] text-slate-500 text-center leading-tight truncate w-full">{conf.text}</span>
-            {weather.min !== null && weather.min !== undefined && (
-                <span className="text-[9px] text-blue-500">▼ {formatTemp(weather.min)}{getTempUnitSymbol()}</span>
-            )}
         </div>
     );
 };
@@ -11820,61 +11836,84 @@ export default function WeatherApp() {
           {activeTab === 'travel' && (
             <div className="space-y-6">
 
-                {/* Trips row: "+" tile first, then saved trip tiles */}
+                {/* Trips grid: "+" tile first, then saved trip tiles – 2-column grid */}
                 <div>
                   <h3 className="text-sm font-bold uppercase opacity-70 mb-3 ml-2">{t('myTrips')}</h3>
-                  <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide">
-                    <div className="flex gap-3 w-max">
+                  <div className="grid grid-cols-2 gap-3">
                       {/* "Plan Trip" tile – always first */}
                       <button
                         onClick={() => setShowNewTripModal(true)}
-                        className="flex flex-col items-center justify-center bg-m3-surface-container/80 backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl shadow-m3-1 hover:shadow-m3-2 transition-all min-w-[180px] w-[180px] min-h-[160px] gap-2 p-3"
+                        className="flex flex-col items-center justify-center bg-m3-primary/10 border border-m3-primary/20 rounded-m3-xl shadow-m3-1 hover:shadow-m3-2 hover:bg-m3-primary/15 active:scale-95 transition-all min-h-[180px] gap-3 p-4"
                       >
-                        <div className="w-14 h-14 rounded-full bg-m3-primary/10 flex items-center justify-center">
-                          <span className="text-4xl font-thin text-m3-primary leading-none">+</span>
+                        <div className="w-16 h-16 rounded-full bg-m3-primary/20 flex items-center justify-center">
+                          <Plane size={28} className="text-m3-primary"/>
                         </div>
-                        <span className="font-bold text-m3-on-surface text-sm text-center">{t('planTrip')}</span>
+                        <div className="text-center">
+                          <span className="font-bold text-m3-primary text-sm block">{t('planTrip')}</span>
+                          <span className="text-[11px] text-m3-primary/70 mt-0.5 block">{t('travelDesc')}</span>
+                        </div>
                       </button>
 
                       {/* Saved trip tiles */}
                       {savedTrips.map(trip => {
+                          const tripDays = trip.endDate && trip.endDate !== trip.startDate
+                            ? Math.round((new Date(trip.endDate) - new Date(trip.startDate)) / (1000 * 60 * 60 * 24)) + 1
+                            : 1;
                           return (
-                            <div key={trip.id} className="flex flex-col bg-m3-surface-container/80 backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl shadow-m3-1 hover:shadow-m3-2 transition-all min-w-[180px] w-[180px] overflow-hidden">
-                              <button onClick={() => openTripPopup(trip)} className="text-left p-3 flex-1">
-                                <div className="font-bold text-m3-on-surface text-sm mb-1 truncate">{trip.customName || trip.name}</div>
-                                <div className="text-xs text-m3-on-surface-variant mb-2">
-                                  {formatDateShort(new Date(trip.startDate), lang)} – {formatDateShort(new Date(trip.endDate || trip.startDate), lang)}
+                            <div key={trip.id} className="flex flex-col bg-m3-surface-container-high border border-m3-outline-variant/30 rounded-m3-xl shadow-m3-1 hover:shadow-m3-2 transition-all overflow-hidden">
+                              <button onClick={() => openTripPopup(trip)} className="text-left flex-1">
+                                {/* Colored header bar */}
+                                <div className="bg-m3-secondary-container/60 px-3 pt-3 pb-2">
+                                  <div className="flex items-start justify-between gap-1">
+                                    <div className="min-w-0">
+                                      <div className="font-bold text-m3-on-secondary-container text-sm leading-tight truncate">{trip.customName || trip.name}</div>
+                                      {trip.customName && (
+                                        <div className="text-[10px] text-m3-on-secondary-container/60 truncate mt-0.5">📍 {trip.name}</div>
+                                      )}
+                                    </div>
+                                    <div className="flex-shrink-0 bg-m3-secondary/20 rounded-full p-1.5">
+                                      <Plane size={14} className="text-m3-secondary"/>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="text-[10px] text-m3-on-surface-variant/70 mb-2 truncate">📍 {trip.name}</div>
-                                <div className="flex justify-center mt-1">
+                                {/* Body */}
+                                <div className="px-3 py-2 space-y-2">
+                                  <div className="flex items-center gap-1.5 text-xs text-m3-on-surface-variant">
+                                    <Calendar size={12} className="flex-shrink-0"/>
+                                    <span className="truncate">{formatDateShort(new Date(trip.startDate), lang)} – {formatDateShort(new Date(trip.endDate || trip.startDate), lang)}</span>
+                                  </div>
+                                  {tripDays > 1 && (
+                                    <div className="inline-flex items-center gap-1 bg-m3-tertiary-container/50 px-2 py-0.5 rounded-full">
+                                      <span className="text-[10px] font-medium text-m3-on-tertiary-container">{tripDays} {t('days')}</span>
+                                    </div>
+                                  )}
                                   <TripWeatherPreview trip={trip} tripPreviewCache={tripPreviewCache} setTripPreviewCache={setTripPreviewCache} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} lang={lang} />
                                 </div>
                               </button>
-                              <div className="flex items-center justify-end border-t border-m3-outline-variant/20 px-2 py-1">
+                              <div className="flex items-center justify-end border-t border-m3-outline-variant/20 px-2 py-1.5 gap-1">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setEditingTrip({ ...trip });
                                   }}
-                                  className="p-1.5 text-m3-on-surface-variant hover:text-blue-500 transition"
+                                  className="p-1.5 rounded-full text-m3-on-surface-variant hover:bg-m3-surface-variant hover:text-m3-primary transition"
                                   title={t('editTrip')}
                                 >
-                                  <Edit2 size={16}/>
+                                  <Edit2 size={15}/>
                                 </button>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleDeleteTrip(trip.id);
                                   }}
-                                  className="p-1.5 text-m3-on-surface-variant hover:text-red-500 transition"
+                                  className="p-1.5 rounded-full text-m3-on-surface-variant hover:bg-red-50 hover:text-red-500 transition"
                                 >
-                                  <Trash2 size={16}/>
+                                  <Trash2 size={15}/>
                                 </button>
                               </div>
                             </div>
                           );
                       })}
-                    </div>
                   </div>
                 </div>
 
