@@ -6802,7 +6802,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
         {/* EXPANDABLE DETAILS */}
         {showDetails && expanded && (
             <div className="px-4 pb-4 pt-0 animate-in fade-in slide-in-from-top-2 duration-300">
-                <div className="h-px w-full bg-indigo-200/50 mb-3"></div>
+                <div className="h-px w-full bg-indigo-200/50 dark:bg-white/10 mb-3"></div>
                 
                 {/* Trip Details (Horizontal View) */}
                 {showTripDetails && (
@@ -6817,7 +6817,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                         const reliabilityValue = day.reliability ?? null;
                         const confColor = reliabilityValue !== null ? getConfidenceColor(reliabilityValue) : "";
                         return (
-                          <div key={idx} className="flex flex-col items-center bg-m3-surface-container/80 backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl p-3 min-w-[160px] w-[160px] shadow-m3-1 hover:shadow-m3-2 transition-all">
+                          <div key={idx} className="flex flex-col items-center bg-m3-surface-container/80 dark:bg-m3-dark-surface-container backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl p-3 min-w-[160px] w-[160px] shadow-m3-1 hover:shadow-m3-2 transition-all">
                             <div className="text-base font-bold mb-0.5 text-m3-on-surface">{day.dayName}</div>
                             <div className="text-xs mb-2 font-medium text-m3-on-surface-variant">{day.dateShort}</div>
                             <DayIcon size={48} className="mb-2 text-m3-on-surface" />
@@ -6850,7 +6850,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                               </div>
                             </div>
                             {reliabilityValue !== null && (
-                              <div className="mt-1 text-xs flex items-center gap-1 border border-m3-outline-variant/30 bg-m3-surface-container-highest/50 px-2 py-0.5 rounded-full">
+                              <div className="mt-1 text-xs flex items-center gap-1 border border-m3-outline-variant/30 bg-m3-surface-container-highest/50 dark:bg-m3-dark-surface-container-highest px-2 py-0.5 rounded-full">
                                 <ShieldCheck size={10} className={confColor} />
                                 <span className={confColor}>{reliabilityValue}% {t.safe}</span>
                               </div>
