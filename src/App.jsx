@@ -283,6 +283,7 @@ const TRANSLATIONS = {
     pollenNoActive: "Kein aktiver Pollenflug",
     pollenPause: "Tief durchatmen, deine Pollen pausieren",
     pollenOthersFlying: "Andere Pollen in der Luft",
+    pollenMoreActive: "weitere aktiv",
     pollenLow: "Niedrig",
     pollenModerate: "Mittel",
     pollenHigh: "Hoch",
@@ -519,6 +520,7 @@ const TRANSLATIONS = {
     pollenNoActive: "No active pollen",
     pollenPause: "Take a deep breath, your pollen are pausing",
     pollenOthersFlying: "Other pollen in the air",
+    pollenMoreActive: "more active",
     pollenLow: "Low",
     pollenModerate: "Moderate",
     pollenHigh: "High",
@@ -8927,18 +8929,25 @@ export default function WeatherApp() {
       { key: 'sorrel_pollen', label: t('pollenSorrel') },
     ].filter(({ key }) => activeFilter.includes(key));
     let max = null;
+    let maxKey = null;
     types.forEach(({ key, label }) => {
       const val = airQualityData[key];
       if (val !== null && val !== undefined && (max === null || val > max.val)) {
         max = { val, label };
+        maxKey = key;
       }
     });
     if (!max || max.val === 0) return { pausing: true };
+    const otherActiveCount = types.filter(({ key }) => {
+      if (key === maxKey) return false;
+      const val = airQualityData[key];
+      return val !== null && val !== undefined && val > 0;
+    }).length;
     let level = t('pollenLow');
     if (max.val >= POLLEN_VERY_HIGH_THRESHOLD) level = t('pollenVeryHigh');
     else if (max.val >= POLLEN_HIGH_THRESHOLD) level = t('pollenHigh');
     else if (max.val >= POLLEN_MODERATE_THRESHOLD) level = t('pollenModerate');
-    return { ...max, level };
+    return { ...max, level, otherActiveCount };
   }, [airQualityData, lang, settings.pollenFilter]);
 
 
@@ -11451,6 +11460,11 @@ export default function WeatherApp() {
                   <div className={`text-xs font-medium mt-1 ${getDominantPollen.val >= POLLEN_HIGH_THRESHOLD ? 'text-orange-500' : getDominantPollen.val >= POLLEN_MODERATE_THRESHOLD ? 'text-yellow-500' : (isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant')}`}>
                     {getDominantPollen.level} ({Math.round(getDominantPollen.val)})
                   </div>
+                  {getDominantPollen.otherActiveCount > 0 && (
+                    <div className={`text-xs mt-0.5 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
+                      +{getDominantPollen.otherActiveCount} {t('pollenMoreActive')}
+                    </div>
+                  )}
                 </>
               )}
             </div>
