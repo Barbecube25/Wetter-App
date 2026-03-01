@@ -9371,7 +9371,7 @@ export default function WeatherApp() {
       // Separate API call for sunrise/sunset without models parameter (astronomical data is location-based, not model-dependent)
       const urlSunriseSunset = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&timezone=auto&forecast_days=1`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
-      const urlAirQuality = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi,pm10,pm2_5,alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&hourly=european_aqi&past_days=1&forecast_days=2&timezone=auto`;
+      const urlAirQuality = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi,pm10,pm2_5,hazel_pollen,alder_pollen,birch_pollen,ash_pollen,hornbeam_pollen,oak_pollen,beech_pollen,grass_pollen,rye_pollen,mugwort_pollen,olive_pollen,ragweed_pollen,plantain_pollen,sorrel_pollen&hourly=european_aqi&past_days=1&forecast_days=2&timezone=auto`;
 
       // Climate normals: fetch same month last year from archive API for historical context
       const nowForClimate = new Date();
