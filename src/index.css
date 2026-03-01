@@ -22,3 +22,58 @@ body {
     padding-right: env(safe-area-inset-right);
   }
 }
+
+/* Dark mode overrides: ensure components without explicit dark mode handling
+   display readable text and appropriate backgrounds when the app is in dark mode.
+   Elements already using `m3-dark-*` classes are unaffected by these overrides. */
+.dark .text-m3-on-surface {
+  color: #E6E1E5;
+}
+.dark .text-m3-on-surface-variant {
+  color: #CAC4D0;
+}
+.dark .text-m3-primary {
+  color: #D0BCFF;
+}
+.dark .text-m3-secondary {
+  color: #CCC2DC;
+}
+.dark .text-m3-tertiary {
+  color: #EFB8C8;
+}
+.dark .bg-m3-surface {
+  background-color: #2d2d2d;
+}
+.dark .bg-m3-surface-container {
+  background-color: #3a3a3a;
+}
+.dark .bg-m3-surface-container-high {
+  background-color: #454545;
+}
+.dark .bg-m3-surface-container-highest {
+  background-color: #505050;
+}
+.dark .bg-m3-surface-container-low {
+  background-color: #323232;
+}
+.dark .border-m3-outline-variant {
+  border-color: rgba(202, 196, 208, 0.3);
+}
+.dark .bg-m3-primary-container {
+  background-color: #4F378B;
+}
+.dark .text-m3-on-primary-container {
+  color: #EADDFF;
+}
+.dark .bg-m3-secondary-container {
+  background-color: #4A4458;
+}
+.dark .text-m3-on-secondary-container {
+  color: #E8DEF8;
+}
+.dark .bg-m3-tertiary-container {
+  background-color: #633B48;
+}
+.dark .text-m3-on-tertiary-container {
+  color: #FFD8E4;
+}
