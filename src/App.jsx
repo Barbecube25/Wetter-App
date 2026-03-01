@@ -8670,19 +8670,20 @@ const TripWeatherPopupModal = ({ trip, tripDetails, savedTripReports, travelLoad
     return (
         <div className={`fixed inset-0 z-[60] flex items-end sm:items-center justify-center ${isSmallScreen ? 'p-0' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`} onClick={onClose}>
             <div
-                className={`bg-white ${isSmallScreen ? 'rounded-t-3xl w-full max-h-[92vh]' : 'rounded-3xl max-w-2xl w-full max-h-[90vh]'} shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-200`}
+                className={`bg-m3-surface-container ${isSmallScreen ? 'rounded-t-3xl w-full max-h-[92vh]' : 'rounded-3xl max-w-2xl w-full max-h-[90vh]'} shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-200`}
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-blue-500 to-indigo-500 text-white sticky top-0">
-                    <div className="flex items-center gap-3 min-w-0">
+                <div className="p-4 border-b border-m3-outline-variant/30 flex justify-between items-center bg-m3-secondary-container sticky top-0">
+                    <div className="flex items-center gap-3 min-w-0 text-m3-on-secondary-container">
                         <Plane size={20} className="flex-shrink-0"/>
                         <div className="min-w-0">
-                            <div className="font-bold text-base truncate">{trip.name}</div>
+                            <div className="font-bold text-base truncate">{trip.customName || trip.name}</div>
+                            {trip.customName && <div className="text-xs opacity-70 truncate">📍 {trip.name}</div>}
                             <div className="text-xs opacity-80">{trip.startDate}{trip.endDate && trip.endDate !== trip.startDate ? ` – ${trip.endDate}` : ''}</div>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition flex-shrink-0">
+                    <button onClick={onClose} className="p-2 hover:bg-m3-on-secondary-container/10 rounded-full transition flex-shrink-0 text-m3-on-secondary-container">
                         <X size={20}/>
                     </button>
                 </div>
@@ -8696,18 +8697,6 @@ const TripWeatherPopupModal = ({ trip, tripDetails, savedTripReports, travelLoad
                             <AIReportBox report={report} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
                         </div>
                     ) : null}
-                    <h4 className="text-sm font-bold text-slate-600 uppercase mb-3">{t('tripWeatherDetails')}</h4>
-                    <TripDetailedView
-                        trip={trip}
-                        tripDetails={tripDetails}
-                        lang={lang}
-                        formatTemp={formatTemp}
-                        getTempUnitSymbol={getTempUnitSymbol}
-                        formatPrecip={formatPrecip}
-                        getPrecipUnitLabel={getPrecipUnitLabel}
-                        formatWind={formatWind}
-                        getWindUnitLabel={getWindUnitLabel}
-                    />
                 </div>
             </div>
         </div>
@@ -11870,6 +11859,14 @@ export default function WeatherApp() {
                           const tripDays = trip.endDate && trip.endDate !== trip.startDate
                             ? Math.round((new Date(trip.endDate) - new Date(trip.startDate)) / (1000 * 60 * 60 * 24)) + 1
                             : 1;
+                          const tripConf = savedTripReports[trip.id]?.confidence ?? null;
+                          const confBadgeClass = tripConf !== null
+                            ? tripConf > 70
+                              ? 'bg-m3-tertiary-container text-m3-on-tertiary-container border-m3-tertiary'
+                              : tripConf > 40
+                                ? 'bg-m3-secondary-container text-m3-on-secondary-container border-m3-secondary'
+                                : 'bg-m3-error-container text-m3-on-error-container border-m3-error'
+                            : null;
                           return (
                             <div key={trip.id} className="flex flex-col bg-m3-surface-container-high border border-m3-outline-variant/30 rounded-m3-xl shadow-m3-1 hover:shadow-m3-2 transition-all overflow-hidden">
                               <button onClick={() => openTripPopup(trip)} className="text-left flex-1">
@@ -11893,11 +11890,18 @@ export default function WeatherApp() {
                                     <Calendar size={12} className="flex-shrink-0"/>
                                     <span className="truncate">{formatDateShort(new Date(trip.startDate), lang)} – {formatDateShort(new Date(trip.endDate || trip.startDate), lang)}</span>
                                   </div>
-                                  {tripDays > 1 && (
-                                    <div className="inline-flex items-center gap-1 bg-m3-tertiary-container/50 px-2 py-0.5 rounded-full">
-                                      <span className="text-[10px] font-medium text-m3-on-tertiary-container">{tripDays} {t('days')}</span>
-                                    </div>
-                                  )}
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    {tripDays > 1 && (
+                                      <div className="inline-flex items-center gap-1 bg-m3-tertiary-container/50 px-2 py-0.5 rounded-full">
+                                        <span className="text-[10px] font-medium text-m3-on-tertiary-container">{tripDays} {t('days')}</span>
+                                      </div>
+                                    )}
+                                    {confBadgeClass && (
+                                      <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${confBadgeClass}`}>
+                                        <ShieldCheck size={10}/> {tripConf}% {t('safe')}
+                                      </div>
+                                    )}
+                                  </div>
                                   <TripWeatherPreview trip={trip} tripPreviewCache={tripPreviewCache} setTripPreviewCache={setTripPreviewCache} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} lang={lang} />
                                 </div>
                               </button>
@@ -11931,79 +11935,79 @@ export default function WeatherApp() {
                 {/* New Trip Modal Popup */}
                 {showNewTripModal && (
                   <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowNewTripModal(false)}>
-                    <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-200" onClick={e => e.stopPropagation()}>
-                      <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+                    <div className="bg-m3-surface-container rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-200" onClick={e => e.stopPropagation()}>
+                      <div className="p-4 border-b border-m3-outline-variant/30 flex justify-between items-center bg-m3-primary-container text-m3-on-primary-container">
                         <div className="flex items-center gap-2">
                           <Plane size={18}/>
                           <span className="font-bold">{t('planTrip')}</span>
                         </div>
-                        <button onClick={() => setShowNewTripModal(false)} className="p-1.5 hover:bg-white/20 rounded-full transition"><X size={18}/></button>
+                        <button onClick={() => setShowNewTripModal(false)} className="p-1.5 hover:bg-m3-on-primary-container/10 rounded-full transition"><X size={18}/></button>
                       </div>
                       <div className="p-4 space-y-3">
                         <div>
-                          <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('whereTo')}</label>
+                          <label className="text-xs font-bold text-m3-on-surface-variant uppercase ml-1 mb-1 block">{t('whereTo')}</label>
                           <div className="relative">
-                            <Search className="absolute left-3 top-3 text-slate-400" size={16}/>
+                            <Search className="absolute left-3 top-3 text-m3-on-surface-variant" size={16}/>
                             <input
                               type="text"
                               value={travelQuery}
                               onChange={(e) => setTravelQuery(e.target.value)}
                               onKeyDown={(e) => e.key === 'Enter' && handleTravelSearch()}
-                              className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
+                              className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-m3-outline-variant bg-m3-surface-container-high focus:outline-none focus:ring-2 focus:ring-m3-primary text-sm font-bold text-m3-on-surface"
                               placeholder={lang === 'en' ? "City, Island..." : "Stadt, Insel, Ort..."}
                             />
                           </div>
                         </div>
                         <div>
-                          <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('tripName')}</label>
+                          <label className="text-xs font-bold text-m3-on-surface-variant uppercase ml-1 mb-1 block">{t('tripName')}</label>
                           <input
                             type="text"
                             value={travelTripName}
                             onChange={(e) => setTravelTripName(e.target.value)}
-                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
+                            className="w-full px-3 py-2.5 rounded-xl border border-m3-outline-variant bg-m3-surface-container-high focus:outline-none focus:ring-2 focus:ring-m3-primary text-sm font-bold text-m3-on-surface"
                             placeholder={lang === 'en' ? "e.g., Summer Vacation..." : "z.B. Sommerurlaub..."}
                           />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('startDate')}</label>
+                            <label className="text-xs font-bold text-m3-on-surface-variant uppercase ml-1 mb-1 block">{t('startDate')}</label>
                             <div className="relative">
-                              <Calendar className="absolute left-3 top-2.5 text-slate-400" size={14}/>
+                              <Calendar className="absolute left-3 top-2.5 text-m3-on-surface-variant" size={14}/>
                               <input type="date" value={travelStartDate} onChange={(e) => setTravelStartDate(e.target.value)}
-                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700" />
+                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-m3-outline-variant bg-m3-surface-container-high focus:outline-none focus:ring-2 focus:ring-m3-primary text-sm font-bold text-m3-on-surface" />
                             </div>
                           </div>
                           <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('endDate')}</label>
+                            <label className="text-xs font-bold text-m3-on-surface-variant uppercase ml-1 mb-1 block">{t('endDate')}</label>
                             <div className="relative">
-                              <Calendar className="absolute left-3 top-2.5 text-slate-400" size={14}/>
+                              <Calendar className="absolute left-3 top-2.5 text-m3-on-surface-variant" size={14}/>
                               <input type="date" value={travelEndDate} onChange={(e) => setTravelEndDate(e.target.value)}
-                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700" />
+                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-m3-outline-variant bg-m3-surface-container-high focus:outline-none focus:ring-2 focus:ring-m3-primary text-sm font-bold text-m3-on-surface" />
                             </div>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('startTime')} <span className="opacity-50 font-normal">(Opt.)</span></label>
+                            <label className="text-xs font-bold text-m3-on-surface-variant uppercase ml-1 mb-1 block">{t('startTime')} <span className="opacity-50 font-normal">(Opt.)</span></label>
                             <div className="relative">
-                              <Clock className="absolute left-3 top-2.5 text-slate-400" size={14}/>
+                              <Clock className="absolute left-3 top-2.5 text-m3-on-surface-variant" size={14}/>
                               <input type="time" value={travelStartTime} onChange={(e) => setTravelStartTime(e.target.value)}
-                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700" />
+                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-m3-outline-variant bg-m3-surface-container-high focus:outline-none focus:ring-2 focus:ring-m3-primary text-sm font-bold text-m3-on-surface" />
                             </div>
                           </div>
                           <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('endTime')} <span className="opacity-50 font-normal">(Opt.)</span></label>
+                            <label className="text-xs font-bold text-m3-on-surface-variant uppercase ml-1 mb-1 block">{t('endTime')} <span className="opacity-50 font-normal">(Opt.)</span></label>
                             <div className="relative">
-                              <Clock className="absolute left-3 top-2.5 text-slate-400" size={14}/>
+                              <Clock className="absolute left-3 top-2.5 text-m3-on-surface-variant" size={14}/>
                               <input type="time" value={travelEndTime} onChange={(e) => setTravelEndTime(e.target.value)}
-                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700" />
+                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-m3-outline-variant bg-m3-surface-container-high focus:outline-none focus:ring-2 focus:ring-m3-primary text-sm font-bold text-m3-on-surface" />
                             </div>
                           </div>
                         </div>
                         <button
                           onClick={() => { handleTravelSearch(); setShowNewTripModal(false); }}
                           disabled={travelLoading}
-                          className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition active:scale-95 flex items-center justify-center gap-2"
+                          className="w-full py-3 bg-m3-primary text-m3-on-primary font-bold rounded-xl shadow-m3-2 hover:bg-m3-primary/90 transition active:scale-95 flex items-center justify-center gap-2"
                         >
                           {travelLoading ? <RefreshCw className="animate-spin" size={18}/> : <CheckCircle2 size={18}/>}
                           {t('checkWeather')}
@@ -12032,59 +12036,59 @@ export default function WeatherApp() {
                 {/* Edit Trip Modal */}
                 {editingTrip && (
                   <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setEditingTrip(null)}>
-                    <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-200" onClick={e => e.stopPropagation()}>
-                      <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+                    <div className="bg-m3-surface-container rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-200" onClick={e => e.stopPropagation()}>
+                      <div className="p-4 border-b border-m3-outline-variant/30 flex justify-between items-center bg-m3-primary-container text-m3-on-primary-container">
                         <div className="flex items-center gap-2">
                           <Edit2 size={18}/>
                           <span className="font-bold">{t('editTrip')}</span>
                         </div>
-                        <button onClick={() => setEditingTrip(null)} className="p-1.5 hover:bg-white/20 rounded-full transition"><X size={18}/></button>
+                        <button onClick={() => setEditingTrip(null)} className="p-1.5 hover:bg-m3-on-primary-container/10 rounded-full transition"><X size={18}/></button>
                       </div>
                       <div className="p-4 space-y-3">
                         <div>
-                          <label htmlFor="edit-trip-name" className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('tripName')}</label>
+                          <label htmlFor="edit-trip-name" className="text-xs font-bold text-m3-on-surface-variant uppercase ml-1 mb-1 block">{t('tripName')}</label>
                           <input id="edit-trip-name" type="text" value={editingTrip.customName || ''} onChange={e => setEditingTrip(prev => ({ ...prev, customName: e.target.value }))}
-                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
+                            className="w-full px-3 py-2 rounded-xl border border-m3-outline-variant bg-m3-surface-container-high focus:outline-none focus:ring-2 focus:ring-m3-primary text-sm font-bold text-m3-on-surface"
                             placeholder={lang === 'en' ? "e.g., Summer Vacation..." : "z.B. Sommerurlaub..."} />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label htmlFor="edit-trip-start" className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('startDate')}</label>
+                            <label htmlFor="edit-trip-start" className="text-xs font-bold text-m3-on-surface-variant uppercase ml-1 mb-1 block">{t('startDate')}</label>
                             <div className="relative">
-                              <Calendar className="absolute left-3 top-2.5 text-slate-400" size={14}/>
+                              <Calendar className="absolute left-3 top-2.5 text-m3-on-surface-variant" size={14}/>
                               <input id="edit-trip-start" type="date" value={editingTrip.startDate} onChange={e => setEditingTrip(prev => ({ ...prev, startDate: e.target.value }))}
-                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700" />
+                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-m3-outline-variant bg-m3-surface-container-high focus:outline-none focus:ring-2 focus:ring-m3-primary text-sm font-bold text-m3-on-surface" />
                             </div>
                           </div>
                           <div>
-                            <label htmlFor="edit-trip-end" className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('endDate')}</label>
+                            <label htmlFor="edit-trip-end" className="text-xs font-bold text-m3-on-surface-variant uppercase ml-1 mb-1 block">{t('endDate')}</label>
                             <div className="relative">
-                              <Calendar className="absolute left-3 top-2.5 text-slate-400" size={14}/>
+                              <Calendar className="absolute left-3 top-2.5 text-m3-on-surface-variant" size={14}/>
                               <input id="edit-trip-end" type="date" value={editingTrip.endDate || ''} onChange={e => setEditingTrip(prev => ({ ...prev, endDate: e.target.value }))}
-                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700" />
+                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-m3-outline-variant bg-m3-surface-container-high focus:outline-none focus:ring-2 focus:ring-m3-primary text-sm font-bold text-m3-on-surface" />
                             </div>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label htmlFor="edit-trip-starttime" className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('startTime')} <span className="opacity-50 font-normal">(Opt.)</span></label>
+                            <label htmlFor="edit-trip-starttime" className="text-xs font-bold text-m3-on-surface-variant uppercase ml-1 mb-1 block">{t('startTime')} <span className="opacity-50 font-normal">(Opt.)</span></label>
                             <div className="relative">
-                              <Clock className="absolute left-3 top-2.5 text-slate-400" size={14}/>
+                              <Clock className="absolute left-3 top-2.5 text-m3-on-surface-variant" size={14}/>
                               <input id="edit-trip-starttime" type="time" value={editingTrip.startTime || ''} onChange={e => setEditingTrip(prev => ({ ...prev, startTime: e.target.value }))}
-                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700" />
+                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-m3-outline-variant bg-m3-surface-container-high focus:outline-none focus:ring-2 focus:ring-m3-primary text-sm font-bold text-m3-on-surface" />
                             </div>
                           </div>
                           <div>
-                            <label htmlFor="edit-trip-endtime" className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('endTime')} <span className="opacity-50 font-normal">(Opt.)</span></label>
+                            <label htmlFor="edit-trip-endtime" className="text-xs font-bold text-m3-on-surface-variant uppercase ml-1 mb-1 block">{t('endTime')} <span className="opacity-50 font-normal">(Opt.)</span></label>
                             <div className="relative">
-                              <Clock className="absolute left-3 top-2.5 text-slate-400" size={14}/>
+                              <Clock className="absolute left-3 top-2.5 text-m3-on-surface-variant" size={14}/>
                               <input id="edit-trip-endtime" type="time" value={editingTrip.endTime || ''} onChange={e => setEditingTrip(prev => ({ ...prev, endTime: e.target.value }))}
-                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700" />
+                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-m3-outline-variant bg-m3-surface-container-high focus:outline-none focus:ring-2 focus:ring-m3-primary text-sm font-bold text-m3-on-surface" />
                             </div>
                           </div>
                         </div>
                         <button onClick={() => handleSaveEditTrip(editingTrip)}
-                          className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition flex items-center justify-center gap-2">
+                          className="w-full py-3 bg-m3-primary text-m3-on-primary font-bold rounded-xl shadow-m3-2 hover:bg-m3-primary/90 transition flex items-center justify-center gap-2">
                           <Check size={18}/> {t('saveChanges')}
                         </button>
                       </div>
