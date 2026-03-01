@@ -11838,7 +11838,6 @@ export default function WeatherApp() {
 
                       {/* Saved trip tiles */}
                       {savedTrips.map(trip => {
-                          const isExpanded = expandedTripId === trip.id;
                           return (
                             <div key={trip.id} className="flex flex-col bg-m3-surface-container/80 backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl shadow-m3-1 hover:shadow-m3-2 transition-all min-w-[180px] w-[180px] overflow-hidden">
                               <button onClick={() => openTripPopup(trip)} className="text-left p-3 flex-1">
@@ -11851,17 +11850,7 @@ export default function WeatherApp() {
                                   <TripWeatherPreview trip={trip} tripPreviewCache={tripPreviewCache} setTripPreviewCache={setTripPreviewCache} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} lang={lang} />
                                 </div>
                               </button>
-                              <div className="flex items-center justify-between border-t border-m3-outline-variant/20 px-2 py-1">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleTripExpansion(trip);
-                                  }}
-                                  className="p-1.5 text-m3-on-surface-variant hover:text-blue-600 transition"
-                                  title={isExpanded ? t('collapseDetails') : t('expandDetails')}
-                                >
-                                  {isExpanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
-                                </button>
+                              <div className="flex items-center justify-end border-t border-m3-outline-variant/20 px-2 py-1">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -11882,16 +11871,6 @@ export default function WeatherApp() {
                                   <Trash2 size={16}/>
                                 </button>
                               </div>
-                              {activeTripId === trip.id && (
-                                <div className="px-3 pb-3">
-                                  {savedTripReports[trip.id] ? (
-                                    <AIReportBox report={savedTripReports[trip.id]} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
-                                  ) : travelLoading ? (
-                                    <div className="p-4 text-center"><RefreshCw className="animate-spin inline" size={20}/></div>
-                                  ) : null}
-                                </div>
-                              )}
-                              {isExpanded && <TripDetailedView trip={trip} tripDetails={tripDetails} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} />}
                             </div>
                           );
                       })}
