@@ -5906,7 +5906,7 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
   const hourlyData = data.slice(0, 24);
   
   return (
-    <div className="bg-m3-surface-container-high/60 backdrop-blur-sm rounded-m3-2xl p-4 border border-m3-outline-variant/40 shadow-m3-2">
+    <div className={`${isRealNight ? 'bg-m3-dark-surface-container-high/60' : 'bg-m3-surface-container-high/60'} backdrop-blur-sm rounded-m3-2xl p-4 border border-m3-outline-variant/40 shadow-m3-2`}>
       <div className="flex items-center gap-2 mb-3">
         <Clock size={18} className="text-m3-on-surface-variant" />
         <span className="text-m3-label-large font-bold text-m3-on-surface">{t.nextHours}</span>
@@ -5924,10 +5924,11 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
             const minTemp = Math.min(appTempVal, hour.temp);
             const maxTemp = Math.max(appTempVal, hour.temp);
             const dateStr = formatDateShort(hour.time, lang);
+            const surfaceBg = isRealNight ? 'bg-m3-dark-surface-container/80' : 'bg-m3-surface-container/80';
             return (
               <div 
                 key={hour.time.toISOString()} 
-                className={`flex flex-col items-center backdrop-blur-sm rounded-m3-xl p-3 min-w-[160px] w-[160px] shadow-m3-1 hover:shadow-m3-2 transition-all ${isNow ? 'bg-m3-primary/15 border-2 border-m3-primary/60' : 'bg-m3-surface-container/80 border border-m3-outline-variant/30'}`}
+                className={`flex flex-col items-center backdrop-blur-sm rounded-m3-xl p-3 min-w-[160px] w-[160px] shadow-m3-1 hover:shadow-m3-2 transition-all ${isNow ? 'bg-m3-primary/15 border-2 border-m3-primary/60' : `${surfaceBg} border border-m3-outline-variant/30`}`}
               >
                 {/* Time & Date */}
                 <div className={`text-base font-bold mb-0.5 ${isNow ? 'text-m3-primary' : 'text-m3-on-surface'}`}>
@@ -11712,7 +11713,7 @@ export default function WeatherApp() {
                       if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
 
                       return (
-                        <div key={i} className="flex flex-col items-center bg-m3-surface-container/80 backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl p-3 min-w-[160px] w-[160px] shadow-m3-1 hover:shadow-m3-2 transition-all relative group">
+                        <div key={i} className={`flex flex-col items-center ${isRealNight ? 'bg-m3-dark-surface-container/80' : 'bg-m3-surface-container/80'} backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl p-3 min-w-[160px] w-[160px] shadow-m3-1 hover:shadow-m3-2 transition-all relative group`}>
                           {/* Day & Date */}
                           <div className="text-base font-bold mb-0.5 text-m3-on-surface">{day.dayName}</div>
                           <div className="text-xs mb-2 font-medium text-m3-on-surface-variant">{day.dateShort}</div>
@@ -11756,7 +11757,7 @@ export default function WeatherApp() {
                            </div>
 
                            {/* Reliability Indicator */}
-                           <div className="mt-1 text-xs flex items-center gap-1 border border-m3-outline-variant/30 bg-m3-surface-container-highest/50 px-2 py-0.5 rounded-full">
+                           <div className={`mt-1 text-xs flex items-center gap-1 border border-m3-outline-variant/30 ${isRealNight ? 'bg-m3-dark-surface-container-highest/50' : 'bg-m3-surface-container-highest/50'} px-2 py-0.5 rounded-full`}>
                               <ShieldCheck size={10} className={confColor} />
                               <span className={confColor}>{day.reliability}% {t('safe')}</span>
                            </div>
