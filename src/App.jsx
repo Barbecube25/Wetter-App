@@ -8623,9 +8623,11 @@ const TripDetailedView = ({ trip, tripDetails, lang, formatTemp, getTempUnitSymb
 };
 
 // --- TRIP WEATHER POPUP MODAL ---
-const TripWeatherPopupModal = ({ trip, tripDetails, onClose, lang, formatTemp, getTempUnitSymbol, formatPrecip, getPrecipUnitLabel, formatWind, getWindUnitLabel, isSmallScreen }) => {
+const TripWeatherPopupModal = ({ trip, tripDetails, savedTripReports, travelLoading, activeTripId, onClose, lang, formatTemp, getTempUnitSymbol, formatPrecip, getPrecipUnitLabel, formatWind, getWindUnitLabel, isSmallScreen }) => {
     const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
     if (!trip) return null;
+    const report = savedTripReports?.[trip.id];
+    const isLoadingReport = travelLoading && activeTripId === trip.id;
     return (
         <div className={`fixed inset-0 z-[60] flex items-end sm:items-center justify-center ${isSmallScreen ? 'p-0' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`} onClick={onClose}>
             <div
@@ -8647,6 +8649,14 @@ const TripWeatherPopupModal = ({ trip, tripDetails, onClose, lang, formatTemp, g
                 </div>
                 {/* Content */}
                 <div className="overflow-y-auto p-4">
+                    {/* AI Report */}
+                    {isLoadingReport ? (
+                        <div className="p-4 text-center mb-3"><RefreshCw className="animate-spin inline" size={20}/></div>
+                    ) : report ? (
+                        <div className="mb-4">
+                            <AIReportBox report={report} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
+                        </div>
+                    ) : null}
                     <h4 className="text-sm font-bold text-slate-600 uppercase mb-3">{t('tripWeatherDetails')}</h4>
                     <TripDetailedView
                         trip={trip}
@@ -10030,6 +10040,9 @@ export default function WeatherApp() {
       if (!tripDetails[trip.id]) {
           fetchTripDetails(trip);
       }
+      if (!savedTripReports[trip.id]) {
+          handleTravelSearch(null, trip);
+      }
   };
 
 
@@ -11073,6 +11086,9 @@ export default function WeatherApp() {
         <TripWeatherPopupModal
           trip={selectedTripForPopup}
           tripDetails={tripDetails}
+          savedTripReports={savedTripReports}
+          travelLoading={travelLoading}
+          activeTripId={activeTripId}
           onClose={() => setSelectedTripForPopup(null)}
           lang={lang}
           formatTemp={formatTemp}
