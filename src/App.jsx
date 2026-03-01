@@ -5773,10 +5773,6 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
             <circle cx="125" cy="155" r="0.8" fill="#fbbf24" />
             <circle cx="150" cy="153" r="2.5" fill="#fecdd3" />
             <circle cx="150" cy="153" r="1" fill="#fbbf24" />
-            <circle cx="175" cy="156" r="2.5" fill="#a78bfa" />
-            <circle cx="175" cy="156" r="1" fill="#fbbf24" />
-            <circle cx="200" cy="154" r="2" fill="#fb923c" />
-            <circle cx="200" cy="154" r="0.8" fill="#fbbf24" />
             <circle cx="220" cy="155" r="2.5" fill="#f9a8d4" />
             <circle cx="220" cy="155" r="1" fill="#fbbf24" />
             <circle cx="245" cy="153" r="2" fill="#fde047" />
