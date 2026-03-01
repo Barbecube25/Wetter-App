@@ -4942,7 +4942,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
     // In winter: deciduous trees are bare (no leaves), evergreens stay green
     showDeciduousLeaves = false; // Hide leaves on deciduous trees
   } else if (season === 'spring') {
-    treeLeaf = isNight ? "#86efac" : "#22c55e"; // bright spring green with some pink blossoms
+    treeLeaf = isNight ? "#fbcfe8" : "#fda4af"; // pink cherry blossom color for spring
     showDeciduousLeaves = true;
   } else if (season === 'summer') {
     treeLeaf = isNight ? "#15803d" : "#16a34a"; // rich deep green
@@ -5731,44 +5731,59 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       {/* Spring Blossoms */}
       {season === 'spring' && !isSnow && (
          <g>
-            <circle cx="45" cy="113" r="2" fill="#fecdd3" />
-            <circle cx="50" cy="116" r="1.5" fill="#fda4af" />
-            <circle cx="102" cy="124" r="2" fill="#fecdd3" />
-            <circle cx="107" cy="126" r="1.5" fill="#fda4af" />
-            <circle cx="285" cy="129" r="2" fill="#fecdd3" />
-            <circle cx="325" cy="128" r="1.5" fill="#fda4af" />
-            {/* Ground flowers */}
-            <circle cx="80" cy="155" r="2" fill="#fda4af" />
-            <circle cx="120" cy="153" r="2" fill="#fecdd3" />
-            <circle cx="240" cy="157" r="2" fill="#fda4af" />
-            <circle cx="300" cy="154" r="2" fill="#fecdd3" />
+            {/* Falling petals */}
+            {[
+               {x:30,d:'0s'},{x:70,d:'1.5s'},{x:130,d:'3s'},{x:180,d:'0.8s'},
+               {x:240,d:'2.5s'},{x:310,d:'4s'},{x:355,d:'1.2s'},{x:90,d:'5s'}
+            ].map((p,i) => (
+               <circle key={i} cx={p.x} cy="-5" r="1.5" fill={i%2===0?"#fda4af":"#fecdd3"} className="animate-leaves" style={{animationDelay:p.d}} />
+            ))}
+            {/* Ground flowers - small flower shapes (outer petal color + yellow center) */}
+            <circle cx="80" cy="155" r="2.5" fill="#fda4af" />
+            <circle cx="80" cy="155" r="1" fill="#fbbf24" />
+            <circle cx="125" cy="154" r="2" fill="#fecdd3" />
+            <circle cx="125" cy="154" r="0.8" fill="#fbbf24" />
+            <circle cx="175" cy="156" r="2.5" fill="#f9a8d4" />
+            <circle cx="175" cy="156" r="1" fill="#fbbf24" />
+            <circle cx="220" cy="154" r="2" fill="#fda4af" />
+            <circle cx="220" cy="154" r="0.8" fill="#fbbf24" />
+            <circle cx="270" cy="155" r="2.5" fill="#fecdd3" />
+            <circle cx="270" cy="155" r="1" fill="#fbbf24" />
+            <circle cx="315" cy="153" r="2" fill="#fda4af" />
+            <circle cx="315" cy="153" r="0.8" fill="#fbbf24" />
          </g>
       )}
 
       {/* Autumn Falling Leaves */}
       {season === 'autumn' && (
          <g>
-            {[...Array(15)].map((_, i) => {
-               const colors = ['#f59e0b', '#dc2626', '#eab308'];
-               const color = colors[i % 3];
+            {[
+               {x:15,d:'0s'},{x:50,d:'1.2s'},{x:85,d:'2.5s'},{x:120,d:'0.4s'},{x:155,d:'3.1s'},
+               {x:185,d:'1.7s'},{x:220,d:'4.0s'},{x:255,d:'2.2s'},{x:285,d:'0.9s'},{x:320,d:'3.6s'},
+               {x:350,d:'1.4s'},{x:35,d:'4.8s'},{x:165,d:'2.9s'},{x:240,d:'0.3s'},{x:340,d:'5.5s'}
+            ].map((p, i) => {
+               const colors = ['#f59e0b', '#dc2626', '#eab308', '#ea580c', '#b45309'];
                return (
-                  <ellipse 
-                    key={i} 
-                    cx={Math.random() * 400 - 20} 
-                    cy="-10" 
-                    rx="3" 
-                    ry="2" 
-                    fill={color} 
-                    className="animate-leaves" 
-                    style={{animationDelay: `${Math.random() * 8}s`}} 
+                  <ellipse
+                    key={i}
+                    cx={p.x}
+                    cy="-10"
+                    rx="3"
+                    ry="2"
+                    fill={colors[i % 5]}
+                    className="animate-leaves"
+                    style={{animationDelay: p.d}}
                   />
                );
             })}
             {/* Ground leaves */}
-            <ellipse cx="90" cy="155" rx="3" ry="2" fill="#dc2626" opacity="0.7" />
-            <ellipse cx="140" cy="153" rx="3" ry="2" fill="#f59e0b" opacity="0.7" />
-            <ellipse cx="190" cy="156" rx="3" ry="2" fill="#eab308" opacity="0.7" />
-            <ellipse cx="250" cy="154" rx="3" ry="2" fill="#dc2626" opacity="0.7" />
+            <ellipse cx="60" cy="155" rx="3" ry="2" fill="#dc2626" opacity="0.8" />
+            <ellipse cx="90" cy="155" rx="3" ry="2" fill="#f59e0b" opacity="0.8" />
+            <ellipse cx="140" cy="154" rx="3" ry="2" fill="#eab308" opacity="0.8" />
+            <ellipse cx="190" cy="156" rx="3" ry="2" fill="#ea580c" opacity="0.8" />
+            <ellipse cx="250" cy="154" rx="3" ry="2" fill="#dc2626" opacity="0.8" />
+            <ellipse cx="295" cy="155" rx="3" ry="2" fill="#f59e0b" opacity="0.8" />
+            <ellipse cx="335" cy="154" rx="3" ry="2" fill="#eab308" opacity="0.8" />
          </g>
       )}
 
