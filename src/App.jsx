@@ -6934,7 +6934,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
 };
 
 // --- WEATHER DETAIL MODAL (Trend chart: 12h history + 24h forecast) ---
-const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData, airQualityChartData, lang, settings, formatTemp, getTempUnitSymbol, formatWind, getWindUnitLabel, isSmallScreen }) => {
+const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData, airQualityChartData, lang, settings, formatTemp, getTempUnitSymbol, formatWind, getWindUnitLabel, isSmallScreen, isRealNight = false }) => {
   const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
 
   if (!isOpen) return null;
@@ -7078,8 +7078,8 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
       return `${config.format(val)}${config.unit ? (config.unit === '%' ? config.unit : ` ${config.unit}`) : ''}`;
     };
     return (
-      <div className="bg-white rounded-xl shadow-lg p-2 text-xs border border-slate-100">
-        <div className="font-bold text-slate-600 mb-1">{label}</div>
+      <div className={`${isRealNight ? 'bg-m3-dark-surface-container border-m3-outline-variant/70' : 'bg-white border-slate-100'} rounded-xl shadow-lg p-2 text-xs border`}>
+        <div className={`font-bold ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-600'} mb-1`}>{label}</div>
         {payload.map((p, i) => (
           <div key={i} style={{ color: p.color }} className="font-medium">
             {p.name}: {formatDisplay(p.value)}
@@ -7091,25 +7091,25 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
 
   return (
     <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
-      <div className={`bg-white rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-lg'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
+      <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-white'} rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-lg'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
         {/* Header */}
-        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 sticky top-0">
-          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+        <div className={`p-4 border-b ${isRealNight ? 'border-m3-outline-variant/70 bg-m3-dark-surface-container-high/50' : 'border-slate-100 bg-slate-50/50'} flex justify-between items-center sticky top-0`}>
+          <h3 className={`font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'} flex items-center gap-2`}>
             {config.icon}
             {config.label} – {t('trendTitle')}
           </h3>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition">
-            <X size={20} className="text-slate-400" />
+          <button onClick={onClose} className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'} rounded-full transition`}>
+            <X size={20} className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} />
           </button>
         </div>
 
         {/* Chart */}
         <div className="p-4 overflow-y-auto">
           {chartData.length === 0 ? (
-            <div className="text-center text-slate-400 py-8">–</div>
+            <div className={`text-center ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} py-8`}>–</div>
           ) : (
             <>
-              <div className="flex items-center gap-4 text-xs text-slate-400 mb-2 justify-between">
+              <div className={`flex items-center gap-4 text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} mb-2 justify-between`}>
                 {nowIndex > 0 ? <span>← 12h</span> : <span />}
                 {nowLabel && <span className="font-bold text-violet-600 flex items-center gap-1">
                   <span className="inline-block w-2 h-2 rounded-full bg-violet-600" aria-hidden="true"></span>
@@ -7119,14 +7119,14 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
               </div>
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={isRealNight ? '#334155' : '#f1f5f9'} />
                   <XAxis dataKey="displayTime" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} interval={tickInterval} />
                   <XAxis xAxisId="idx" type="number" domain={[0, chartData.length - 1]} hide />
                   <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} unit={metric === 'humidity' ? '%' : ''} />
                   <Tooltip content={<CustomTooltip />} />
                   {/* Shade the past region using numeric axis to avoid duplicate-label issues */}
                   {nowIndex > 0 && (
-                    <ReferenceArea xAxisId="idx" x1={0} x2={nowIndex - 1} fill="#e2e8f0" fillOpacity={0.5} />
+                    <ReferenceArea xAxisId="idx" x1={0} x2={nowIndex - 1} fill={isRealNight ? '#1e293b' : '#e2e8f0'} fillOpacity={0.5} />
                   )}
                   {/* Current time marker using numeric axis */}
                   {nowLabel && nowIndex < chartData.length && (
@@ -7140,7 +7140,7 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
               </ResponsiveContainer>
               {/* Legend for wind */}
               {config.extraKey && (
-                <div className="flex items-center gap-4 mt-2 justify-center text-xs">
+                <div className={`flex items-center gap-4 mt-2 justify-center text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : ''}`}>
                   <span className="flex items-center gap-1"><span className="inline-block w-4 h-0.5 rounded" style={{ background: config.color }}></span>{config.label}</span>
                   <span className="flex items-center gap-1"><span className="inline-block w-4 border-t-2 border-dashed" style={{ borderColor: config.extraColor }}></span>{config.extraLabel}</span>
                 </div>
@@ -7154,7 +7154,7 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
 };
 
 // --- POLLEN DETAILS MODAL ---
-const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmallScreen = false, pollenFilter = null }) => {
+const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmallScreen = false, pollenFilter = null, isRealNight = false }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
 
   if (!isOpen || !airQualityData) return null;
@@ -7179,10 +7179,10 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
   ];
 
   const getPollenLevel = (val) => {
-    if (val >= POLLEN_VERY_HIGH_THRESHOLD) return { label: t.pollenVeryHigh, color: 'text-red-600', bg: 'bg-red-50 border-red-200' };
-    if (val >= POLLEN_HIGH_THRESHOLD) return { label: t.pollenHigh, color: 'text-orange-500', bg: 'bg-orange-50 border-orange-200' };
-    if (val >= POLLEN_MODERATE_THRESHOLD) return { label: t.pollenModerate, color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-200' };
-    return { label: t.pollenLow, color: 'text-green-600', bg: 'bg-green-50 border-green-200' };
+    if (val >= POLLEN_VERY_HIGH_THRESHOLD) return { label: t.pollenVeryHigh, color: 'text-red-600', bg: isRealNight ? 'bg-red-900/30 border-red-700/50' : 'bg-red-50 border-red-200' };
+    if (val >= POLLEN_HIGH_THRESHOLD) return { label: t.pollenHigh, color: 'text-orange-500', bg: isRealNight ? 'bg-orange-900/30 border-orange-700/50' : 'bg-orange-50 border-orange-200' };
+    if (val >= POLLEN_MODERATE_THRESHOLD) return { label: t.pollenModerate, color: 'text-yellow-500', bg: isRealNight ? 'bg-yellow-900/30 border-yellow-700/50' : 'bg-yellow-50 border-yellow-200' };
+    return { label: t.pollenLow, color: 'text-green-500', bg: isRealNight ? 'bg-green-900/30 border-green-700/50' : 'bg-green-50 border-green-200' };
   };
 
   const userTypes = allPollenTypes
@@ -7203,12 +7203,12 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
     return (
       <div key={label} className={`flex flex-col p-3 rounded-xl border ${bg}`}>
         <div className="flex justify-between items-center mb-1">
-          <span className="font-medium text-slate-700">{label}</span>
+          <span className={`font-medium ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-700'}`}>{label}</span>
           <span className={`text-sm font-bold ${color}`}>
             {getPollenLevel(val).label} ({Math.round(val)})
           </span>
         </div>
-        <div className="w-full bg-slate-200 rounded-full h-2">
+        <div className={`w-full ${isRealNight ? 'bg-slate-700' : 'bg-slate-200'} rounded-full h-2`}>
           <div
             className={`h-2 rounded-full transition-all ${val >= POLLEN_VERY_HIGH_THRESHOLD ? 'bg-red-500' : val >= POLLEN_HIGH_THRESHOLD ? 'bg-orange-400' : val >= POLLEN_MODERATE_THRESHOLD ? 'bg-yellow-400' : 'bg-green-400'}`}
             style={{ width: `${barWidth}%` }}
@@ -7220,29 +7220,29 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
 
   return (
     <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
-      <div className={`bg-white rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-md'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
+      <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-white'} rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-md'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
         {/* Header */}
-        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 sticky top-0">
-          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+        <div className={`p-4 border-b ${isRealNight ? 'border-m3-outline-variant/70 bg-m3-dark-surface-container-high/50' : 'border-slate-100 bg-slate-50/50'} flex justify-between items-center sticky top-0`}>
+          <h3 className={`font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'} flex items-center gap-2`}>
             <Sparkles size={18} className="text-yellow-500" />
             {t.pollenDetails}
           </h3>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition">
-            <X size={20} className="text-slate-400" />
+          <button onClick={onClose} className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'} rounded-full transition`}>
+            <X size={20} className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} />
           </button>
         </div>
 
         {/* Content */}
         <div className="overflow-y-auto p-4 space-y-2">
           {userTypes.length === 0 && otherTypes.length === 0 ? (
-            <div className="text-center text-slate-500 py-6">{t.pollenNoActive}</div>
+            <div className={`text-center ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'} py-6`}>{t.pollenNoActive}</div>
           ) : (
             <>
               {userTypes.map(renderPollenItem)}
               {otherTypes.length > 0 && (
                 <>
                   <div className="pt-2 pb-1">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{t.pollenOthersFlying}</span>
+                    <span className={`text-xs font-semibold ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} uppercase tracking-wide`}>{t.pollenOthersFlying}</span>
                   </div>
                   {otherTypes.map(renderPollenItem)}
                 </>
@@ -7256,7 +7256,7 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
 };
 
 // --- PRECIPITATION DETAILS MODAL ---
-const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', formatPrecip, getPrecipUnitLabel, setActiveTab, isSmallScreen = false }) => {
+const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', formatPrecip, getPrecipUnitLabel, setActiveTab, isSmallScreen = false, isRealNight = false }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
   
   if (!isOpen) return null;
@@ -7291,26 +7291,26 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
 
   return (
     <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
-      <div className={`bg-white rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-md'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
+      <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-white'} rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-md'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
         {/* Header */}
-        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 sticky top-0">
-          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+        <div className={`p-4 border-b ${isRealNight ? 'border-m3-outline-variant/70 bg-m3-dark-surface-container-high/50' : 'border-slate-100 bg-slate-50/50'} flex justify-between items-center sticky top-0`}>
+          <h3 className={`font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'} flex items-center gap-2`}>
             <CloudRain size={18} className="text-blue-500"/> 
             {t.precipitationDetails}
           </h3>
           <button 
             onClick={onClose} 
-            className="p-2 hover:bg-slate-100 rounded-full transition"
+            className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'} rounded-full transition`}
           >
-            <X size={20} className="text-slate-400" />
+            <X size={20} className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} />
           </button>
         </div>
         
         {/* Summary */}
-        <div className="p-4 bg-blue-50/50 border-b border-blue-100">
+        <div className={`p-4 ${isRealNight ? 'bg-blue-900/20 border-b border-blue-700/30' : 'bg-blue-50/50 border-b border-blue-100'}`}>
           <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-slate-600">{t.precip24h}</span>
-            <span className="text-lg font-bold text-blue-600">
+            <span className={`text-sm font-medium ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-600'}`}>{t.precip24h}</span>
+            <span className={`text-lg font-bold ${isRealNight ? 'text-blue-400' : 'text-blue-600'}`}>
               {formatPrecip ? formatPrecip(totalAmount) : totalAmount.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
             </span>
           </div>
@@ -7327,8 +7327,8 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
               <div
                 className={`flex justify-between items-center p-3 rounded-xl transition-colors ${
                   hour.hasPrecip 
-                    ? 'bg-blue-50 border border-blue-100' 
-                    : 'bg-slate-50/50'
+                    ? (isRealNight ? 'bg-blue-900/30 border border-blue-700/40' : 'bg-blue-50 border border-blue-100')
+                    : (isRealNight ? 'bg-m3-dark-surface-container-high/40' : 'bg-slate-50/50')
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -7339,20 +7339,20 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
                       <CloudRain size={18} className="text-blue-500" />
                     )
                   ) : (
-                    <Sun size={18} className="text-slate-300" />
+                    <Sun size={18} className={isRealNight ? 'text-slate-600' : 'text-slate-300'} />
                   )}
-                  <span className="font-medium text-slate-700">
+                  <span className={`font-medium ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-700'}`}>
                     {hour.displayTime}
                   </span>
                 </div>
                 <div className="text-right">
                   {hour.hasPrecip ? (
                     <>
-                      <div className="font-bold text-slate-800">
+                      <div className={`font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'}`}>
                         {formatPrecip ? formatPrecip(hour.amount) : hour.amount.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                       </div>
                       {hour.hasRain && hour.hasSnow && (
-                        <div className="text-xs text-slate-500">
+                        <div className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'}`}>
                           <CloudRain className="inline w-3 h-3" /> {formatPrecip ? formatPrecip(hour.rain) : hour.rain.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                           {' '}
                           <Snowflake className="inline w-3 h-3" /> {formatPrecip ? formatPrecip(hour.snow) : hour.snow.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
@@ -7360,7 +7360,7 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
                       )}
                     </>
                   ) : (
-                    <span className="text-sm text-slate-400">{t.noRain}</span>
+                    <span className={`text-sm ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'}`}>{t.noRain}</span>
                   )}
                 </div>
               </div>
@@ -7381,7 +7381,7 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
         
         {/* Footer with Radar link */}
         {setActiveTab && (
-          <div className="p-4 border-t border-m3-outline-variant bg-m3-surface-container/50 sticky bottom-0">
+          <div className={`p-4 border-t ${isRealNight ? 'border-m3-outline-variant/70 bg-m3-dark-surface-container-high/50' : 'border-m3-outline-variant bg-m3-surface-container/50'} sticky bottom-0`}>
             <button 
               onClick={() => {
                 setActiveTab('radar');
@@ -7400,7 +7400,7 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
 };
 
 // --- ACTIVITY INDEX MODAL ---
-const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null }) => {
+const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null, isRealNight = false }) => {
   const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
   if (!isOpen) return null;
 
@@ -7422,13 +7422,18 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
   const currentHour = new Date().getHours();
 
   // Map advice color to background color classes for the grid cells
-  const COLOR_TO_BG = {
+  const COLOR_TO_BG = isRealNight ? {
+    'text-red-500': 'bg-red-900/40 border-red-700/50',
+    'text-orange-500': 'bg-orange-900/40 border-orange-700/50',
+    'text-blue-500': 'bg-blue-900/40 border-blue-700/50',
+    'text-blue-400': 'bg-sky-900/40 border-sky-700/50',
+  } : {
     'text-red-500': 'bg-red-100 border-red-300',
     'text-orange-500': 'bg-orange-100 border-orange-300',
     'text-blue-500': 'bg-blue-100 border-blue-300',
     'text-blue-400': 'bg-sky-100 border-sky-300',
   };
-  const colorToBg = (color) => COLOR_TO_BG[color] || 'bg-green-100 border-green-300';
+  const colorToBg = (color) => COLOR_TO_BG[color] || (isRealNight ? 'bg-green-900/40 border-green-700/50' : 'bg-green-100 border-green-300');
 
   // Group consecutive hours with the same advice text into time ranges
   const ranges = [];
@@ -7468,36 +7473,36 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
         .sort((a, b) => b.val - a.val)
     : [];
   const getPollenLevelLabel = (val) => {
-    if (val >= POLLEN_VERY_HIGH_THRESHOLD) return { label: tr.pollenVeryHigh, color: 'text-red-600' };
+    if (val >= POLLEN_VERY_HIGH_THRESHOLD) return { label: tr.pollenVeryHigh, color: 'text-red-500' };
     if (val >= POLLEN_HIGH_THRESHOLD) return { label: tr.pollenHigh, color: 'text-orange-500' };
-    if (val >= POLLEN_MODERATE_THRESHOLD) return { label: tr.pollenModerate, color: 'text-yellow-600' };
-    return { label: tr.pollenLow, color: 'text-green-600' };
+    if (val >= POLLEN_MODERATE_THRESHOLD) return { label: tr.pollenModerate, color: 'text-yellow-500' };
+    return { label: tr.pollenLow, color: 'text-green-500' };
   };
 
   return (
     <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
-      <div className={`bg-white rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-md'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
+      <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-white'} rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-md'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
         {/* Header */}
-        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 sticky top-0">
-          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+        <div className={`p-4 border-b ${isRealNight ? 'border-m3-outline-variant/70 bg-m3-dark-surface-container-high/50' : 'border-slate-100 bg-slate-50/50'} flex justify-between items-center sticky top-0`}>
+          <h3 className={`font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'} flex items-center gap-2`}>
             <Zap size={18} className="text-yellow-500" />
             {t('activityIndex')}
           </h3>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition">
-            <X size={20} className="text-slate-400" />
+          <button onClick={onClose} className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'} rounded-full transition`}>
+            <X size={20} className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} />
           </button>
         </div>
 
         {/* Subtitle */}
-        <div className="px-4 py-2 bg-yellow-50/50 border-b border-yellow-100">
-          <span className="text-sm text-slate-500">{t('activityIndexToday')}</span>
+        <div className={`px-4 py-2 ${isRealNight ? 'bg-yellow-900/20 border-b border-yellow-700/30' : 'bg-yellow-50/50 border-b border-yellow-100'}`}>
+          <span className={`text-sm ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'}`}>{t('activityIndexToday')}</span>
         </div>
 
         {/* Scrollable content */}
         <div className="overflow-y-auto">
           {/* 24-hour grid overview */}
-          <div className="p-4 border-b border-slate-100">
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3 flex items-center gap-1">
+          <div className={`p-4 border-b ${isRealNight ? 'border-m3-outline-variant/70' : 'border-slate-100'}`}>
+            <div className={`text-xs font-semibold ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} uppercase tracking-wide mb-3 flex items-center gap-1`}>
               <Zap size={11} className="text-yellow-400" /> {t('activityIndex24h')}
             </div>
             <div className="grid grid-cols-12 gap-1">
@@ -7510,11 +7515,11 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
                     className={`flex flex-col items-center rounded-lg border py-1 px-0.5 ${cellBg} ${isNow ? 'ring-2 ring-yellow-400 ring-offset-1' : ''}`}
                     title={`${h.displayTime} – ${h.advice.text}`}
                   >
-                    <span className={`text-[10px] font-semibold leading-none ${isNow ? 'text-yellow-600' : 'text-slate-500'}`}>
+                    <span className={`text-[10px] font-semibold leading-none ${isNow ? 'text-yellow-500' : (isRealNight ? 'text-slate-400' : 'text-slate-500')}`}>
                       {String(h.hour).padStart(2, '0')}
                     </span>
                     <span className="text-sm leading-none mt-0.5">{h.advice.emoji}</span>
-                    <span className="text-[9px] text-slate-500 leading-none mt-0.5">{h.temp}°</span>
+                    <span className={`text-[9px] ${isRealNight ? 'text-slate-400' : 'text-slate-500'} leading-none mt-0.5`}>{h.temp}°</span>
                   </div>
                 );
               })}
@@ -7527,10 +7532,10 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
               const isDanger = range.advice.color === 'text-red-500';
               const isWarning = range.advice.color === 'text-orange-500';
               const rangeBg = isDanger
-                ? 'bg-red-50 border-red-200'
+                ? (isRealNight ? 'bg-red-900/30 border-red-700/50' : 'bg-red-50 border-red-200')
                 : isWarning
-                  ? 'bg-orange-50 border-orange-200'
-                  : 'bg-slate-50/80 border-slate-100';
+                  ? (isRealNight ? 'bg-orange-900/30 border-orange-700/50' : 'bg-orange-50 border-orange-200')
+                  : (isRealNight ? 'bg-m3-dark-surface-container-high/60 border-m3-outline-variant/50' : 'bg-slate-50/80 border-slate-100');
               return (
                 <div
                   key={idx}
@@ -7539,7 +7544,7 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
                   <span className="text-xl flex-shrink-0">{range.advice.emoji}</span>
                   <div className="flex-1 min-w-0">
                     <div className={`text-sm font-bold ${range.advice.color} leading-tight`}>{range.advice.text}</div>
-                    <div className="text-xs text-slate-400 mt-0.5">
+                    <div className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} mt-0.5`}>
                       {range.from === range.to
                         ? `${t('ab') || 'Ab'} ${range.from} ${t('oclock') || 'Uhr'}`
                         : `${range.from} – ${range.to} ${t('oclock') || 'Uhr'}`}
@@ -7551,8 +7556,8 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
 
             {/* Pollen section */}
             {activePollen.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-slate-100">
-                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-1">
+              <div className={`mt-3 pt-3 border-t ${isRealNight ? 'border-m3-outline-variant/70' : 'border-slate-100'}`}>
+                <div className={`text-xs font-semibold ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} uppercase tracking-wide mb-2 flex items-center gap-1`}>
                   <Sparkles size={12} /> {t('pollenNow')}
                 </div>
                 <div className="space-y-1.5">
@@ -7560,7 +7565,7 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
                     const { label: lvlLabel, color } = getPollenLevelLabel(val);
                     return (
                       <div key={label} className="flex items-center justify-between text-sm">
-                        <span className="text-slate-600">🌿 {label}</span>
+                        <span className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-600'}>🌿 {label}</span>
                         <span className={`font-semibold ${color}`}>{lvlLabel}</span>
                       </div>
                     );
@@ -7569,7 +7574,7 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
               </div>
             )}
             {airQualityData && activePollen.length === 0 && (
-              <div className="mt-3 pt-3 border-t border-slate-100 text-sm text-slate-400 text-center">
+              <div className={`mt-3 pt-3 border-t ${isRealNight ? 'border-m3-outline-variant/70 text-m3-dark-on-surface-variant' : 'border-slate-100 text-slate-400'} text-sm text-center`}>
                 🌿 {t('pollenNoActive')}
               </div>
             )}
@@ -11074,6 +11079,7 @@ export default function WeatherApp() {
           formatWind={formatWind}
           getWindUnitLabel={getWindUnitLabel}
           isSmallScreen={isSmallScreen}
+          isRealNight={isRealNight}
         />
       )}
       {showPollenModal && (
@@ -11084,6 +11090,7 @@ export default function WeatherApp() {
           lang={lang}
           isSmallScreen={isSmallScreen}
           pollenFilter={settings.pollenFilter}
+          isRealNight={isRealNight}
         />
       )}
       {showPrecipModal && (
@@ -11096,6 +11103,7 @@ export default function WeatherApp() {
           getPrecipUnitLabel={getPrecipUnitLabel}
           setActiveTab={setActiveTab}
           isSmallScreen={isSmallScreen}
+          isRealNight={isRealNight}
         />
       )}
       {showActivityModal && (
@@ -11107,6 +11115,7 @@ export default function WeatherApp() {
           isSmallScreen={isSmallScreen}
           airQualityData={airQualityData}
           pollenFilter={settings.pollenFilter}
+          isRealNight={isRealNight}
         />
       )}
       {showSettingsModal && (
