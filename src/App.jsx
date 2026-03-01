@@ -56,6 +56,53 @@ const POLLEN_VERY_HIGH_THRESHOLD = 50;
 // Default pollen filter: all pollen types requested by users (olive_pollen excluded from default as it is not relevant for Central Europe)
 const DEFAULT_POLLEN_FILTER = ['hazel_pollen', 'alder_pollen', 'birch_pollen', 'ash_pollen', 'hornbeam_pollen', 'oak_pollen', 'beech_pollen', 'grass_pollen', 'rye_pollen', 'mugwort_pollen', 'ragweed_pollen', 'plantain_pollen', 'sorrel_pollen'];
 
+// Google Pollen API: UPI (0–5) to concentration-equivalent score mapping for compatibility with EAN thresholds
+// UPI 0=None, 1=VeryLow, 2=Low, 3=Medium, 4=High, 5=VeryHigh
+const UPI_TO_POLLEN_SCORE = [0, 8, 15, 25, 40, 60];
+
+// Google Pollen API: plant code → app pollen key mapping
+const GOOGLE_POLLEN_PLANT_MAP = {
+  HAZEL: 'hazel_pollen',
+  ALDER: 'alder_pollen',
+  BIRCH: 'birch_pollen',
+  ASH: 'ash_pollen',
+  OAK: 'oak_pollen',
+  OLIVE: 'olive_pollen',
+  MUGWORT: 'mugwort_pollen',
+  RAGWEED: 'ragweed_pollen',
+  RYE_GRASS: 'rye_pollen',
+  GRAMINALES: 'grass_pollen',
+  TIMOTHY_GRASS: 'grass_pollen',
+  BERMUDA_GRASS: 'grass_pollen',
+  BAHIA_GRASS: 'grass_pollen',
+  JOHNSON_GRASS: 'grass_pollen',
+  SWEET_VERNAL_GRASS: 'grass_pollen',
+};
+
+// Parse Google Pollen API response into airQualityData-compatible pollen fields
+const parseGooglePollenData = (googleData) => {
+  const result = {};
+  const today = googleData?.dailyInfo?.[0];
+  if (!today) return result;
+  const grassScores = [];
+  for (const plant of (today.plantInfo || [])) {
+    const appKey = GOOGLE_POLLEN_PLANT_MAP[plant.code];
+    if (!appKey) continue;
+    const upiRaw = plant.indexInfo?.value;
+    const upi = (typeof upiRaw === 'number' && !isNaN(upiRaw)) ? upiRaw : 0;
+    const score = UPI_TO_POLLEN_SCORE[Math.min(Math.max(Math.round(upi), 0), 5)];
+    if (appKey === 'grass_pollen') {
+      grassScores.push(score);
+    } else {
+      result[appKey] = Math.max(result[appKey] ?? 0, score);
+    }
+  }
+  if (grassScores.length > 0) {
+    result['grass_pollen'] = Math.max(...grassScores);
+  }
+  return result;
+};
+
 // Historical context: minimum temperature difference to show anomaly banner (°C)
 const TEMP_ANOMALY_THRESHOLD = 0.5;
 
@@ -288,6 +335,9 @@ const TRANSLATIONS = {
     pollenHigh: "Hoch",
     pollenVeryHigh: "Sehr hoch",
     pollenFilter: "Pollen in Kachel anzeigen",
+    pollenApiKey: "Google Pollen API-Schlüssel",
+    pollenApiKeyPlaceholder: "API-Schlüssel eingeben (optional)",
+    pollenApiKeyDesc: "Optionaler Google Maps API-Schlüssel für detailliertere Pollendaten. Ohne Schlüssel wird Open-Meteo verwendet.",
     goldenHour: "Goldene Stunde",
     blueHour: "Blaue Stunde",
     photographerWeather: "Fotograf",
@@ -524,6 +574,9 @@ const TRANSLATIONS = {
     pollenHigh: "High",
     pollenVeryHigh: "Very high",
     pollenFilter: "Show pollen in tile",
+    pollenApiKey: "Google Pollen API Key",
+    pollenApiKeyPlaceholder: "Enter API key (optional)",
+    pollenApiKeyDesc: "Optional Google Maps API key for more detailed pollen data. Without a key, Open-Meteo is used.",
     goldenHour: "Golden Hour",
     blueHour: "Blue Hour",
     photographerWeather: "Photographer",
@@ -2458,7 +2511,8 @@ const getSavedSettings = () => {
             windUnit: 'kmh',
             precipUnit: 'mm',
             pollenFilter: DEFAULT_POLLEN_FILTER,
-            homeTerrain: null
+            homeTerrain: null,
+            googlePollenApiKey: ''
         };
         if (!saved) return defaults;
         const parsed = JSON.parse(saved);
@@ -2484,7 +2538,8 @@ const getSavedSettings = () => {
             windUnit: 'kmh',
             precipUnit: 'mm',
             pollenFilter: DEFAULT_POLLEN_FILTER,
-            homeTerrain: null
+            homeTerrain: null,
+            googlePollenApiKey: ''
         }; 
     }
 };
@@ -4472,6 +4527,21 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                              );
                          })}
                      </div>
+                 </div>
+
+                 {/* GOOGLE POLLEN API KEY */}
+                 <div className="mb-8">
+                     <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <Sparkles size={16}/> {t.pollenApiKey || 'Google Pollen API Key'}
+                     </label>
+                     <input
+                         type="password"
+                         value={localSettings.googlePollenApiKey || ''}
+                         onChange={(e) => setLocalSettings({ ...localSettings, googlePollenApiKey: e.target.value })}
+                         placeholder={t.pollenApiKeyPlaceholder || 'API key (optional)'}
+                         className="w-full py-2 px-3 bg-m3-surface-container text-m3-on-surface font-medium rounded-m3-md border border-m3-outline-variant text-sm"
+                     />
+                     <p className="text-xs text-m3-on-surface-variant mt-2">{t.pollenApiKeyDesc || 'Optional Google Maps API key for detailed pollen data.'}</p>
                  </div>
 
                  </div>
@@ -9423,7 +9493,23 @@ export default function WeatherApp() {
       
       if (resAirQuality.ok) {
         const aqJson = await resAirQuality.json();
-        setAirQualityData(aqJson.current);
+        const aqCurrent = aqJson.current || {};
+        // Try Google Pollen API if API key is configured
+        const googleKey = settings.googlePollenApiKey;
+        if (googleKey) {
+          try {
+            const urlGooglePollen = `https://pollen.googleapis.com/v1/forecast:lookup?key=${encodeURIComponent(googleKey)}&location.latitude=${lat}&location.longitude=${lon}&days=1`;
+            const resGooglePollen = await fetch(urlGooglePollen).catch((err) => { console.warn('Google Pollen API fetch failed:', err); return { ok: false }; });
+            if (resGooglePollen.ok) {
+              const googleJson = await resGooglePollen.json();
+              const googlePollen = parseGooglePollenData(googleJson);
+              Object.assign(aqCurrent, googlePollen);
+            }
+          } catch (e) {
+            console.warn('Google Pollen API error:', e);
+          }
+        }
+        setAirQualityData(aqCurrent);
         setAirQualityHourlyData(aqJson.hourly || null);
       }
 
