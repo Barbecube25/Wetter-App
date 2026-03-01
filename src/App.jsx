@@ -2477,6 +2477,13 @@ const getSavedTrips = () => {
     } catch (e) { return []; }
 };
 
+const getTripPreviewCache = () => {
+    try {
+        const saved = localStorage.getItem('weather_trip_preview_cache');
+        return saved ? JSON.parse(saved) : {};
+    } catch (e) { return {}; }
+};
+
 const getSavedSettings = () => {
     try {
         const saved = localStorage.getItem('weather_settings');
@@ -9058,7 +9065,7 @@ export default function WeatherApp() {
   const [activeTripId, setActiveTripId] = useState(null);
   // Edit trip modal state
   const [editingTrip, setEditingTrip] = useState(null);
-  const [tripPreviewCache, setTripPreviewCache] = useState({});
+  const [tripPreviewCache, setTripPreviewCache] = useState(() => getTripPreviewCache());
   const [selectedTripForPopup, setSelectedTripForPopup] = useState(null);
   const [showNewTripModal, setShowNewTripModal] = useState(false);
 
@@ -9155,6 +9162,11 @@ export default function WeatherApp() {
   useEffect(() => {
     localStorage.setItem('weather_trips', JSON.stringify(savedTrips));
   }, [savedTrips]);
+
+  // Persist trip preview cache to localStorage
+  useEffect(() => {
+    localStorage.setItem('weather_trip_preview_cache', JSON.stringify(tripPreviewCache));
+  }, [tripPreviewCache]);
 
 
   // NEU: iOS Erkennung
