@@ -2850,20 +2850,20 @@ const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvInd
   const isGoodBike = temp >= TEMPERATURE_THRESHOLDS_C.cool && temp <= 25 && wind < 30 && !hasRain;
 
   const de = lang === 'de';
-  if (isThunderstorm) return { emoji: '⛈️', text: de ? 'Gewitter – Outdoor-Aktivitäten meiden' : 'Thunderstorm – avoid outdoor activities', color: 'text-red-500' };
-  if (isStorm) return { emoji: '🌪️', text: de ? 'Sturm – besser drinnen bleiben' : 'Storm – better stay indoors', color: 'text-red-500' };
-  if (isVeryCold && wind > 20) return { emoji: '🤧', text: de ? 'Erkältungsrisiko hoch' : 'High cold risk', color: 'text-orange-500' };
-  if (hasRain) return { emoji: '☂️', text: de ? 'Regenschirm einpacken' : 'Pack an umbrella', color: 'text-blue-500' };
+  if (isThunderstorm) return { emoji: '⛈️', text: de ? 'Gewitter – Outdoor-Aktivitäten meiden' : 'Thunderstorm – avoid outdoor activities', color: 'text-red-500', score: 1 };
+  if (isStorm) return { emoji: '🌪️', text: de ? 'Sturm – besser drinnen bleiben' : 'Storm – better stay indoors', color: 'text-red-500', score: 1 };
+  if (isVeryCold && wind > 20) return { emoji: '🤧', text: de ? 'Erkältungsrisiko hoch' : 'High cold risk', color: 'text-orange-500', score: 3 };
+  if (hasRain) return { emoji: '☂️', text: de ? 'Regenschirm einpacken' : 'Pack an umbrella', color: 'text-blue-500', score: 4 };
   // isNearFreezing overlaps with isVeryCold for -3..0 °C; slippery risk takes priority over generic frost warning in that range
-  if (isNearFreezing) return { emoji: '🧊', text: de ? 'Vorsicht, kann glatt werden' : 'Caution, may be icy', color: 'text-blue-400' };
-  if (isVeryCold) return { emoji: '❄️', text: de ? 'Frostiger Tag – warm anziehen' : 'Frosty – dress warmly', color: 'text-blue-400' };
-  if (isCold) return { emoji: '🧥', text: de ? 'Kalt – Jacke empfohlen' : 'Cold – jacket recommended', color: 'text-blue-400' };
-  if (isExtremeHeat) return { emoji: '🥵', text: de ? 'Extrem heiß – ausreichend trinken' : 'Extreme heat – stay hydrated', color: 'text-red-500' };
-  if (isVeryHot && isUVHigh) return { emoji: '☀️', text: de ? 'Sonnenschutz & viel trinken' : 'Sun protection & stay hydrated', color: 'text-orange-500' };
-  if (isHot) return { emoji: '🏖️', text: de ? 'Perfektes Badewetter' : 'Perfect beach weather', color: 'text-green-500' };
-  if (isGoodRun) return { emoji: '🏃', text: de ? 'Gutes Laufwetter' : 'Good running weather', color: 'text-green-500' };
-  if (isGoodBike) return { emoji: '🚴', text: de ? 'Gutes Radfahrwetter' : 'Good cycling weather', color: 'text-green-500' };
-  return { emoji: '✅', text: de ? 'Angenehmes Wetter' : 'Comfortable weather', color: 'text-green-500' };
+  if (isNearFreezing) return { emoji: '🧊', text: de ? 'Vorsicht, kann glatt werden' : 'Caution, may be icy', color: 'text-blue-400', score: 3 };
+  if (isVeryCold) return { emoji: '❄️', text: de ? 'Frostiger Tag – warm anziehen' : 'Frosty – dress warmly', color: 'text-blue-400', score: 3 };
+  if (isCold) return { emoji: '🧥', text: de ? 'Kalt – Jacke empfohlen' : 'Cold – jacket recommended', color: 'text-blue-400', score: 5 };
+  if (isExtremeHeat) return { emoji: '🥵', text: de ? 'Extrem heiß – ausreichend trinken' : 'Extreme heat – stay hydrated', color: 'text-red-500', score: 2 };
+  if (isVeryHot && isUVHigh) return { emoji: '☀️', text: de ? 'Sonnenschutz & viel trinken' : 'Sun protection & stay hydrated', color: 'text-orange-500', score: 5 };
+  if (isHot) return { emoji: '🏖️', text: de ? 'Perfektes Badewetter' : 'Perfect beach weather', color: 'text-green-500', score: 7 };
+  if (isGoodRun) return { emoji: '🏃', text: de ? 'Gutes Laufwetter' : 'Good running weather', color: 'text-green-500', score: 9 };
+  if (isGoodBike) return { emoji: '🚴', text: de ? 'Gutes Radfahrwetter' : 'Good cycling weather', color: 'text-green-500', score: 8 };
+  return { emoji: '✅', text: de ? 'Angenehmes Wetter' : 'Comfortable weather', color: 'text-green-500', score: 7 };
 };
 
 
@@ -7513,7 +7513,7 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
                   <div
                     key={idx}
                     className={`flex flex-col items-center rounded-lg border py-1 px-0.5 ${cellBg} ${isNow ? 'ring-2 ring-yellow-400 ring-offset-1' : ''}`}
-                    title={`${h.displayTime} – ${h.advice.text}`}
+                    title={`${h.displayTime} – ${h.advice.score}/10 – ${h.advice.text}`}
                   >
                     <span className={`text-[10px] font-semibold leading-none ${isNow ? 'text-yellow-500' : (isRealNight ? 'text-slate-400' : 'text-slate-500')}`}>
                       {String(h.hour).padStart(2, '0')}
@@ -7543,7 +7543,10 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
                 >
                   <span className="text-xl flex-shrink-0">{range.advice.emoji}</span>
                   <div className="flex-1 min-w-0">
-                    <div className={`text-sm font-bold ${range.advice.color} leading-tight`}>{range.advice.text}</div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-bold ${range.advice.color} leading-tight`}>{range.advice.score}/10</span>
+                      <span className={`text-sm font-bold ${range.advice.color} leading-tight`}>{range.advice.text}</span>
+                    </div>
                     <div className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} mt-0.5`}>
                       {range.from === range.to
                         ? `${t('ab') || 'Ab'} ${range.from} ${t('oclock') || 'Uhr'}`
@@ -11596,8 +11599,11 @@ export default function WeatherApp() {
                 <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                   <Zap size={14} /> {t('activityIndex')}
                 </div>
-                <div className="text-lg leading-none mb-1">{advice.emoji}</div>
-                <div className={`text-m3-label-medium font-bold ${advice.color} leading-tight`}>{advice.text}</div>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className="text-base leading-none">{advice.emoji}</span>
+                  <span className={`text-base font-bold leading-none ${advice.color}`}>{advice.score}/10</span>
+                </div>
+                <div className={`text-m3-label-small ${advice.color} leading-tight`}>{advice.text}</div>
                 {getDominantPollen && !getDominantPollen.pausing && (
                   <div className="text-xs mt-1 text-m3-on-surface-variant truncate">
                     🌿 {getDominantPollen.label}: {getDominantPollen.level}
