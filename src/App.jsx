@@ -141,6 +141,7 @@ const TRANSLATIONS = {
     modelCheck: "Modell-Check",
     longtermList: "14-Tage Liste",
     travelPlanner: "Reiseplaner",
+    planTrip: "Reise planen",
     travelDesc: "Planen Sie Ihren Ausflug und checken Sie die Wetter-Wahrscheinlichkeit.",
     whereTo: "Wohin soll es gehen?",
     startDate: "Startdatum",
@@ -378,6 +379,7 @@ const TRANSLATIONS = {
     modelCheck: "Model Check",
     longtermList: "14-Day List",
     travelPlanner: "Travel Planner",
+    planTrip: "Plan Trip",
     travelDesc: "Plan your trip and check weather probability.",
     whereTo: "Where are you going?",
     startDate: "Start Date",
@@ -614,6 +616,7 @@ const TRANSLATIONS = {
     modelCheck: "Vérification modèle",
     longtermList: "Liste 14 jours",
     travelPlanner: "Planificateur de voyage",
+    planTrip: "Planifier un voyage",
     travelDesc: "Planifiez votre sortie et vérifiez les probabilités météo.",
     whereTo: "Où allez-vous ?",
     startDate: "Date de début",
@@ -803,6 +806,7 @@ const TRANSLATIONS = {
     modelCheck: "Verificación modelo",
     longtermList: "Lista 14 días",
     travelPlanner: "Planificador de viajes",
+    planTrip: "Planificar viaje",
     travelDesc: "Planifica tu viaje y comprueba la probabilidad meteorológica.",
     whereTo: "¿Adónde vas?",
     startDate: "Fecha de inicio",
@@ -991,6 +995,7 @@ const TRANSLATIONS = {
     modelCheck: "Controllo modello",
     longtermList: "Lista 14 giorni",
     travelPlanner: "Pianificatore viaggi",
+    planTrip: "Pianifica viaggio",
     travelDesc: "Pianifica la tua gita e controlla le probabilità meteo.",
     whereTo: "Dove vai?",
     startDate: "Data inizio",
@@ -1179,6 +1184,7 @@ const TRANSLATIONS = {
     modelCheck: "Model kontrolü",
     longtermList: "14 günlük liste",
     travelPlanner: "Seyahat planlayıcı",
+    planTrip: "Seyahat planla",
     travelDesc: "Gezinizi planlayın ve hava durumu olasılığını kontrol edin.",
     whereTo: "Nereye gidiyorsunuz?",
     startDate: "Başlangıç tarihi",
@@ -1367,6 +1373,7 @@ const TRANSLATIONS = {
     modelCheck: "Sprawdzenie modelu",
     longtermList: "Lista 14-dniowa",
     travelPlanner: "Planer podróży",
+    planTrip: "Zaplanuj podróż",
     travelDesc: "Zaplanuj wycieczkę i sprawdź prawdopodobieństwo pogody.",
     whereTo: "Dokąd się wybierasz?",
     startDate: "Data rozpoczęcia",
@@ -1555,6 +1562,7 @@ const TRANSLATIONS = {
     modelCheck: "Modelcontrole",
     longtermList: "14-daagse lijst",
     travelPlanner: "Reisplanner",
+    planTrip: "Reis plannen",
     travelDesc: "Plan je uitstapje en controleer de weerskans.",
     whereTo: "Waar ga je heen?",
     startDate: "Startdatum",
@@ -1743,6 +1751,7 @@ const TRANSLATIONS = {
     modelCheck: "Provjera modela",
     longtermList: "14-dnevni popis",
     travelPlanner: "Planer putovanja",
+    planTrip: "Planiraj putovanje",
     travelDesc: "Planirajte izlet i provjerite vjerojatnost vremena.",
     whereTo: "Kamo idete?",
     startDate: "Datum početka",
@@ -1931,6 +1940,7 @@ const TRANSLATIONS = {
     modelCheck: "Έλεγχος μοντέλου",
     longtermList: "Λίστα 14 ημερών",
     travelPlanner: "Σχεδιαστής ταξιδιού",
+    planTrip: "Σχεδιασμός ταξιδιού",
     travelDesc: "Σχεδιάστε την εκδρομή σας και ελέγξτε την πιθανότητα καιρού.",
     whereTo: "Πού πηγαίνετε;",
     startDate: "Ημερομηνία έναρξης",
@@ -2119,6 +2129,7 @@ const TRANSLATIONS = {
     modelCheck: "Modeltjek",
     longtermList: "14-dages liste",
     travelPlanner: "Rejseplanlægger",
+    planTrip: "Planlæg rejse",
     travelDesc: "Planlæg din tur og tjek vejrsandsynligheden.",
     whereTo: "Hvor skal du hen?",
     startDate: "Startdato",
@@ -2308,6 +2319,7 @@ const TRANSLATIONS = {
     modelCheck: "Проверка модели",
     longtermList: "Список 14 дней",
     travelPlanner: "Планировщик путешествий",
+    planTrip: "Запланировать поездку",
     travelDesc: "Спланируйте поездку и проверьте вероятность погоды.",
     whereTo: "Куда вы направляетесь?",
     startDate: "Дата начала",
@@ -9026,6 +9038,7 @@ export default function WeatherApp() {
   const [editingTrip, setEditingTrip] = useState(null);
   const [tripPreviewCache, setTripPreviewCache] = useState({});
   const [selectedTripForPopup, setSelectedTripForPopup] = useState(null);
+  const [showNewTripModal, setShowNewTripModal] = useState(false);
 
   // Initial Location Logic / Home Check
   useEffect(() => {
@@ -9474,7 +9487,7 @@ export default function WeatherApp() {
   }, [loading, lastUpdated, isRefreshing]);
 
   // --- PULL-TO-REFRESH & SWIPE GESTURE HANDLERS ---
-  const isAnyModalOpen = showFeedback || !!activeDetailModal || showPrecipModal || showActivityModal || showSettingsModal || showLocationModal || showPollenModal || !!selectedTripForPopup;
+  const isAnyModalOpen = showFeedback || !!activeDetailModal || showPrecipModal || showActivityModal || showSettingsModal || showLocationModal || showPollenModal || !!selectedTripForPopup || showNewTripModal;
 
   const handleTouchStart = (e) => {
     // Do not activate gestures when a modal/overlay is open
@@ -11807,181 +11820,169 @@ export default function WeatherApp() {
           {activeTab === 'travel' && (
             <div className="space-y-6">
 
-                {/* Saved Trips – horizontal scrollable tiles at the top */}
-                {savedTrips.length === 0 ? (
-                   <div className="flex flex-col items-center justify-center py-10 px-4 text-center bg-white/40 rounded-2xl border border-white/40">
-                     <div className="text-6xl mb-4">🏖️</div>
-                     <div className="text-4xl mb-2">🔜</div>
-                     <p className="font-bold text-slate-700 text-base mb-1">{t('noTripsYet')}</p>
-                     <p className="text-sm text-slate-500">{t('noTripsYetDesc')}</p>
-                   </div>
-                ) : (
-                   <div>
-                     <h3 className="text-sm font-bold uppercase opacity-70 mb-3 ml-2">{t('myTrips')}</h3>
-                     <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide">
-                       <div className="flex gap-3 w-max">
-                         {savedTrips.map(trip => {
-                             const isExpanded = expandedTripId === trip.id;
-                             return (
-                               <div key={trip.id} className="flex flex-col bg-m3-surface-container/80 backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl shadow-m3-1 hover:shadow-m3-2 transition-all min-w-[180px] w-[180px] overflow-hidden">
-                                 <button onClick={() => openTripPopup(trip)} className="text-left p-3 flex-1">
-                                   <div className="font-bold text-m3-on-surface text-sm mb-1 truncate">{trip.name}</div>
-                                   <div className="text-xs text-m3-on-surface-variant mb-2">
-                                     {formatDateShort(new Date(trip.startDate), lang)} – {formatDateShort(new Date(trip.endDate || trip.startDate), lang)}
-                                   </div>
-                                   {trip.customName && (
-                                     <div className="text-xs font-semibold text-blue-600 mb-2 truncate">📝 {trip.customName}</div>
-                                   )}
-                                   <div className="flex justify-center my-2">
-                                     <TripWeatherPreview trip={trip} tripPreviewCache={tripPreviewCache} setTripPreviewCache={setTripPreviewCache} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} lang={lang} />
-                                   </div>
-                                 </button>
-                                 <div className="flex items-center justify-between border-t border-m3-outline-variant/20 px-2 py-1">
-                                   <button
-                                     onClick={(e) => {
-                                       e.stopPropagation();
-                                       toggleTripExpansion(trip);
-                                     }}
-                                     className="p-1.5 text-m3-on-surface-variant hover:text-blue-600 transition"
-                                     title={isExpanded ? t('collapseDetails') : t('expandDetails')}
-                                   >
-                                     {isExpanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
-                                   </button>
-                                   <button
-                                     onClick={(e) => {
-                                       e.stopPropagation();
-                                       setEditingTrip({ ...trip });
-                                     }}
-                                     className="p-1.5 text-m3-on-surface-variant hover:text-blue-500 transition"
-                                     title={t('editTrip')}
-                                   >
-                                     <Edit2 size={16}/>
-                                   </button>
-                                   <button
-                                     onClick={(e) => {
-                                       e.stopPropagation();
-                                       handleDeleteTrip(trip.id);
-                                     }}
-                                     className="p-1.5 text-m3-on-surface-variant hover:text-red-500 transition"
-                                   >
-                                     <Trash2 size={16}/>
-                                   </button>
-                                 </div>
-                                 {activeTripId === trip.id && (
-                                   <div className="px-3 pb-3">
-                                     {savedTripReports[trip.id] ? (
-                                       <AIReportBox report={savedTripReports[trip.id]} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
-                                     ) : travelLoading ? (
-                                       <div className="p-4 text-center"><RefreshCw className="animate-spin inline" size={20}/></div>
-                                     ) : null}
-                                   </div>
-                                 )}
-                                 {isExpanded && <TripDetailedView trip={trip} tripDetails={tripDetails} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} />}
-                               </div>
-                             );
-                         })}
-                       </div>
-                     </div>
-                   </div>
-                )}
+                {/* Trips row: "+" tile first, then saved trip tiles */}
+                <div>
+                  <h3 className="text-sm font-bold uppercase opacity-70 mb-3 ml-2">{t('myTrips')}</h3>
+                  <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide">
+                    <div className="flex gap-3 w-max">
+                      {/* "Plan Trip" tile – always first */}
+                      <button
+                        onClick={() => setShowNewTripModal(true)}
+                        className="flex flex-col items-center justify-center bg-m3-surface-container/80 backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl shadow-m3-1 hover:shadow-m3-2 transition-all min-w-[180px] w-[180px] min-h-[160px] gap-2 p-3"
+                      >
+                        <div className="w-14 h-14 rounded-full bg-m3-primary/10 flex items-center justify-center">
+                          <span className="text-4xl font-thin text-m3-primary leading-none">+</span>
+                        </div>
+                        <span className="font-bold text-m3-on-surface text-sm text-center">{t('planTrip')}</span>
+                      </button>
 
-                {/* New Trip Form */}
-                <div className="bg-white/50 rounded-2xl p-4 border border-white/40">
-                   <h3 className="text-sm font-bold uppercase opacity-70 mb-4 flex items-center gap-2"><Plane size={16}/> {t('travelPlanner')}</h3>
-                   
-                   <div className="space-y-3">
-                      <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('whereTo')}</label>
-                        <div className="relative">
+                      {/* Saved trip tiles */}
+                      {savedTrips.map(trip => {
+                          const isExpanded = expandedTripId === trip.id;
+                          return (
+                            <div key={trip.id} className="flex flex-col bg-m3-surface-container/80 backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl shadow-m3-1 hover:shadow-m3-2 transition-all min-w-[180px] w-[180px] overflow-hidden">
+                              <button onClick={() => openTripPopup(trip)} className="text-left p-3 flex-1">
+                                <div className="font-bold text-m3-on-surface text-sm mb-1 truncate">{trip.customName || trip.name}</div>
+                                <div className="text-xs text-m3-on-surface-variant mb-2">
+                                  {formatDateShort(new Date(trip.startDate), lang)} – {formatDateShort(new Date(trip.endDate || trip.startDate), lang)}
+                                </div>
+                                <div className="text-[10px] text-m3-on-surface-variant/70 mb-2 truncate">📍 {trip.name}</div>
+                                <div className="flex justify-center mt-1">
+                                  <TripWeatherPreview trip={trip} tripPreviewCache={tripPreviewCache} setTripPreviewCache={setTripPreviewCache} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} lang={lang} />
+                                </div>
+                              </button>
+                              <div className="flex items-center justify-between border-t border-m3-outline-variant/20 px-2 py-1">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleTripExpansion(trip);
+                                  }}
+                                  className="p-1.5 text-m3-on-surface-variant hover:text-blue-600 transition"
+                                  title={isExpanded ? t('collapseDetails') : t('expandDetails')}
+                                >
+                                  {isExpanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingTrip({ ...trip });
+                                  }}
+                                  className="p-1.5 text-m3-on-surface-variant hover:text-blue-500 transition"
+                                  title={t('editTrip')}
+                                >
+                                  <Edit2 size={16}/>
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteTrip(trip.id);
+                                  }}
+                                  className="p-1.5 text-m3-on-surface-variant hover:text-red-500 transition"
+                                >
+                                  <Trash2 size={16}/>
+                                </button>
+                              </div>
+                              {activeTripId === trip.id && (
+                                <div className="px-3 pb-3">
+                                  {savedTripReports[trip.id] ? (
+                                    <AIReportBox report={savedTripReports[trip.id]} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
+                                  ) : travelLoading ? (
+                                    <div className="p-4 text-center"><RefreshCw className="animate-spin inline" size={20}/></div>
+                                  ) : null}
+                                </div>
+                              )}
+                              {isExpanded && <TripDetailedView trip={trip} tripDetails={tripDetails} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} />}
+                            </div>
+                          );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* New Trip Modal Popup */}
+                {showNewTripModal && (
+                  <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowNewTripModal(false)}>
+                    <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-200" onClick={e => e.stopPropagation()}>
+                      <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+                        <div className="flex items-center gap-2">
+                          <Plane size={18}/>
+                          <span className="font-bold">{t('planTrip')}</span>
+                        </div>
+                        <button onClick={() => setShowNewTripModal(false)} className="p-1.5 hover:bg-white/20 rounded-full transition"><X size={18}/></button>
+                      </div>
+                      <div className="p-4 space-y-3">
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('whereTo')}</label>
+                          <div className="relative">
                             <Search className="absolute left-3 top-3 text-slate-400" size={16}/>
-                            <input 
-                              type="text" 
+                            <input
+                              type="text"
                               value={travelQuery}
                               onChange={(e) => setTravelQuery(e.target.value)}
                               onKeyDown={(e) => e.key === 'Enter' && handleTravelSearch()}
-                              className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/50 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
+                              className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
                               placeholder={lang === 'en' ? "City, Island..." : "Stadt, Insel, Ort..."}
                             />
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('tripName')}</label>
-                        <div className="relative">
-                            <input 
-                              type="text" 
-                              value={travelTripName}
-                              onChange={(e) => setTravelTripName(e.target.value)}
-                              className="w-full px-3 py-2.5 rounded-xl border border-white/50 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
-                              placeholder={lang === 'en' ? "e.g., Summer Vacation, Business Trip..." : "z.B. Sommerurlaub, Geschäftsreise..."}
-                            />
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('tripName')}</label>
+                          <input
+                            type="text"
+                            value={travelTripName}
+                            onChange={(e) => setTravelTripName(e.target.value)}
+                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
+                            placeholder={lang === 'en' ? "e.g., Summer Vacation..." : "z.B. Sommerurlaub..."}
+                          />
                         </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-3">
-                         <div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
                             <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('startDate')}</label>
                             <div className="relative">
-                              <Calendar className="absolute left-3 top-3 text-slate-400" size={16}/>
-                              <input 
-                                type="date" 
-                                value={travelStartDate} 
-                                onChange={(e) => setTravelStartDate(e.target.value)}
-                                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/50 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
-                              />
+                              <Calendar className="absolute left-3 top-2.5 text-slate-400" size={14}/>
+                              <input type="date" value={travelStartDate} onChange={(e) => setTravelStartDate(e.target.value)}
+                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700" />
                             </div>
-                         </div>
-                         <div>
+                          </div>
+                          <div>
                             <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('endDate')}</label>
                             <div className="relative">
-                              <Calendar className="absolute left-3 top-3 text-slate-400" size={16}/>
-                              <input 
-                                type="date" 
-                                value={travelEndDate} 
-                                onChange={(e) => setTravelEndDate(e.target.value)}
-                                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/50 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
-                              />
+                              <Calendar className="absolute left-3 top-2.5 text-slate-400" size={14}/>
+                              <input type="date" value={travelEndDate} onChange={(e) => setTravelEndDate(e.target.value)}
+                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700" />
                             </div>
-                         </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('startTime')} <span className="opacity-50 font-normal">(Optional)</span></label>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('startTime')} <span className="opacity-50 font-normal">(Opt.)</span></label>
                             <div className="relative">
-                              <Clock className="absolute left-3 top-3 text-slate-400" size={16}/>
-                              <input 
-                                type="time" 
-                                value={travelStartTime} 
-                                onChange={(e) => setTravelStartTime(e.target.value)}
-                                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/50 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
-                              />
+                              <Clock className="absolute left-3 top-2.5 text-slate-400" size={14}/>
+                              <input type="time" value={travelStartTime} onChange={(e) => setTravelStartTime(e.target.value)}
+                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700" />
                             </div>
-                         </div>
-                         <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('endTime')} <span className="opacity-50 font-normal">(Optional)</span></label>
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase ml-1 mb-1 block">{t('endTime')} <span className="opacity-50 font-normal">(Opt.)</span></label>
                             <div className="relative">
-                              <Clock className="absolute left-3 top-3 text-slate-400" size={16}/>
-                              <input 
-                                type="time" 
-                                value={travelEndTime} 
-                                onChange={(e) => setTravelEndTime(e.target.value)}
-                                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/50 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700"
-                              />
+                              <Clock className="absolute left-3 top-2.5 text-slate-400" size={14}/>
+                              <input type="time" value={travelEndTime} onChange={(e) => setTravelEndTime(e.target.value)}
+                                className="w-full pl-8 pr-2 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-bold text-slate-700" />
                             </div>
-                         </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => { handleTravelSearch(); setShowNewTripModal(false); }}
+                          disabled={travelLoading}
+                          className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition active:scale-95 flex items-center justify-center gap-2"
+                        >
+                          {travelLoading ? <RefreshCw className="animate-spin" size={18}/> : <CheckCircle2 size={18}/>}
+                          {t('checkWeather')}
+                        </button>
                       </div>
-
-                      <button 
-                         onClick={() => handleTravelSearch()} 
-                         disabled={travelLoading}
-                         className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition active:scale-95 flex items-center justify-center gap-2"
-                      >
-                         {travelLoading ? <RefreshCw className="animate-spin" size={18}/> : <CheckCircle2 size={18}/>}
-                         {t('checkWeather')}
-                      </button>
-                   </div>
-                </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Result Area */}
                 {travelResult && (
