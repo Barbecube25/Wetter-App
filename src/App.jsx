@@ -56,6 +56,77 @@ const POLLEN_VERY_HIGH_THRESHOLD = 50;
 // Default pollen filter: all pollen types requested by users (olive_pollen excluded from default as it is not relevant for Central Europe)
 const DEFAULT_POLLEN_FILTER = ['hazel_pollen', 'alder_pollen', 'birch_pollen', 'ash_pollen', 'hornbeam_pollen', 'oak_pollen', 'beech_pollen', 'grass_pollen', 'rye_pollen', 'mugwort_pollen', 'ragweed_pollen', 'plantain_pollen', 'sorrel_pollen'];
 
+// DWD pollen region centers for nearest-region lookup (partregion_id used when available, else region_id)
+const DWD_POLLEN_REGIONS = [
+  { id: 10,  lat: 54.0, lon: 10.0 },  // Schleswig-Holstein und Hamburg
+  { id: 20,  lat: 53.9, lon: 13.0 },  // Mecklenburg-Vorpommern
+  { id: 31,  lat: 53.5, lon:  9.0 },  // Niedersachsen Nord
+  { id: 32,  lat: 52.6, lon:  9.0 },  // Niedersachsen Mitte
+  { id: 33,  lat: 51.9, lon: 10.5 },  // Niedersachsen Süd/Östliches Niedersachsen
+  { id: 41,  lat: 51.5, lon:  6.8 },  // NW Tiefland West/Niederrhein
+  { id: 42,  lat: 51.8, lon:  7.9 },  // NW Tiefland Ost/Münsterland
+  { id: 43,  lat: 51.3, lon:  8.2 },  // NW Bergisches Land/Sauerland
+  { id: 50,  lat: 52.5, lon: 13.3 },  // Brandenburg und Berlin
+  { id: 61,  lat: 51.8, lon: 11.5 },  // Sachsen-Anhalt West
+  { id: 62,  lat: 52.3, lon: 12.2 },  // Sachsen-Anhalt Ost
+  { id: 71,  lat: 51.1, lon: 11.0 },  // Thüringen Tiefland/Hügelland
+  { id: 72,  lat: 50.5, lon: 11.5 },  // Thüringen Bergland
+  { id: 81,  lat: 51.3, lon: 13.2 },  // Sachsen Tiefland
+  { id: 82,  lat: 50.7, lon: 13.4 },  // Sachsen Berg-/Hügelland
+  { id: 91,  lat: 49.5, lon: 11.5 },  // Bayern Nord
+  { id: 92,  lat: 48.0, lon: 11.5 },  // Bayern Süd
+  { id: 101, lat: 48.3, lon:  7.9 },  // BW Oberrhein und unteres Neckartal
+  { id: 102, lat: 48.8, lon:  9.2 },  // BW Hohenlohe/mittlerer Neckar/Oberschwaben
+  { id: 103, lat: 47.9, lon:  8.8 },  // BW Schwarzwald/Baar/Hegau
+  { id: 111, lat: 51.0, lon:  9.3 },  // Hessen Nord und hess. Bergland
+  { id: 112, lat: 50.1, lon:  8.6 },  // Hessen Rhein/Main und ostexponierte Lagen
+  { id: 121, lat: 49.4, lon:  7.0 },  // Saarland
+  { id: 122, lat: 50.0, lon:  7.3 },  // Rheinland-Pfalz
+  { id: 123, lat: 50.3, lon:  7.8 },  // Östliche Mittelgebirge/Hochlagen
+];
+
+// Map DWD pollen German names to the app's field names
+const DWD_POLLEN_NAME_MAP = {
+  'Hasel':    'hazel_pollen',
+  'Erle':     'alder_pollen',
+  'Esche':    'ash_pollen',
+  'Birke':    'birch_pollen',
+  'Gräser':   'grass_pollen',
+  'Roggen':   'rye_pollen',
+  'Beifuß':   'mugwort_pollen',
+  'Ambrosia': 'ragweed_pollen',
+};
+
+// Convert DWD pollen index (0, 0-1, 1, 1-2, 2, 2-3, 3, 3-4) to approximate grains/m³
+// so the existing POLLEN_MODERATE/HIGH/VERY_HIGH thresholds continue to work
+const dwdPollenIndexToGrains = (dwdValue) => {
+  switch (String(dwdValue).trim()) {
+    case '0':   return 0;
+    case '0-1': return 3;
+    case '1':   return 8;
+    case '1-2': return 14;
+    case '2':   return 25;
+    case '2-3': return 38;
+    case '3':   return 60;
+    case '3-4': return 80;
+    default:    return 0;
+  }
+};
+
+// Find nearest DWD pollen region id for given coordinates
+const findDwdRegionId = (lat, lon) => {
+  let minDist = Infinity;
+  let nearestId = DWD_POLLEN_REGIONS[0].id;
+  for (const r of DWD_POLLEN_REGIONS) {
+    const dist = (lat - r.lat) ** 2 + (lon - r.lon) ** 2;
+    if (dist < minDist) { minDist = dist; nearestId = r.id; }
+  }
+  return nearestId;
+};
+
+// Returns true when coordinates are within Germany's bounding box
+const isInGermany = (lat, lon) => lat >= 47.3 && lat <= 55.1 && lon >= 5.9 && lon <= 15.1;
+
 // Historical context: minimum temperature difference to show anomaly banner (°C)
 const TEMP_ANOMALY_THRESHOLD = 0.5;
 
@@ -7201,6 +7272,11 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
               )}
             </>
           )}
+          <div className="text-[10px] text-center opacity-50 pt-2">
+            {airQualityData._pollenSource === 'DWD'
+              ? 'Quelle: DWD (Deutscher Wetterdienst)'
+              : 'Quelle: CAMS / Open-Meteo'}
+          </div>
         </div>
       </div>
     </div>
@@ -9372,6 +9448,10 @@ export default function WeatherApp() {
       const urlSunriseSunset = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&timezone=auto&forecast_days=1`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
       const urlAirQuality = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi,pm10,pm2_5,alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&hourly=european_aqi&past_days=1&forecast_days=2&timezone=auto`;
+      // For German locations use official DWD pollen forecast (better coverage than CAMS/open-meteo)
+      const urlDwdPollen = isInGermany(lat, lon)
+        ? 'https://opendata.dwd.de/climate_environment/health/alerts/s31fg.json'
+        : null;
 
       // Climate normals: fetch same month last year from archive API for historical context
       const nowForClimate = new Date();
@@ -9380,13 +9460,14 @@ export default function WeatherApp() {
       const climLastDay = new Date(lastYear, nowForClimate.getMonth() + 1, 0).getDate();
       const urlClimate = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${lastYear}-${climMonth}-01&end_date=${lastYear}-${climMonth}-${climLastDay}&daily=temperature_2m_mean&timezone=auto`;
 
-      const [resShort, resLong, resSunriseSunset, resDwd, resAirQuality, resClimate] = await Promise.all([
+      const [resShort, resLong, resSunriseSunset, resDwd, resAirQuality, resClimate, resDwdPollen] = await Promise.all([
         fetch(urlShort), 
         fetch(urlLong), 
         fetch(urlSunriseSunset).catch(() => ({ ok: false })),
         fetch(urlDwd).catch(() => ({ ok: false })),
         fetch(urlAirQuality).catch(() => ({ ok: false })),
-        fetch(urlClimate).catch(() => ({ ok: false }))
+        fetch(urlClimate).catch(() => ({ ok: false })),
+        urlDwdPollen ? fetch(urlDwdPollen).catch(() => ({ ok: false })) : Promise.resolve({ ok: false })
       ]);
       
       if (!resShort.ok) {
@@ -9423,7 +9504,30 @@ export default function WeatherApp() {
       
       if (resAirQuality.ok) {
         const aqJson = await resAirQuality.json();
-        setAirQualityData(aqJson.current);
+        let aqCurrent = aqJson.current || {};
+
+        // Overlay DWD pollen data for German locations (more accurate than CAMS/open-meteo)
+        if (resDwdPollen.ok) {
+          try {
+            const dwdPollenJson = await resDwdPollen.json();
+            const regionId = findDwdRegionId(lat, lon);
+            // Prefer sub-region (partregion_id === regionId) over main region (partregion_id === -1)
+            const regionData =
+              dwdPollenJson.content?.find(r => r.partregion_id === regionId) ||
+              dwdPollenJson.content?.find(r => r.region_id === regionId && r.partregion_id === -1);
+            if (regionData?.pollen) {
+              for (const [dwdName, appKey] of Object.entries(DWD_POLLEN_NAME_MAP)) {
+                const todayVal = regionData.pollen[dwdName]?.today;
+                if (todayVal !== undefined) {
+                  aqCurrent[appKey] = dwdPollenIndexToGrains(todayVal);
+                }
+              }
+              aqCurrent._pollenSource = 'DWD';
+            }
+          } catch (e) { console.warn('DWD pollen parse error:', e); }
+        }
+
+        setAirQualityData(aqCurrent);
         setAirQualityHourlyData(aqJson.hourly || null);
       }
 
