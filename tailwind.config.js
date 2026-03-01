@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       fontFamily: {
@@ -63,6 +64,8 @@ export default {
           'dark-surface-container-highest': '#505050',
           'dark-on-surface': '#E6E1E5',
           'dark-on-surface-variant': '#CAC4D0',
+          'dark-primary': '#D0BCFF',
+          'dark-outline-variant': '#49454F',
         }
       },
       borderRadius: {
