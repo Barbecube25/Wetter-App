@@ -163,6 +163,9 @@ const TRANSLATIONS = {
     saveChanges: "Änderungen speichern",
     tripTooFarFuture: "Noch zu weit weg! 🔮",
     tripTooFarFutureHint: "Daten gibts bald...",
+    tripCountdownToday: "Heute!",
+    tripCountdownTomorrow: "Morgen!",
+    tripCountdownIn: "Noch",
     radarCredit: "Radarbild bereitgestellt von Windy.com", // Radar data from Windy.com
     noRain: "Trocken",
     rain: "Regen",
@@ -402,6 +405,9 @@ const TRANSLATIONS = {
     saveChanges: "Save Changes",
     tripTooFarFuture: "Too far ahead! 🔮",
     tripTooFarFutureHint: "Data coming soon...",
+    tripCountdownToday: "Today!",
+    tripCountdownTomorrow: "Tomorrow!",
+    tripCountdownIn: "in",
     radarCredit: "Radar image provided by Windy.com", // Radar data from Windy.com
     noRain: "Dry",
     rain: "Rain",
@@ -9904,8 +9910,9 @@ export default function WeatherApp() {
 
   const handleSaveTrip = () => {
       if (!travelResult) return;
+      const newTripId = crypto.randomUUID();
       const newTrip = {
-          id: crypto.randomUUID(),
+          id: newTripId,
           name: travelResult.location.name || travelQuery,
           customName: travelTripName.trim() || null,
           lat: travelResult.location.latitude || travelResult.location.lat,
@@ -9915,6 +9922,17 @@ export default function WeatherApp() {
           startTime: travelStartTime,
           endTime: travelEndTime
       };
+      // Pre-populate preview cache with already-available weather data so the tile shows immediately
+      let previewData = null;
+      if (travelResult.mode === 'multi' && travelResult.items?.length > 0) {
+          const firstItem = travelResult.items[0];
+          previewData = { code: firstItem.code, max: firstItem.max, min: firstItem.min };
+      } else if (travelResult.summary?.code !== undefined) {
+          previewData = { code: travelResult.summary.code, max: travelResult.summary.maxTemp, min: travelResult.summary.minTemp };
+      }
+      if (previewData) {
+          setTripPreviewCache(prev => ({ ...prev, [newTripId]: previewData }));
+      }
       setSavedTrips([...savedTrips, newTrip]);
       setTravelTripName("");
       alert(t('tripSaved'));
@@ -11856,17 +11874,12 @@ export default function WeatherApp() {
 
                       {/* Saved trip tiles */}
                       {savedTrips.map(trip => {
-                          const tripDays = trip.endDate && trip.endDate !== trip.startDate
-                            ? Math.round((new Date(trip.endDate) - new Date(trip.startDate)) / (1000 * 60 * 60 * 24)) + 1
-                            : 1;
-                          const tripConf = savedTripReports[trip.id]?.confidence ?? null;
-                          const confBadgeClass = tripConf !== null
-                            ? tripConf > 70
-                              ? 'bg-m3-tertiary-container text-m3-on-tertiary-container border-m3-tertiary'
-                              : tripConf > 40
-                                ? 'bg-m3-secondary-container text-m3-on-secondary-container border-m3-secondary'
-                                : 'bg-m3-error-container text-m3-on-error-container border-m3-error'
-                            : null;
+                          const daysUntilTrip = Math.ceil((new Date(trip.startDate) - new Date()) / MILLISECONDS_PER_DAY);
+                          const countdownLabel = daysUntilTrip <= 0
+                            ? t('tripCountdownToday')
+                            : daysUntilTrip === 1
+                              ? t('tripCountdownTomorrow')
+                              : `${t('tripCountdownIn')} ${daysUntilTrip} ${t('days')}`;
                           return (
                             <div key={trip.id} className="flex flex-col bg-m3-surface-container-high border border-m3-outline-variant/30 rounded-m3-xl shadow-m3-1 hover:shadow-m3-2 transition-all overflow-hidden">
                               <button onClick={() => openTripPopup(trip)} className="text-left flex-1">
@@ -11888,19 +11901,11 @@ export default function WeatherApp() {
                                 <div className="px-3 py-2 space-y-2">
                                   <div className="flex items-center gap-1.5 text-xs text-m3-on-surface-variant">
                                     <Calendar size={12} className="flex-shrink-0"/>
-                                    <span className="truncate">{formatDateShort(new Date(trip.startDate), lang)} – {formatDateShort(new Date(trip.endDate || trip.startDate), lang)}</span>
+                                    <span className="truncate">{formatDateShort(new Date(trip.startDate), lang)}{trip.endDate && trip.endDate !== trip.startDate ? ` – ${formatDateShort(new Date(trip.endDate), lang)}` : ''}</span>
                                   </div>
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    {tripDays > 1 && (
-                                      <div className="inline-flex items-center gap-1 bg-m3-tertiary-container/50 px-2 py-0.5 rounded-full">
-                                        <span className="text-[10px] font-medium text-m3-on-tertiary-container">{tripDays} {t('days')}</span>
-                                      </div>
-                                    )}
-                                    {confBadgeClass && (
-                                      <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${confBadgeClass}`}>
-                                        <ShieldCheck size={10}/> {tripConf}% {t('safe')}
-                                      </div>
-                                    )}
+                                  <div className="inline-flex items-center gap-1 bg-m3-primary/10 px-2 py-0.5 rounded-full">
+                                    <Timer size={10} className="text-m3-primary flex-shrink-0"/>
+                                    <span className="text-[10px] font-medium text-m3-primary">{countdownLabel}</span>
                                   </div>
                                   <TripWeatherPreview trip={trip} tripPreviewCache={tripPreviewCache} setTripPreviewCache={setTripPreviewCache} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} lang={lang} />
                                 </div>
