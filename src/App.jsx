@@ -5787,26 +5787,12 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
             {/* Ground flowers - small flower shapes (outer petal color + yellow center) */}
             <circle cx="60" cy="156" r="2.5" fill="#c084fc" />
             <circle cx="60" cy="156" r="1" fill="#fbbf24" />
-            <circle cx="80" cy="155" r="2.5" fill="#fda4af" />
-            <circle cx="80" cy="155" r="1" fill="#fbbf24" />
-            <circle cx="105" cy="154" r="2" fill="#fde047" />
-            <circle cx="105" cy="154" r="0.8" fill="#f97316" />
-            <circle cx="125" cy="155" r="2" fill="#86efac" />
-            <circle cx="125" cy="155" r="0.8" fill="#fbbf24" />
             <circle cx="150" cy="153" r="2.5" fill="#fecdd3" />
             <circle cx="150" cy="153" r="1" fill="#fbbf24" />
-            <circle cx="220" cy="155" r="2.5" fill="#f9a8d4" />
-            <circle cx="220" cy="155" r="1" fill="#fbbf24" />
             <circle cx="245" cy="153" r="2" fill="#fde047" />
             <circle cx="245" cy="153" r="0.8" fill="#f97316" />
-            <circle cx="270" cy="155" r="2.5" fill="#7dd3fc" />
-            <circle cx="270" cy="155" r="1" fill="#fbbf24" />
-            <circle cx="295" cy="154" r="2" fill="#fda4af" />
-            <circle cx="295" cy="154" r="0.8" fill="#fbbf24" />
             <circle cx="315" cy="156" r="2.5" fill="#c084fc" />
             <circle cx="315" cy="156" r="1" fill="#fbbf24" />
-            <circle cx="335" cy="153" r="2" fill="#86efac" />
-            <circle cx="335" cy="153" r="0.8" fill="#fbbf24" />
          </g>
       )}
 
