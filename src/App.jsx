@@ -56,6 +56,68 @@ const POLLEN_VERY_HIGH_THRESHOLD = 50;
 // Default pollen filter: all pollen types requested by users (olive_pollen excluded from default as it is not relevant for Central Europe)
 const DEFAULT_POLLEN_FILTER = ['hazel_pollen', 'alder_pollen', 'birch_pollen', 'ash_pollen', 'hornbeam_pollen', 'oak_pollen', 'beech_pollen', 'grass_pollen', 'rye_pollen', 'mugwort_pollen', 'ragweed_pollen', 'plantain_pollen', 'sorrel_pollen'];
 
+// DWD pollen regions: approximate center coordinates for each partregion (or region if no partregions)
+const DWD_POLLEN_REGIONS = [
+  { region_id: 10, partregion_id: 11, lat: 54.7, lon: 8.6 },
+  { region_id: 10, partregion_id: 12, lat: 53.9, lon: 9.9 },
+  { region_id: 20, partregion_id: -1, lat: 53.8, lon: 12.5 },
+  { region_id: 30, partregion_id: 31, lat: 53.1, lon: 8.8 },
+  { region_id: 30, partregion_id: 32, lat: 52.6, lon: 10.5 },
+  { region_id: 40, partregion_id: 41, lat: 51.7, lon: 7.0 },
+  { region_id: 40, partregion_id: 42, lat: 52.0, lon: 8.8 },
+  { region_id: 40, partregion_id: 43, lat: 51.2, lon: 8.0 },
+  { region_id: 50, partregion_id: -1, lat: 52.5, lon: 13.4 },
+  { region_id: 60, partregion_id: 61, lat: 52.0, lon: 11.6 },
+  { region_id: 60, partregion_id: 62, lat: 51.7, lon: 10.7 },
+  { region_id: 70, partregion_id: 71, lat: 51.1, lon: 11.5 },
+  { region_id: 70, partregion_id: 72, lat: 50.6, lon: 10.8 },
+  { region_id: 80, partregion_id: 81, lat: 51.4, lon: 12.8 },
+  { region_id: 80, partregion_id: 82, lat: 50.6, lon: 13.3 },
+  { region_id: 90, partregion_id: 91, lat: 51.0, lon: 9.3 },
+  { region_id: 90, partregion_id: 92, lat: 50.1, lon: 8.7 },
+  { region_id: 100, partregion_id: 101, lat: 49.6, lon: 7.8 },
+  { region_id: 100, partregion_id: 102, lat: 50.0, lon: 7.1 },
+  { region_id: 100, partregion_id: 103, lat: 49.4, lon: 7.0 },
+  { region_id: 110, partregion_id: 111, lat: 49.3, lon: 8.4 },
+  { region_id: 110, partregion_id: 112, lat: 48.8, lon: 9.8 },
+  { region_id: 110, partregion_id: 113, lat: 48.4, lon: 8.2 },
+  { region_id: 120, partregion_id: 121, lat: 47.8, lon: 11.5 },
+  { region_id: 120, partregion_id: 122, lat: 48.7, lon: 11.5 },
+  { region_id: 120, partregion_id: 123, lat: 49.3, lon: 11.8 },
+  { region_id: 120, partregion_id: 124, lat: 49.8, lon: 10.1 },
+];
+
+// Check if coordinates are within Germany's approximate bounding box
+// (min lat 47.27°N, max lat 55.06°N, min lon 5.87°E, max lon 15.04°E)
+const isInGermany = (lat, lon) => lat >= 47.27 && lat <= 55.06 && lon >= 5.87 && lon <= 15.04;
+
+// Convert DWD pollen value (ordinal 0–3 scale) to approximate grains/m³ matching app thresholds
+const dwdPollenToGrains = (val) => {
+  const v = parseFloat(val);
+  if (isNaN(v) || v <= 0) return 0; // 0 = keine Belastung, -1 = no data
+  if (v <= 0.5) return 2;
+  if (v <= 1) return 8;
+  if (v <= 1.5) return 14;
+  if (v <= 2) return 25;
+  if (v <= 2.5) return 38;
+  return 60;
+};
+
+// Find the nearest DWD content entry to the given coordinates
+const findNearestDwdRegion = (lat, lon, content) => {
+  let nearest = null;
+  let minDist = Infinity;
+  for (const entry of content) {
+    const ref = DWD_POLLEN_REGIONS.find(
+      r => r.region_id === entry.region_id && r.partregion_id === entry.partregion_id
+    );
+    if (!ref) continue;
+    const dist = Math.hypot(lat - ref.lat, lon - ref.lon);
+    if (dist < minDist) { minDist = dist; nearest = entry; }
+  }
+  return nearest;
+};
+
 // Historical context: minimum temperature difference to show anomaly banner (°C)
 const TEMP_ANOMALY_THRESHOLD = 0.5;
 
@@ -293,6 +355,7 @@ const TRANSLATIONS = {
     pollenHigh: "Hoch",
     pollenVeryHigh: "Sehr hoch",
     pollenFilter: "Pollen in Kachel anzeigen",
+    pollenSourceDwd: "Quelle: Deutscher Wetterdienst (DWD)",
     goldenHour: "Goldene Stunde",
     blueHour: "Blaue Stunde",
     photographerWeather: "Fotograf",
@@ -534,6 +597,7 @@ const TRANSLATIONS = {
     pollenHigh: "High",
     pollenVeryHigh: "Very high",
     pollenFilter: "Show pollen in tile",
+    pollenSourceDwd: "Source: Deutscher Wetterdienst (DWD)",
     goldenHour: "Golden Hour",
     blueHour: "Blue Hour",
     photographerWeather: "Photographer",
@@ -7149,7 +7213,7 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
 };
 
 // --- POLLEN DETAILS MODAL ---
-const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmallScreen = false, pollenFilter = null, isRealNight = false }) => {
+const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmallScreen = false, pollenFilter = null, isRealNight = false, dwdPollenRegion = null }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
 
   if (!isOpen || !airQualityData) return null;
@@ -7243,6 +7307,11 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
                 </>
               )}
             </>
+          )}
+          {dwdPollenRegion && (
+            <div className={`pt-2 text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} text-center`}>
+              {t.pollenSourceDwd} · {dwdPollenRegion}
+            </div>
           )}
         </div>
       </div>
@@ -8748,6 +8817,7 @@ export default function WeatherApp() {
   const [airQualityData, setAirQualityData] = useState(null);
   const [airQualityHourlyData, setAirQualityHourlyData] = useState(null);
   const [dwdWarnings, setDwdWarnings] = useState([]);
+  const [dwdPollenRegion, setDwdPollenRegion] = useState(null);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [chartView, setChartView] = useState('hourly');
@@ -9431,6 +9501,7 @@ export default function WeatherApp() {
     
     setError(null);
     setDwdWarnings([]);
+    setDwdPollenRegion(null);
     try {
       const { lat, lon } = currentLoc;
       
@@ -9443,6 +9514,7 @@ export default function WeatherApp() {
       const urlSunriseSunset = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&timezone=auto&forecast_days=1`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
       const urlAirQuality = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi,pm10,pm2_5,alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&hourly=european_aqi&past_days=1&forecast_days=2&timezone=auto`;
+      const urlDwdPollen = 'https://opendata.dwd.de/climate_environment/health/alerts/s31fg.json';
 
       // Climate normals: fetch same month last year from archive API for historical context
       const nowForClimate = new Date();
@@ -9451,13 +9523,14 @@ export default function WeatherApp() {
       const climLastDay = new Date(lastYear, nowForClimate.getMonth() + 1, 0).getDate();
       const urlClimate = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${lastYear}-${climMonth}-01&end_date=${lastYear}-${climMonth}-${climLastDay}&daily=temperature_2m_mean&timezone=auto`;
 
-      const [resShort, resLong, resSunriseSunset, resDwd, resAirQuality, resClimate] = await Promise.all([
+      const [resShort, resLong, resSunriseSunset, resDwd, resAirQuality, resClimate, resDwdPollen] = await Promise.all([
         fetch(urlShort), 
         fetch(urlLong), 
         fetch(urlSunriseSunset).catch(() => ({ ok: false })),
         fetch(urlDwd).catch(() => ({ ok: false })),
         fetch(urlAirQuality).catch(() => ({ ok: false })),
-        fetch(urlClimate).catch(() => ({ ok: false }))
+        fetch(urlClimate).catch(() => ({ ok: false })),
+        isInGermany(lat, lon) ? fetch(urlDwdPollen).catch(() => ({ ok: false })) : Promise.resolve({ ok: false })
       ]);
       
       if (!resShort.ok) {
@@ -9492,11 +9565,38 @@ export default function WeatherApp() {
          setDwdWarnings(dwdJson.alerts || []);
       }
       
+      let aqData = null;
       if (resAirQuality.ok) {
         const aqJson = await resAirQuality.json();
-        setAirQualityData(aqJson.current);
+        aqData = { ...(aqJson.current || {}) };
         setAirQualityHourlyData(aqJson.hourly || null);
       }
+
+      // For German locations, override pollen fields with DWD data (more accurate regional data)
+      if (resDwdPollen.ok) {
+        const dwdPollenJson = await resDwdPollen.json();
+        const nearest = findNearestDwdRegion(lat, lon, dwdPollenJson.content || []);
+        if (nearest && nearest.Pollen) {
+          const p = nearest.Pollen;
+          // DWD provides: Hasel, Erle, Esche, Birke, Graeser, Roggen, Beifuss, Ambrosia
+          // Types not measured by DWD (hornbeam, oak, beech, plantain, sorrel, olive) are left unchanged
+          const dwdMapped = {
+            hazel_pollen: dwdPollenToGrains(p.Hasel?.today),
+            alder_pollen: dwdPollenToGrains(p.Erle?.today),
+            ash_pollen: dwdPollenToGrains(p.Esche?.today),
+            birch_pollen: dwdPollenToGrains(p.Birke?.today),
+            grass_pollen: dwdPollenToGrains(p.Graeser?.today),
+            rye_pollen: dwdPollenToGrains(p.Roggen?.today),
+            mugwort_pollen: dwdPollenToGrains(p.Beifuss?.today),
+            ragweed_pollen: dwdPollenToGrains(p.Ambrosia?.today),
+          };
+          aqData = aqData ? { ...aqData, ...dwdMapped } : dwdMapped;
+          const regionLabel = nearest.partregion_name || nearest.region_name;
+          setDwdPollenRegion(regionLabel);
+        }
+      }
+
+      if (aqData) setAirQualityData(aqData);
 
       if (resClimate.ok) {
         const climJson = await resClimate.json();
@@ -11100,6 +11200,7 @@ export default function WeatherApp() {
           isSmallScreen={isSmallScreen}
           pollenFilter={settings.pollenFilter}
           isRealNight={isRealNight}
+          dwdPollenRegion={dwdPollenRegion}
         />
       )}
       {showPrecipModal && (
