@@ -7845,9 +7845,9 @@ const HomeSetupModal = ({ onSave, lang='de', isSmallScreen = false }) => {
             
             try {
                 // Name auflösen
-                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=de`, { headers: { 'User-Agent': 'WetterScoutAI/1.0' } });
                 const data = await res.json();
-                const city = data.results?.[0]?.name || t.myLocation;
+                const city = data.address?.city || data.address?.town || data.address?.village || data.address?.suburb || data.name || t.myLocation;
                 
                 const loc = { name: city, lat, lon, id: 'home_default', type: 'home' };
                 setSelectedLoc(loc);
@@ -8061,10 +8061,10 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
             
             try {
                 const searchLang = settings?.language || lang || 'de';
-                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=${searchLang}&format=json`);
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=${searchLang}`, { headers: { 'User-Agent': 'WetterScoutAI/1.0' } });
                 const data = await res.json();
-                const city = data.results?.[0]?.name || t.myLocation;
-                const elevation = data.results?.[0]?.elevation || 0;
+                const city = data.address?.city || data.address?.town || data.address?.village || data.address?.suburb || data.name || t.myLocation;
+                const elevation = 0;
                 const loc = { name: city, lat, lon, elevation, id: 'home_default', type: 'home' };
                 setSelectedHomeLoc(loc);
                 setCustomHomeName(city);
@@ -9131,9 +9131,9 @@ export default function WeatherApp() {
             } else {
                 // Fetch City Name
                 try {
-                    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=de`, { headers: { 'User-Agent': 'WetterScoutAI/1.0' } });
                     const data = await res.json();
-                    const city = data.results?.[0]?.name || t('myLocation');
+                    const city = data.address?.city || data.address?.town || data.address?.village || data.address?.suburb || data.name || t('myLocation');
                     setCurrentLoc({ name: city, lat, lon, type: 'gps' });
                     setGpsAvailable(true); // GPS is available
                 } catch (e) {
@@ -9291,13 +9291,12 @@ export default function WeatherApp() {
 
       let elevation = 0;
       try {
-        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=de&format=json`);
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=de`, { headers: { 'User-Agent': 'WetterScoutAI/1.0' } });
         const data = await res.json();
-        if (data.results && data.results[0]) {
-          cityName = data.results[0].name;
-          regionName = data.results[0].admin1 || ""; 
-          countryName = data.results[0].country || ""; 
-          elevation = data.results[0].elevation || 0;
+        if (data.address) {
+          cityName = data.address.city || data.address.town || data.address.village || data.address.suburb || data.name || t('myLocation');
+          regionName = data.address.state || ""; 
+          countryName = data.address.country || ""; 
         }
       } catch (e) {
         console.warn("Reverse Geocoding failed", e);
