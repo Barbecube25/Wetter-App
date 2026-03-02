@@ -2837,6 +2837,11 @@ const getTripClothingTip = ({ lang = 'de', maxTemp = 0, minTemp = 0, rainChance 
 const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvIndex = 0, code = 0) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
   const hasRain = precip24h >= UMBRELLA_PRECIP_THRESHOLD || RAIN_WEATHER_CODES.includes(code);
+  // isDrizzle: drizzle codes (51-55) with low precipitation – shown as ☕ cosy-indoors rather than ☂️ umbrella.
+  // hasRain stays true for these codes (they are in RAIN_WEATHER_CODES), so the umbrella branch uses
+  // `hasRain && !isDrizzle` to let light drizzle fall through to the overcast/drizzle handler below.
+  const isDrizzle = [51, 53, 55].includes(code) && precip24h < UMBRELLA_PRECIP_THRESHOLD;
+  const isOvercast = [2, 3, 45, 48].includes(code) && !hasRain;
   const isThunderstorm = [17, 95, 96, 99].includes(code);
   const isStorm = wind > 50;
   const isVeryCold = temp < TEMPERATURE_THRESHOLDS_C.freezing;
@@ -2846,24 +2851,28 @@ const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvInd
   const isVeryHot = temp >= 32;
   const isHot = temp >= TEMPERATURE_THRESHOLDS_C.hot;
   const isUVHigh = uvIndex >= 6;
-  const isGoodRun = temp >= TEMPERATURE_THRESHOLDS_C.cold && temp <= 18 && wind < 25 && !hasRain;
-  const isGoodBike = temp >= TEMPERATURE_THRESHOLDS_C.cool && temp <= 25 && wind < 30 && !hasRain;
+  const isClearOrPartly = [0, 1].includes(code);
+  const isGoodWalk = temp >= TEMPERATURE_THRESHOLDS_C.cold && temp <= 18 && wind < 25 && !hasRain;
+  const isIdealOutdoor = temp >= TEMPERATURE_THRESHOLDS_C.cool && temp <= 25 && wind < 30 && !hasRain;
+  const isCoolClear = temp >= TEMPERATURE_THRESHOLDS_C.cold && temp < TEMPERATURE_THRESHOLDS_C.cool && isClearOrPartly && wind < 30 && !hasRain;
 
   const de = lang === 'de';
-  if (isThunderstorm) return { emoji: '⛈️', text: de ? 'Gewitter – Outdoor-Aktivitäten meiden' : 'Thunderstorm – avoid outdoor activities', color: 'text-red-500' };
-  if (isStorm) return { emoji: '🌪️', text: de ? 'Sturm – besser drinnen bleiben' : 'Storm – better stay indoors', color: 'text-red-500' };
-  if (isVeryCold && wind > 20) return { emoji: '🤧', text: de ? 'Erkältungsrisiko hoch' : 'High cold risk', color: 'text-orange-500' };
-  if (hasRain) return { emoji: '☂️', text: de ? 'Regenschirm einpacken' : 'Pack an umbrella', color: 'text-blue-500' };
+  if (isThunderstorm) return { emoji: '⛈️', text: de ? 'Gewitter – Outdoor-Aktivitäten meiden' : 'Thunderstorm – avoid outdoor activities', color: 'text-red-500', score: 1 };
+  if (isStorm) return { emoji: '🌪️', text: de ? 'Sturm – besser drinnen bleiben' : 'Storm – better stay indoors', color: 'text-red-500', score: 1 };
+  if (isVeryCold && wind > 20) return { emoji: '🤧', text: de ? 'Erkältungsrisiko hoch' : 'High cold risk', color: 'text-orange-500', score: 2 };
+  if (hasRain && !isDrizzle) return { emoji: '☂️', text: de ? 'Regenschirm einpacken' : 'Pack an umbrella', color: 'text-blue-500', score: 3 };
   // isNearFreezing overlaps with isVeryCold for -3..0 °C; slippery risk takes priority over generic frost warning in that range
-  if (isNearFreezing) return { emoji: '🧊', text: de ? 'Vorsicht, kann glatt werden' : 'Caution, may be icy', color: 'text-blue-400' };
-  if (isVeryCold) return { emoji: '❄️', text: de ? 'Frostiger Tag – warm anziehen' : 'Frosty – dress warmly', color: 'text-blue-400' };
-  if (isCold) return { emoji: '🧥', text: de ? 'Kalt – Jacke empfohlen' : 'Cold – jacket recommended', color: 'text-blue-400' };
-  if (isExtremeHeat) return { emoji: '🥵', text: de ? 'Extrem heiß – ausreichend trinken' : 'Extreme heat – stay hydrated', color: 'text-red-500' };
-  if (isVeryHot && isUVHigh) return { emoji: '☀️', text: de ? 'Sonnenschutz & viel trinken' : 'Sun protection & stay hydrated', color: 'text-orange-500' };
-  if (isHot) return { emoji: '🏖️', text: de ? 'Perfektes Badewetter' : 'Perfect beach weather', color: 'text-green-500' };
-  if (isGoodRun) return { emoji: '🏃', text: de ? 'Gutes Laufwetter' : 'Good running weather', color: 'text-green-500' };
-  if (isGoodBike) return { emoji: '🚴', text: de ? 'Gutes Radfahrwetter' : 'Good cycling weather', color: 'text-green-500' };
-  return { emoji: '✅', text: de ? 'Angenehmes Wetter' : 'Comfortable weather', color: 'text-green-500' };
+  if (isNearFreezing) return { emoji: '🧊', text: de ? 'Vorsicht, kann glatt werden' : 'Caution, may be icy', color: 'text-blue-400', score: 3 };
+  if (isVeryCold) return { emoji: '❄️', text: de ? 'Frostiger Tag – warm anziehen' : 'Frosty – dress warmly', color: 'text-blue-400', score: 3 };
+  if (isDrizzle || isOvercast) return { emoji: '☕', text: de ? 'Gemütliches Drinnen-Wetter' : 'Cosy indoor weather', color: 'text-blue-400', score: 4 };
+  if (isCold) return { emoji: '🧥', text: de ? 'Kalt – Jacke empfohlen' : 'Cold – jacket recommended', color: 'text-blue-400', score: 4 };
+  if (isExtremeHeat) return { emoji: '🥵', text: de ? 'Extrem heiß – ausreichend trinken' : 'Extreme heat – stay hydrated', color: 'text-red-500', score: 2 };
+  if (isVeryHot && isUVHigh) return { emoji: '☀️', text: de ? 'Sonnenschutz & viel trinken' : 'Sun protection & stay hydrated', color: 'text-orange-500', score: 5 };
+  if (isHot) return { emoji: '🎒', text: de ? 'Gutes Ausflugswetter' : 'Great weather for a trip', color: 'text-green-500', score: 7 };
+  if (isIdealOutdoor) return { emoji: '🌳', text: de ? 'Ideal für draußen' : 'Ideal for outdoors', color: 'text-green-500', score: 9 };
+  if (isGoodWalk) return { emoji: '🚶', text: de ? 'Perfekt für einen Spaziergang' : 'Perfect for a walk', color: 'text-green-500', score: 8 };
+  if (isCoolClear) return { emoji: '🌬️', text: de ? 'Frische Luft genießen' : 'Enjoy the fresh air', color: 'text-green-500', score: 6 };
+  return { emoji: '✅', text: de ? 'Angenehmes Wetter' : 'Comfortable weather', color: 'text-green-500', score: 7 };
 };
 
 
@@ -7399,6 +7408,14 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
   );
 };
 
+// Helper: returns Tailwind class string for score badge background/text based on score and night mode
+const getScoreBadgeClass = (score, isNight) =>
+  score >= 7
+    ? (isNight ? 'bg-green-900/50 text-green-400' : 'bg-green-100 text-green-700')
+    : score >= 4
+      ? (isNight ? 'bg-yellow-900/50 text-yellow-400' : 'bg-yellow-100 text-yellow-700')
+      : (isNight ? 'bg-red-900/50 text-red-400' : 'bg-red-100 text-red-700');
+
 // --- ACTIVITY INDEX MODAL ---
 const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null, isRealNight = false }) => {
   const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
@@ -7543,7 +7560,14 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
                 >
                   <span className="text-xl flex-shrink-0">{range.advice.emoji}</span>
                   <div className="flex-1 min-w-0">
-                    <div className={`text-sm font-bold ${range.advice.color} leading-tight`}>{range.advice.text}</div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-bold ${range.advice.color} leading-tight`}>{range.advice.text}</span>
+                      {range.advice.score != null && (
+                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full leading-none flex-shrink-0 ${getScoreBadgeClass(range.advice.score, isRealNight)}`}>
+                          {range.advice.score}/10
+                        </span>
+                      )}
+                    </div>
                     <div className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} mt-0.5`}>
                       {range.from === range.to
                         ? `${t('ab') || 'Ab'} ${range.from} ${t('oclock') || 'Uhr'}`
@@ -11596,7 +11620,14 @@ export default function WeatherApp() {
                 <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                   <Zap size={14} /> {t('activityIndex')}
                 </div>
-                <div className="text-lg leading-none mb-1">{advice.emoji}</div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-lg leading-none">{advice.emoji}</span>
+                  {advice.score != null && (
+                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full leading-none ${getScoreBadgeClass(advice.score, isRealNight)}`}>
+                      {advice.score}/10
+                    </span>
+                  )}
+                </div>
                 <div className={`text-m3-label-medium font-bold ${advice.color} leading-tight`}>{advice.text}</div>
                 {getDominantPollen && !getDominantPollen.pausing && (
                   <div className="text-xs mt-1 text-m3-on-surface-variant truncate">
