@@ -9282,6 +9282,10 @@ export default function WeatherApp() {
   // Climate normals for historical context
   const [climateNormals, setClimateNormals] = useState(null);
 
+  // Personal weather station live data
+  const [personalStationData, setPersonalStationData] = useState(null);
+  const [personalStationLoading, setPersonalStationLoading] = useState(false);
+
 
   // Landscape mode detection
   const [isLandscape, setIsLandscape] = useState(false);
@@ -10034,6 +10038,81 @@ export default function WeatherApp() {
   };
 
   useEffect(() => { fetchData(); }, [currentLoc]);
+
+  // Fetch live data from personal weather station
+  const fetchPersonalStationData = useCallback(async () => {
+    const ps = settings.personalStation;
+    if (!ps?.provider || ps.provider === 'netatmo') return;
+    setPersonalStationLoading(true);
+    try {
+      if (ps.provider === 'wunderground') {
+        const url = `https://api.weather.com/v2/pws/observations/current?stationId=${encodeURIComponent(ps.stationId)}&format=json&units=m&apiKey=${encodeURIComponent(ps.apiKey)}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const obs = data.observations?.[0];
+        if (!obs) throw new Error('no data');
+        setPersonalStationData({
+          provider: 'wunderground',
+          temp: obs.metric?.temp,
+          humidity: obs.humidity,
+          wind: obs.metric?.windSpeed,
+          gust: obs.metric?.windGust,
+          pressure: obs.metric?.pressure,
+          precipRate: obs.metric?.precipRate,
+          uv: obs.uv,
+          stationId: obs.stationID,
+        });
+      } else if (ps.provider === 'ecowitt') {
+        const url = `https://api.ecowitt.net/api/v3/device/real_time?application_key=${encodeURIComponent(ps.applicationKey)}&api_key=${encodeURIComponent(ps.apiKey)}&mac=${encodeURIComponent(ps.mac)}&call_back=all`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (data.code !== 0) throw new Error(data.msg || 'api_error');
+        const d = data.data || {};
+        const parseEcoVal = (obj) => (obj?.value !== undefined ? parseFloat(obj.value) : undefined);
+        // Normalize wind to km/h if needed
+        const rawWind = parseEcoVal(d.wind?.wind_speed);
+        const windUnit = d.wind?.wind_speed?.unit || '';
+        const windKmh = rawWind !== undefined
+          ? (windUnit === 'mph' ? rawWind * 1.60934 : windUnit === 'm/s' ? rawWind * 3.6 : rawWind)
+          : undefined;
+        const rawGust = parseEcoVal(d.wind?.wind_gust);
+        const gustKmh = rawGust !== undefined
+          ? (windUnit === 'mph' ? rawGust * 1.60934 : windUnit === 'm/s' ? rawGust * 3.6 : rawGust)
+          : undefined;
+        // Normalize temperature to °C if needed
+        const rawTemp = parseEcoVal(d.outdoor?.temperature);
+        const tempUnit = d.outdoor?.temperature?.unit || '';
+        const tempC = rawTemp !== undefined
+          ? (tempUnit.includes('F') || tempUnit === '℉' ? (rawTemp - 32) * 5 / 9 : rawTemp)
+          : undefined;
+        setPersonalStationData({
+          provider: 'ecowitt',
+          temp: tempC,
+          humidity: parseEcoVal(d.outdoor?.humidity),
+          wind: windKmh,
+          gust: gustKmh,
+          pressure: parseEcoVal(d.pressure?.relative),
+          precipRate: parseEcoVal(d.rainfall?.rain_rate),
+          uv: parseEcoVal(d.solar_and_uvi?.uvi),
+        });
+      }
+    } catch (e) {
+      console.error('Personal station fetch error:', e);
+      setPersonalStationData(null);
+    } finally {
+      setPersonalStationLoading(false);
+    }
+  }, [settings.personalStation]);
+
+  useEffect(() => {
+    const ps = settings.personalStation;
+    if (!ps?.provider || ps.provider === 'netatmo') return;
+    fetchPersonalStationData();
+    const interval = setInterval(fetchPersonalStationData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchPersonalStationData]);
 
   // Show pull-to-refresh hint briefly after data finishes loading
   useEffect(() => {
@@ -12147,6 +12226,70 @@ export default function WeatherApp() {
           {activeTab === 'overview' && (
             <div className="space-y-4">
                <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
+
+               {/* Personal Weather Station Live Data */}
+               {(personalStationData || personalStationLoading) && (
+                 <div className={`${isRealNight ? 'bg-m3-dark-surface-container border-m3-dark-outline-variant' : 'bg-m3-surface-container border-m3-outline-variant'} rounded-m3-xl p-3 border shadow-m3-1`}>
+                   <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-2`}>
+                     <span>📡</span>
+                     <span className="font-bold">{t('personalStation')}</span>
+                     {personalStationData?.provider && (
+                       <span className="ml-auto text-xs opacity-60">
+                         {personalStationData.provider === 'wunderground' ? 'Weather Underground' : 'ecowitt'}
+                         {personalStationData.stationId ? ` · ${personalStationData.stationId}` : ''}
+                       </span>
+                     )}
+                   </div>
+                   {personalStationLoading && !personalStationData ? (
+                     <div className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>{t('loading')}</div>
+                   ) : personalStationData && (
+                     <div className="grid grid-cols-3 gap-2">
+                       {personalStationData.temp !== undefined && (
+                         <div className="flex flex-col items-center py-1">
+                           <Thermometer size={16} className="text-orange-500 mb-1" />
+                           <span className={`text-m3-title-medium font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{formatTemp(personalStationData.temp)}{getTempUnitSymbol()}</span>
+                           <span className="text-xs opacity-60">Temp</span>
+                         </div>
+                       )}
+                       {personalStationData.humidity !== undefined && (
+                         <div className="flex flex-col items-center py-1">
+                           <Droplets size={16} className="text-blue-500 mb-1" />
+                           <span className={`text-m3-title-medium font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{Math.round(personalStationData.humidity)}%</span>
+                           <span className="text-xs opacity-60">{t('humidity')}</span>
+                         </div>
+                       )}
+                       {personalStationData.wind !== undefined && (
+                         <div className="flex flex-col items-center py-1">
+                           <Wind size={16} className="text-sky-500 mb-1" />
+                           <span className={`text-m3-title-medium font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{formatWind(personalStationData.wind)} {getWindUnitLabel()}</span>
+                           <span className="text-xs opacity-60">{t('wind')}</span>
+                         </div>
+                       )}
+                       {personalStationData.gust !== undefined && (
+                         <div className="flex flex-col items-center py-1">
+                           <Wind size={16} className="text-sky-300 mb-1" />
+                           <span className={`text-m3-title-medium font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{formatWind(personalStationData.gust)} {getWindUnitLabel()}</span>
+                           <span className="text-xs opacity-60">{t('gusts')}</span>
+                         </div>
+                       )}
+                       {personalStationData.pressure !== undefined && (
+                         <div className="flex flex-col items-center py-1">
+                           <Gauge size={16} className="text-purple-500 mb-1" />
+                           <span className={`text-m3-title-medium font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{Math.round(personalStationData.pressure)}</span>
+                           <span className="text-xs opacity-60">{t('pressure')} hPa</span>
+                         </div>
+                       )}
+                       {personalStationData.uv !== undefined && (
+                         <div className="flex flex-col items-center py-1">
+                           <Sun size={16} className="text-yellow-500 mb-1" />
+                           <span className={`text-m3-title-medium font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{Math.round(personalStationData.uv)}</span>
+                           <span className="text-xs opacity-60">{t('uv')}</span>
+                         </div>
+                       )}
+                     </div>
+                   )}
+                 </div>
+               )}
                
                {/* Historical context: temperature anomaly vs. last year's monthly average */}
                {climateNormals !== null && processedShort.length > 0 && (() => {
