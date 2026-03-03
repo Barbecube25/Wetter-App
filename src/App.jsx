@@ -373,6 +373,18 @@ const TRANSLATIONS = {
     swipeHintTabs: "Wischen zum Tab wechseln",
     trendTitle: "Verlauf",
     homeLandscape: "Heimat-Landschaft",
+    personalStation: "Eigene Wetterstation",
+    stationIdLabel: "Stations-ID",
+    apiKeyLabel: "API-Schlüssel",
+    applicationKeyLabel: "Application-Key",
+    macAddressLabel: "MAC-Adresse",
+    stationConnect: "Verbinden",
+    stationConnecting: "Verbinde...",
+    stationConnected: "Station verbunden",
+    stationError: "Verbindung fehlgeschlagen. Prüfe deine Zugangsdaten.",
+    stationNameLabel: "Stationsname / Ort",
+    stationHintNetatmo: "Gib den Standort deiner Netatmo-Station als Ortsnamen ein.",
+    orUseStation: "Oder eigene Wetterstation",
 
   },
   en: {
@@ -615,6 +627,18 @@ const TRANSLATIONS = {
     swipeHintTabs: "Swipe to switch tab",
     trendTitle: "Trend",
     homeLandscape: "Home Landscape",
+    personalStation: "Personal Weather Station",
+    stationIdLabel: "Station ID",
+    apiKeyLabel: "API Key",
+    applicationKeyLabel: "Application Key",
+    macAddressLabel: "MAC Address",
+    stationConnect: "Connect",
+    stationConnecting: "Connecting...",
+    stationConnected: "Station connected",
+    stationError: "Connection failed. Check your credentials.",
+    stationNameLabel: "Station name / location",
+    stationHintNetatmo: "Enter the location of your Netatmo station as a city name.",
+    orUseStation: "Or personal weather station",
 
   },
   fr: {
@@ -805,6 +829,18 @@ const TRANSLATIONS = {
     showMoreDetails: "Afficher plus de détails",
     hideMoreDetails: "Masquer les détails",
     homeLandscape: "Paysage d'accueil",
+    personalStation: "Station météo personnelle",
+    stationIdLabel: "ID de station",
+    apiKeyLabel: "Clé API",
+    applicationKeyLabel: "Clé d'application",
+    macAddressLabel: "Adresse MAC",
+    stationConnect: "Connecter",
+    stationConnecting: "Connexion...",
+    stationConnected: "Station connectée",
+    stationError: "Connexion échouée. Vérifiez vos identifiants.",
+    stationNameLabel: "Nom / lieu de la station",
+    stationHintNetatmo: "Entrez le lieu de votre station Netatmo comme nom de ville.",
+    orUseStation: "Ou station météo personnelle",
 
 
   },
@@ -996,6 +1032,18 @@ const TRANSLATIONS = {
     showMoreDetails: "Mostrar más detalles",
     hideMoreDetails: "Ocultar detalles",
     homeLandscape: "Paisaje de inicio",
+    personalStation: "Estación meteorológica personal",
+    stationIdLabel: "ID de estación",
+    apiKeyLabel: "Clave API",
+    applicationKeyLabel: "Clave de aplicación",
+    macAddressLabel: "Dirección MAC",
+    stationConnect: "Conectar",
+    stationConnecting: "Conectando...",
+    stationConnected: "Estación conectada",
+    stationError: "Conexión fallida. Verifica tus credenciales.",
+    stationNameLabel: "Nombre / ubicación de la estación",
+    stationHintNetatmo: "Introduce la ubicación de tu estación Netatmo como nombre de ciudad.",
+    orUseStation: "O estación meteorológica personal",
 
   },
   it: {
@@ -1186,6 +1234,18 @@ const TRANSLATIONS = {
     showMoreDetails: "Mostra più dettagli",
     hideMoreDetails: "Nascondi dettagli",
     homeLandscape: "Paesaggio principale",
+    personalStation: "Stazione meteo personale",
+    stationIdLabel: "ID stazione",
+    apiKeyLabel: "Chiave API",
+    applicationKeyLabel: "Chiave applicazione",
+    macAddressLabel: "Indirizzo MAC",
+    stationConnect: "Connetti",
+    stationConnecting: "Connessione...",
+    stationConnected: "Stazione connessa",
+    stationError: "Connessione fallita. Verifica le credenziali.",
+    stationNameLabel: "Nome / luogo della stazione",
+    stationHintNetatmo: "Inserisci la posizione della tua stazione Netatmo come nome di città.",
+    orUseStation: "O stazione meteo personale",
 
   },
   tr: {
@@ -1376,6 +1436,18 @@ const TRANSLATIONS = {
     showMoreDetails: "Daha fazla ayrıntı göster",
     hideMoreDetails: "Ayrıntıları gizle",
     homeLandscape: "Ana konum manzarası",
+    personalStation: "Kişisel hava istasyonu",
+    stationIdLabel: "İstasyon kimliği",
+    apiKeyLabel: "API anahtarı",
+    applicationKeyLabel: "Uygulama anahtarı",
+    macAddressLabel: "MAC adresi",
+    stationConnect: "Bağlan",
+    stationConnecting: "Bağlanıyor...",
+    stationConnected: "İstasyon bağlandı",
+    stationError: "Bağlantı başarısız. Kimlik bilgilerini kontrol edin.",
+    stationNameLabel: "İstasyon adı / konumu",
+    stationHintNetatmo: "Netatmo istasyonunuzun konumunu şehir adı olarak girin.",
+    orUseStation: "Veya kişisel hava istasyonu",
 
   },
   pl: {
@@ -1566,6 +1638,18 @@ const TRANSLATIONS = {
     showMoreDetails: "Pokaż więcej szczegółów",
     hideMoreDetails: "Ukryj szczegóły",
     homeLandscape: "Krajobraz domowy",
+    personalStation: "Własna stacja pogodowa",
+    stationIdLabel: "ID stacji",
+    apiKeyLabel: "Klucz API",
+    applicationKeyLabel: "Klucz aplikacji",
+    macAddressLabel: "Adres MAC",
+    stationConnect: "Połącz",
+    stationConnecting: "Łączenie...",
+    stationConnected: "Stacja połączona",
+    stationError: "Połączenie nieudane. Sprawdź dane logowania.",
+    stationNameLabel: "Nazwa / lokalizacja stacji",
+    stationHintNetatmo: "Wprowadź lokalizację stacji Netatmo jako nazwę miasta.",
+    orUseStation: "Lub własna stacja pogodowa",
 
   },
   nl: {
@@ -1756,6 +1840,18 @@ const TRANSLATIONS = {
     showMoreDetails: "Meer details tonen",
     hideMoreDetails: "Details verbergen",
     homeLandscape: "Thuislandschap",
+    personalStation: "Persoonlijk weerstation",
+    stationIdLabel: "Station-ID",
+    apiKeyLabel: "API-sleutel",
+    applicationKeyLabel: "Applicatiesleutel",
+    macAddressLabel: "MAC-adres",
+    stationConnect: "Verbinden",
+    stationConnecting: "Verbinden...",
+    stationConnected: "Station verbonden",
+    stationError: "Verbinding mislukt. Controleer uw gegevens.",
+    stationNameLabel: "Naam / locatie station",
+    stationHintNetatmo: "Voer de locatie van uw Netatmo-station in als plaatsnaam.",
+    orUseStation: "Of persoonlijk weerstation",
 
   },
   hr: {
@@ -1946,6 +2042,18 @@ const TRANSLATIONS = {
     showMoreDetails: "Prikaži više detalja",
     hideMoreDetails: "Sakrij detalje",
     homeLandscape: "Pejzaž doma",
+    personalStation: "Osobna meteorološka postaja",
+    stationIdLabel: "ID postaje",
+    apiKeyLabel: "API ključ",
+    applicationKeyLabel: "Ključ aplikacije",
+    macAddressLabel: "MAC adresa",
+    stationConnect: "Poveži",
+    stationConnecting: "Spajanje...",
+    stationConnected: "Postaja spojena",
+    stationError: "Spajanje nije uspjelo. Provjerite podatke.",
+    stationNameLabel: "Naziv / lokacija postaje",
+    stationHintNetatmo: "Unesite lokaciju svoje Netatmo postaje kao naziv grada.",
+    orUseStation: "Ili osobna meteorološka postaja",
 
   },
   el: {
@@ -2136,6 +2244,18 @@ const TRANSLATIONS = {
     showMoreDetails: "Εμφάνιση περισσότερων λεπτομερειών",
     hideMoreDetails: "Απόκρυψη λεπτομερειών",
     homeLandscape: "Τοπίο κατοικίας",
+    personalStation: "Προσωπικός μετεωρολογικός σταθμός",
+    stationIdLabel: "ID σταθμού",
+    apiKeyLabel: "Κλειδί API",
+    applicationKeyLabel: "Κλειδί εφαρμογής",
+    macAddressLabel: "Διεύθυνση MAC",
+    stationConnect: "Σύνδεση",
+    stationConnecting: "Σύνδεση...",
+    stationConnected: "Σταθμός συνδέθηκε",
+    stationError: "Αποτυχία σύνδεσης. Ελέγξτε τα διαπιστευτήριά σας.",
+    stationNameLabel: "Όνομα / τοποθεσία σταθμού",
+    stationHintNetatmo: "Εισάγετε την τοποθεσία του σταθμού Netatmo ως όνομα πόλης.",
+    orUseStation: "Ή προσωπικός μετεωρολογικός σταθμός",
 
   },
   da: {
@@ -2326,6 +2446,18 @@ const TRANSLATIONS = {
     showMoreDetails: "Vis flere detaljer",
     hideMoreDetails: "Skjul detaljer",
     homeLandscape: "Hjemlandskab",
+    personalStation: "Personlig vejrstation",
+    stationIdLabel: "Stations-ID",
+    apiKeyLabel: "API-nøgle",
+    applicationKeyLabel: "Applikationsnøgle",
+    macAddressLabel: "MAC-adresse",
+    stationConnect: "Forbind",
+    stationConnecting: "Forbinder...",
+    stationConnected: "Station forbundet",
+    stationError: "Forbindelsen mislykkedes. Tjek dine oplysninger.",
+    stationNameLabel: "Stationsnavn / sted",
+    stationHintNetatmo: "Angiv din Netatmo-stations placering som bynavn.",
+    orUseStation: "Eller personlig vejrstation",
 
   },
   ru: {
@@ -2516,6 +2648,18 @@ const TRANSLATIONS = {
     showMoreDetails: "Показать больше деталей",
     hideMoreDetails: "Скрыть детали",
     homeLandscape: "Пейзаж дома",
+    personalStation: "Личная метеостанция",
+    stationIdLabel: "ID станции",
+    apiKeyLabel: "API-ключ",
+    applicationKeyLabel: "Ключ приложения",
+    macAddressLabel: "MAC-адрес",
+    stationConnect: "Подключить",
+    stationConnecting: "Подключение...",
+    stationConnected: "Станция подключена",
+    stationError: "Ошибка подключения. Проверьте данные.",
+    stationNameLabel: "Название / место станции",
+    stationHintNetatmo: "Введите местоположение вашей станции Netatmo как название города.",
+    orUseStation: "Или личная метеостанция",
 
   }
 };
@@ -2559,7 +2703,8 @@ const getSavedSettings = () => {
             windUnit: 'kmh',
             precipUnit: 'mm',
             pollenFilter: DEFAULT_POLLEN_FILTER,
-            homeTerrain: null
+            homeTerrain: null,
+            personalStation: null
         };
         if (!saved) return defaults;
         const parsed = JSON.parse(saved);
@@ -2585,7 +2730,8 @@ const getSavedSettings = () => {
             windUnit: 'kmh',
             precipUnit: 'mm',
             pollenFilter: DEFAULT_POLLEN_FILTER,
-            homeTerrain: null
+            homeTerrain: null,
+            personalStation: null
         }; 
     }
 };
@@ -4327,6 +4473,13 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                      >
                          <Edit2 size={16}/> {t.changeHome}
                      </button>
+                     {localSettings.personalStation?.provider && (
+                         <div className="mt-2 px-3 py-2 bg-m3-primary-container rounded-m3-md flex items-center gap-2 text-sm text-m3-on-primary-container">
+                             <span>📡</span>
+                             <span className="font-bold">{t.personalStation || 'Eigene Wetterstation'}:</span>
+                             <span>{localSettings.personalStation.provider === 'wunderground' ? 'Weather Underground' : localSettings.personalStation.provider === 'netatmo' ? 'Netatmo' : 'ecowitt'}</span>
+                         </div>
+                     )}
                  </div>
 
                  {/* HOME LANDSCAPE */}
@@ -7863,12 +8016,214 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
     );
 };
 
+// --- PERSONAL WEATHER STATION SETUP COMPONENT ---
+const PersonalStationSetup = ({ onConnected, onCancel, lang = 'de' }) => {
+    const [provider, setProvider] = useState(null);
+    const [stationId, setStationId] = useState('');
+    const [apiKey, setApiKey] = useState('');
+    const [applicationKey, setApplicationKey] = useState('');
+    const [mac, setMac] = useState('');
+    const [stationName, setStationName] = useState('');
+    const [connecting, setConnecting] = useState(false);
+    const [error, setError] = useState('');
+    const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+
+    const handleConnect = async () => {
+        setConnecting(true);
+        setError('');
+        try {
+            let stationLat, stationLon, resolvedName;
+            if (provider === 'wunderground') {
+                const url = `https://api.weather.com/v2/pws/observations/current?stationId=${encodeURIComponent(stationId.trim())}&format=json&units=m&apiKey=${encodeURIComponent(apiKey.trim())}`;
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                const obs = data.observations?.[0];
+                if (!obs) throw new Error('no_data');
+                stationLat = obs.lat;
+                stationLon = obs.lon;
+                resolvedName = obs.stationID || stationId.trim();
+            } else if (provider === 'ecowitt') {
+                const url = `https://api.ecowitt.net/api/v3/device/real_time?application_key=${encodeURIComponent(applicationKey.trim())}&api_key=${encodeURIComponent(apiKey.trim())}&mac=${encodeURIComponent(mac.trim())}&call_back=all`;
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                if (data.code !== 0) throw new Error(data.msg || 'api_error');
+                try {
+                    const listUrl = `https://api.ecowitt.net/api/v3/device/list?application_key=${encodeURIComponent(applicationKey.trim())}&api_key=${encodeURIComponent(apiKey.trim())}`;
+                    const listRes = await fetch(listUrl);
+                    const listData = await listRes.json();
+                    const device = listData.data?.list?.find(d => d.mac?.toLowerCase() === mac.trim().toLowerCase());
+                    if (device?.latitude && device?.longitude) {
+                        stationLat = parseFloat(device.latitude);
+                        stationLon = parseFloat(device.longitude);
+                        resolvedName = device.name || mac.trim();
+                    }
+                } catch (e) { console.debug('ecowitt device list:', e); }
+                if (!stationLat) throw new Error('no_location');
+            } else if (provider === 'netatmo') {
+                if (!stationName.trim()) throw new Error('no_name');
+                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(stationName.trim())}&count=1&language=de&format=json`);
+                const data = await res.json();
+                const result = data.results?.[0];
+                if (!result) throw new Error('location_not_found');
+                stationLat = result.latitude;
+                stationLon = result.longitude;
+                resolvedName = stationName.trim();
+            }
+            const stationConfig = {
+                provider,
+                stationId: provider === 'wunderground' ? stationId.trim() : '',
+                apiKey: (provider === 'wunderground' || provider === 'ecowitt') ? apiKey.trim() : '',
+                applicationKey: provider === 'ecowitt' ? applicationKey.trim() : '',
+                mac: (provider === 'ecowitt' || provider === 'netatmo') ? mac.trim() : '',
+            };
+            const loc = {
+                name: resolvedName,
+                lat: stationLat,
+                lon: stationLon,
+                id: 'home_default',
+                type: 'home',
+                stationProvider: provider,
+                stationConfig,
+            };
+            onConnected(loc, stationConfig);
+        } catch (e) {
+            setError(t.stationError || 'Verbindung fehlgeschlagen. Prüfe deine Zugangsdaten.');
+        } finally {
+            setConnecting(false);
+        }
+    };
+
+    const canConnect =
+        provider === 'wunderground' ? (stationId.trim().length > 0 && apiKey.trim().length > 0) :
+        provider === 'ecowitt' ? (applicationKey.trim().length > 0 && apiKey.trim().length > 0 && mac.trim().length > 0) :
+        provider === 'netatmo' ? stationName.trim().length > 0 :
+        false;
+
+    if (!provider) {
+        return (
+            <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-2">
+                    {[
+                        { id: 'wunderground', label: 'Weather\nUnderground', icon: '🌦' },
+                        { id: 'netatmo', label: 'Netatmo', icon: '📡' },
+                        { id: 'ecowitt', label: 'ecowitt', icon: '🌡' },
+                    ].map(p => (
+                        <button
+                            key={p.id}
+                            onClick={() => setProvider(p.id)}
+                            aria-label={p.label.replace(/\n/g, ' ')}
+                            className="p-3 bg-m3-surface-container hover:bg-m3-surface-container-high rounded-m3-md text-center transition active:scale-95 border border-m3-outline-variant"
+                        >
+                            <div className="text-2xl mb-1">{p.icon}</div>
+                            <div className="text-xs font-bold text-m3-on-surface whitespace-pre-line">{p.label}</div>
+                        </button>
+                    ))}
+                </div>
+                {onCancel && (
+                    <button onClick={onCancel} className="w-full text-sm text-m3-on-surface-variant hover:text-m3-on-surface py-2 transition">
+                        {t.cancel || 'Abbrechen'}
+                    </button>
+                )}
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-3">
+            <div className="flex items-center gap-2">
+                <button onClick={() => { setProvider(null); setError(''); }} className="text-m3-on-surface-variant hover:text-m3-on-surface">
+                    <ArrowLeft size={18}/>
+                </button>
+                <span className="font-bold text-m3-on-surface text-sm">
+                    {provider === 'wunderground' ? 'Weather Underground' : provider === 'netatmo' ? 'Netatmo' : 'ecowitt'}
+                </span>
+            </div>
+            {provider === 'wunderground' && (
+                <>
+                    <input
+                        type="text"
+                        placeholder={t.stationIdLabel || 'Stations-ID'}
+                        className="w-full px-3 py-2 rounded-m3-md border border-m3-outline focus:ring-2 focus:ring-m3-primary focus:outline-none bg-m3-surface-container text-m3-on-surface text-sm"
+                        value={stationId}
+                        onChange={e => setStationId(e.target.value)}
+                    />
+                    <input
+                        type="text"
+                        placeholder={t.apiKeyLabel || 'API-Schlüssel'}
+                        className="w-full px-3 py-2 rounded-m3-md border border-m3-outline focus:ring-2 focus:ring-m3-primary focus:outline-none bg-m3-surface-container text-m3-on-surface text-sm"
+                        value={apiKey}
+                        onChange={e => setApiKey(e.target.value)}
+                    />
+                </>
+            )}
+            {provider === 'ecowitt' && (
+                <>
+                    <input
+                        type="text"
+                        placeholder={t.applicationKeyLabel || 'Application-Key'}
+                        className="w-full px-3 py-2 rounded-m3-md border border-m3-outline focus:ring-2 focus:ring-m3-primary focus:outline-none bg-m3-surface-container text-m3-on-surface text-sm"
+                        value={applicationKey}
+                        onChange={e => setApplicationKey(e.target.value)}
+                    />
+                    <input
+                        type="text"
+                        placeholder={t.apiKeyLabel || 'API-Schlüssel'}
+                        className="w-full px-3 py-2 rounded-m3-md border border-m3-outline focus:ring-2 focus:ring-m3-primary focus:outline-none bg-m3-surface-container text-m3-on-surface text-sm"
+                        value={apiKey}
+                        onChange={e => setApiKey(e.target.value)}
+                    />
+                    <input
+                        type="text"
+                        placeholder={t.macAddressLabel || 'MAC-Adresse'}
+                        className="w-full px-3 py-2 rounded-m3-md border border-m3-outline focus:ring-2 focus:ring-m3-primary focus:outline-none bg-m3-surface-container text-m3-on-surface text-sm"
+                        value={mac}
+                        onChange={e => setMac(e.target.value)}
+                    />
+                </>
+            )}
+            {provider === 'netatmo' && (
+                <>
+                    <p className="text-xs text-m3-on-surface-variant">{t.stationHintNetatmo || 'Gib den Standort deiner Netatmo-Station als Ortsnamen ein.'}</p>
+                    <input
+                        type="text"
+                        placeholder={t.stationNameLabel || 'Stationsname / Ort'}
+                        className="w-full px-3 py-2 rounded-m3-md border border-m3-outline focus:ring-2 focus:ring-m3-primary focus:outline-none bg-m3-surface-container text-m3-on-surface text-sm"
+                        value={stationName}
+                        onChange={e => setStationName(e.target.value)}
+                    />
+                    <input
+                        type="text"
+                        placeholder={t.macAddressLabel + ' (optional)'}
+                        className="w-full px-3 py-2 rounded-m3-md border border-m3-outline focus:ring-2 focus:ring-m3-primary focus:outline-none bg-m3-surface-container text-m3-on-surface text-sm"
+                        value={mac}
+                        onChange={e => setMac(e.target.value)}
+                    />
+                </>
+            )}
+            {error && (
+                <p className="text-red-500 text-xs">{error}</p>
+            )}
+            <button
+                onClick={handleConnect}
+                disabled={!canConnect || connecting}
+                className="w-full py-3 bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary font-bold rounded-m3-md flex items-center justify-center gap-2 shadow-m3-2 transition active:scale-95 disabled:opacity-50"
+            >
+                {connecting ? <RefreshCw className="animate-spin" size={18}/> : <Zap size={18}/>}
+                {connecting ? (t.stationConnecting || 'Verbinde...') : (t.stationConnect || 'Verbinden')}
+            </button>
+        </div>
+    );
+};
+
 // --- NEU: HOME SETUP MODAL (Für den allerersten Start) ---
 const HomeSetupModal = ({ onSave, lang='de', isSmallScreen = false }) => {
     const [searchQuery, setSearchQuery] = useState("");
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
     const [gpsLoading, setGpsLoading] = useState(false);
+    const [showStationSetup, setShowStationSetup] = useState(false);
     
     // Schritt 2: Name vergeben
     const [selectedLoc, setSelectedLoc] = useState(null);
@@ -7992,6 +8347,31 @@ const HomeSetupModal = ({ onSave, lang='de', isSmallScreen = false }) => {
                                 ))}
                             </div>
                         )}
+
+                        {!showStationSetup ? (
+                            <div className="mt-4">
+                                <div className="relative mb-3">
+                                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
+                                    <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400">{t.orUseStation || 'Oder eigene Station'}</span></div>
+                                </div>
+                                <button
+                                    onClick={() => setShowStationSetup(true)}
+                                    className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-2 transition active:scale-95"
+                                >
+                                    📡 {t.personalStation || 'Eigene Wetterstation'}
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="mt-4">
+                                <PersonalStationSetup
+                                    lang={lang}
+                                    onConnected={(loc) => {
+                                        onSave(loc);
+                                    }}
+                                    onCancel={() => setShowStationSetup(false)}
+                                />
+                            </div>
+                        )}
                      </>
                  ) : (
                      <>
@@ -8055,6 +8435,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
     const [gpsLoading, setGpsLoading] = useState(false);
     const [customHomeName, setCustomHomeName] = useState("");
     const [selectedHomeLoc, setSelectedHomeLoc] = useState(null);
+    const [showStationSetupTutorial, setShowStationSetupTutorial] = useState(false);
     
     const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
     
@@ -8318,6 +8699,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                     {currentStep.content === 'home' && (
                         <div className="space-y-4">
                             {!selectedHomeLoc ? (
+                                !showStationSetupTutorial ? (
                                 <>
                                     <p className="text-m3-on-surface-variant text-sm mb-4">{t.welcomeDesc}</p>
                                     
@@ -8369,7 +8751,35 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                                             ))}
                                         </div>
                                     )}
+
+                                    <div className="relative mt-2">
+                                        <div className="absolute inset-0 flex items-center">
+                                            <div className="w-full border-t border-m3-outline-variant"></div>
+                                        </div>
+                                        <div className="relative flex justify-center text-xs uppercase">
+                                            <span className="bg-m3-surface px-2 text-m3-on-surface-variant">{t.orUseStation || 'Oder eigene Station'}</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowStationSetupTutorial(true)}
+                                        className="w-full py-3 bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface font-bold rounded-m3-md flex items-center justify-center gap-2 border border-m3-outline-variant transition active:scale-95"
+                                    >
+                                        📡 {t.personalStation || 'Eigene Wetterstation'}
+                                    </button>
                                 </>
+                                ) : (
+                                    <PersonalStationSetup
+                                        lang={settings?.language || lang}
+                                        onConnected={(loc, stationConfig) => {
+                                            setSelectedHomeLoc(loc);
+                                            setCustomHomeName(loc.name);
+                                            setHomeLocation(loc);
+                                            setShowStationSetupTutorial(false);
+                                            setSettings({ ...settings, personalStation: stationConfig });
+                                        }}
+                                        onCancel={() => setShowStationSetupTutorial(false)}
+                                    />
+                                )
                             ) : (
                                 <div className="bg-m3-tertiary-container rounded-m3-lg p-6 border border-m3-tertiary">
                                     <div className="w-16 h-16 bg-m3-tertiary text-m3-on-tertiary rounded-m3-full flex items-center justify-center mx-auto mb-4 shadow-m3-3">
@@ -11122,6 +11532,9 @@ export default function WeatherApp() {
                       setHomeLoc(loc);
                       setCurrentLoc(loc);
                       setShowHomeSetup(false);
+                      if (loc.stationConfig) {
+                          setSettings(prev => ({ ...prev, personalStation: loc.stationConfig }));
+                      }
                   }}
                   lang={lang}
                   isSmallScreen={isSmallScreen}
