@@ -4,11 +4,11 @@ Diese ausführliche Anleitung zeigt Ihnen Schritt für Schritt, wie Sie die Wett
 
 ## 📱 Aktueller Projektstand
 
-**Wichtiger Hinweis:** Dieses Projekt enthält aktuell:
+**Dieses Projekt enthält:**
 - ✅ **Mobile Android App** (für Smartphones und Tablets)
-- ❌ **Keine Wear OS App** (für Smartwatches)
+- ✅ **Wear OS App** (für Smartwatches) – Modul unter `android/wear/`
 
-Wenn Sie eine Wear OS Version benötigen, lesen Sie den Abschnitt [Wear OS App erstellen](#wear-os-app-erstellen-optional) am Ende dieser Anleitung.
+Weitere Details zur Wear OS Integration: [WEAR_OS_INTEGRATION.md](./WEAR_OS_INTEGRATION.md)
 
 ## 📋 Voraussetzungen
 
@@ -235,6 +235,12 @@ Wetter-App/
 │   │   │   ├── java/            # Java/Kotlin Code
 │   │   │   └── res/             # Android Ressourcen (Icons, etc.)
 │   │   └── build.gradle         # App-Konfiguration
+│   ├── wear/                    # ⌚ Wear OS Modul (Smartwatch)
+│   │   ├── src/main/
+│   │   │   ├── AndroidManifest.xml
+│   │   │   ├── java/            # Wear OS Kotlin Code
+│   │   │   └── res/             # Wear OS Ressourcen
+│   │   └── build.gradle         # Wear OS Konfiguration
 │   ├── build.gradle             # Projekt-Konfiguration
 │   └── settings.gradle
 ├── capacitor.config.ts          # Capacitor-Konfiguration
@@ -307,53 +313,57 @@ Bevor Sie die App veröffentlichen:
    - ✅ `ACCESS_FINE_LOCATION` - Für GPS
    - ✅ `ACCESS_COARSE_LOCATION` - Für ungefähren Standort
 
-## 👕 Wear OS App erstellen (Optional)
+## ⌚ Wear OS App
 
-**Status:** Aktuell existiert **keine Wear OS Version** dieser App.
+**Status:** Die Wear OS Version ist bereits implementiert und im Projekt enthalten.
 
-Wenn Sie eine Wear OS App erstellen möchten, sind folgende Schritte nötig:
+Das Wear OS Modul befindet sich unter `android/wear/` und ist vollständig in das Android-Projekt integriert (siehe `android/settings.gradle`).
 
-### Was benötigt wird:
+### Was ist bereits vorhanden:
 
-1. **Neues Wear OS Modul in Android Studio erstellen:**
-   - **File** → **New** → **New Module**
-   - Wählen Sie **Wear OS Module**
-   - Wählen Sie Template (z.B. "Blank Activity")
+1. **Wear OS Modul** (`android/wear/`):
+   - `MainActivity.kt`: Wear OS Activity mit Jetpack Compose
+   - `AndroidManifest.xml`: Wear OS spezifische Konfiguration
+   - `build.gradle`: Wear OS Abhängigkeiten (standalone-fähig)
 
-2. **Wear OS spezifische Anpassungen:**
-   - Eigene UI für kleine, runde Displays
-   - Wear OS spezifische Komponenten (Jetpack Compose for Wear OS)
-   - Angepasste Navigation für Smartwatches
-   - Optimierte Performance für begrenzte Ressourcen
-
-3. **Dependencies hinzufügen:**
-   ```gradle
-   implementation 'androidx.wear:wear:1.3.0'
-   implementation 'androidx.wear.compose:compose-material:1.2.1'
-   ```
-
-4. **Wear OS Manifest-Konfiguration:**
+2. **Hauptapp Manifest** enthält bereits:
    ```xml
-   <uses-feature android:name="android.hardware.type.watch" />
+   <uses-feature android:name="android.hardware.type.watch" android:required="false" />
    ```
 
-5. **Daten-Synchronisation** zwischen Phone und Watch App:
-   - Wearable Data Layer API
-   - MessageClient für Echtzeit-Kommunikation
+3. **Projekt-Konfiguration** (`android/settings.gradle`):
+   ```gradle
+   include ':wear'
+   ```
 
-### Komplexität:
-- **Aufwand:** Mittel bis hoch (ca. 20-40 Entwicklungsstunden)
-- **Kenntnisse erforderlich:** 
-  - Android Wear OS Entwicklung
-  - Jetpack Compose for Wear
-  - UI-Design für Wearables
+### Wear OS App bauen und testen:
 
-### Empfohlene Ressourcen:
-- [Android Wear OS Developer Guide](https://developer.android.com/training/wearables)
-- [Compose for Wear OS](https://developer.android.com/training/wearables/compose)
-- [Wear OS Samples](https://github.com/android/wear-os-samples)
+```bash
+# Debug-Build des Wear OS Moduls
+cd android
+./gradlew :wear:assembleDebug
 
-**Falls Sie eine Wear OS Version benötigen, wird empfohlen, dies als separates Projekt/Issue anzulegen, da es umfangreiche Änderungen erfordert.**
+# Auf Wear OS Emulator oder Gerät installieren
+./gradlew :wear:installDebug
+
+# AAB mit Wear OS Support erstellen (empfohlen für Play Store)
+./gradlew bundleRelease
+```
+
+Oder mit dem npm-Script:
+```bash
+npm run build:wear
+```
+
+### Wear OS Emulator einrichten (Android Studio):
+1. **Device Manager** öffnen (Smartphone-Symbol in der Toolbar)
+2. **Create Device** klicken
+3. **Wear OS** als Kategorie wählen
+4. Gerät auswählen (z.B. "Wear OS Small Round") → **Next**
+5. System Image wählen (z.B. "Wear OS 4 - API 33") → **Finish**
+6. Emulator starten und das Wear OS Modul ausführen
+
+Weitere Details: [WEAR_OS_INTEGRATION.md](./WEAR_OS_INTEGRATION.md)
 
 ## 📚 Zusätzliche Ressourcen
 
@@ -362,6 +372,7 @@ Wenn Sie eine Wear OS App erstellen möchten, sind folgende Schritte nötig:
 - 📄 [BUILD_AAB_GUIDE.md](./BUILD_AAB_GUIDE.md) - English version
 - 📄 [KEYSTORE_SETUP.md](./android/KEYSTORE_SETUP.md) - Keystore Konfiguration
 - 📄 [QUICK_START.md](./QUICK_START.md) - Schnellstart-Guide
+- 📄 [WEAR_OS_INTEGRATION.md](./WEAR_OS_INTEGRATION.md) - Wear OS Details
 - 🌐 [Capacitor Documentation](https://capacitorjs.com/docs)
 - 🌐 [Android Studio Guide](https://developer.android.com/studio/intro)
 

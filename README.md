@@ -93,10 +93,11 @@ npm run android:open
 - `npm run dev` - Development Server starten
 - `npm run build` - Production Build erstellen
 - `npm run preview` - Production Build lokal testen
-- `npm run prepare:aab` - **NEU:** Projekt für AAB-Build vorbereiten
+- `npm run prepare:aab` - Projekt für AAB-Build vorbereiten
 - `npm run android:sync` - Web-App bauen und mit Android synchronisieren
 - `npm run android:open` - Android Studio öffnen
 - `npm run android:run` - App auf verbundenem Gerät ausführen
+- `npm run build:wear` - Wear OS App bauen (inkl. Web-Build)
 
 ## Wear OS Support ⌚
 
