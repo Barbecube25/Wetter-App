@@ -9282,6 +9282,9 @@ export default function WeatherApp() {
   // Climate normals for historical context
   const [climateNormals, setClimateNormals] = useState(null);
 
+  // Personal weather station live readings (replaces open-meteo current data at home location)
+  const [stationLiveData, setStationLiveData] = useState(null);
+
 
   // Landscape mode detection
   const [isLandscape, setIsLandscape] = useState(false);
@@ -9891,6 +9894,62 @@ export default function WeatherApp() {
     }
   };
   
+  // Fetch live data from personal weather station (Weather Underground or ecowitt)
+  const fetchStationData = useCallback(async () => {
+    const station = settings?.personalStation;
+    if (!station?.provider) return;
+    if (currentLoc?.id !== 'home_default' && currentLoc?.type !== 'home') return;
+    try {
+      if (station.provider === 'wunderground') {
+        const url = `https://api.weather.com/v2/pws/observations/current?stationId=${encodeURIComponent(station.stationId)}&format=json&units=m&apiKey=${encodeURIComponent(station.apiKey)}`;
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const data = await res.json();
+        const obs = data.observations?.[0];
+        if (!obs) return;
+        const m = obs.metric || {};
+        setStationLiveData({
+          temp: m.temp,
+          humidity: obs.humidity,
+          wind: m.windSpeed,
+          gust: m.windGust,
+          dir: obs.winddir,
+          pressure: m.pressure,
+          dewPoint: m.dewpt,
+          precip: m.precipRate,
+          uvIndex: obs.uv,
+        });
+      } else if (station.provider === 'ecowitt') {
+        const url = `https://api.ecowitt.net/api/v3/device/real_time?application_key=${encodeURIComponent(station.applicationKey)}&api_key=${encodeURIComponent(station.apiKey)}&mac=${encodeURIComponent(station.mac)}&call_back=all`;
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.code !== 0) return;
+        const d = data.data || {};
+        const outdoor = d.outdoor || {};
+        const wind = d.wind || {};
+        const pressure = d.pressure || {};
+        const rainfall = d.rainfall || {};
+        const solar = d.solar_and_uvi || {};
+        const parseVal = (obj) => obj?.value !== undefined ? parseFloat(obj.value) : undefined;
+        setStationLiveData({
+          temp: parseVal(outdoor.temperature),
+          humidity: parseVal(outdoor.humidity),
+          wind: parseVal(wind.wind_speed),
+          gust: parseVal(wind.wind_gust),
+          dir: parseVal(wind.wind_direction),
+          pressure: parseVal(pressure.relative),
+          dewPoint: parseVal(outdoor.dew_point),
+          precip: parseVal(rainfall.rain_rate),
+          uvIndex: parseVal(solar.uvi),
+        });
+      }
+      // Netatmo: no API credentials stored, skip
+    } catch (e) {
+      console.warn('fetchStationData error:', e);
+    }
+  }, [settings?.personalStation, currentLoc]);
+
   const fetchData = async () => {
     if (!currentLoc) return; // Nicht fetchen wenn kein Ort da ist
 
@@ -10031,9 +10090,25 @@ export default function WeatherApp() {
           setIsUsingCache(true);
         }
     } finally { setLoading(false); }
+    fetchStationData();
   };
 
   useEffect(() => { fetchData(); }, [currentLoc]);
+
+  // Clear station data when not on home location
+  useEffect(() => {
+    if (currentLoc?.id !== 'home_default' && currentLoc?.type !== 'home') {
+      setStationLiveData(null);
+    }
+  }, [currentLoc]);
+
+  // Periodically refresh personal weather station data every 5 minutes
+  useEffect(() => {
+    if (!settings?.personalStation?.provider) return;
+    if (currentLoc?.id !== 'home_default' && currentLoc?.type !== 'home') return;
+    const interval = setInterval(() => { fetchStationData(); }, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [settings?.personalStation, currentLoc, fetchStationData]);
 
   // Show pull-to-refresh hint briefly after data finishes loading
   useEffect(() => {
@@ -10926,9 +11001,10 @@ export default function WeatherApp() {
     const baseData = processedShort.length > 0 ? processedShort[0] : { temp: 0, snow: 0, precip: 0, wind: 0, gust: 0, dir: 0, code: 0, isDay: 1, appTemp: null, humidity: 0, dewPoint: 0, uvIndex: 0, cloudCover: 0, pressure: null, visibility: null };
     
     // Override with current API data if available (more accurate, radar-based observations)
+    let apiData = baseData;
     if (shortTermData?.current) {
       const curr = shortTermData.current;
-      return {
+      apiData = {
         ...baseData,
         temp: curr.temperature_2m !== undefined ? curr.temperature_2m : baseData.temp,
         // Match hourly data structure: precip = total precipitation (rain + showers), snow = snowfall
@@ -10942,9 +11018,26 @@ export default function WeatherApp() {
         cloudCover: baseData.cloudCover // Preserve cloudCover from hourly data
       };
     }
+
+    // Override with personal weather station live data when available (most accurate, local sensor)
+    if (stationLiveData) {
+      const s = stationLiveData;
+      return {
+        ...apiData,
+        ...(s.temp !== undefined && s.temp !== null && { temp: s.temp }),
+        ...(s.humidity !== undefined && s.humidity !== null && { humidity: s.humidity }),
+        ...(s.wind !== undefined && s.wind !== null && { wind: s.wind }),
+        ...(s.gust !== undefined && s.gust !== null && { gust: s.gust }),
+        ...(s.dir !== undefined && s.dir !== null && { dir: s.dir }),
+        ...(s.pressure !== undefined && s.pressure !== null && { pressure: s.pressure }),
+        ...(s.dewPoint !== undefined && s.dewPoint !== null && { dewPoint: s.dewPoint }),
+        ...(s.precip !== undefined && s.precip !== null && { precip: s.precip }),
+        ...(s.uvIndex !== undefined && s.uvIndex !== null && { uvIndex: s.uvIndex }),
+      };
+    }
     
-    return baseData;
-  }, [processedShort, shortTermData]);
+    return apiData;
+  }, [processedShort, shortTermData, stationLiveData]);
   const current = liveCurrent;
 
   // --- NEUE LOGIK: Echter Tag/Nacht Status für das UI ---
