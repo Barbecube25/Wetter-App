@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/widget_background">
+
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Wetter KI-Bericht"
+        android:textStyle="bold"
+        android:textColor="#1A1A1A"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/widget_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="Lade aktuellen Bericht..."
+        android:textColor="#4A4A4A"
+        android:textSize="14sp"
+        android:ellipsize="end"
+        android:layout_marginTop="8dp" />
+
+</LinearLayout>
