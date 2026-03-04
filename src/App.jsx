@@ -3,7 +3,11 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Eye, Activity } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
 import { StatusBar } from '@capacitor/status-bar';
+import { registerPlugin } from '@capacitor/core';
 import packageJson from '../package.json';
+
+// Native Android plugin for updating the home screen widget
+const WidgetPlugin = registerPlugin('WidgetPlugin');
 
 // --- 1. KONSTANTEN & CONFIG & ÜBERSETZUNGEN ---
 
@@ -11238,6 +11242,15 @@ export default function WeatherApp() {
   const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, { threeDayForecast, pollenData: airQualityData, pollenFilter: settings.pollenFilter }), [processedShort, lang, threeDayForecast, airQualityData, settings.pollenFilter]);
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter }), [processedLong, lang, airQualityData, settings.pollenFilter]);
+
+  // Update the Android home screen widget whenever the daily AI report changes
+  useEffect(() => {
+    if (!dailyReport || !dailyReport.summary || dailyReport.title === 'Lade...') return;
+    const kiBerichtText = `${dailyReport.title}\n\n${dailyReport.summary}`;
+    WidgetPlugin.updateAiReport({ report: kiBerichtText }).catch(err => {
+      console.log('Widget konnte nicht aktualisiert werden (vielleicht iOS/Web?): ', err);
+    });
+  }, [dailyReport]);
 
   // --- WIDGET VIEWS ---
   // Only block rendering on initial load (no data yet); during location switches, keep existing data visible.

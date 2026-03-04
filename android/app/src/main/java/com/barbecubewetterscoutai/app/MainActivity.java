@@ -15,9 +15,10 @@ import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
     private static final String TAG = "MainActivity";
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(WidgetPlugin.class);
         super.onCreate(savedInstanceState);
         
         // Enable edge-to-edge display for Android 15 (SDK 35) compatibility
