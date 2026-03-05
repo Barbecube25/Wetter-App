@@ -360,6 +360,8 @@ const TRANSLATIONS = {
     pollenVeryHigh: "Sehr hoch",
     pollenFilter: "Pollen in Kachel anzeigen",
     pollenSourceDwd: "Quelle: Deutscher Wetterdienst (DWD)",
+    pollenForecast: "3-Tage-Vorhersage (DWD)",
+    pollenDayAfterTomorrow: "Übermorgen",
     goldenHour: "Goldene Stunde",
     blueHour: "Blaue Stunde",
     photographerWeather: "Fotograf",
@@ -614,6 +616,8 @@ const TRANSLATIONS = {
     pollenVeryHigh: "Very high",
     pollenFilter: "Show pollen in tile",
     pollenSourceDwd: "Source: Deutscher Wetterdienst (DWD)",
+    pollenForecast: "3-Day Forecast (DWD)",
+    pollenDayAfterTomorrow: "Day after tomorrow",
     goldenHour: "Golden Hour",
     blueHour: "Blue Hour",
     photographerWeather: "Photographer",
@@ -3373,6 +3377,8 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     const now = new Date();
     const currentHour = now.getHours();
     const pollenDataDaily = extraData && !Array.isArray(extraData) ? extraData.pollenData : null;
+    const dwdPollenForecastData = extraData && !Array.isArray(extraData) ? extraData.dwdPollenForecast : null;
+    const pollenDataTomorrow = dwdPollenForecastData ? dwdPollenForecastData.tomorrow : pollenDataDaily;
     
     const current = data[0];
     let intro = `${t.now} (${current.displayTime} ${t.oclock}): ${Math.round(current.temp)}°`;
@@ -4088,7 +4094,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         }
         
         // Pollen info for tomorrow
-        const pollenTomorrow = getPollenText(pollenDataDaily, 'tomorrow');
+        const pollenTomorrow = getPollenText(pollenDataTomorrow, 'tomorrow');
         if (pollenTomorrow) tomorrowText += `\n${pollenTomorrow}`;
         
         parts.push(tomorrowText);
@@ -7370,12 +7376,24 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
 };
 
 // --- POLLEN DETAILS MODAL ---
-const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmallScreen = false, pollenFilter = null, isRealNight = false, dwdPollenRegion = null }) => {
+const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmallScreen = false, pollenFilter = null, isRealNight = false, dwdPollenRegion = null, dwdPollenForecast = null }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
 
   if (!isOpen || !airQualityData) return null;
 
   const activeFilter = Array.isArray(pollenFilter) ? pollenFilter : DEFAULT_POLLEN_FILTER;
+
+  // Only the 8 pollen types provided by DWD
+  const dwdPollenTypes = [
+    { key: 'hazel_pollen', label: t.pollenHazel },
+    { key: 'alder_pollen', label: t.pollenAlder },
+    { key: 'birch_pollen', label: t.pollenBirch },
+    { key: 'ash_pollen', label: t.pollenAsh },
+    { key: 'grass_pollen', label: t.pollenGrass },
+    { key: 'rye_pollen', label: t.pollenRye },
+    { key: 'mugwort_pollen', label: t.pollenMugwort },
+    { key: 'ragweed_pollen', label: t.pollenRagweed },
+  ];
 
   const allPollenTypes = [
     { key: 'hazel_pollen', label: t.pollenHazel },
@@ -7399,6 +7417,15 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
     if (val >= POLLEN_HIGH_THRESHOLD) return { label: t.pollenHigh, color: 'text-orange-500', bg: isRealNight ? 'bg-orange-900/30 border-orange-700/50' : 'bg-orange-50 border-orange-200' };
     if (val >= POLLEN_MODERATE_THRESHOLD) return { label: t.pollenModerate, color: 'text-yellow-500', bg: isRealNight ? 'bg-yellow-900/30 border-yellow-700/50' : 'bg-yellow-50 border-yellow-200' };
     return { label: t.pollenLow, color: 'text-green-500', bg: isRealNight ? 'bg-green-900/30 border-green-700/50' : 'bg-green-50 border-green-200' };
+  };
+
+  // Returns dot bg class and text color class for a pollen value (used in 3-day forecast table)
+  const getForecastLevel = (val) => {
+    if (val >= POLLEN_VERY_HIGH_THRESHOLD) return { dot: 'bg-red-500', textColor: 'text-red-500', label: t.pollenVeryHigh };
+    if (val >= POLLEN_HIGH_THRESHOLD) return { dot: 'bg-orange-500', textColor: 'text-orange-500', label: t.pollenHigh };
+    if (val >= POLLEN_MODERATE_THRESHOLD) return { dot: 'bg-yellow-500', textColor: 'text-yellow-500', label: t.pollenModerate };
+    if (val > 0) return { dot: 'bg-green-500', textColor: 'text-green-500', label: t.pollenLow };
+    return { dot: isRealNight ? 'bg-slate-600' : 'bg-slate-200', textColor: isRealNight ? 'text-slate-500' : 'text-slate-300', label: '–' };
   };
 
   const userTypes = allPollenTypes
@@ -7434,6 +7461,21 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
     );
   };
 
+  // Build DWD 3-day forecast rows: show types active in any of the 3 days, filtered by user's pollenFilter
+  const forecastRows = dwdPollenForecast
+    ? dwdPollenTypes
+        .filter(({ key }) => activeFilter.includes(key))
+        .map(({ key, label }) => ({
+          key,
+          label,
+          today: airQualityData[key] ?? 0,
+          tomorrow: dwdPollenForecast.tomorrow[key] ?? 0,
+          dayafter: dwdPollenForecast.dayafter[key] ?? 0,
+        }))
+        .filter(({ today, tomorrow, dayafter }) => today > 0 || tomorrow > 0 || dayafter > 0)
+        .sort((a, b) => b.today - a.today)
+    : [];
+
   return (
     <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
       <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-white'} rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-md'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
@@ -7450,6 +7492,40 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
 
         {/* Content */}
         <div className="overflow-y-auto p-4 space-y-2">
+          {/* DWD 3-day forecast table (Germany only) */}
+          {dwdPollenForecast && forecastRows.length > 0 && (
+            <div className={`rounded-2xl border ${isRealNight ? 'border-m3-outline-variant/50 bg-m3-dark-surface-container-high/30' : 'border-slate-200 bg-slate-50'} overflow-hidden mb-2`}>
+              <div className={`px-3 py-2 border-b ${isRealNight ? 'border-m3-outline-variant/40' : 'border-slate-200'}`}>
+                <span className={`text-xs font-semibold ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'} uppercase tracking-wide`}>
+                  {t.pollenForecast || '3-Tage-Vorhersage (DWD)'}
+                </span>
+              </div>
+              {/* Column headers */}
+              <div className={`grid grid-cols-4 px-3 py-1 border-b ${isRealNight ? 'border-m3-outline-variant/30' : 'border-slate-100'}`}>
+                <span className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'}`}></span>
+                <span className={`text-xs font-medium text-center ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-600'}`}>{t.today}</span>
+                <span className={`text-xs font-medium text-center ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-600'}`}>{t.tomorrow}</span>
+                <span className={`text-xs font-medium text-center ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-600'}`}>{t.pollenDayAfterTomorrow || 'Übermorgen'}</span>
+              </div>
+              {/* Rows */}
+              {forecastRows.map(({ key, label, today, tomorrow, dayafter }) => (
+                <div key={key} className={`grid grid-cols-4 items-center px-3 py-2 border-b last:border-0 ${isRealNight ? 'border-m3-outline-variant/20' : 'border-slate-100'}`}>
+                  <span className={`text-xs font-medium truncate pr-1 ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-700'}`}>{label}</span>
+                  {[today, tomorrow, dayafter].map((val, i) => {
+                    const { dot, textColor, label: lvlLabel } = getForecastLevel(val);
+                    return (
+                      <div key={i} className="flex flex-col items-center gap-0.5">
+                        <div className={`w-2.5 h-2.5 rounded-full ${dot}`} />
+                        <span className={`text-[10px] font-semibold ${textColor} leading-tight text-center`}>{lvlLabel}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Current pollen bars (non-DWD types or when no forecast available) */}
           {userTypes.length === 0 && otherTypes.length === 0 ? (
             <div className={`text-center ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'} py-6`}>{t.pollenNoActive}</div>
           ) : (
@@ -9232,6 +9308,7 @@ export default function WeatherApp() {
   const [airQualityHourlyData, setAirQualityHourlyData] = useState(null);
   const [dwdWarnings, setDwdWarnings] = useState([]);
   const [dwdPollenRegion, setDwdPollenRegion] = useState(null);
+  const [dwdPollenForecast, setDwdPollenForecast] = useState(null);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [chartView, setChartView] = useState('hourly');
@@ -10066,7 +10143,32 @@ export default function WeatherApp() {
           aqData = aqData ? { ...aqData, ...dwdMapped } : dwdMapped;
           const regionLabel = nearest.partregion_name || nearest.region_name;
           setDwdPollenRegion(regionLabel);
+          // Store tomorrow and day-after-tomorrow DWD forecast
+          setDwdPollenForecast({
+            tomorrow: {
+              hazel_pollen: dwdPollenToGrains(p.Hasel?.tomorrow),
+              alder_pollen: dwdPollenToGrains(p.Erle?.tomorrow),
+              ash_pollen: dwdPollenToGrains(p.Esche?.tomorrow),
+              birch_pollen: dwdPollenToGrains(p.Birke?.tomorrow),
+              grass_pollen: dwdPollenToGrains(p.Graeser?.tomorrow),
+              rye_pollen: dwdPollenToGrains(p.Roggen?.tomorrow),
+              mugwort_pollen: dwdPollenToGrains(p.Beifuss?.tomorrow),
+              ragweed_pollen: dwdPollenToGrains(p.Ambrosia?.tomorrow),
+            },
+            dayafter: {
+              hazel_pollen: dwdPollenToGrains(p.Hasel?.dayafter_to),
+              alder_pollen: dwdPollenToGrains(p.Erle?.dayafter_to),
+              ash_pollen: dwdPollenToGrains(p.Esche?.dayafter_to),
+              birch_pollen: dwdPollenToGrains(p.Birke?.dayafter_to),
+              grass_pollen: dwdPollenToGrains(p.Graeser?.dayafter_to),
+              rye_pollen: dwdPollenToGrains(p.Roggen?.dayafter_to),
+              mugwort_pollen: dwdPollenToGrains(p.Beifuss?.dayafter_to),
+              ragweed_pollen: dwdPollenToGrains(p.Ambrosia?.dayafter_to),
+            },
+          });
         }
+      } else {
+        setDwdPollenForecast(null);
       }
 
       if (aqData) setAirQualityData(aqData);
@@ -11239,7 +11341,7 @@ export default function WeatherApp() {
     return result;
   }, [processedShort, processedLong, lang, t]);
 
-  const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, { threeDayForecast, pollenData: airQualityData, pollenFilter: settings.pollenFilter }), [processedShort, lang, threeDayForecast, airQualityData, settings.pollenFilter]);
+  const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, { threeDayForecast, pollenData: airQualityData, pollenFilter: settings.pollenFilter, dwdPollenForecast }), [processedShort, lang, threeDayForecast, airQualityData, settings.pollenFilter, dwdPollenForecast]);
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter }), [processedLong, lang, airQualityData, settings.pollenFilter]);
 
@@ -11720,6 +11822,7 @@ export default function WeatherApp() {
           pollenFilter={settings.pollenFilter}
           isRealNight={isRealNight}
           dwdPollenRegion={dwdPollenRegion}
+          dwdPollenForecast={dwdPollenForecast}
         />
       )}
       {showPrecipModal && (
