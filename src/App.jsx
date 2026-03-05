@@ -7461,10 +7461,9 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
     );
   };
 
-  // Build DWD 3-day forecast rows: show types active in any of the 3 days, filtered by user's pollenFilter
+  // Build DWD 3-day forecast rows: show all DWD-provided pollen types that are active in any of the 3 days
   const forecastRows = dwdPollenForecast
     ? dwdPollenTypes
-        .filter(({ key }) => activeFilter.includes(key))
         .map(({ key, label }) => ({
           key,
           label,
