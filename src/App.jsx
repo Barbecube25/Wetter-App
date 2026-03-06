@@ -253,6 +253,8 @@ const TRANSLATIONS = {
     activityIndex: "Aktivitäts-Index",
     activityIndexToday: "Empfehlungen für heute",
     activityIndex24h: "24-Stunden-Übersicht",
+    activityReasonTitle: "Warum diese Empfehlung?",
+    activityReasonClose: "Schließen",
     startingNow: "beginnt jetzt",
     startingSoon: "beginnt bald",
     inMinutes: "in",
@@ -510,6 +512,8 @@ const TRANSLATIONS = {
     activityIndex: "Activity Index",
     activityIndexToday: "Recommendations for today",
     activityIndex24h: "24-hour overview",
+    activityReasonTitle: "Why this recommendation?",
+    activityReasonClose: "Close",
     startingSoon: "starting soon",
     inMinutes: "in",
     currentIntensity: "Current Intensity",
@@ -756,6 +760,8 @@ const TRANSLATIONS = {
     activityIndex: "Indice d'activité",
     activityIndexToday: "Recommandations pour aujourd'hui",
     activityIndex24h: "Aperçu sur 24 heures",
+    activityReasonTitle: "Pourquoi cette recommandation?",
+    activityReasonClose: "Fermer",
     startingSoon: "commence bientôt",
     inMinutes: "dans",
     currentIntensity: "Intensité actuelle",
@@ -959,6 +965,8 @@ const TRANSLATIONS = {
     activityIndex: "Índice de actividad",
     activityIndexToday: "Recomendaciones para hoy",
     activityIndex24h: "Vista general de 24 horas",
+    activityReasonTitle: "¿Por qué esta recomendación?",
+    activityReasonClose: "Cerrar",
     startingSoon: "comienza pronto",
     inMinutes: "en",
     currentIntensity: "Intensidad actual",
@@ -1161,6 +1169,8 @@ const TRANSLATIONS = {
     activityIndex: "Indice di attività",
     activityIndexToday: "Consigli per oggi",
     activityIndex24h: "Panoramica 24 ore",
+    activityReasonTitle: "Perché questo consiglio?",
+    activityReasonClose: "Chiudi",
     startingSoon: "inizia presto",
     inMinutes: "tra",
     currentIntensity: "Intensità attuale",
@@ -1363,6 +1373,8 @@ const TRANSLATIONS = {
     activityIndex: "Aktivite Endeksi",
     activityIndexToday: "Bugün için öneriler",
     activityIndex24h: "24 saatlik genel bakış",
+    activityReasonTitle: "Bu öneri neden?",
+    activityReasonClose: "Kapat",
     startingSoon: "yakında başlayacak",
     inMinutes: "içinde",
     currentIntensity: "Mevcut yoğunluk",
@@ -1565,6 +1577,8 @@ const TRANSLATIONS = {
     activityIndex: "Wskaźnik aktywności",
     activityIndexToday: "Zalecenia na dziś",
     activityIndex24h: "Przegląd 24 godzin",
+    activityReasonTitle: "Dlaczego ta rekomendacja?",
+    activityReasonClose: "Zamknij",
     startingSoon: "zaczyna się wkrótce",
     inMinutes: "za",
     currentIntensity: "Obecna intensywność",
@@ -1767,6 +1781,8 @@ const TRANSLATIONS = {
     activityIndex: "Activiteitsindex",
     activityIndexToday: "Aanbevelingen voor vandaag",
     activityIndex24h: "24-uurs overzicht",
+    activityReasonTitle: "Waarom deze aanbeveling?",
+    activityReasonClose: "Sluiten",
     startingSoon: "begint binnenkort",
     inMinutes: "over",
     currentIntensity: "Huidige intensiteit",
@@ -1969,6 +1985,8 @@ const TRANSLATIONS = {
     activityIndex: "Indeks aktivnosti",
     activityIndexToday: "Preporuke za danas",
     activityIndex24h: "Pregled 24 sata",
+    activityReasonTitle: "Zašto ova preporuka?",
+    activityReasonClose: "Zatvori",
     startingSoon: "uskoro počinje",
     inMinutes: "za",
     currentIntensity: "Trenutni intenzitet",
@@ -2171,6 +2189,8 @@ const TRANSLATIONS = {
     activityIndex: "Δείκτης δραστηριότητας",
     activityIndexToday: "Συστάσεις για σήμερα",
     activityIndex24h: "Επισκόπηση 24 ωρών",
+    activityReasonTitle: "Γιατί αυτή η σύσταση;",
+    activityReasonClose: "Κλείσιμο",
     startingSoon: "ξεκινά σύντομα",
     inMinutes: "σε",
     currentIntensity: "Τρέχουσα ένταση",
@@ -2373,6 +2393,8 @@ const TRANSLATIONS = {
     activityIndex: "Aktivitetsindeks",
     activityIndexToday: "Anbefalinger for i dag",
     activityIndex24h: "24-timers oversigt",
+    activityReasonTitle: "Hvorfor denne anbefaling?",
+    activityReasonClose: "Luk",
     startingSoon: "starter snart",
     inMinutes: "om",
     currentIntensity: "Nuværende intensitet",
@@ -2576,6 +2598,8 @@ const TRANSLATIONS = {
     activityIndex: "Индекс активности",
     activityIndexToday: "Рекомендации на сегодня",
     activityIndex24h: "Обзор за 24 часа",
+    activityReasonTitle: "Почему эта рекомендация?",
+    activityReasonClose: "Закрыть",
     startingSoon: "скоро начнётся",
     inMinutes: "через",
     currentIntensity: "Текущая интенсивность",
@@ -3075,22 +3099,37 @@ const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvInd
   const isCoolClear = temp >= TEMPERATURE_THRESHOLDS_C.cold && temp < TEMPERATURE_THRESHOLDS_C.cool && isClearOrPartly && wind < 30 && !hasRain;
 
   const de = lang === 'de';
-  if (isThunderstorm) return { emoji: '⛈️', text: de ? 'Gewitter – Outdoor-Aktivitäten meiden' : 'Thunderstorm – avoid outdoor activities', color: 'text-red-500', score: 1 };
-  if (isStorm) return { emoji: '🌪️', text: de ? 'Sturm – besser drinnen bleiben' : 'Storm – better stay indoors', color: 'text-red-500', score: 1 };
-  if (isVeryCold && wind > 20) return { emoji: '🤧', text: de ? 'Erkältungsrisiko hoch' : 'High cold risk', color: 'text-orange-500', score: 2 };
-  if (hasRain && !isDrizzle) return { emoji: '☂️', text: de ? 'Regenschirm einpacken' : 'Pack an umbrella', color: 'text-blue-500', score: 3 };
+  if (isThunderstorm) return { emoji: '⛈️', text: de ? 'Gewitter – Outdoor-Aktivitäten meiden' : 'Thunderstorm – avoid outdoor activities', color: 'text-red-500', score: 1,
+    reason: de ? `Aktive Gewitter wurden erkannt. Bei Gewittern besteht erhebliche Gefahr durch Blitzschlag und starke Böen. Outdoor-Aktivitäten sind in dieser Zeit nicht empfohlen.` : `Active thunderstorms detected. Thunderstorms pose significant risk from lightning and strong gusts. Outdoor activities are not recommended at this time.` };
+  if (isStorm) return { emoji: '🌪️', text: de ? 'Sturm – besser drinnen bleiben' : 'Storm – better stay indoors', color: 'text-red-500', score: 1,
+    reason: de ? `Der Wind hat Sturmstärke erreicht (${wind} km/h). Bei solchen Windgeschwindigkeiten ist ein Aufenthalt im Freien gefährlich. Lose Gegenstände können zu Projektilen werden.` : `Wind has reached storm force (${wind} km/h). It is dangerous to be outdoors in such conditions. Loose objects can become projectiles.` };
+  if (isVeryCold && wind > 20) return { emoji: '🤧', text: de ? 'Erkältungsrisiko hoch' : 'High cold risk', color: 'text-orange-500', score: 2,
+    reason: de ? `Die Kombination aus Frost (${temp}°C) und Wind (${wind} km/h) lässt die gefühlte Temperatur stark sinken. Das Erkältungsrisiko ist erhöht. Schütze dich mit wärmender Kleidung und begrenze die Zeit draußen.` : `The combination of freezing temperature (${temp}°C) and wind (${wind} km/h) makes it feel much colder. The risk of catching a cold is elevated. Dress warmly and limit time spent outdoors.` };
+  if (hasRain && !isDrizzle) return { emoji: '☂️', text: de ? 'Regenschirm einpacken' : 'Pack an umbrella', color: 'text-blue-500', score: 3,
+    reason: de ? `Es wird Regen erwartet${precip24h >= UMBRELLA_PRECIP_THRESHOLD ? ` (${precip24h.toFixed(1)} mm)` : ''}. Ein Regenschirm oder wasserfeste Kleidung ist empfehlenswert, wenn du nach draußen gehst.` : `Rain is expected${precip24h >= UMBRELLA_PRECIP_THRESHOLD ? ` (${precip24h.toFixed(1)} mm)` : ''}. An umbrella or waterproof clothing is recommended if you go outside.` };
   // isNearFreezing overlaps with isVeryCold for -3..0 °C; slippery risk takes priority over generic frost warning in that range
-  if (isNearFreezing) return { emoji: '🧊', text: de ? 'Vorsicht, kann glatt werden' : 'Caution, may be icy', color: 'text-blue-400', score: 3 };
-  if (isVeryCold) return { emoji: '❄️', text: de ? 'Frostiger Tag – warm anziehen' : 'Frosty – dress warmly', color: 'text-blue-400', score: 3 };
-  if (isDrizzle || isOvercast) return { emoji: '☕', text: de ? 'Gemütliches Drinnen-Wetter' : 'Cosy indoor weather', color: 'text-blue-400', score: 4 };
-  if (isCold) return { emoji: '🧥', text: de ? 'Kalt – Jacke empfohlen' : 'Cold – jacket recommended', color: 'text-blue-400', score: 4 };
-  if (isExtremeHeat) return { emoji: '🥵', text: de ? 'Extrem heiß – ausreichend trinken' : 'Extreme heat – stay hydrated', color: 'text-red-500', score: 2 };
-  if (isVeryHot && isUVHigh) return { emoji: '☀️', text: de ? 'Sonnenschutz & viel trinken' : 'Sun protection & stay hydrated', color: 'text-orange-500', score: 5 };
-  if (isHot) return { emoji: '🎒', text: de ? 'Gutes Ausflugswetter' : 'Great weather for a trip', color: 'text-green-500', score: 7 };
-  if (isIdealOutdoor) return { emoji: '🌳', text: de ? 'Ideal für draußen' : 'Ideal for outdoors', color: 'text-green-500', score: 9 };
-  if (isGoodWalk) return { emoji: '🚶', text: de ? 'Perfekt für einen Spaziergang' : 'Perfect for a walk', color: 'text-green-500', score: 8 };
-  if (isCoolClear) return { emoji: '🌬️', text: de ? 'Frische Luft genießen' : 'Enjoy the fresh air', color: 'text-green-500', score: 6 };
-  return { emoji: '✅', text: de ? 'Angenehmes Wetter' : 'Comfortable weather', color: 'text-green-500', score: 7 };
+  if (isNearFreezing) return { emoji: '🧊', text: de ? 'Vorsicht, kann glatt werden' : 'Caution, may be icy', color: 'text-blue-400', score: 3,
+    reason: de ? `Die Temperatur liegt nahe dem Gefrierpunkt (${temp}°C). Auf Straßen und Gehwegen kann sich Eis oder Reif gebildet haben. Bitte beim Fahren und Gehen besonders vorsichtig sein.` : `Temperatures are near freezing (${temp}°C). Roads and sidewalks may be icy or frosty. Please take extra care when driving or walking.` };
+  if (isVeryCold) return { emoji: '❄️', text: de ? 'Frostiger Tag – warm anziehen' : 'Frosty – dress warmly', color: 'text-blue-400', score: 3,
+    reason: de ? `Die Temperatur liegt unter 0°C (${temp}°C). Frost kann sich bilden. Ziehe dich warm an – Schichten, Mütze und Handschuhe sind empfehlenswert.` : `Temperatures are below 0°C (${temp}°C). Frost conditions expected. Dress warmly with layers, a hat and gloves.` };
+  if (isDrizzle || isOvercast) return { emoji: '☕', text: de ? 'Gemütliches Drinnen-Wetter' : 'Cosy indoor weather', color: 'text-blue-400', score: 4,
+    reason: de ? `${isDrizzle ? 'Es nieselt leicht' : 'Der Himmel ist bedeckt'} und mit ${temp}°C ist es draußen ungemütlich. Ein perfekter Tag zum gemütlichen Drinnenbleiben: Lesen, Kochen oder einen Film schauen.` : `${isDrizzle ? 'There is light drizzle' : 'The sky is overcast'} and at ${temp}°C it is uncomfortable outside. A perfect day to stay cosy indoors: read a book, cook, or watch a film.` };
+  if (isCold) return { emoji: '🧥', text: de ? 'Kalt – Jacke empfohlen' : 'Cold – jacket recommended', color: 'text-blue-400', score: 4,
+    reason: de ? `Mit ${temp}°C ist es heute kalt. Eine Jacke ist empfohlen. Dennoch ideal für kurze Aktivitäten im Freien oder Spaziergänge, wenn man sich warm genug anzieht.` : `With ${temp}°C it is cold today. A jacket is recommended. Still suitable for short outdoor activities or walks if you dress warmly.` };
+  if (isExtremeHeat) return { emoji: '🥵', text: de ? 'Extrem heiß – ausreichend trinken' : 'Extreme heat – stay hydrated', color: 'text-red-500', score: 2,
+    reason: de ? `Die Temperatur erreicht extreme Werte (${temp}°C). Vermeide körperliche Anstrengung in der Mittagshitze. Trinke ausreichend Wasser und suche schattige oder klimatisierte Bereiche auf.` : `Temperatures reach extreme levels (${temp}°C). Avoid physical exertion during midday heat. Drink plenty of water and seek shade or air-conditioned areas.` };
+  if (isVeryHot && isUVHigh) return { emoji: '☀️', text: de ? 'Sonnenschutz & viel trinken' : 'Sun protection & stay hydrated', color: 'text-orange-500', score: 5,
+    reason: de ? `Es ist sehr heiß (${temp}°C) und der UV-Index ist hoch (${Math.round(uvIndex)}). Trage Sonnenschutz, eine Sonnenbrille und geeignete Kleidung. Vermeide direkte Sonneneinstrahlung zur Mittagszeit.` : `It is very hot (${temp}°C) and the UV index is high (${Math.round(uvIndex)}). Apply sun protection, wear sunglasses and appropriate clothing. Avoid direct sunlight around noon.` };
+  if (isHot) return { emoji: '🎒', text: de ? 'Gutes Ausflugswetter' : 'Great weather for a trip', color: 'text-green-500', score: 7,
+    reason: de ? `Mit ${temp}°C ist es warm – ideales Ausflugswetter. Pack ausreichend Wasser ein und genieße die angenehme Wärme für Unternehmungen im Freien.` : `At ${temp}°C it is warm – great weather for a trip. Pack enough water and enjoy the pleasant warmth for outdoor activities.` };
+  if (isIdealOutdoor) return { emoji: '🌳', text: de ? 'Ideal für draußen' : 'Ideal for outdoors', color: 'text-green-500', score: 9,
+    reason: de ? `Optimale Bedingungen für Outdoor-Aktivitäten: ${temp}°C, kein Regen und wenig Wind (${wind} km/h). Nutze dieses Wetter für Sport, Radfahren oder andere Aktivitäten im Freien.` : `Optimal conditions for outdoor activities: ${temp}°C, no rain and light winds (${wind} km/h). Take advantage of this weather for sports, cycling or other outdoor activities.` };
+  if (isGoodWalk) return { emoji: '🚶', text: de ? 'Perfekt für einen Spaziergang' : 'Perfect for a walk', color: 'text-green-500', score: 8,
+    reason: de ? `Mit ${temp}°C und wenig Wind (${wind} km/h) ist es perfekt für einen Spaziergang. Die Bedingungen sind angenehm – ideal für einen Weg durch die Natur oder durch die Stadt.` : `At ${temp}°C with light winds (${wind} km/h), it is perfect for a walk. Conditions are pleasant – ideal for a stroll through nature or the city.` };
+  if (isCoolClear) return { emoji: '🌬️', text: de ? 'Frische Luft genießen' : 'Enjoy the fresh air', color: 'text-green-500', score: 6,
+    reason: de ? `Kühle, klare Luft bei ${temp}°C. Genieße die frische Luft – ideal für einen Spaziergang oder kurze Aktivitäten im Freien. Angemessene Kleidung für die Temperatur empfohlen.` : `Cool, clear air at ${temp}°C. Enjoy the fresh air – ideal for a walk or short outdoor activities. Dress appropriately for the temperature.` };
+  return { emoji: '✅', text: de ? 'Angenehmes Wetter' : 'Comfortable weather', color: 'text-green-500', score: 7,
+    reason: de ? `Das Wetter ist angenehm mit ${temp}°C. Gut geeignet für Outdoor-Aktivitäten und Unternehmungen jeder Art.` : `The weather is comfortable with ${temp}°C. Suitable for outdoor activities and outings of all kinds.` };
 };
 
 
@@ -7706,18 +7745,24 @@ const getScoreBadgeClass = (score, isNight) =>
 // --- ACTIVITY INDEX MODAL ---
 const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null, isRealNight = false }) => {
   const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
+  const [selectedAdvice, setSelectedAdvice] = useState(null);
   if (!isOpen) return null;
 
   const locale = LANG_LOCALE_MAP[lang] || 'de-DE';
 
   // Use today's hours from the hourly data (max 24h)
   const todayHours = hourlyData.slice(0, 24).map(hour => {
-    const advice = getActivityAdvice(lang, hour.temp, hour.windAvg ?? hour.wind, hour.precip, hour.uvIndex, hour.code);
+    const wind = hour.windAvg ?? hour.wind;
+    const advice = getActivityAdvice(lang, hour.temp, wind, hour.precip, hour.uvIndex, hour.code);
     return {
       time: hour.time,
       hour: hour.time.getHours(),
       displayTime: hour.time.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
       temp: Math.round(hour.temp),
+      wind: Math.round(wind ?? 0),
+      precip: hour.precip ?? 0,
+      uvIndex: hour.uvIndex ?? 0,
+      code: hour.code ?? 0,
       advice,
     };
   });
@@ -7816,8 +7861,13 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
                 return (
                   <div
                     key={idx}
-                    className={`flex flex-col items-center rounded-lg border py-1 px-0.5 ${cellBg} ${isNow ? 'ring-2 ring-yellow-400 ring-offset-1' : ''}`}
+                    role="button"
+                    tabIndex={0}
+                    className={`flex flex-col items-center rounded-lg border py-1 px-0.5 ${cellBg} ${isNow ? 'ring-2 ring-yellow-400 ring-offset-1' : ''} cursor-pointer hover:opacity-80 active:scale-95 transition-all`}
                     title={`${h.displayTime} – ${h.advice.text}`}
+                    onClick={() => setSelectedAdvice({ ...h.advice, displayTime: h.displayTime })}
+                    onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setSelectedAdvice({ ...h.advice, displayTime: h.displayTime })}
+                    aria-label={`${h.displayTime} – ${h.advice.text}`}
                   >
                     <span className={`text-[10px] font-semibold leading-none ${isNow ? 'text-yellow-500' : (isRealNight ? 'text-slate-400' : 'text-slate-500')}`}>
                       {String(h.hour).padStart(2, '0')}
@@ -7843,7 +7893,12 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
               return (
                 <div
                   key={idx}
-                  className={`flex items-center gap-3 p-3 rounded-xl border ${rangeBg}`}
+                  role="button"
+                  tabIndex={0}
+                  className={`flex items-center gap-3 p-3 rounded-xl border ${rangeBg} cursor-pointer hover:opacity-80 active:scale-[0.99] transition-all`}
+                  onClick={() => setSelectedAdvice(range.advice)}
+                  onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setSelectedAdvice(range.advice)}
+                  aria-label={`${range.advice.text} – ${t('activityReasonTitle')}`}
                 >
                   <span className="text-xl flex-shrink-0">{range.advice.emoji}</span>
                   <div className="flex-1 min-w-0">
@@ -7861,6 +7916,7 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
                         : `${range.from} – ${range.to} ${t('oclock') || 'Uhr'}`}
                     </div>
                   </div>
+                  <Info size={15} aria-hidden="true" className={isRealNight ? 'text-m3-dark-on-surface-variant/60 flex-shrink-0' : 'text-slate-300 flex-shrink-0'} />
                 </div>
               );
             })}
@@ -7892,6 +7948,44 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
           </div>
         </div>
       </div>
+
+      {/* Detail popup: explains WHY this activity is recommended */}
+      {selectedAdvice && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="activity-reason-title"
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-150"
+          onClick={() => setSelectedAdvice(null)}
+        >
+          <div
+            className={`${isRealNight ? 'bg-m3-dark-surface-container-high' : 'bg-white'} rounded-2xl w-full max-w-xs shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150`}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Detail header */}
+            <div className={`p-4 border-b ${isRealNight ? 'border-m3-outline-variant/70' : 'border-slate-100'} flex items-center gap-3`}>
+              <span className="text-3xl flex-shrink-0" aria-hidden="true">{selectedAdvice.emoji}</span>
+              <div className="flex-1 min-w-0">
+                <div id="activity-reason-title" className={`font-bold text-sm ${selectedAdvice.color} leading-tight`}>{selectedAdvice.text}</div>
+                <div className={`text-xs mt-0.5 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'}`}>{t('activityReasonTitle')}</div>
+              </div>
+              <button
+                onClick={() => setSelectedAdvice(null)}
+                aria-label={t('activityReasonClose')}
+                className={`p-1.5 ${isRealNight ? 'hover:bg-m3-dark-surface-container' : 'hover:bg-slate-100'} rounded-full transition flex-shrink-0`}
+              >
+                <X size={18} aria-hidden="true" className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} />
+              </button>
+            </div>
+            {/* Detail body */}
+            <div className="p-4">
+              <p className={`text-sm ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-700'} leading-relaxed`}>
+                {selectedAdvice.reason}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
