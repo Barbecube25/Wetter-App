@@ -10649,7 +10649,7 @@ export default function WeatherApp() {
       if (previewData) {
           setTripPreviewCache(prev => ({ ...prev, [newTripId]: previewData }));
       }
-      setSavedTrips([...savedTrips, newTrip]);
+      setSavedTrips([...savedTrips, newTrip].sort((a, b) => new Date(a.startDate || 0) - new Date(b.startDate || 0)));
       setTravelTripName("");
       alert(t('tripSaved'));
   };
