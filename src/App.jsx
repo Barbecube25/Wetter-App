@@ -3077,6 +3077,7 @@ const getTripClothingTip = ({ lang = 'de', maxTemp = 0, minTemp = 0, rainChance 
  * @returns {{ emoji: string, text: string, color: string }}
  */
 const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvIndex = 0, code = 0) => {
+  temp = Math.round(temp);
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
   const hasRain = precip24h >= UMBRELLA_PRECIP_THRESHOLD || RAIN_WEATHER_CODES.includes(code);
   // isDrizzle: drizzle codes (51-55) with low precipitation – shown as ☕ cosy-indoors rather than ☂️ umbrella.
