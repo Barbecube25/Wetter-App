@@ -9180,18 +9180,21 @@ const checkAndRequestLocationPermission = async () => {
 
 // --- TRIP PREVIEW COMPONENT (defined outside WeatherApp to prevent remounting on parent re-render) ---
 const TRIP_FORECAST_LIMIT_DAYS = 16;
+const TRIP_PREVIEW_CACHE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
+
 const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, formatTemp, getTempUnitSymbol, lang }) => {
     const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
     const cachedWeather = tripPreviewCache[trip.id];
-    const [weather, setWeather] = useState(cachedWeather || null);
-    const [loading, setLoading] = useState(!cachedWeather);
+    const isCacheStale = !cachedWeather || !cachedWeather.fetchedAt || (Date.now() - cachedWeather.fetchedAt > TRIP_PREVIEW_CACHE_TTL_MS);
+    const [weather, setWeather] = useState(isCacheStale ? null : cachedWeather);
+    const [loading, setLoading] = useState(isCacheStale);
 
     // Check if trip is too far in the future for forecast data
     const daysUntilTrip = Math.ceil((new Date(trip.startDate) - new Date()) / (1000 * 60 * 60 * 24));
     const isTooFarFuture = daysUntilTrip > TRIP_FORECAST_LIMIT_DAYS;
 
     useEffect(() => {
-        if (cachedWeather) {
+        if (cachedWeather && !isCacheStale) {
             setWeather(cachedWeather);
             setLoading(false);
         }
@@ -9199,7 +9202,7 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
 
     useEffect(() => {
         if (isTooFarFuture) { setLoading(false); return; }
-        if (cachedWeather) {
+        if (cachedWeather && !isCacheStale) {
             setWeather(cachedWeather);
             setLoading(false);
             return;
@@ -9213,7 +9216,8 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
                     const nextWeather = {
                         code: data.daily.weathercode[0],
                         max: data.daily.temperature_2m_max[0],
-                        min: data.daily.temperature_2m_min[0]
+                        min: data.daily.temperature_2m_min[0],
+                        fetchedAt: Date.now()
                     };
                     setWeather(nextWeather);
                     setTripPreviewCache(prev => ({ ...prev, [trip.id]: nextWeather }));
@@ -10737,9 +10741,9 @@ export default function WeatherApp() {
       let previewData = null;
       if (travelResult.mode === 'multi' && travelResult.items?.length > 0) {
           const firstItem = travelResult.items[0];
-          previewData = { code: firstItem.code, max: firstItem.max, min: firstItem.min };
+          previewData = { code: firstItem.code, max: firstItem.max, min: firstItem.min, fetchedAt: Date.now() };
       } else if (travelResult.summary?.code !== undefined) {
-          previewData = { code: travelResult.summary.code, max: travelResult.summary.maxTemp, min: travelResult.summary.minTemp };
+          previewData = { code: travelResult.summary.code, max: travelResult.summary.maxTemp, min: travelResult.summary.minTemp, fetchedAt: Date.now() };
       }
       if (previewData) {
           setTripPreviewCache(prev => ({ ...prev, [newTripId]: previewData }));
