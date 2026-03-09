@@ -28,7 +28,7 @@
         </activity>
 
         <receiver
-            android:name=".AiReportWidget"
+            android:name=".widget.AiReportWidgetProvider"
             android:exported="true"
             android:label="@string/widget_title">
             <intent-filter>

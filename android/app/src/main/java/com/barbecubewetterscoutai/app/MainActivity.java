@@ -11,6 +11,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import com.barbecubewetterscoutai.app.plugins.WidgetPlugin;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -18,6 +19,8 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // Register the widget plugin (plugins.WidgetPlugin) so the JS bridge can call
+        // updateAiReport() to refresh the home screen widget via AiReportWidgetProvider.
         registerPlugin(WidgetPlugin.class);
         super.onCreate(savedInstanceState);
         
