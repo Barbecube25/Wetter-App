@@ -1,0 +1,205 @@
+package com.barbecubewetterscoutai.wear
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.location.Location
+import androidx.wear.tiles.ColorBuilders
+import androidx.wear.tiles.DeviceParametersBuilders
+import androidx.wear.tiles.DimensionBuilders
+import androidx.wear.tiles.LayoutElementBuilders
+import androidx.wear.tiles.RequestBuilders.ResourcesRequest
+import androidx.wear.tiles.RequestBuilders.TileRequest
+import androidx.wear.tiles.ResourceBuilders.Resources
+import androidx.wear.tiles.TileBuilders.Tile
+import androidx.wear.tiles.TileService
+import androidx.wear.tiles.TimelineBuilders
+import androidx.wear.tiles.material.Text as TileText
+import androidx.wear.tiles.material.Typography
+import androidx.wear.tiles.material.layouts.PrimaryLayout
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.SettableFuture
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.math.roundToInt
+
+/**
+ * Wear OS Tile service that displays a weather summary card.
+ *
+ * The tile is refreshed every 30 minutes. It shows the current temperature,
+ * weather condition emoji/description, and today's min/max temperatures.
+ */
+class WeatherTileService : TileService() {
+
+    companion object {
+        private const val RESOURCES_VERSION = "0"
+        private const val FRESHNESS_INTERVAL_MS = 30L * 60L * 1_000L
+        private const val LOCATION_TIMEOUT_MS = 15_000L
+    }
+
+    private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    override fun onDestroy() {
+        serviceScope.cancel()
+        super.onDestroy()
+    }
+
+    @SuppressLint("MissingPermission")
+    override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> {
+        val future = SettableFuture.create<Tile>()
+        val appContext = applicationContext
+        serviceScope.launch {
+            val weatherData = try {
+                resolveLocation(appContext)?.let { loc ->
+                    WeatherRepository.fetchWeather(loc.latitude, loc.longitude)
+                }
+            } catch (e: Exception) {
+                null
+            }
+            future.set(buildTile(appContext, requestParams, weatherData))
+        }
+        return future
+    }
+
+    override fun onResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> {
+        val future = SettableFuture.create<Resources>()
+        future.set(Resources.Builder().setVersion(RESOURCES_VERSION).build())
+        return future
+    }
+
+    @SuppressLint("MissingPermission")
+    private suspend fun resolveLocation(context: Context): Location? {
+        val client = LocationServices.getFusedLocationProviderClient(context)
+        client.lastLocation.await()?.let { return it }
+        val cts = CancellationTokenSource()
+        return withTimeoutOrNull(LOCATION_TIMEOUT_MS) {
+            try {
+                client.getCurrentLocation(
+                    Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+                    cts.token
+                ).await()
+            } finally {
+                cts.cancel()
+            }
+        }
+    }
+
+    private fun buildTile(
+        context: Context,
+        requestParams: TileRequest,
+        data: WeatherData?
+    ): Tile {
+        val deviceParams = requestParams.deviceConfiguration
+            ?: DeviceParametersBuilders.DeviceParameters.Builder()
+                .setScreenWidthDp(192)
+                .setScreenHeightDp(192)
+                .setScreenDensity(2.0f)
+                .setScreenShape(DeviceParametersBuilders.SCREEN_SHAPE_ROUND)
+                .build()
+
+        val rootLayout = LayoutElementBuilders.Layout.Builder()
+            .setRoot(
+                if (data != null) buildWeatherLayout(context, deviceParams, data)
+                else buildErrorLayout(context, deviceParams)
+            )
+            .build()
+
+        return Tile.Builder()
+            .setResourcesVersion(RESOURCES_VERSION)
+            .setFreshnessIntervalMillis(FRESHNESS_INTERVAL_MS)
+            .setTileTimeline(
+                TimelineBuilders.Timeline.Builder()
+                    .addTimelineEntry(
+                        TimelineBuilders.TimelineEntry.Builder()
+                            .setLayout(rootLayout)
+                            .build()
+                    )
+                    .build()
+            )
+            .build()
+    }
+
+    private fun buildWeatherLayout(
+        context: Context,
+        deviceParams: DeviceParametersBuilders.DeviceParameters,
+        data: WeatherData
+    ): LayoutElementBuilders.LayoutElement {
+        val temp = data.temperature.roundToInt()
+        val tMax = data.tempMax.roundToInt()
+        val tMin = data.tempMin.roundToInt()
+        val emoji = WMOCode.emoji(data.weatherCode)
+        val description = WMOCode.description(data.weatherCode)
+
+        val content = LayoutElementBuilders.Column.Builder()
+            .setWidth(DimensionBuilders.wrap())
+            .setHeight(DimensionBuilders.wrap())
+            .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+            .addContent(
+                TileText.Builder(context, "$emoji $temp°C")
+                    .setTypography(Typography.TYPOGRAPHY_DISPLAY1)
+                    .setColor(ColorBuilders.argb(0xFFFFFFFF.toInt()))
+                    .build()
+            )
+            .addContent(
+                LayoutElementBuilders.Spacer.Builder()
+                    .setHeight(DimensionBuilders.dp(2f))
+                    .build()
+            )
+            .addContent(
+                TileText.Builder(context, description)
+                    .setTypography(Typography.TYPOGRAPHY_CAPTION1)
+                    .setColor(ColorBuilders.argb(0xFFAAAAAA.toInt()))
+                    .build()
+            )
+            .addContent(
+                LayoutElementBuilders.Spacer.Builder()
+                    .setHeight(DimensionBuilders.dp(4f))
+                    .build()
+            )
+            .addContent(
+                TileText.Builder(context, "↑$tMax°  ↓$tMin°")
+                    .setTypography(Typography.TYPOGRAPHY_CAPTION2)
+                    .setColor(ColorBuilders.argb(0xFFCCCCCC.toInt()))
+                    .build()
+            )
+            .build()
+
+        return PrimaryLayout.Builder(deviceParams)
+            .setContent(content)
+            .build()
+    }
+
+    private fun buildErrorLayout(
+        context: Context,
+        deviceParams: DeviceParametersBuilders.DeviceParameters
+    ): LayoutElementBuilders.LayoutElement {
+        val content = LayoutElementBuilders.Column.Builder()
+            .setWidth(DimensionBuilders.wrap())
+            .setHeight(DimensionBuilders.wrap())
+            .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+            .addContent(
+                TileText.Builder(context, "⚠️")
+                    .setTypography(Typography.TYPOGRAPHY_DISPLAY2)
+                    .setColor(ColorBuilders.argb(0xFFAAAAAA.toInt()))
+                    .build()
+            )
+            .addContent(
+                TileText.Builder(context, "Keine Daten")
+                    .setTypography(Typography.TYPOGRAPHY_CAPTION1)
+                    .setColor(ColorBuilders.argb(0xFFAAAAAA.toInt()))
+                    .build()
+            )
+            .build()
+
+        return PrimaryLayout.Builder(deviceParams)
+            .setContent(content)
+            .build()
+    }
+}

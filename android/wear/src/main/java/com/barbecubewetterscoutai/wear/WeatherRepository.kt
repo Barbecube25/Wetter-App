@@ -48,11 +48,12 @@ object WeatherRepository {
         return "https://api.open-meteo.com/v1/forecast" +
             "?latitude=$lat&longitude=$lon" +
             "&current=temperature_2m,apparent_temperature,weathercode," +
-            "relative_humidity_2m,wind_speed_10m" +
-            "&daily=temperature_2m_max,temperature_2m_min" +
+            "relative_humidity_2m,wind_speed_10m,precipitation" +
+            "&daily=weather_code,temperature_2m_max,temperature_2m_min," +
+            "precipitation_sum,precipitation_probability_max" +
             "&models=icon_seamless" +
             "&timezone=auto" +
-            "&forecast_days=1"
+            "&forecast_days=4"
     }
 
     private fun getJson(urlString: String): JSONObject {
@@ -79,12 +80,34 @@ object WeatherRepository {
         val weatherCode = current.getInt("weathercode")
         val humidity = current.getInt("relative_humidity_2m")
         val windSpeed = current.getDouble("wind_speed_10m")
+        val precipitation = current.optDouble("precipitation", 0.0)
 
-        // daily arrays contain one entry (forecast_days=1)
         val maxArray = daily.getJSONArray("temperature_2m_max")
         val minArray = daily.getJSONArray("temperature_2m_min")
+        val weatherCodeArray = daily.getJSONArray("weather_code")
+        val precipSumArray = daily.getJSONArray("precipitation_sum")
+        val precipProbArray = daily.getJSONArray("precipitation_probability_max")
+        val dateArray = daily.getJSONArray("time")
+
+        // daily arrays: index 0 = today
         val tempMax = maxArray.getDouble(0)
         val tempMin = minArray.getDouble(0)
+        val precipitationProbability = if (precipProbArray.length() > 0) precipProbArray.optInt(0, 0) else 0
+
+        // Build daily forecast for the next 3 days (skip today = index 0)
+        val dailyForecast = mutableListOf<DayForecast>()
+        for (i in 1 until minOf(4, dateArray.length())) {
+            dailyForecast.add(
+                DayForecast(
+                    date = dateArray.getString(i),
+                    weatherCode = weatherCodeArray.getInt(i),
+                    tempMax = maxArray.getDouble(i),
+                    tempMin = minArray.getDouble(i),
+                    precipitationSum = precipSumArray.optDouble(i, 0.0),
+                    precipitationProbabilityMax = precipProbArray.optInt(i, 0)
+                )
+            )
+        }
 
         return WeatherData(
             temperature = temperature,
@@ -93,7 +116,10 @@ object WeatherRepository {
             humidity = humidity,
             windSpeed = windSpeed,
             tempMax = tempMax,
-            tempMin = tempMin
+            tempMin = tempMin,
+            precipitation = precipitation,
+            precipitationProbability = precipitationProbability,
+            dailyForecast = dailyForecast
         )
     }
 }
