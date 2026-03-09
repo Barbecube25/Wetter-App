@@ -40,7 +40,8 @@ class WeatherTileService : TileService() {
     companion object {
         private const val RESOURCES_VERSION = "0"
         private const val FRESHNESS_INTERVAL_MS = 30L * 60L * 1_000L
-        private const val LOCATION_TIMEOUT_MS = 15_000L
+        private const val LOCATION_TIMEOUT_BALANCED_MS = 15_000L
+        private const val LOCATION_TIMEOUT_HIGH_MS = 20_000L
     }
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -74,16 +75,34 @@ class WeatherTileService : TileService() {
     @SuppressLint("MissingPermission")
     private suspend fun resolveLocation(context: Context): Location? {
         val client = LocationServices.getFusedLocationProviderClient(context)
+
+        // 1. Last known location – instant, no battery cost.
         client.lastLocation.await()?.let { return it }
-        val cts = CancellationTokenSource()
-        return withTimeoutOrNull(LOCATION_TIMEOUT_MS) {
+
+        // 2. Balanced accuracy (network / Wi-Fi).
+        val balancedCts = CancellationTokenSource()
+        val balanced = withTimeoutOrNull(LOCATION_TIMEOUT_BALANCED_MS) {
             try {
                 client.getCurrentLocation(
                     Priority.PRIORITY_BALANCED_POWER_ACCURACY,
-                    cts.token
+                    balancedCts.token
                 ).await()
             } finally {
-                cts.cancel()
+                balancedCts.cancel()
+            }
+        }
+        if (balanced != null) return balanced
+
+        // 3. High accuracy (GPS) – fallback for Wear OS devices without a cached location.
+        val highCts = CancellationTokenSource()
+        return withTimeoutOrNull(LOCATION_TIMEOUT_HIGH_MS) {
+            try {
+                client.getCurrentLocation(
+                    Priority.PRIORITY_HIGH_ACCURACY,
+                    highCts.token
+                ).await()
+            } finally {
+                highCts.cancel()
             }
         }
     }
@@ -133,6 +152,7 @@ class WeatherTileService : TileService() {
         val tMin = data.tempMin.roundToInt()
         val emoji = WMOCode.emoji(data.weatherCode)
         val description = WMOCode.description(data.weatherCode)
+        val precipProb = data.precipitationProbability
 
         val content = LayoutElementBuilders.Column.Builder()
             .setWidth(DimensionBuilders.wrap())
@@ -164,6 +184,17 @@ class WeatherTileService : TileService() {
                 TileText.Builder(context, "↑$tMax°  ↓$tMin°")
                     .setTypography(Typography.TYPOGRAPHY_CAPTION2)
                     .setColor(ColorBuilders.argb(0xFFCCCCCC.toInt()))
+                    .build()
+            )
+            .addContent(
+                LayoutElementBuilders.Spacer.Builder()
+                    .setHeight(DimensionBuilders.dp(4f))
+                    .build()
+            )
+            .addContent(
+                TileText.Builder(context, "🌧️ $precipProb%  💧 ${data.humidity}%")
+                    .setTypography(Typography.TYPOGRAPHY_CAPTION2)
+                    .setColor(ColorBuilders.argb(0xFF90CAF9.toInt()))
                     .build()
             )
             .build()
