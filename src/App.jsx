@@ -6954,7 +6954,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
   
   const hasDwd = dwdWarnings && dwdWarnings.length > 0;
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
-  const showDetails = report.type !== 'daily';
+  const showDetails = report.type !== 'daily' || (Array.isArray(structuredDetails) && structuredDetails.length > 0);
   const getWindUnitLabelSafe = getWindUnitLabel || (() => 'km/h');
   const formatWindSafe = formatWind || ((val) => (val ?? '--'));
   const getPrecipUnitLabelSafe = getPrecipUnitLabel || (() => 'mm');
@@ -11446,7 +11446,9 @@ export default function WeatherApp() {
   // Update the Android home screen widget whenever the daily AI report changes
   useEffect(() => {
     if (!dailyReport || !dailyReport.summary || dailyReport.title === 'Lade...') return;
-    const kiBerichtText = `${dailyReport.title}\n\n${dailyReport.summary}`;
+    // Build a compact single-line-per-section text for the widget (no blank lines)
+    const summaryParts = dailyReport.summary.split('\n\n');
+    const kiBerichtText = summaryParts.slice(0, 3).join('\n');
     WidgetPlugin.updateAiReport({ report: kiBerichtText }).catch(err => {
       console.log('Widget konnte nicht aktualisiert werden (vielleicht iOS/Web?): ', err);
     });
@@ -11756,6 +11758,18 @@ export default function WeatherApp() {
 
   if (viewMode === 'report') {
      if (isInitialLoading) return <div className="h-screen w-screen flex items-center justify-center bg-m3-surface">{t('loading')}</div>;
+     if (error && !shortTermData) return (
+       <div className="min-h-screen bg-m3-surface px-4 pb-4 pt-14 flex flex-col items-center justify-center gap-4">
+         <div className="mb-4 self-start">
+           <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
+         </div>
+         <div className="text-center p-6 bg-m3-error-container rounded-xl text-m3-on-error-container">
+           <p className="font-bold text-lg mb-2">{lang === 'en' ? 'No data available' : 'Keine Daten verfügbar'}</p>
+           <p className="text-sm mb-4">{lang === 'en' ? 'Weather data could not be loaded. Please open the app.' : 'Wetterdaten konnten nicht geladen werden. Bitte App öffnen.'}</p>
+           <a href="/" className="bg-m3-error text-white px-4 py-2 rounded-lg font-bold">{lang === 'en' ? 'Open App' : 'App öffnen'}</a>
+         </div>
+       </div>
+     );
      return (
         <div className="min-h-screen bg-m3-surface px-4 pb-4 pt-14">
             <div className="mb-4">
@@ -11763,6 +11777,7 @@ export default function WeatherApp() {
             </div>
             <h2 className="text-2xl font-bold mb-4 text-slate-800">{t('dailyReport')}</h2>
              <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
+            {processedShort.length > 0 && <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} isRealNight={isRealNight} />}
             <div className="mt-8">
                  <h2 className="text-2xl font-bold mb-4 text-slate-800">{t('trend')}</h2>
                  <AIReportBox report={longtermReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
