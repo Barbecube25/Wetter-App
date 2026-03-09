@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App colors -->
+    <color name="colorPrimary">#3B82F6</color>
+    <color name="colorPrimaryDark">#1D4ED8</color>
+    <color name="colorAccent">#60A5FA</color>
+
+    <!-- Widget colors – light mode -->
+    <color name="widget_background">#FFFFFF</color>
+    <color name="widget_header_bg">#EFF6FF</color>
+    <color name="widget_header_text">#1E3A5F</color>
+    <color name="widget_text">#374151</color>
+    <color name="widget_subtext">#6B7280</color>
+    <color name="widget_divider">#DBEAFE</color>
+    <color name="widget_accent">#3B82F6</color>
+</resources>
