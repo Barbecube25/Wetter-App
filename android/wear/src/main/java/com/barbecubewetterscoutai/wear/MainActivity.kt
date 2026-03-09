@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
-import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.TimeText
 import androidx.wear.compose.material3.*
 import java.text.SimpleDateFormat
@@ -75,7 +74,7 @@ fun WearApp(viewModel: WeatherViewModel) {
     val uiState by viewModel.uiState.collectAsState()
 
     MaterialTheme {
-        Scaffold(
+        AppScaffold(
             timeText = { TimeText() }
         ) {
             when (val state = uiState) {

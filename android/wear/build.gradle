@@ -7,7 +7,7 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
     
     defaultConfig {
-        applicationId "com.barbecubewetterscoutai.app"
+        applicationId "com.barbecubewetterscoutai.wear"
         minSdk 30
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 15
