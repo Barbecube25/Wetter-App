@@ -11,7 +11,6 @@ Eine moderne Wetter-App mit React, Vite und Capacitor.
 - 🤖 KI-generierte Wetterberichte (verbessert und detaillierter)
 - 🌧️ Niederschlagsradar
 - 📱 Progressive Web App (PWA) und native Android App
-- ⌚ **Wear OS Support** - Jetzt auch für Smartwatches verfügbar!
 
 ## Technologie-Stack
 
@@ -53,7 +52,6 @@ Die gebauten Dateien befinden sich im `dist/` Ordner.
   - Installation und Voraussetzungen
   - Projekt in Android Studio öffnen
   - App auf Gerät/Emulator testen
-  - Wear OS Informationen
 
 ### Android App Bundle (.aab) erstellen
 
@@ -98,16 +96,6 @@ npm run android:open
 - `npm run android:open` - Android Studio öffnen
 - `npm run android:run` - App auf verbundenem Gerät ausführen
 
-## Wear OS Support ⌚
-
-Die App unterstützt jetzt Wear OS (Smartwatches)! Siehe [WEAR_OS_INTEGRATION.md](./WEAR_OS_INTEGRATION.md) für:
-- Detaillierte Informationen zur Wear OS Integration
-- Build-Anweisungen für die Wear OS Version
-- Hinweise zur Play Store Veröffentlichung
-- Zukünftige Erweiterungsmöglichkeiten
-
-Wenn Sie ein AAB erstellen, wird automatisch auch die Wear OS Version eingeschlossen, und der Play Store zeigt die App sowohl für Smartphones als auch für Smartwatches an.
-
 ## Android Berechtigungen
 
 Die App benötigt folgende Berechtigungen:
@@ -140,8 +128,7 @@ Siehe [DATENSCHUTZ.md](./DATENSCHUTZ.md) für Details zur Datenverarbeitung und 
 ├── src/                    # React Quellcode
 ├── public/                 # Statische Assets
 ├── android/                # Native Android Projekt (Capacitor)
-│   ├── app/                # Hauptapp für Smartphones
-│   └── wear/               # 🆕 Wear OS Modul für Smartwatches
+│   └── app/                # Hauptapp für Smartphones
 ├── play-store-screenshots/ # 🆕 Google Play Store Screenshots & Dokumentation
 ├── dist/                   # Build-Ausgabe (wird ignoriert)
 ├── capacitor.config.ts     # Capacitor Konfiguration
