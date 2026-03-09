@@ -11375,80 +11375,15 @@ export default function WeatherApp() {
   const effectiveTerrain = demoTerrain || (currentLocIdx === 0 ? settings.homeTerrain : null);
 
   // Create a 3-day forecast: rest of today, tomorrow, and day after tomorrow
-  const threeDayForecast = useMemo(() => {
-    if (!processedShort.length || !processedLong.length) return [];
-    
-    const now = new Date();
-    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-    const remainingHoursToday = processedShort.filter(hour => hour.time <= todayEnd);
-    
-    const result = [];
-    
-    // 1. Rest of today (aggregated from hourly data)
-    if (remainingHoursToday.length > 0) {
-      const temps = remainingHoursToday.map(h => h.temp);
-      const maxTemp = Math.max(...temps);
-      const minTemp = Math.min(...temps);
-      const avgReliability = Math.round(remainingHoursToday.reduce((sum, h) => sum + h.reliability, 0) / remainingHoursToday.length);
-      
-      // Find the most common weather code
-      const weatherCodes = remainingHoursToday.map(h => h.code);
-      const codeFreq = {};
-      weatherCodes.forEach(code => { codeFreq[code] = (codeFreq[code] || 0) + 1; });
-      const mostCommonCode = parseInt(Object.keys(codeFreq).reduce((a, b) => codeFreq[a] > codeFreq[b] ? a : b, 0));
-      
-      // Aggregate precipitation
-      const totalRain = remainingHoursToday.reduce((sum, h) => sum + parseFloat(h.precip || 0), 0).toFixed(1);
-      const totalSnow = remainingHoursToday.reduce((sum, h) => sum + parseFloat(h.snow || 0), 0).toFixed(1);
-      const maxWind = Math.max(...remainingHoursToday.map(h => h.wind || 0));
-      const maxGust = Math.max(...remainingHoursToday.map(h => h.gust || 0));
-      const avgDir = remainingHoursToday[Math.floor(remainingHoursToday.length / 2)]?.dir || 0;
-      const maxPrecipProb = Math.max(...remainingHoursToday.map(h => h.precipProb || 0));
-      
-      result.push({
-        date: now,
-        dayName: t('restOfDay'),
-        dayNameFull: t('restOfDay'),
-        dateShort: t('today'),
-        max: maxTemp,
-        min: minTemp,
-        rain: totalRain,
-        snow: totalSnow,
-        wind: Math.round(maxWind),
-        gust: Math.round(maxGust),
-        dir: avgDir,
-        code: mostCommonCode,
-        reliability: avgReliability,
-        prob: Math.round(maxPrecipProb)
-      });
-    }
-    
-    // 2. Tomorrow (from processedLong[1])
-    if (processedLong.length > 1) {
-      result.push({
-        ...processedLong[1],
-        dateShort: t('tomorrow')
-      });
-    }
-    
-    // 3. Day after tomorrow (from processedLong[2])
-    if (processedLong.length > 2) {
-      result.push(processedLong[2]);
-    }
-    
-    return result;
-  }, [processedShort, processedLong, lang, t]);
-
-  const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, { threeDayForecast, pollenData: airQualityData, pollenFilter: settings.pollenFilter, dwdPollenForecast }), [processedShort, lang, threeDayForecast, airQualityData, settings.pollenFilter, dwdPollenForecast]);
+    const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter, dwdPollenForecast }), [processedShort, lang, airQualityData, settings.pollenFilter, dwdPollenForecast]);
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter }), [processedLong, lang, airQualityData, settings.pollenFilter]);
 
   // Update the Android home screen widget whenever the daily AI report changes
   useEffect(() => {
     if (!dailyReport || !dailyReport.summary || dailyReport.title === 'Lade...') return;
-    // Build a compact single-line-per-section text for the widget (no blank lines)
-    const summaryParts = dailyReport.summary.split('\n\n');
-    const kiBerichtText = summaryParts.slice(0, 3).join('\n');
+    const kiBerichtText = dailyReport.summary.trim();
+    if (!kiBerichtText) return;
     WidgetPlugin.updateAiReport({ report: kiBerichtText }).catch(err => {
       console.log('Widget konnte nicht aktualisiert werden (vielleicht iOS/Web?): ', err);
     });
