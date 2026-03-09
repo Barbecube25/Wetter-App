@@ -60,6 +60,7 @@
         android:paddingEnd="14dp"
         android:paddingTop="10dp"
         android:paddingBottom="10dp"
+        android:maxLines="6"
         android:ellipsize="end"
         android:lineSpacingMultiplier="1.35" />
 

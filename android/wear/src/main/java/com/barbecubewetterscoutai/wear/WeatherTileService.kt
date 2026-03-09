@@ -7,12 +7,10 @@ import androidx.wear.protolayout.ColorBuilders
 import androidx.wear.protolayout.DeviceParametersBuilders
 import androidx.wear.protolayout.DimensionBuilders
 import androidx.wear.protolayout.LayoutElementBuilders
-import androidx.wear.protolayout.ResourceBuilders.Resources
 import androidx.wear.protolayout.TimelineBuilders
 import androidx.wear.protolayout.material.Text as TileText
 import androidx.wear.protolayout.material.Typography
 import androidx.wear.protolayout.material.layouts.PrimaryLayout
-import androidx.wear.tiles.RequestBuilders.ResourcesRequest
 import androidx.wear.tiles.RequestBuilders.TileRequest
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
@@ -63,12 +61,6 @@ class WeatherTileService : TileService() {
                 null
             }
             buildTile(appContext, requestParams, weatherData)
-        }
-    }
-
-    override fun onResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<androidx.wear.tiles.ResourceBuilders.Resources> {
-        return serviceScope.future {
-            androidx.wear.tiles.ResourceBuilders.Resources.Builder().setVersion(RESOURCES_VERSION).build()
         }
     }
 
