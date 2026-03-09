@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 
 android {
     namespace "com.barbecubewetterscoutai.app"
@@ -69,7 +70,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "21"
     }
 }
 
@@ -102,6 +103,8 @@ dependencies {
     implementation "androidx.compose.material3:material3-window-size-class:$material3WindowSizeVersion"
     implementation "androidx.compose.material3:material3-adaptive-navigation-suite:$material3AdaptiveNavVersion"
     
+    // Material Icons Extended
+    implementation "androidx.compose.material:material-icons-extended:$composeUiVersion"
 }
 
 apply from: 'capacitor.build.gradle'
