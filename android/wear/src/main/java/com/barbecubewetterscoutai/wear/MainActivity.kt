@@ -9,16 +9,21 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import androidx.wear.compose.material.*
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.material3.*
+import java.text.SimpleDateFormat
+import java.util.Locale
 import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
@@ -94,21 +99,17 @@ private fun LoadingScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colors.background),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(32.dp),
-                indicatorColor = MaterialTheme.colors.primary,
-                trackColor = MaterialTheme.colors.onBackground.copy(alpha = 0.2f)
-            )
+            CircularProgressIndicator(modifier = Modifier.size(36.dp))
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Wetter wird geladen…",
-                style = MaterialTheme.typography.caption2,
+                style = MaterialTheme.typography.labelSmall,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colors.onBackground
+                color = MaterialTheme.colorScheme.onBackground
             )
         }
     }
@@ -123,14 +124,14 @@ private fun NoPermissionScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colors.background),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = "📍 Standortberechtigung fehlt",
-            style = MaterialTheme.typography.caption1,
+            style = MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.Center,
-            color = MaterialTheme.colors.error,
+            color = MaterialTheme.colorScheme.error,
             modifier = Modifier.padding(16.dp)
         )
     }
@@ -145,7 +146,7 @@ private fun ErrorScreen(message: String, onRetry: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colors.background),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -160,16 +161,17 @@ private fun ErrorScreen(message: String, onRetry: () -> Unit) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = message,
-                style = MaterialTheme.typography.caption2,
+                style = MaterialTheme.typography.labelSmall,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colors.error
+                color = MaterialTheme.colorScheme.error
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Chip(
+            Button(
                 onClick = onRetry,
-                label = { Text("Wiederholen") },
-                colors = ChipDefaults.primaryChipColors()
-            )
+                modifier = Modifier.fillMaxWidth(0.7f)
+            ) {
+                Text("Wiederholen", fontSize = 11.sp)
+            }
         }
     }
 }
@@ -190,7 +192,7 @@ private fun WeatherScreen(data: WeatherData, onRefresh: () -> Unit) {
     ScalingLazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colors.background),
+            .background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(top = 28.dp, bottom = 12.dp, start = 8.dp, end = 8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -200,8 +202,8 @@ private fun WeatherScreen(data: WeatherData, onRefresh: () -> Unit) {
             item {
                 Text(
                     text = data.locationName,
-                    style = MaterialTheme.typography.caption2,
-                    color = MaterialTheme.colors.onBackground.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center
                 )
             }
@@ -218,9 +220,9 @@ private fun WeatherScreen(data: WeatherData, onRefresh: () -> Unit) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = description,
-                    style = MaterialTheme.typography.caption1,
+                    style = MaterialTheme.typography.labelMedium,
                     textAlign = TextAlign.Center,
-                    color = MaterialTheme.colors.onBackground
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             }
         }
@@ -231,7 +233,7 @@ private fun WeatherScreen(data: WeatherData, onRefresh: () -> Unit) {
                 text = "$temp°C",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colors.primary,
+                color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center
             )
         }
@@ -240,8 +242,8 @@ private fun WeatherScreen(data: WeatherData, onRefresh: () -> Unit) {
         item {
             Text(
                 text = "Gefühlt $feelsLike°C",
-                style = MaterialTheme.typography.caption2,
-                color = MaterialTheme.colors.onBackground.copy(alpha = 0.7f),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center
             )
         }
@@ -254,13 +256,13 @@ private fun WeatherScreen(data: WeatherData, onRefresh: () -> Unit) {
             ) {
                 Text(
                     text = "↑ $tMax°",
-                    style = MaterialTheme.typography.caption1,
+                    style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFFFF6B35),
                     fontWeight = FontWeight.Medium
                 )
                 Text(
                     text = "↓ $tMin°",
-                    style = MaterialTheme.typography.caption1,
+                    style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFF64B5F6),
                     fontWeight = FontWeight.Medium
                 )
@@ -268,12 +270,13 @@ private fun WeatherScreen(data: WeatherData, onRefresh: () -> Unit) {
         }
 
         // Divider
+        item { SectionDivider() }
+
+        // Precipitation tile
         item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .height(1.dp)
-                    .background(MaterialTheme.colors.onBackground.copy(alpha = 0.15f))
+            PrecipitationTile(
+                precipitation = data.precipitation,
+                precipitationProbability = data.precipitationProbability
             )
         }
 
@@ -295,18 +298,158 @@ private fun WeatherScreen(data: WeatherData, onRefresh: () -> Unit) {
             )
         }
 
+        // Day outlook
+        if (data.dailyForecast.isNotEmpty()) {
+            item { SectionDivider() }
+            item {
+                DayOutlookSection(forecasts = data.dailyForecast)
+            }
+        }
+
         // Refresh button
         item {
             Spacer(modifier = Modifier.height(4.dp))
-            Chip(
+            FilledTonalButton(
                 onClick = onRefresh,
-                label = { Text("Aktualisieren", fontSize = 11.sp) },
-                modifier = Modifier.fillMaxWidth(0.75f),
-                colors = ChipDefaults.secondaryChipColors()
-            )
+                modifier = Modifier.fillMaxWidth(0.75f)
+            ) {
+                Text("Aktualisieren", fontSize = 11.sp)
+            }
         }
     }
 }
+
+@Composable
+private fun SectionDivider() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth(0.6f)
+            .height(1.dp)
+            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f))
+    )
+}
+
+// ---------------------------------------------------------------------------
+// Precipitation tile
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun PrecipitationTile(
+    precipitation: Double,
+    precipitationProbability: Int
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth(0.9f)
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f))
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "🌧️ Niederschlag",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+                )
+                Text(
+                    text = "%.1f mm".format(precipitation),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "$precipitationProbability%",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (precipitationProbability >= 50) Color(0xFF64B5F6)
+                            else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+                Text(
+                    text = "Wahrsch.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Day outlook
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun DayOutlookSection(forecasts: List<DayForecast>) {
+    Column(
+        modifier = Modifier.fillMaxWidth(0.9f),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = "Ausblick",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        forecasts.forEach { day ->
+            DayForecastRow(day)
+        }
+    }
+}
+
+@Composable
+private fun DayForecastRow(day: DayForecast) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.4f))
+            .padding(horizontal = 8.dp, vertical = 5.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = day.dayName(),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.width(30.dp)
+            )
+            Text(
+                text = WMOCode.emoji(day.weatherCode),
+                fontSize = 14.sp
+            )
+            Text(
+                text = "${day.tempMin.roundToInt()}°/${day.tempMax.roundToInt()}°",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            if (day.precipitationProbabilityMax > 0) {
+                Text(
+                    text = "💧${day.precipitationProbabilityMax}%",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFF64B5F6)
+                )
+            } else {
+                Spacer(modifier = Modifier.width(32.dp))
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Shared helpers
+// ---------------------------------------------------------------------------
 
 @Composable
 private fun WeatherDetailRow(icon: String, label: String, value: String) {
@@ -317,14 +460,25 @@ private fun WeatherDetailRow(icon: String, label: String, value: String) {
     ) {
         Text(
             text = "$icon $label",
-            style = MaterialTheme.typography.caption2,
-            color = MaterialTheme.colors.onBackground.copy(alpha = 0.7f)
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.caption1,
+            style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colors.onBackground
+            color = MaterialTheme.colorScheme.onBackground
         )
+    }
+}
+
+private fun DayForecast.dayName(): String {
+    return try {
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.GERMAN)
+        val date = sdf.parse(this.date) ?: return this.date.takeLast(5)
+        val dayFormat = SimpleDateFormat("EE", Locale.GERMAN)
+        dayFormat.format(date).replaceFirstChar { it.uppercase() }
+    } catch (e: Exception) {
+        this.date.takeLast(5)
     }
 }
