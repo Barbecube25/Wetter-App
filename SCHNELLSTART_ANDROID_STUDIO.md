@@ -92,14 +92,7 @@ cd android && ./gradlew clean && cd ..
 | Änderungen nicht sichtbar | **Build** → **Clean Project** in Android Studio |
 | SDK location not found | `android/local.properties` erstellen mit `sdk.dir=...` |
 
-## 📱 Wear OS App?
-
-**Status:** Dieses Projekt enthält aktuell **keine Wear OS Version**.
-
-Für Informationen, wie eine Wear OS App erstellt werden könnte, siehe:
-- [ANDROID_STUDIO_ANLEITUNG.md - Wear OS Abschnitt](./ANDROID_STUDIO_ANLEITUNG.md#-wear-os-app-erstellen-optional)
-
-## 📚 Weitere Ressourcen
+## 📱 Weitere Ressourcen
 
 - 📄 [ANDROID_STUDIO_ANLEITUNG.md](./ANDROID_STUDIO_ANLEITUNG.md) - Vollständige detaillierte Anleitung
 - 📄 [README.md](./README.md) - Projekt-Übersicht

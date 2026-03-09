@@ -4,11 +4,8 @@ Diese ausführliche Anleitung zeigt Ihnen Schritt für Schritt, wie Sie die Wett
 
 ## 📱 Aktueller Projektstand
 
-**Wichtiger Hinweis:** Dieses Projekt enthält aktuell:
+**Wichtiger Hinweis:** Dieses Projekt enthält:
 - ✅ **Mobile Android App** (für Smartphones und Tablets)
-- ❌ **Keine Wear OS App** (für Smartwatches)
-
-Wenn Sie eine Wear OS Version benötigen, lesen Sie den Abschnitt [Wear OS App erstellen](#wear-os-app-erstellen-optional) am Ende dieser Anleitung.
 
 ## 📋 Voraussetzungen
 
@@ -306,54 +303,6 @@ Bevor Sie die App veröffentlichen:
    - ✅ `INTERNET` - Für API-Zugriff
    - ✅ `ACCESS_FINE_LOCATION` - Für GPS
    - ✅ `ACCESS_COARSE_LOCATION` - Für ungefähren Standort
-
-## 👕 Wear OS App erstellen (Optional)
-
-**Status:** Aktuell existiert **keine Wear OS Version** dieser App.
-
-Wenn Sie eine Wear OS App erstellen möchten, sind folgende Schritte nötig:
-
-### Was benötigt wird:
-
-1. **Neues Wear OS Modul in Android Studio erstellen:**
-   - **File** → **New** → **New Module**
-   - Wählen Sie **Wear OS Module**
-   - Wählen Sie Template (z.B. "Blank Activity")
-
-2. **Wear OS spezifische Anpassungen:**
-   - Eigene UI für kleine, runde Displays
-   - Wear OS spezifische Komponenten (Jetpack Compose for Wear OS)
-   - Angepasste Navigation für Smartwatches
-   - Optimierte Performance für begrenzte Ressourcen
-
-3. **Dependencies hinzufügen:**
-   ```gradle
-   implementation 'androidx.wear:wear:1.3.0'
-   implementation 'androidx.wear.compose:compose-material:1.2.1'
-   ```
-
-4. **Wear OS Manifest-Konfiguration:**
-   ```xml
-   <uses-feature android:name="android.hardware.type.watch" />
-   ```
-
-5. **Daten-Synchronisation** zwischen Phone und Watch App:
-   - Wearable Data Layer API
-   - MessageClient für Echtzeit-Kommunikation
-
-### Komplexität:
-- **Aufwand:** Mittel bis hoch (ca. 20-40 Entwicklungsstunden)
-- **Kenntnisse erforderlich:** 
-  - Android Wear OS Entwicklung
-  - Jetpack Compose for Wear
-  - UI-Design für Wearables
-
-### Empfohlene Ressourcen:
-- [Android Wear OS Developer Guide](https://developer.android.com/training/wearables)
-- [Compose for Wear OS](https://developer.android.com/training/wearables/compose)
-- [Wear OS Samples](https://github.com/android/wear-os-samples)
-
-**Falls Sie eine Wear OS Version benötigen, wird empfohlen, dies als separates Projekt/Issue anzulegen, da es umfangreiche Änderungen erfordert.**
 
 ## 📚 Zusätzliche Ressourcen
 

@@ -67,7 +67,6 @@ Google Play Store erlaubt unterschiedliche Screenshots für:
 - **7-Zoll Tablets** (optional)
 - **10-Zoll Tablets** (optional)
 - **Android TV** (optional)
-- **Wear OS** (optional)
 
 ## Schritt 6: Beschreibungstexte hinzufügen
 
