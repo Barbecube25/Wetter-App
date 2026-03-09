@@ -86,13 +86,18 @@ object WeatherRepository {
         val minArray = daily.getJSONArray("temperature_2m_min")
         val weatherCodeArray = daily.getJSONArray("weather_code")
         val precipSumArray = daily.getJSONArray("precipitation_sum")
-        val precipProbArray = daily.getJSONArray("precipitation_probability_max")
+        // precipitation_probability_max is only available for ensemble models (e.g. gfs_seamless).
+        // Deterministic models like icon_seamless omit the field entirely, so use optJSONArray
+        // to avoid a JSONException that would abort the entire weather fetch.
+        val precipProbArray = daily.optJSONArray("precipitation_probability_max")
         val dateArray = daily.getJSONArray("time")
 
         // daily arrays: index 0 = today
         val tempMax = maxArray.getDouble(0)
         val tempMin = minArray.getDouble(0)
-        val precipitationProbability = if (precipProbArray.length() > 0) precipProbArray.optInt(0, 0) else 0
+        val precipitationProbability = precipProbArray
+            ?.let { if (it.length() > 0) it.optInt(0, 0) else 0 }
+            ?: 0
 
         // Build daily forecast for the next 3 days (skip today = index 0)
         val dailyForecast = mutableListOf<DayForecast>()
@@ -104,7 +109,7 @@ object WeatherRepository {
                     tempMax = maxArray.getDouble(i),
                     tempMin = minArray.getDouble(i),
                     precipitationSum = precipSumArray.optDouble(i, 0.0),
-                    precipitationProbabilityMax = precipProbArray.optInt(i, 0)
+                    precipitationProbabilityMax = precipProbArray?.optInt(i, 0) ?: 0
                 )
             )
         }

@@ -29,7 +29,8 @@ import kotlin.math.roundToInt
 class TemperatureComplicationService : SuspendingComplicationDataSourceService() {
 
     companion object {
-        private const val LOCATION_TIMEOUT_MS = 15_000L
+        private const val LOCATION_TIMEOUT_BALANCED_MS = 15_000L
+        private const val LOCATION_TIMEOUT_HIGH_MS = 20_000L
     }
 
     /**
@@ -98,16 +99,34 @@ class TemperatureComplicationService : SuspendingComplicationDataSourceService()
     @SuppressLint("MissingPermission")
     private suspend fun resolveLocation(context: Context): Location? {
         val client = LocationServices.getFusedLocationProviderClient(context)
+
+        // 1. Last known location – instant, no battery cost.
         client.lastLocation.await()?.let { return it }
-        val cts = CancellationTokenSource()
-        return withTimeoutOrNull(LOCATION_TIMEOUT_MS) {
+
+        // 2. Balanced accuracy (network / Wi-Fi).
+        val balancedCts = CancellationTokenSource()
+        val balanced = withTimeoutOrNull(LOCATION_TIMEOUT_BALANCED_MS) {
             try {
                 client.getCurrentLocation(
                     Priority.PRIORITY_BALANCED_POWER_ACCURACY,
-                    cts.token
+                    balancedCts.token
                 ).await()
             } finally {
-                cts.cancel()
+                balancedCts.cancel()
+            }
+        }
+        if (balanced != null) return balanced
+
+        // 3. High accuracy (GPS) – fallback for Wear OS devices without a cached location.
+        val highCts = CancellationTokenSource()
+        return withTimeoutOrNull(LOCATION_TIMEOUT_HIGH_MS) {
+            try {
+                client.getCurrentLocation(
+                    Priority.PRIORITY_HIGH_ACCURACY,
+                    highCts.token
+                ).await()
+            } finally {
+                highCts.cancel()
             }
         }
     }
