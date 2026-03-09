@@ -63,6 +63,15 @@ dependencies {
     compileOnly "com.google.android.wearable:wearable:2.9.0"
     implementation "com.google.android.support:wearable:2.9.0"
 
+    // Wear OS Tiles (swipeable widget cards)
+    implementation "androidx.wear.tiles:tiles:1.3.0"
+    implementation "androidx.wear.tiles:tiles-material:1.3.0"
+
+    // Wear OS Complications (watch face data sources)
+    implementation "androidx.wear.watchface:watchface-complications-data:1.2.1"
+    implementation "androidx.wear.watchface:watchface-complications-data-source:1.2.1"
+    implementation "androidx.wear.watchface:watchface-complications-data-source-ktx:1.2.1"
+
     // ViewModel + LiveData
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.8.7"
