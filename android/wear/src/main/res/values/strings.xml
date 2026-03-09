@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Wetter Scout AI</string>
+    <string name="tile_weather_label">Wetter</string>
+    <string name="complication_temperature_label">Temperatur</string>
 </resources>
