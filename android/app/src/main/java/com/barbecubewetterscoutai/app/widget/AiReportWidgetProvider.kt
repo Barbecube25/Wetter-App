@@ -8,6 +8,9 @@ import android.content.Intent
 import android.widget.RemoteViews
 import com.barbecubewetterscoutai.app.MainActivity
 import com.barbecubewetterscoutai.app.R
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class AiReportWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
@@ -21,8 +24,11 @@ class AiReportWidgetProvider : AppWidgetProvider() {
             val prefs = context.getSharedPreferences("WidgetPrefs", Context.MODE_PRIVATE)
             val reportText = prefs.getString("ai_report", "Noch kein Bericht verfügbar. Öffne die App, um die KI-Analyse zu laden.")
 
+            val today = SimpleDateFormat("EEE, dd. MMM", Locale("de", "DE")).format(Date())
+
             val views = RemoteViews(context.packageName, R.layout.widget_ai_report)
             views.setTextViewText(R.id.widget_content, reportText)
+            views.setTextViewText(R.id.widget_date, today)
 
             // Klick auf das Widget öffnet die App
             val intent = Intent(context, MainActivity::class.java)
