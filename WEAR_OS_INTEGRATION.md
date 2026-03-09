@@ -49,19 +49,25 @@ Das resultierende AAB enthält beide Module (App + Wear) und der Play Store wird
 
 ## Funktionen der Wear OS App
 
-Die Wear OS Version zeigt derzeit:
-- App-Name ("Wetter Scout AI")
-- "Wear OS" Label
-- Zeitanzeige oben (TimeText)
-- Material Design für Wear OS
+Die Wear OS Version zeigt:
+- **Standortname** (via Reverse-Geocoding, z. B. "Berlin")
+- **Wetter-Emoji + Bedingung** (aus WMO-Wettercode, z. B. "☀️ Klar")
+- **Aktuelle Temperatur** in °C (groß und gut lesbar)
+- **Gefühlte Temperatur** ("Gefühlt X°C")
+- **Tageshöchst- und -tiefstwert** (↑ Max° / ↓ Min°)
+- **Luftfeuchtigkeit** und **Windgeschwindigkeit** (km/h)
+- **Uhrzeit** (oben, immer sichtbar per TimeText)
+- **Lade-Indikator** beim ersten Start
+- **Fehlermeldung + Wiederholen-Button** bei Netzwerkproblemen
+- **Aktualisieren-Button** zum manuellen Neuladen
 
 ## Zukünftige Erweiterungen
 
-Die Wear OS App kann erweitert werden um:
-- Wetterdaten von der Hauptapp zu synchronisieren
+Die Wear OS App kann noch erweitert werden um:
 - Komplikationen (Complications) für Watch Faces
 - Tiles für schnellen Zugriff auf Wetterdaten
 - Notifications für Wetterwarnungen
+- Stündliche Vorschau (horizontal scrollbar)
 
 ## Wichtige Hinweise
 
