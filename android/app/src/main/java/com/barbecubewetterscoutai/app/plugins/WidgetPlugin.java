@@ -21,7 +21,7 @@ public class WidgetPlugin extends Plugin {
         
         Context context = getContext();
         SharedPreferences prefs = context.getSharedPreferences("WidgetPrefs", Context.MODE_PRIVATE);
-        prefs.edit().putString("ai_report", report).apply();
+        prefs.edit().putString("ai_report", report).commit();
 
         // Widget-Update anstoßen
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
