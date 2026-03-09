@@ -15,7 +15,7 @@ public class AiReportWidget extends AppWidgetProvider {
 
         for (int appWidgetId : appWidgetIds) {
             RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_ai_report);
-            views.setTextViewText(R.id.widget_report_text, report);
+            views.setTextViewText(R.id.widget_content, report);
             appWidgetManager.updateAppWidget(appWidgetId, views);
         }
     }

@@ -3,29 +3,28 @@ package com.barbecubewetterscoutai.wear
 import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
-import androidx.wear.tiles.ColorBuilders
-import androidx.wear.tiles.DeviceParametersBuilders
-import androidx.wear.tiles.DimensionBuilders
-import androidx.wear.tiles.LayoutElementBuilders
+import androidx.wear.protolayout.ColorBuilders
+import androidx.wear.protolayout.DeviceParametersBuilders
+import androidx.wear.protolayout.DimensionBuilders
+import androidx.wear.protolayout.LayoutElementBuilders
+import androidx.wear.protolayout.ResourceBuilders.Resources
+import androidx.wear.protolayout.TimelineBuilders
+import androidx.wear.protolayout.material.Text as TileText
+import androidx.wear.protolayout.material.Typography
+import androidx.wear.protolayout.material.layouts.PrimaryLayout
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
 import androidx.wear.tiles.RequestBuilders.TileRequest
-import androidx.wear.tiles.ResourceBuilders.Resources
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
-import androidx.wear.tiles.TimelineBuilders
-import androidx.wear.tiles.material.Text as TileText
-import androidx.wear.tiles.material.Typography
-import androidx.wear.tiles.material.layouts.PrimaryLayout
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.common.util.concurrent.ListenableFuture
-import com.google.common.util.concurrent.SettableFuture
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.roundToInt
@@ -53,9 +52,8 @@ class WeatherTileService : TileService() {
 
     @SuppressLint("MissingPermission")
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> {
-        val future = SettableFuture.create<Tile>()
         val appContext = applicationContext
-        serviceScope.launch {
+        return serviceScope.future {
             val weatherData = try {
                 resolveLocation(appContext)?.let { loc ->
                     WeatherRepository.fetchWeather(loc.latitude, loc.longitude)
@@ -63,15 +61,14 @@ class WeatherTileService : TileService() {
             } catch (e: Exception) {
                 null
             }
-            future.set(buildTile(appContext, requestParams, weatherData))
+            buildTile(appContext, requestParams, weatherData)
         }
-        return future
     }
 
-    override fun onResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> {
-        val future = SettableFuture.create<Resources>()
-        future.set(Resources.Builder().setVersion(RESOURCES_VERSION).build())
-        return future
+    override fun onResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<androidx.wear.tiles.ResourceBuilders.Resources> {
+        return serviceScope.future {
+            androidx.wear.tiles.ResourceBuilders.Resources.Builder().setVersion(RESOURCES_VERSION).build()
+        }
     }
 
     @SuppressLint("MissingPermission")

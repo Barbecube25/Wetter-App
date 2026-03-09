@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.material.Scaffold
+import androidx.wear.compose.material.TimeText
 import androidx.wear.compose.material3.*
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -410,7 +412,7 @@ private fun DayForecastRow(day: DayForecast) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.4f))
+            .background(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.4f))
             .padding(horizontal = 8.dp, vertical = 5.dp)
     ) {
         Row(
