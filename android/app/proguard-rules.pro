@@ -44,6 +44,8 @@
 # Keep widget plugin classes used by the Capacitor bridge
 -keep class com.barbecubewetterscoutai.app.plugins.WidgetPlugin { *; }
 -keep class com.barbecubewetterscoutai.app.widget.AiReportWidgetProvider { *; }
+# Keep Kotlin companion object for AiReportWidgetProvider (required for @JvmStatic interop)
+-keep class com.barbecubewetterscoutai.app.widget.AiReportWidgetProvider$Companion { *; }
 
 # If you keep the line number information, uncomment this to
 # hide the original source file name.

@@ -37,7 +37,7 @@ public class WidgetPlugin extends Plugin {
         int[] appWidgetIds = appWidgetManager.getAppWidgetIds(
                 new ComponentName(context, AiReportWidgetProvider.class));
         for (int appWidgetId : appWidgetIds) {
-            AiReportWidgetProvider.Companion.updateAppWidget(context, appWidgetManager, appWidgetId);
+            AiReportWidgetProvider.updateAppWidget(context, appWidgetManager, appWidgetId);
         }
 
         call.resolve();
