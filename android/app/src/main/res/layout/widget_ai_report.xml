@@ -8,37 +8,60 @@
     android:clipChildren="true"
     android:clipToPadding="true">
 
-    <!-- ── Header: title + date ── -->
+    <!-- ── Header: title + date + optional location subtitle ── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingStart="14dp"
-        android:paddingEnd="14dp"
-        android:paddingTop="9dp"
-        android:paddingBottom="9dp"
-        android:gravity="center_vertical"
+        android:orientation="vertical"
         android:background="@drawable/widget_header_bg">
 
-        <TextView
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/widget_title"
-            android:textStyle="bold"
-            android:textColor="@color/widget_header_text"
-            android:textSize="13sp"
-            android:maxLines="1"
-            android:ellipsize="end" />
+            android:orientation="horizontal"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="2dp"
+            android:gravity="center_vertical">
 
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/widget_title"
+                android:textStyle="bold"
+                android:textColor="@color/widget_header_text"
+                android:textSize="13sp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/widget_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="@color/widget_subtext"
+                android:textSize="11sp"
+                android:maxLines="1" />
+
+        </LinearLayout>
+
+        <!-- ── Location name subtitle (GONE when no location set) ── -->
         <TextView
-            android:id="@+id/widget_date"
-            android:layout_width="wrap_content"
+            android:id="@+id/widget_location"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingTop="0dp"
+            android:paddingBottom="8dp"
             android:text=""
             android:textColor="@color/widget_subtext"
             android:textSize="11sp"
-            android:maxLines="1" />
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:visibility="gone" />
 
     </LinearLayout>
 
@@ -268,7 +291,7 @@
         android:paddingStart="10dp"
         android:paddingEnd="10dp"
         android:paddingTop="4dp"
-        android:paddingBottom="6dp"
+        android:paddingBottom="8dp"
         android:visibility="gone">
 
         <TextView
@@ -279,10 +302,10 @@
             android:textColor="@color/widget_warning_text"
             android:textSize="11sp"
             android:background="@drawable/widget_warning_bg"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:paddingTop="5dp"
-            android:paddingBottom="5dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
             android:maxLines="2"
             android:ellipsize="end" />
 
