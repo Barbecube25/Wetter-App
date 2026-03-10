@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
@@ -27,6 +28,19 @@ class AiReportWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: Bundle
+    ) {
+        try {
+            updateAppWidget(context, appWidgetManager, appWidgetId)
+        } catch (t: Throwable) {
+            Log.e(TAG, "Fehler beim Resize-Update des Widgets (ID $appWidgetId)", t)
+        }
+    }
+
     companion object {
         private const val TAG = "AiReportWidget"
         private const val DEFAULT_REPORT = "Noch kein Bericht verfügbar. Öffne die App, um die KI-Analyse zu laden."
@@ -35,6 +49,23 @@ class AiReportWidgetProvider : AppWidgetProvider() {
         /** Maximum characters for the AI-report text sent via Binder IPC.
          *  Keeps the RemoteViews parcel well below the 1 MB Binder limit. */
         private const val MAX_REPORT_CHARS = 400
+
+        /**
+         * Determines display mode from the current widget width (in dp).
+         * Returns 2, 3, or 4 for 2-column, 3-column, or 4-column display mode.
+         *   2-col (< 180 dp): location + current temp + time periods
+         *   3-col (< 250 dp): + precipitation row
+         *   4-col (≥ 250 dp): + AI weather report
+         */
+        private fun getColumnMode(appWidgetManager: AppWidgetManager, appWidgetId: Int): Int {
+            val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
+            val minWidthDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250)
+            return when {
+                minWidthDp < 180 -> 2
+                minWidthDp < 250 -> 3
+                else -> 4
+            }
+        }
 
         @JvmStatic
         fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
@@ -70,16 +101,23 @@ class AiReportWidgetProvider : AppWidgetProvider() {
                 val ngtTemp  = prefs.getInt("night_temp", NO_TEMP)
                 val ngtEmoji = prefs.getString("night_emoji", "") ?: ""
 
+                // Precipitation per period (in mm, -1 means no data)
+                val morPrecip  = prefs.getFloat("morning_precip", -1f)
+                val noonPrecip = prefs.getFloat("noon_precip", -1f)
+                val evePrecip  = prefs.getFloat("evening_precip", -1f)
+                val ngtPrecip  = prefs.getFloat("night_precip", -1f)
+
                 // Warnings
                 val warnCount = prefs.getInt("warning_count", 0)
                 val warnText  = prefs.getString("warning_text", "") ?: ""
 
+                // Determine how many columns are allocated to this widget instance
+                val colMode = getColumnMode(appWidgetManager, appWidgetId)
+
                 val views = RemoteViews(context.packageName, R.layout.widget_ai_report)
 
-                // --- Header ---
+                // --- Header: location (bold) + date ---
                 views.setTextViewText(R.id.widget_date, today)
-
-                // --- Location name subtitle ---
                 if (locationName.isNotEmpty()) {
                     views.setTextViewText(R.id.widget_location, "📍 $locationName")
                     views.setViewVisibility(R.id.widget_location, View.VISIBLE)
@@ -100,10 +138,7 @@ class AiReportWidgetProvider : AppWidgetProvider() {
                     views.setViewVisibility(R.id.widget_current_row, View.GONE)
                 }
 
-                // --- AI report ---
-                views.setTextViewText(R.id.widget_content, reportText)
-
-                // --- Time periods ---
+                // --- Time periods (always shown when data available) ---
                 val hasPeriods = morTemp != NO_TEMP || noonTemp != NO_TEMP ||
                                  eveTemp != NO_TEMP || ngtTemp != NO_TEMP
                 if (hasPeriods) {
@@ -114,6 +149,29 @@ class AiReportWidgetProvider : AppWidgetProvider() {
                     setPeriod(views, R.id.widget_night_emoji,   R.id.widget_night_temp,   ngtEmoji, ngtTemp)
                 } else {
                     views.setViewVisibility(R.id.widget_periods_row, View.GONE)
+                }
+
+                // --- Precipitation row (shown for 3-col and wider) ---
+                if (colMode >= 3) {
+                    views.setViewVisibility(R.id.widget_precip_divider, View.VISIBLE)
+                    views.setViewVisibility(R.id.widget_precipitation_row, View.VISIBLE)
+                    views.setTextViewText(R.id.widget_morning_precip, formatPrecip(morPrecip))
+                    views.setTextViewText(R.id.widget_noon_precip,    formatPrecip(noonPrecip))
+                    views.setTextViewText(R.id.widget_evening_precip, formatPrecip(evePrecip))
+                    views.setTextViewText(R.id.widget_night_precip,   formatPrecip(ngtPrecip))
+                } else {
+                    views.setViewVisibility(R.id.widget_precip_divider, View.GONE)
+                    views.setViewVisibility(R.id.widget_precipitation_row, View.GONE)
+                }
+
+                // --- AI report (shown for 4-col only) ---
+                if (colMode >= 4) {
+                    views.setViewVisibility(R.id.widget_ai_divider, View.VISIBLE)
+                    views.setViewVisibility(R.id.widget_content, View.VISIBLE)
+                    views.setTextViewText(R.id.widget_content, reportText)
+                } else {
+                    views.setViewVisibility(R.id.widget_ai_divider, View.GONE)
+                    views.setViewVisibility(R.id.widget_content, View.GONE)
                 }
 
                 // --- Warning row ---
@@ -156,6 +214,13 @@ class AiReportWidgetProvider : AppWidgetProvider() {
             views.setTextViewText(tempId,  if (temp != NO_TEMP) "${temp}°" else "–")
         }
 
+        /** Formats a precipitation value (mm) for display. Negative means no data. */
+        private fun formatPrecip(mm: Float): String {
+            if (mm < 0f) return "–"
+            // Always use one decimal place for consistency; integers for large amounts
+            return if (mm < 10f) String.format("%.1fmm", mm) else "${mm.toInt()}mm"
+        }
+
         /**
          * Shows a minimal "please open the app" widget so the launcher never displays
          * the system "Can't load widget" error message when the normal update fails.
@@ -167,10 +232,14 @@ class AiReportWidgetProvider : AppWidgetProvider() {
         ) {
             try {
                 val views = RemoteViews(context.packageName, R.layout.widget_ai_report)
-                views.setTextViewText(R.id.widget_content, DEFAULT_REPORT)
                 views.setViewVisibility(R.id.widget_location, View.GONE)
                 views.setViewVisibility(R.id.widget_current_row, View.GONE)
                 views.setViewVisibility(R.id.widget_periods_row, View.GONE)
+                views.setViewVisibility(R.id.widget_precip_divider, View.GONE)
+                views.setViewVisibility(R.id.widget_precipitation_row, View.GONE)
+                views.setViewVisibility(R.id.widget_ai_divider, View.VISIBLE)
+                views.setViewVisibility(R.id.widget_content, View.VISIBLE)
+                views.setTextViewText(R.id.widget_content, DEFAULT_REPORT)
                 views.setViewVisibility(R.id.widget_warning_row, View.GONE)
                 val intent = Intent(context, MainActivity::class.java)
                 val pendingIntent = PendingIntent.getActivity(

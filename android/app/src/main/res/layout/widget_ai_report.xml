@@ -8,60 +8,43 @@
     android:clipChildren="true"
     android:clipToPadding="true">
 
-    <!-- ── Header: title + date + optional location subtitle ── -->
+    <!-- ── Header: date + optional location subtitle ── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:background="@drawable/widget_header_bg">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingStart="14dp"
-            android:paddingEnd="14dp"
-            android:paddingTop="10dp"
-            android:paddingBottom="2dp"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/widget_title"
-                android:textStyle="bold"
-                android:textColor="@color/widget_header_text"
-                android:textSize="13sp"
-                android:maxLines="1"
-                android:ellipsize="end" />
-
-            <TextView
-                android:id="@+id/widget_date"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=""
-                android:textColor="@color/widget_subtext"
-                android:textSize="11sp"
-                android:maxLines="1" />
-
-        </LinearLayout>
-
-        <!-- ── Location name subtitle (GONE when no location set) ── -->
+        <!-- ── Location name (primary, GONE when no location set) ── -->
         <TextView
             android:id="@+id/widget_location"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
-            android:paddingTop="0dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="0dp"
+            android:text=""
+            android:textColor="@color/widget_header_text"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:visibility="gone" />
+
+        <!-- ── Date subtitle ── -->
+        <TextView
+            android:id="@+id/widget_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingTop="2dp"
             android:paddingBottom="8dp"
             android:text=""
             android:textColor="@color/widget_subtext"
             android:textSize="11sp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:visibility="gone" />
+            android:maxLines="1" />
 
     </LinearLayout>
 
@@ -102,29 +85,7 @@
         android:layout_height="1dp"
         android:background="@color/widget_divider" />
 
-    <!-- ── AI Report summary ── -->
-    <TextView
-        android:id="@+id/widget_content"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:text="@string/widget_no_data"
-        android:textColor="@color/widget_text"
-        android:textSize="12sp"
-        android:paddingStart="14dp"
-        android:paddingEnd="14dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="6dp"
-        android:maxLines="4"
-        android:ellipsize="end" />
-
-    <!-- ── Divider ── -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/widget_divider" />
-
-    <!-- ── 4 time-period columns ── -->
+    <!-- ── 4 time-period columns (always shown when data available) ── -->
     <LinearLayout
         android:id="@+id/widget_periods_row"
         android:layout_width="match_parent"
@@ -280,6 +241,157 @@
         </LinearLayout>
 
     </LinearLayout>
+
+    <!-- ── Divider (before precipitation, shown for 3-col and wider) ── -->
+    <View
+        android:id="@+id/widget_precip_divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/widget_divider"
+        android:visibility="gone" />
+
+    <!-- ── Precipitation row (shown for 3-col and wider) ── -->
+    <LinearLayout
+        android:id="@+id/widget_precipitation_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="6dp"
+        android:visibility="gone">
+
+        <!-- Morning precip -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="💧"
+                android:textSize="12sp"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@+id/widget_morning_precip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="–"
+                android:textColor="@color/widget_accent"
+                android:textSize="11sp"
+                android:maxLines="1" />
+
+        </LinearLayout>
+
+        <!-- Noon precip -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="💧"
+                android:textSize="12sp"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@+id/widget_noon_precip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="–"
+                android:textColor="@color/widget_accent"
+                android:textSize="11sp"
+                android:maxLines="1" />
+
+        </LinearLayout>
+
+        <!-- Evening precip -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="💧"
+                android:textSize="12sp"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@+id/widget_evening_precip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="–"
+                android:textColor="@color/widget_accent"
+                android:textSize="11sp"
+                android:maxLines="1" />
+
+        </LinearLayout>
+
+        <!-- Night precip -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="💧"
+                android:textSize="12sp"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@+id/widget_night_precip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="–"
+                android:textColor="@color/widget_accent"
+                android:textSize="11sp"
+                android:maxLines="1" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- ── Divider (before AI report, shown for 4-col only) ── -->
+    <View
+        android:id="@+id/widget_ai_divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/widget_divider"
+        android:visibility="gone" />
+
+    <!-- ── AI Report summary (shown for 4-col only) ── -->
+    <TextView
+        android:id="@+id/widget_content"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="@string/widget_no_data"
+        android:textColor="@color/widget_text"
+        android:textSize="12sp"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="6dp"
+        android:maxLines="4"
+        android:ellipsize="end"
+        android:visibility="gone" />
 
     <!-- ── Warning row (GONE when no warnings) ── -->
     <LinearLayout

@@ -11407,7 +11407,7 @@ export default function WeatherApp() {
     // to signal "no data available for this time period".
     const NO_TEMP_VALUE = 2147483647; // Integer.MAX_VALUE
 
-    // Helper: find representative temp & WMO code for a time window on today's date.
+    // Helper: find representative temp, WMO code, and total precipitation for a time window on today's date.
     // Overnight windows (startHour > endHour) wrap past midnight into the next calendar day.
     const getTimePeriod = (startHour, endHour) => {
       const today = new Date();
@@ -11430,7 +11430,8 @@ export default function WeatherApp() {
       const avgTemp = Math.round(hours.reduce((s, h) => s + h.temp, 0) / hours.length);
       const codeFreq = hours.reduce((acc, h) => { acc[h.code] = (acc[h.code] || 0) + 1; return acc; }, {});
       const domCode = parseInt(Object.entries(codeFreq).sort(([,a],[,b]) => b - a)[0][0]);
-      return { temp: avgTemp, code: domCode };
+      const totalPrecip = Math.round(hours.reduce((s, h) => s + (parseFloat(h.precip) || 0) + (parseFloat(h.snow) || 0), 0) * 10) / 10;
+      return { temp: avgTemp, code: domCode, precip: totalPrecip };
     };
 
     const morning = getTimePeriod(6, 10);
@@ -11454,12 +11455,16 @@ export default function WeatherApp() {
       // Time periods (NO_TEMP_VALUE signals "no data" to the widget provider)
       morningTemp: morning ? morning.temp : NO_TEMP_VALUE,
       morningEmoji: morning ? wmoToWidgetEmoji(morning.code, 1) : '',
+      morningPrecip: morning ? morning.precip : -1,
       noonTemp: noon ? noon.temp : NO_TEMP_VALUE,
       noonEmoji: noon ? wmoToWidgetEmoji(noon.code, 1) : '',
+      noonPrecip: noon ? noon.precip : -1,
       eveningTemp: evening ? evening.temp : NO_TEMP_VALUE,
       eveningEmoji: evening ? wmoToWidgetEmoji(evening.code, 1) : '',
+      eveningPrecip: evening ? evening.precip : -1,
       nightTemp: night ? night.temp : NO_TEMP_VALUE,
       nightEmoji: night ? wmoToWidgetEmoji(night.code, 0) : '',
+      nightPrecip: night ? night.precip : -1,
       // Warnings
       warningCount: dwdWarnings ? dwdWarnings.length : 0,
       warningText: warningHeadline,
