@@ -6,5 +6,9 @@
     <string name="custom_url_scheme">com.barbecubewetterscoutai.app</string>
     <string name="widget_title">☁️ KI-Wetterbericht</string>
     <string name="widget_no_data">Öffne die App, um den KI-Bericht zu laden.</string>
-    <string name="widget_description">Zeigt den tagesaktuellen KI-Wetterbericht an.</string>
+    <string name="widget_description">Zeigt den KI-Wetterbericht mit aktuellem Wetter, Tagesverlauf und Warnungen.</string>
+    <string name="widget_period_morning">Morgens</string>
+    <string name="widget_period_noon">Mittags</string>
+    <string name="widget_period_evening">Abends</string>
+    <string name="widget_period_night">Nachts</string>
 </resources>
