@@ -57,18 +57,22 @@ public class WidgetPlugin extends Plugin {
         // Time period: morning (06–10 h)
         editor.putInt("morning_temp", call.getInt("morningTemp", NO_TEMP));
         editor.putString("morning_emoji", orEmpty(call.getString("morningEmoji", "")));
+        editor.putFloat("morning_precip", (float) call.getDouble("morningPrecip", -1.0));
 
         // Time period: noon (10–14 h)
         editor.putInt("noon_temp", call.getInt("noonTemp", NO_TEMP));
         editor.putString("noon_emoji", orEmpty(call.getString("noonEmoji", "")));
+        editor.putFloat("noon_precip", (float) call.getDouble("noonPrecip", -1.0));
 
         // Time period: evening (16–20 h)
         editor.putInt("evening_temp", call.getInt("eveningTemp", NO_TEMP));
         editor.putString("evening_emoji", orEmpty(call.getString("eveningEmoji", "")));
+        editor.putFloat("evening_precip", (float) call.getDouble("eveningPrecip", -1.0));
 
         // Time period: night (21–06 h)
         editor.putInt("night_temp", call.getInt("nightTemp", NO_TEMP));
         editor.putString("night_emoji", orEmpty(call.getString("nightEmoji", "")));
+        editor.putFloat("night_precip", (float) call.getDouble("nightPrecip", -1.0));
 
         // Weather warnings
         editor.putInt("warning_count", call.getInt("warningCount", 0));
