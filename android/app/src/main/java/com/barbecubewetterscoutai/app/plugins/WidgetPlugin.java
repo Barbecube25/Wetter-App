@@ -37,6 +37,9 @@ public class WidgetPlugin extends Plugin {
 
         editor.putString("ai_report", report);
 
+        // Location name
+        editor.putString("location_name", orEmpty(call.getString("locationName", "")));
+
         // Current conditions
         editor.putInt("current_temp", call.getInt("currentTemp", NO_TEMP));
         editor.putString("current_emoji", orEmpty(call.getString("currentEmoji", "")));

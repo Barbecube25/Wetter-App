@@ -11445,6 +11445,8 @@ export default function WeatherApp() {
 
     WidgetPlugin.updateAiReport({
       report: kiBerichtText,
+      // Location
+      locationName: currentLoc?.name ?? '',
       // Current conditions
       currentTemp: Math.round(current?.temp ?? 0),
       currentEmoji: wmoToWidgetEmoji(current?.code ?? 0, isRealNight ? 0 : 1),
@@ -11464,7 +11466,7 @@ export default function WeatherApp() {
     }).catch(err => {
       console.log('Widget konnte nicht aktualisiert werden (vielleicht iOS/Web?): ', err);
     });
-  }, [dailyReport, current, processedShort, dwdWarnings, isRealNight, lang]);
+  }, [dailyReport, current, processedShort, dwdWarnings, isRealNight, lang, currentLoc]);
 
   // --- WIDGET VIEWS ---
   // Only block rendering on initial load (no data yet); during location switches, keep existing data visible.

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Widget colors – dark mode (night) -->
-    <color name="widget_background">#1E2A3A</color>
-    <color name="widget_header_bg">#162032</color>
-    <color name="widget_header_text">#93C5FD</color>
-    <color name="widget_text">#E5E7EB</color>
-    <color name="widget_subtext">#9CA3AF</color>
-    <color name="widget_divider">#1D3461</color>
-    <color name="widget_accent">#60A5FA</color>
-    <color name="widget_warning_bg">#451A03</color>
-    <color name="widget_warning_text">#FCD34D</color>
+    <!-- Widget colors – dark mode (Material 3 baseline dark, blue tonal palette) -->
+    <color name="widget_background">#1A1C1E</color>
+    <color name="widget_header_bg">#00487D</color>
+    <color name="widget_header_text">#D1E4FF</color>
+    <color name="widget_text">#E2E2E6</color>
+    <color name="widget_subtext">#C4C6CF</color>
+    <color name="widget_divider">#44474E</color>
+    <color name="widget_accent">#9ECAFF</color>
+    <color name="widget_warning_bg">#93000A</color>
+    <color name="widget_warning_text">#FFDAD6</color>
 </resources>

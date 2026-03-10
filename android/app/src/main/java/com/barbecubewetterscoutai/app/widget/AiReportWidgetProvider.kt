@@ -38,6 +38,9 @@ class AiReportWidgetProvider : AppWidgetProvider() {
                 val reportText: String = prefs.getString("ai_report", null) ?: DEFAULT_REPORT
                 val today = SimpleDateFormat("EEE, dd. MMM", Locale("de", "DE")).format(Date())
 
+                // Location name
+                val locationName = prefs.getString("location_name", "") ?: ""
+
                 // Current conditions
                 val curTemp   = prefs.getInt("current_temp", NO_TEMP)
                 val curEmoji  = prefs.getString("current_emoji", "") ?: ""
@@ -61,6 +64,14 @@ class AiReportWidgetProvider : AppWidgetProvider() {
 
                 // --- Header ---
                 views.setTextViewText(R.id.widget_date, today)
+
+                // --- Location name subtitle ---
+                if (locationName.isNotEmpty()) {
+                    views.setTextViewText(R.id.widget_location, "📍 $locationName")
+                    views.setViewVisibility(R.id.widget_location, View.VISIBLE)
+                } else {
+                    views.setViewVisibility(R.id.widget_location, View.GONE)
+                }
 
                 // --- Current weather row ---
                 if (curTemp != NO_TEMP) {

@@ -5,14 +5,14 @@
     <color name="colorPrimaryDark">#1D4ED8</color>
     <color name="colorAccent">#60A5FA</color>
 
-    <!-- Widget colors – light mode -->
-    <color name="widget_background">#FFFFFF</color>
-    <color name="widget_header_bg">#EFF6FF</color>
-    <color name="widget_header_text">#1E3A5F</color>
-    <color name="widget_text">#374151</color>
-    <color name="widget_subtext">#6B7280</color>
-    <color name="widget_divider">#DBEAFE</color>
-    <color name="widget_accent">#3B82F6</color>
-    <color name="widget_warning_bg">#FEF3C7</color>
-    <color name="widget_warning_text">#92400E</color>
+    <!-- Widget colors – light mode (Material 3 baseline, blue tonal palette) -->
+    <color name="widget_background">#FDFCFF</color>
+    <color name="widget_header_bg">#D1E4FF</color>
+    <color name="widget_header_text">#001D36</color>
+    <color name="widget_text">#1A1C1E</color>
+    <color name="widget_subtext">#44474E</color>
+    <color name="widget_divider">#C4C6CF</color>
+    <color name="widget_accent">#0061A4</color>
+    <color name="widget_warning_bg">#FFDAD6</color>
+    <color name="widget_warning_text">#410002</color>
 </resources>
