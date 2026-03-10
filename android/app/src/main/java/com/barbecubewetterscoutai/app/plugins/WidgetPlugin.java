@@ -14,6 +14,9 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 @CapacitorPlugin(name = "WidgetPlugin")
 public class WidgetPlugin extends Plugin {
 
+    /** Sentinel that matches AiReportWidgetProvider.NO_TEMP – signals "no data for this period". */
+    private static final int NO_TEMP = Integer.MAX_VALUE;
+
     @PluginMethod
     public void updateAiReport(PluginCall call) {
         String report = call.getString("report", "");
@@ -28,9 +31,38 @@ public class WidgetPlugin extends Plugin {
             return;
         }
 
-        // Persist the report text for the widget to read
+        // Persist all widget data so the widget can read them without the app being open
         SharedPreferences prefs = context.getSharedPreferences("WidgetPrefs", Context.MODE_PRIVATE);
-        prefs.edit().putString("ai_report", report).commit();
+        SharedPreferences.Editor editor = prefs.edit();
+
+        editor.putString("ai_report", report);
+
+        // Current conditions
+        editor.putInt("current_temp", call.getInt("currentTemp", NO_TEMP));
+        editor.putString("current_emoji", orEmpty(call.getString("currentEmoji", "")));
+        editor.putString("current_label", orEmpty(call.getString("currentLabel", "")));
+
+        // Time period: morning (06–10 h)
+        editor.putInt("morning_temp", call.getInt("morningTemp", NO_TEMP));
+        editor.putString("morning_emoji", orEmpty(call.getString("morningEmoji", "")));
+
+        // Time period: noon (10–14 h)
+        editor.putInt("noon_temp", call.getInt("noonTemp", NO_TEMP));
+        editor.putString("noon_emoji", orEmpty(call.getString("noonEmoji", "")));
+
+        // Time period: evening (16–20 h)
+        editor.putInt("evening_temp", call.getInt("eveningTemp", NO_TEMP));
+        editor.putString("evening_emoji", orEmpty(call.getString("eveningEmoji", "")));
+
+        // Time period: night (21–06 h)
+        editor.putInt("night_temp", call.getInt("nightTemp", NO_TEMP));
+        editor.putString("night_emoji", orEmpty(call.getString("nightEmoji", "")));
+
+        // Weather warnings
+        editor.putInt("warning_count", call.getInt("warningCount", 0));
+        editor.putString("warning_text", orEmpty(call.getString("warningText", "")));
+
+        editor.commit();
 
         // Directly update each widget instance for immediate refresh
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
@@ -41,5 +73,9 @@ public class WidgetPlugin extends Plugin {
         }
 
         call.resolve();
+    }
+
+    private static String orEmpty(String s) {
+        return s != null ? s : "";
     }
 }

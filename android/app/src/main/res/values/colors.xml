@@ -13,4 +13,6 @@
     <color name="widget_subtext">#6B7280</color>
     <color name="widget_divider">#DBEAFE</color>
     <color name="widget_accent">#3B82F6</color>
+    <color name="widget_warning_bg">#FEF3C7</color>
+    <color name="widget_warning_text">#92400E</color>
 </resources>

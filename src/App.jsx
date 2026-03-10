@@ -3153,6 +3153,24 @@ const getWeatherConfig = (code, isDay = 1, lang = 'de') => {
   return { text: t.unknown, icon: Info };
 };
 
+// Maps WMO weather code to a single emoji for the Android home-screen widget.
+// Uses day/night flag only for code 0 and 1 (clear / mainly clear).
+const wmoToWidgetEmoji = (code, isDay = 1) => {
+  if (code === 0) return isDay ? '☀️' : '🌙';
+  if (code === 1) return isDay ? '🌤️' : '🌙';
+  if (code === 2) return '⛅';
+  if (code === 3) return '☁️';
+  if (code === 45 || code === 48) return '🌫️';
+  if (code >= 51 && code <= 55) return '🌦️';
+  if (code >= 61 && code <= 65) return '🌧️';
+  if (code === 66 || code === 67) return '🌨️';
+  if (code >= 71 && code <= 77) return '❄️';
+  if (code >= 80 && code <= 82) return '🌦️';
+  if (code === 85 || code === 86) return '❄️';
+  if (code === 17 || code >= 95) return '⛈️';
+  return '🌡️';
+};
+
 const getMoonPhase = (d) => {
   if (!d) return 0;
   const dateObj = new Date(d);
@@ -11379,15 +11397,74 @@ export default function WeatherApp() {
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter }), [processedLong, lang, airQualityData, settings.pollenFilter]);
 
-  // Update the Android home screen widget whenever the daily AI report changes
+  // Update the Android home screen widget whenever weather data or AI report changes
   useEffect(() => {
     if (!dailyReport || !dailyReport.summary || dailyReport.title === 'Lade...') return;
     const kiBerichtText = dailyReport.summary.trim();
     if (!kiBerichtText) return;
-    WidgetPlugin.updateAiReport({ report: kiBerichtText }).catch(err => {
+
+    // Sentinel value that matches the Java Integer.MAX_VALUE used in WidgetPlugin / AiReportWidgetProvider
+    // to signal "no data available for this time period".
+    const NO_TEMP_VALUE = 2147483647; // Integer.MAX_VALUE
+
+    // Helper: find representative temp & WMO code for a time window on today's date.
+    // Overnight windows (startHour > endHour) wrap past midnight into the next calendar day.
+    const getTimePeriod = (startHour, endHour) => {
+      const today = new Date();
+      const todayDate = today.getDate();
+      const todayMonth = today.getMonth();
+      const tomorrow = new Date(today.getTime() + 86400000);
+      const tomorrowDate = tomorrow.getDate();
+      const tomorrowMonth = tomorrow.getMonth();
+      const hours = processedShort.filter(h => {
+        const hh = h.time.getHours();
+        const isToday = h.time.getDate() === todayDate && h.time.getMonth() === todayMonth;
+        if (startHour <= endHour) {
+          return isToday && hh >= startHour && hh < endHour;
+        }
+        // Overnight window wraps past midnight; compare both date and month for month-boundary safety
+        const isTomorrow = h.time.getDate() === tomorrowDate && h.time.getMonth() === tomorrowMonth;
+        return (isToday && hh >= startHour) || (isTomorrow && hh < endHour);
+      });
+      if (hours.length === 0) return null;
+      const avgTemp = Math.round(hours.reduce((s, h) => s + h.temp, 0) / hours.length);
+      const codeFreq = hours.reduce((acc, h) => { acc[h.code] = (acc[h.code] || 0) + 1; return acc; }, {});
+      const domCode = parseInt(Object.entries(codeFreq).sort(([,a],[,b]) => b - a)[0][0]);
+      return { temp: avgTemp, code: domCode };
+    };
+
+    const morning = getTimePeriod(6, 10);
+    const noon    = getTimePeriod(10, 14);
+    const evening = getTimePeriod(16, 20);
+    const night   = getTimePeriod(21, 6);  // wraps midnight
+
+    const firstWarning = dwdWarnings && dwdWarnings.length > 0 ? dwdWarnings[0] : null;
+    const warningHeadline = firstWarning
+      ? (firstWarning.headline || firstWarning.event || firstWarning.description || '').substring(0, 60)
+      : '';
+
+    WidgetPlugin.updateAiReport({
+      report: kiBerichtText,
+      // Current conditions
+      currentTemp: Math.round(current?.temp ?? 0),
+      currentEmoji: wmoToWidgetEmoji(current?.code ?? 0, isRealNight ? 0 : 1),
+      currentLabel: getWeatherConfig(current?.code ?? 0, isRealNight ? 0 : 1, lang)?.text ?? '',
+      // Time periods (NO_TEMP_VALUE signals "no data" to the widget provider)
+      morningTemp: morning ? morning.temp : NO_TEMP_VALUE,
+      morningEmoji: morning ? wmoToWidgetEmoji(morning.code, 1) : '',
+      noonTemp: noon ? noon.temp : NO_TEMP_VALUE,
+      noonEmoji: noon ? wmoToWidgetEmoji(noon.code, 1) : '',
+      eveningTemp: evening ? evening.temp : NO_TEMP_VALUE,
+      eveningEmoji: evening ? wmoToWidgetEmoji(evening.code, 1) : '',
+      nightTemp: night ? night.temp : NO_TEMP_VALUE,
+      nightEmoji: night ? wmoToWidgetEmoji(night.code, 0) : '',
+      // Warnings
+      warningCount: dwdWarnings ? dwdWarnings.length : 0,
+      warningText: warningHeadline,
+    }).catch(err => {
       console.log('Widget konnte nicht aktualisiert werden (vielleicht iOS/Web?): ', err);
     });
-  }, [dailyReport]);
+  }, [dailyReport, current, processedShort, dwdWarnings, isRealNight, lang]);
 
   // --- WIDGET VIEWS ---
   // Only block rendering on initial load (no data yet); during location switches, keep existing data visible.
