@@ -6,6 +6,7 @@
     android:targetCellHeight="3"
     android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/widget_ai_report"
+    android:previewImage="@mipmap/ic_launcher"
     android:previewLayout="@layout/widget_ai_report"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"

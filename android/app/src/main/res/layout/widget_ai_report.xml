@@ -116,8 +116,7 @@
         android:paddingTop="8dp"
         android:paddingBottom="6dp"
         android:maxLines="4"
-        android:ellipsize="end"
-        android:lineSpacingMultiplier="1.3" />
+        android:ellipsize="end" />
 
     <!-- ── Divider ── -->
     <View

@@ -19,8 +19,10 @@ class AiReportWidgetProvider : AppWidgetProvider() {
         for (appWidgetId in appWidgetIds) {
             try {
                 updateAppWidget(context, appWidgetManager, appWidgetId)
-            } catch (e: Exception) {
-                Log.e(TAG, "Fehler beim Aktualisieren des Widgets (ID $appWidgetId)", e)
+            } catch (t: Throwable) {
+                Log.e(TAG, "Fehler beim Aktualisieren des Widgets (ID $appWidgetId)", t)
+                // Show a minimal fallback so the launcher never displays "Can't load widget"
+                showFallbackWidget(context, appWidgetManager, appWidgetId)
             }
         }
     }
@@ -30,12 +32,24 @@ class AiReportWidgetProvider : AppWidgetProvider() {
         private const val DEFAULT_REPORT = "Noch kein Bericht verfügbar. Öffne die App, um die KI-Analyse zu laden."
         private const val NO_TEMP = Int.MAX_VALUE
 
+        /** Maximum characters for the AI-report text sent via Binder IPC.
+         *  Keeps the RemoteViews parcel well below the 1 MB Binder limit. */
+        private const val MAX_REPORT_CHARS = 400
+
         @JvmStatic
         fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
             try {
                 val prefs = context.getSharedPreferences("WidgetPrefs", Context.MODE_PRIVATE)
 
-                val reportText: String = prefs.getString("ai_report", null) ?: DEFAULT_REPORT
+                // Truncate the report text to prevent TransactionTooLargeException when
+                // passing the RemoteViews parcel to the launcher via Binder IPC.
+                // WidgetPlugin.java also truncates at write-time; this is a
+                // belt-and-suspenders check for data written by older app versions.
+                val rawReport: String = prefs.getString("ai_report", null) ?: DEFAULT_REPORT
+                val reportText = if (rawReport.length > MAX_REPORT_CHARS)
+                    rawReport.take(MAX_REPORT_CHARS) + "…"
+                else
+                    rawReport
                 val today = SimpleDateFormat("EEE, dd. MMM", Locale("de", "DE")).format(Date())
 
                 // Location name
@@ -124,8 +138,9 @@ class AiReportWidgetProvider : AppWidgetProvider() {
                 views.setOnClickPendingIntent(R.id.widget_container, pendingIntent)
 
                 appWidgetManager.updateAppWidget(appWidgetId, views)
-            } catch (e: Exception) {
-                Log.e(TAG, "Fehler beim Erstellen der Widget-Ansicht (ID $appWidgetId)", e)
+            } catch (t: Throwable) {
+                Log.e(TAG, "Fehler beim Erstellen der Widget-Ansicht (ID $appWidgetId)", t)
+                showFallbackWidget(context, appWidgetManager, appWidgetId)
             }
         }
 
@@ -139,6 +154,34 @@ class AiReportWidgetProvider : AppWidgetProvider() {
         ) {
             views.setTextViewText(emojiId, if (emoji.isNotEmpty()) emoji else "–")
             views.setTextViewText(tempId,  if (temp != NO_TEMP) "${temp}°" else "–")
+        }
+
+        /**
+         * Shows a minimal "please open the app" widget so the launcher never displays
+         * the system "Can't load widget" error message when the normal update fails.
+         */
+        private fun showFallbackWidget(
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetId: Int
+        ) {
+            try {
+                val views = RemoteViews(context.packageName, R.layout.widget_ai_report)
+                views.setTextViewText(R.id.widget_content, DEFAULT_REPORT)
+                views.setViewVisibility(R.id.widget_location, View.GONE)
+                views.setViewVisibility(R.id.widget_current_row, View.GONE)
+                views.setViewVisibility(R.id.widget_periods_row, View.GONE)
+                views.setViewVisibility(R.id.widget_warning_row, View.GONE)
+                val intent = Intent(context, MainActivity::class.java)
+                val pendingIntent = PendingIntent.getActivity(
+                    context, 0, intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                views.setOnClickPendingIntent(R.id.widget_container, pendingIntent)
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+            } catch (t: Throwable) {
+                Log.e(TAG, "Fallback-Widget konnte nicht angezeigt werden (ID $appWidgetId)", t)
+            }
         }
     }
 }

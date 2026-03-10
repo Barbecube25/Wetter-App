@@ -17,6 +17,9 @@ public class WidgetPlugin extends Plugin {
     /** Sentinel that matches AiReportWidgetProvider.NO_TEMP – signals "no data for this period". */
     private static final int NO_TEMP = Integer.MAX_VALUE;
 
+    /** Maximum characters stored for the AI report; matches AiReportWidgetProvider.MAX_REPORT_CHARS. */
+    private static final int MAX_REPORT_CHARS = 400;
+
     @PluginMethod
     public void updateAiReport(PluginCall call) {
         String report = call.getString("report", "");
@@ -31,11 +34,17 @@ public class WidgetPlugin extends Plugin {
             return;
         }
 
+        // Truncate early so the SharedPreferences value is already bounded.
+        // (Belt-and-suspenders: AiReportWidgetProvider also truncates on read.)
+        final String truncatedReport = report.length() > MAX_REPORT_CHARS
+                ? report.substring(0, MAX_REPORT_CHARS) + "…"
+                : report;
+
         // Persist all widget data so the widget can read them without the app being open
         SharedPreferences prefs = context.getSharedPreferences("WidgetPrefs", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
 
-        editor.putString("ai_report", report);
+        editor.putString("ai_report", truncatedReport);
 
         // Location name
         editor.putString("location_name", orEmpty(call.getString("locationName", "")));

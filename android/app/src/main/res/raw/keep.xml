@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Explicit resource-keep rules for the home-screen widget.
+    R8/resource-shrinking traces code → R.layout → XML attributes, but the
+    chain can be broken when only the manifest / AppWidgetProviderInfo points
+    to the layout.  Declaring them here guarantees they survive a release build
+    with minifyEnabled + shrinkResources = true.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="
+        @layout/widget_ai_report,
+        @xml/widget_ai_report_info,
+        @drawable/widget_background,
+        @drawable/widget_header_bg,
+        @drawable/widget_warning_bg,
+        @color/widget_background,
+        @color/widget_header_bg,
+        @color/widget_header_text,
+        @color/widget_text,
+        @color/widget_subtext,
+        @color/widget_divider,
+        @color/widget_accent,
+        @color/widget_warning_bg,
+        @color/widget_warning_text,
+        @string/widget_title,
+        @string/widget_no_data,
+        @string/widget_description,
+        @string/widget_period_morning,
+        @string/widget_period_noon,
+        @string/widget_period_evening,
+        @string/widget_period_night" />
