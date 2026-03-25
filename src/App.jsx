@@ -12304,14 +12304,17 @@ export default function WeatherApp() {
         {/* Toggle button to show/hide controls in landscape mode */}
         {isLandscape && (() => {
           const buttonLabel = hideControlsInLandscape ? t('showControls') : t('hideControls');
-          const buttonPosition = hideControlsInLandscape ? 'bottom-6 right-6' : 'bottom-24 right-6';
+          const buttonBottom = hideControlsInLandscape
+            ? 'calc(1.5rem + env(safe-area-inset-bottom, 0px))'
+            : 'calc(6rem + env(safe-area-inset-bottom, 0px))';
           
           return (
             <button
               onClick={() => setHideControlsInLandscape(!hideControlsInLandscape)}
               aria-label={buttonLabel}
               title={buttonLabel}
-              className={`fixed ${buttonPosition} z-50 p-3 rounded-full bg-black/70 text-white shadow-lg hover:bg-black/80 backdrop-blur-md transition-all`}
+              className="fixed right-6 z-50 p-3 rounded-full bg-black/70 text-white shadow-lg hover:bg-black/80 backdrop-blur-md transition-all"
+              style={{ bottom: buttonBottom }}
             >
               {hideControlsInLandscape ? (
                 <Eye size={20} />
@@ -12605,7 +12608,7 @@ export default function WeatherApp() {
         </button>
       )}
 
-      <main className={`max-w-4xl mx-auto ${isSmallScreen ? 'px-2' : 'px-4'} pb-4 z-10 relative space-y-2`} style={{ paddingTop: `calc(${animationCardHeight} + ${navBarHeight} + 2 * ${fixedElementsGap} + ${fixedTopOffset})` }}>
+      <main className={`max-w-4xl mx-auto ${isSmallScreen ? 'px-2' : 'px-4'} z-10 relative space-y-2`} style={{ paddingTop: `calc(${animationCardHeight} + ${navBarHeight} + 2 * ${fixedElementsGap} + ${fixedTopOffset})`, paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
         {/* Fixed Animation Card Container - Matches main content width, extends to top edge */}
         <div className={`fixed left-0 right-0 z-20 ${isSmallScreen ? 'px-2' : 'px-4'}`} style={{ top: fixedTopOffset }}>
           <div className="max-w-4xl mx-auto">
@@ -13562,7 +13565,7 @@ export default function WeatherApp() {
 
       {/* Floating Action Buttons at bottom right, hidden in landscape when controls are hidden */}
       {!(isLandscape && hideControlsInLandscape) && (
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+      <div className="fixed right-6 z-50 flex flex-col items-end gap-3" style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}>
         {/* Expandable FAB Menu Items - shown when menu is open */}
         {showFabMenu && (
           <>
