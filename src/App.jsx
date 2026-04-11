@@ -60,6 +60,20 @@ const POLLEN_VERY_HIGH_THRESHOLD = 50;
 // Default pollen filter: all pollen types requested by users (olive_pollen excluded from default as it is not relevant for Central Europe)
 const DEFAULT_POLLEN_FILTER = ['hazel_pollen', 'alder_pollen', 'birch_pollen', 'ash_pollen', 'hornbeam_pollen', 'oak_pollen', 'beech_pollen', 'grass_pollen', 'rye_pollen', 'mugwort_pollen', 'ragweed_pollen', 'plantain_pollen', 'sorrel_pollen'];
 
+// Activity definitions for the activity index filter
+const ACTIVITY_DEFINITIONS = [
+  { key: 'cycling',   emoji: '🚴', label: { de: 'Radfahren',    en: 'Cycling',    fr: 'Vélo',          es: 'Ciclismo',       it: 'Ciclismo',        tr: 'Bisiklet',      pl: 'Rowerem',      nl: 'Fietsen',       hr: 'Bicikliranje', el: 'Ποδηλασία',  da: 'Cykling',     ru: 'Велоспорт'   } },
+  { key: 'running',   emoji: '🏃', label: { de: 'Joggen',       en: 'Running',    fr: 'Course',        es: 'Correr',         it: 'Corsa',           tr: 'Koşu',          pl: 'Bieganie',     nl: 'Hardlopen',     hr: 'Trčanje',      el: 'Τρέξιμο',    da: 'Løb',         ru: 'Бег'         } },
+  { key: 'hiking',    emoji: '🥾', label: { de: 'Wandern',      en: 'Hiking',     fr: 'Randonnée',     es: 'Senderismo',     it: 'Escursionismo',   tr: 'Yürüyüş',       pl: 'Wędrówki',     nl: 'Wandelen',      hr: 'Planinarenje', el: 'Πεζοπορία',  da: 'Vandring',    ru: 'Походы'      } },
+  { key: 'walking',   emoji: '🚶', label: { de: 'Spaziergang',  en: 'Walking',    fr: 'Promenade',     es: 'Paseo',          it: 'Passeggiata',     tr: 'Yürüyüş',       pl: 'Spacer',       nl: 'Wandeling',     hr: 'Šetnja',       el: 'Περπάτημα',  da: 'Gåtur',       ru: 'Прогулка'    } },
+  { key: 'swimming',  emoji: '🏊', label: { de: 'Schwimmen',    en: 'Swimming',   fr: 'Natation',      es: 'Natación',       it: 'Nuoto',           tr: 'Yüzme',         pl: 'Pływanie',     nl: 'Zwemmen',       hr: 'Plivanje',     el: 'Κολύμβηση',  da: 'Svømning',    ru: 'Плавание'    } },
+  { key: 'skiing',    emoji: '⛷️', label: { de: 'Ski fahren',   en: 'Skiing',     fr: 'Ski',           es: 'Esquí',          it: 'Sci',             tr: 'Kayak',         pl: 'Narciarstwo',  nl: 'Skiën',         hr: 'Skijanje',     el: 'Σκι',        da: 'Skiløb',      ru: 'Лыжи'        } },
+  { key: 'gardening', emoji: '🌿', label: { de: 'Gartenarbeit', en: 'Gardening',  fr: 'Jardinage',     es: 'Jardinería',     it: 'Giardinaggio',    tr: 'Bahçecilik',    pl: 'Ogrodnictwo',  nl: 'Tuinieren',     hr: 'Vrtlarstvo',   el: 'Κηπουρική',  da: 'Havearbejde', ru: 'Садоводство' } },
+  { key: 'picnic',    emoji: '🧺', label: { de: 'Picknick',     en: 'Picnic',     fr: 'Pique-nique',   es: 'Picnic',         it: 'Picnic',          tr: 'Piknik',        pl: 'Piknik',       nl: 'Picknick',      hr: 'Piknik',       el: 'Πικνίκ',     da: 'Picnic',      ru: 'Пикник'      } },
+];
+// Default activity filter: all activities enabled
+const DEFAULT_ACTIVITY_FILTER = ACTIVITY_DEFINITIONS.map(a => a.key);
+
 // DWD pollen regions: approximate center coordinates for each partregion (or region if no partregions)
 const DWD_POLLEN_REGIONS = [
   { region_id: 10, partregion_id: 11, lat: 54.7, lon: 8.6 },
@@ -393,6 +407,12 @@ const TRANSLATIONS = {
     stationNameLabel: "Stationsname / Ort",
     stationHintNetatmo: "Gib den Standort deiner Netatmo-Station als Ortsnamen ein.",
     orUseStation: "Oder eigene Wetterstation",
+    activityFilterLabel: "Aktivitäten anpassen",
+    activityMyActivities: "Meine Aktivitäten",
+    activityRatingIdeal: "Ideal",
+    activityRatingGood: "Gut",
+    activityRatingFair: "Mäßig",
+    activityRatingPoor: "Ungünstig",
 
   },
   en: {
@@ -652,6 +672,12 @@ const TRANSLATIONS = {
     stationHintNetatmo: "Enter the location of your Netatmo station as a city name.",
     orUseStation: "Or personal weather station",
     startingNow: "starting now",
+    activityFilterLabel: "Customize Activities",
+    activityMyActivities: "My Activities",
+    activityRatingIdeal: "Ideal",
+    activityRatingGood: "Good",
+    activityRatingFair: "Fair",
+    activityRatingPoor: "Unfavorable",
 
   },
   fr: {
@@ -911,6 +937,12 @@ const TRANSLATIONS = {
     swipeHintLocations: "Glisser la carte pour changer de lieu",
     swipeHintTabs: "Glisser pour changer d'onglet",
     trendTitle: "Historique",
+    activityFilterLabel: "Personnaliser activités",
+    activityMyActivities: "Mes activités",
+    activityRatingIdeal: "Idéal",
+    activityRatingGood: "Bien",
+    activityRatingFair: "Correct",
+    activityRatingPoor: "Défavorable",
 
   },
   es: {
@@ -1170,6 +1202,12 @@ const TRANSLATIONS = {
     swipeHintLocations: "Desliza la tarjeta para cambiar de lugar",
     swipeHintTabs: "Desliza para cambiar de pestaña",
     trendTitle: "Historial",
+    activityFilterLabel: "Personalizar actividades",
+    activityMyActivities: "Mis actividades",
+    activityRatingIdeal: "Ideal",
+    activityRatingGood: "Bien",
+    activityRatingFair: "Regular",
+    activityRatingPoor: "Desfavorable",
 
   },
   it: {
@@ -1429,6 +1467,12 @@ const TRANSLATIONS = {
     swipeHintLocations: "Scorri la scheda per cambiare luogo",
     swipeHintTabs: "Scorri per cambiare scheda",
     trendTitle: "Storico",
+    activityFilterLabel: "Personalizza attività",
+    activityMyActivities: "Le mie attività",
+    activityRatingIdeal: "Ideale",
+    activityRatingGood: "Bene",
+    activityRatingFair: "Discreto",
+    activityRatingPoor: "Sfavorevole",
 
   },
   tr: {
@@ -1688,6 +1732,12 @@ const TRANSLATIONS = {
     swipeHintLocations: "Yer değiştirmek için kartı kaydır",
     swipeHintTabs: "Sekme değiştirmek için kaydır",
     trendTitle: "Geçmiş",
+    activityFilterLabel: "Aktiviteleri özelleştir",
+    activityMyActivities: "Aktivitelerim",
+    activityRatingIdeal: "İdeal",
+    activityRatingGood: "İyi",
+    activityRatingFair: "Orta",
+    activityRatingPoor: "Olumsuz",
 
   },
   pl: {
@@ -1947,6 +1997,12 @@ const TRANSLATIONS = {
     swipeHintLocations: "Przesuń kartę, aby zmienić miejsce",
     swipeHintTabs: "Przesuń, aby zmienić zakładkę",
     trendTitle: "Historia",
+    activityFilterLabel: "Dostosuj aktywności",
+    activityMyActivities: "Moje aktywności",
+    activityRatingIdeal: "Idealnie",
+    activityRatingGood: "Dobrze",
+    activityRatingFair: "Przeciętnie",
+    activityRatingPoor: "Niekorzystnie",
 
   },
   nl: {
@@ -2206,6 +2262,12 @@ const TRANSLATIONS = {
     swipeHintLocations: "Veeg kaart om locatie te wisselen",
     swipeHintTabs: "Veeg om van tabblad te wisselen",
     trendTitle: "Verloop",
+    activityFilterLabel: "Activiteiten aanpassen",
+    activityMyActivities: "Mijn activiteiten",
+    activityRatingIdeal: "Ideaal",
+    activityRatingGood: "Goed",
+    activityRatingFair: "Redelijk",
+    activityRatingPoor: "Ongunstig",
 
   },
   hr: {
@@ -2465,6 +2527,12 @@ const TRANSLATIONS = {
     swipeHintLocations: "Prijeđite prstom po kartici za promjenu mjesta",
     swipeHintTabs: "Prijeđite prstom za promjenu kartice",
     trendTitle: "Pregled",
+    activityFilterLabel: "Prilagodi aktivnosti",
+    activityMyActivities: "Moje aktivnosti",
+    activityRatingIdeal: "Idealno",
+    activityRatingGood: "Dobro",
+    activityRatingFair: "Prihvatljivo",
+    activityRatingPoor: "Nepovoljno",
 
   },
   el: {
@@ -2724,6 +2792,12 @@ const TRANSLATIONS = {
     swipeHintLocations: "Σύρτε την κάρτα για αλλαγή τοποθεσίας",
     swipeHintTabs: "Σύρτε για αλλαγή καρτέλας",
     trendTitle: "Ιστορικό",
+    activityFilterLabel: "Προσαρμογή δραστηριοτήτων",
+    activityMyActivities: "Οι δραστηριότητές μου",
+    activityRatingIdeal: "Ιδανικό",
+    activityRatingGood: "Καλό",
+    activityRatingFair: "Μέτριο",
+    activityRatingPoor: "Δυσμενές",
 
   },
   da: {
@@ -2983,6 +3057,12 @@ const TRANSLATIONS = {
     swipeHintLocations: "Swipe kortet for at skifte sted",
     swipeHintTabs: "Swipe for at skifte fane",
     trendTitle: "Oversigt",
+    activityFilterLabel: "Tilpas aktiviteter",
+    activityMyActivities: "Mine aktiviteter",
+    activityRatingIdeal: "Ideelt",
+    activityRatingGood: "Godt",
+    activityRatingFair: "Rimeligt",
+    activityRatingPoor: "Ugunstigt",
 
   },
   ru: {
@@ -3242,6 +3322,12 @@ const TRANSLATIONS = {
     swipeHintLocations: "Смахните карточку, чтобы сменить место",
     swipeHintTabs: "Смахните для смены вкладки",
     trendTitle: "История",
+    activityFilterLabel: "Настроить активности",
+    activityMyActivities: "Мои активности",
+    activityRatingIdeal: "Идеально",
+    activityRatingGood: "Хорошо",
+    activityRatingFair: "Умеренно",
+    activityRatingPoor: "Неблагоприятно",
 
   }
 };
@@ -3285,6 +3371,7 @@ const getSavedSettings = () => {
             windUnit: 'kmh',
             precipUnit: 'mm',
             pollenFilter: DEFAULT_POLLEN_FILTER,
+            activityFilter: DEFAULT_ACTIVITY_FILTER,
             homeTerrain: null,
             personalStation: null
         };
@@ -3303,6 +3390,9 @@ const getSavedSettings = () => {
         if (!Array.isArray(merged.pollenFilter)) {
             merged.pollenFilter = DEFAULT_POLLEN_FILTER;
         }
+        if (!Array.isArray(merged.activityFilter)) {
+            merged.activityFilter = DEFAULT_ACTIVITY_FILTER;
+        }
         return merged;
     } catch (e) { 
         return { 
@@ -3312,6 +3402,7 @@ const getSavedSettings = () => {
             windUnit: 'kmh',
             precipUnit: 'mm',
             pollenFilter: DEFAULT_POLLEN_FILTER,
+            activityFilter: DEFAULT_ACTIVITY_FILTER,
             homeTerrain: null,
             personalStation: null
         }; 
@@ -3681,6 +3772,88 @@ const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvInd
     reason: de ? `Kühle, klare Luft bei ${temp}°C. Genieße die frische Luft – ideal für einen Spaziergang oder kurze Aktivitäten im Freien. Angemessene Kleidung für die Temperatur empfohlen.` : `Cool, clear air at ${temp}°C. Enjoy the fresh air – ideal for a walk or short outdoor activities. Dress appropriately for the temperature.` };
   return { emoji: '✅', text: de ? 'Angenehmes Wetter' : 'Comfortable weather', color: 'text-green-500', score: 7,
     reason: de ? `Das Wetter ist angenehm mit ${temp}°C. Gut geeignet für Outdoor-Aktivitäten und Unternehmungen jeder Art.` : `The weather is comfortable with ${temp}°C. Suitable for outdoor activities and outings of all kinds.` };
+};
+
+/**
+ * Returns a suitability rating (score 1-10, color, label key) for a specific activity
+ * given current weather conditions.
+ */
+const getActivityRating = (key, temp, wind, precip, uvIndex, code) => {
+  const hasRain = precip >= UMBRELLA_PRECIP_THRESHOLD || RAIN_WEATHER_CODES.includes(code);
+  const isThunderstorm = [17, 95, 96, 99].includes(code);
+  const isStorm = wind > 50;
+  const isSnow = [71, 73, 75, 77, 85, 86].includes(code);
+  const isHeavyRain = precip >= 5 || [65, 82].includes(code);
+
+  const rate = (score) => {
+    if (score >= 8) return { score, color: 'text-green-500',  labelKey: 'activityRatingIdeal' };
+    if (score >= 6) return { score, color: 'text-green-600',  labelKey: 'activityRatingGood'  };
+    if (score >= 4) return { score, color: 'text-orange-500', labelKey: 'activityRatingFair'  };
+    return            { score, color: 'text-red-500',    labelKey: 'activityRatingPoor'  };
+  };
+
+  switch (key) {
+    case 'cycling': {
+      if (isThunderstorm || isStorm) return rate(1);
+      if (hasRain || temp < 0 || temp > 37) return rate(3);
+      if (wind > 35 || temp < 5 || temp > 32) return rate(5);
+      if (temp >= 10 && temp <= 25 && wind < 20 && !hasRain) return rate(9);
+      return rate(7);
+    }
+    case 'running': {
+      if (isThunderstorm || isStorm) return rate(1);
+      if (temp < -5 || temp > 35) return rate(2);
+      if (isHeavyRain || wind > 40) return rate(3);
+      if (hasRain || temp < 0 || temp > 30) return rate(4);
+      if (temp >= 8 && temp <= 18 && wind < 20 && !hasRain) return rate(9);
+      return rate(7);
+    }
+    case 'hiking': {
+      if (isThunderstorm || isStorm) return rate(1);
+      if (temp < -10 || isHeavyRain) return rate(2);
+      if (temp < 0 || hasRain || wind > 45) return rate(4);
+      if (temp >= 8 && temp <= 25 && wind < 30 && !hasRain) return rate(9);
+      return rate(6);
+    }
+    case 'walking': {
+      if (isThunderstorm || isStorm) return rate(1);
+      if (isHeavyRain || temp < -10 || temp > 38) return rate(2);
+      if (hasRain || temp < -5 || temp > 35 || wind > 40) return rate(4);
+      if (temp >= 10 && temp <= 25 && wind < 25 && !hasRain) return rate(9);
+      return rate(6);
+    }
+    case 'swimming': {
+      if (isThunderstorm || isStorm) return rate(1);
+      if (hasRain || temp < 18) return rate(2);
+      if (temp < 22) return rate(4);
+      if (temp >= 24 && temp <= 32 && !hasRain) return rate(9);
+      return rate(7);
+    }
+    case 'skiing': {
+      if (isThunderstorm) return rate(1);
+      if (temp > 5 || (hasRain && !isSnow)) return rate(2);
+      if (temp > 2 || isHeavyRain) return rate(4);
+      if (isSnow && temp <= 0 && wind < 40) return rate(9);
+      if (temp <= 0 && wind < 40) return rate(7);
+      return rate(5);
+    }
+    case 'gardening': {
+      if (isThunderstorm || isStorm) return rate(1);
+      if (isHeavyRain || temp > 38 || temp < -5) return rate(2);
+      if (hasRain || temp < 5 || temp > 33 || wind > 40) return rate(4);
+      if (temp >= 12 && temp <= 25 && wind < 25 && !hasRain) return rate(9);
+      return rate(6);
+    }
+    case 'picnic': {
+      if (isThunderstorm || isStorm) return rate(1);
+      if (hasRain || temp < 10 || temp > 35 || wind > 35) return rate(2);
+      if (temp < 15 || temp > 30 || wind > 25) return rate(5);
+      if (temp >= 18 && temp <= 28 && wind < 20 && !hasRain) return rate(9);
+      return rate(7);
+    }
+    default:
+      return rate(5);
+  }
 };
 
 
@@ -5313,7 +5486,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                   </div>
 
                  {/* POLLEN FILTER */}
-                 <div className="mb-8">
+                 <div className="mb-6">
                      <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
                         <Sparkles size={16}/> {t.pollenFilter}
                      </label>
@@ -5348,6 +5521,35 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                                      className={`py-2 px-3 rounded-m3-sm text-sm font-bold transition flex items-center justify-between gap-1 ${isActive ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                                  >
                                      <span>{label}</span>
+                                     {isActive && <Check size={14} />}
+                                 </button>
+                             );
+                         })}
+                     </div>
+                 </div>
+
+                 {/* ACTIVITY FILTER */}
+                 <div className="mb-8">
+                     <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <Activity size={16}/> {t.activityFilterLabel || 'Aktivitäten anpassen'}
+                     </label>
+                     <div className="grid grid-cols-2 gap-2 bg-m3-surface-container p-2 rounded-m3-md">
+                         {ACTIVITY_DEFINITIONS.map(({ key, emoji, label }) => {
+                             const filter = localSettings.activityFilter || DEFAULT_ACTIVITY_FILTER;
+                             const isActive = filter.includes(key);
+                             const actLabel = label[localSettings.language] || label['en'] || key;
+                             return (
+                                 <button
+                                     key={key}
+                                     onClick={() => {
+                                         const updated = isActive
+                                             ? filter.filter(k => k !== key)
+                                             : [...filter, key];
+                                         setLocalSettings({ ...localSettings, activityFilter: updated });
+                                     }}
+                                     className={`py-2 px-3 rounded-m3-sm text-sm font-bold transition flex items-center justify-between gap-1 ${isActive ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                                 >
+                                     <span>{emoji} {actLabel}</span>
                                      {isActive && <Check size={14} />}
                                  </button>
                              );
@@ -8312,7 +8514,7 @@ const getScoreBadgeClass = (score, isNight) =>
       : (isNight ? 'bg-red-900/50 text-red-400' : 'bg-red-100 text-red-700');
 
 // --- ACTIVITY INDEX MODAL ---
-const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null, isRealNight = false }) => {
+const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null, activityFilter = null, isRealNight = false }) => {
   const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
   const [selectedAdvice, setSelectedAdvice] = useState(null);
   if (!isOpen) return null;
@@ -8397,6 +8599,20 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
     return { label: tr.pollenLow, color: 'text-green-500' };
   };
 
+  // Compute per-activity ratings based on current hour's weather
+  const activeActivityFilter = Array.isArray(activityFilter) ? activityFilter : DEFAULT_ACTIVITY_FILTER;
+  const currentHourData = todayHours.find(h => h.hour === currentHour) || todayHours[0];
+  const activityRatings = currentHourData
+    ? ACTIVITY_DEFINITIONS
+        .filter(({ key }) => activeActivityFilter.includes(key))
+        .map(({ key, emoji, label }) => ({
+          key,
+          emoji,
+          label: label[lang] || label['en'] || key,
+          rating: getActivityRating(key, currentHourData.temp, currentHourData.wind, currentHourData.precip, currentHourData.uvIndex, currentHourData.code),
+        }))
+    : [];
+
   return (
     <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
       <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-white'} rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-md'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
@@ -8418,6 +8634,35 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
 
         {/* Scrollable content */}
         <div className="overflow-y-auto">
+          {/* My Activities section */}
+          {activityRatings.length > 0 && (
+            <div className={`p-4 border-b ${isRealNight ? 'border-m3-outline-variant/70' : 'border-slate-100'}`}>
+              <div className={`text-xs font-semibold ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} uppercase tracking-wide mb-3 flex items-center gap-1`}>
+                <Activity size={11} className="text-yellow-400" /> {tr.activityMyActivities || 'Meine Aktivitäten'}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {activityRatings.map(({ key, emoji, label, rating }) => (
+                  <div
+                    key={key}
+                    className={`flex items-center gap-2 p-2 rounded-xl border ${
+                      isRealNight
+                        ? 'bg-m3-dark-surface-container-high/60 border-m3-outline-variant/50'
+                        : 'bg-slate-50 border-slate-100'
+                    }`}
+                  >
+                    <span className="text-xl flex-shrink-0">{emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className={`text-xs font-semibold truncate ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-700'}`}>{label}</div>
+                      <div className={`text-xs font-bold ${rating.color}`}>{tr[rating.labelKey] || rating.labelKey}</div>
+                    </div>
+                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full leading-none flex-shrink-0 ${getScoreBadgeClass(rating.score, isRealNight)}`}>
+                      {rating.score}/10
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {/* 24-hour grid overview */}
           <div className={`p-4 border-b ${isRealNight ? 'border-m3-outline-variant/70' : 'border-slate-100'}`}>
             <div className={`text-xs font-semibold ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} uppercase tracking-wide mb-3 flex items-center gap-1`}>
@@ -12541,6 +12786,7 @@ export default function WeatherApp() {
           isSmallScreen={isSmallScreen}
           airQualityData={airQualityData}
           pollenFilter={settings.pollenFilter}
+          activityFilter={settings.activityFilter}
           isRealNight={isRealNight}
         />
       )}
