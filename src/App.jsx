@@ -10722,7 +10722,7 @@ export default function WeatherApp() {
       const { lat, lon } = currentLoc;
       
       const modelsShort = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless";
-      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,rain,snowfall,weathercode,wind_speed_10m,relative_humidity_2m&hourly=temperature_2m,precipitation,snowfall,weathercode,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,cloud_cover,pressure_msl,visibility&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2&past_hours=12`;
+      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,rain,snowfall,weathercode,wind_speed_10m,relative_humidity_2m,cloud_cover&hourly=temperature_2m,precipitation,snowfall,weathercode,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,cloud_cover,pressure_msl,visibility&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2&past_hours=12`;
       
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
       const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,precipitation_probability_max&models=${modelsLong}&timezone=auto&forecast_days=14`;
@@ -10866,6 +10866,12 @@ export default function WeatherApp() {
   };
 
   useEffect(() => { fetchData(); }, [currentLoc]);
+
+  // Periodically refresh weather data every 15 minutes for live animation
+  useEffect(() => {
+    const interval = setInterval(() => { fetchData(); }, 15 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [currentLoc]);
 
   // Clear station data when not on home location
   useEffect(() => {
@@ -11787,7 +11793,7 @@ export default function WeatherApp() {
         wind: curr.wind_speed_10m !== undefined ? curr.wind_speed_10m : baseData.wind,
         humidity: curr.relative_humidity_2m !== undefined ? curr.relative_humidity_2m : baseData.humidity,
         code: curr.weathercode !== undefined ? curr.weathercode : baseData.code,
-        cloudCover: baseData.cloudCover // Preserve cloudCover from hourly data
+        cloudCover: curr.cloud_cover !== undefined ? curr.cloud_cover : baseData.cloudCover
       };
     }
 
@@ -12048,6 +12054,9 @@ export default function WeatherApp() {
               sunrise={sunriseSunset.sunrise} 
               sunset={sunriseSunset.sunset} 
               windSpeed={current.wind} 
+              cloudCover={current.cloudCover}
+              precipitation={current.precip}
+              snowfall={current.snow}
               lang={lang}
               demoWeather={demoWeather}
               demoSeason={demoSeason}
