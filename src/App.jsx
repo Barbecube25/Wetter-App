@@ -52,6 +52,7 @@ const DOT_MIN_SWIPE_PX = 2;
 // Photography time durations (milliseconds)
 const GOLDEN_HOUR_DURATION_MS = 60 * 60 * 1000; // 60 minutes
 const BLUE_HOUR_DURATION_MS = 30 * 60 * 1000;   // 30 minutes
+const MS_PER_DAY = 24 * 60 * 60 * 1000;         // 24 hours in milliseconds
 
 // Pollen concentration thresholds (grains/m³, based on EAN standard)
 const POLLEN_MODERATE_THRESHOLD = 5;
@@ -8186,7 +8187,7 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
 };
 
 // --- POLLEN DETAILS MODAL ---
-const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmallScreen = false, pollenFilter = null, isRealNight = false, dwdPollenRegion = null, dwdPollenForecast = null }) => {
+const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmallScreen = false, pollenFilter = null, isRealNight = false, dwdPollenRegion = null, dwdPollenForecast = null, openMeteoPollenForecast = null }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
 
   if (!isOpen || !airQualityData) return null;
@@ -8272,14 +8273,25 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
   };
 
   // Build DWD 3-day forecast rows: show all DWD-provided pollen types that are active in any of the 3 days
-  const forecastRows = dwdPollenForecast
-    ? dwdPollenTypes
+  const activeForecast = dwdPollenForecast || openMeteoPollenForecast;
+  const isOpenMeteoForecast = !dwdPollenForecast && !!openMeteoPollenForecast;
+  const openMeteoPollenTypes = [
+    { key: 'alder_pollen', label: t.pollenAlder },
+    { key: 'birch_pollen', label: t.pollenBirch },
+    { key: 'grass_pollen', label: t.pollenGrass },
+    { key: 'mugwort_pollen', label: t.pollenMugwort },
+    { key: 'olive_pollen', label: t.pollenOlive },
+    { key: 'ragweed_pollen', label: t.pollenRagweed },
+  ];
+  const forecastPollenTypes = dwdPollenForecast ? dwdPollenTypes : openMeteoPollenTypes;
+  const forecastRows = activeForecast
+    ? forecastPollenTypes
         .map(({ key, label }) => ({
           key,
           label,
           today: airQualityData[key] ?? 0,
-          tomorrow: dwdPollenForecast.tomorrow[key] ?? 0,
-          dayafter: dwdPollenForecast.dayafter[key] ?? 0,
+          tomorrow: activeForecast.tomorrow[key] ?? 0,
+          dayafter: activeForecast.dayafter[key] ?? 0,
         }))
         .filter(({ today, tomorrow, dayafter }) => today > 0 || tomorrow > 0 || dayafter > 0)
         .sort((a, b) => b.today - a.today)
@@ -8301,12 +8313,14 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
 
         {/* Content */}
         <div className="overflow-y-auto p-4 space-y-2">
-          {/* DWD 3-day forecast table (Germany only) */}
-          {dwdPollenForecast && forecastRows.length > 0 && (
+          {/* 3-day forecast table (DWD for Germany, Open-Meteo for other locations) */}
+          {activeForecast && forecastRows.length > 0 && (
             <div className={`rounded-2xl border ${isRealNight ? 'border-m3-outline-variant/50 bg-m3-dark-surface-container-high/30' : 'border-slate-200 bg-slate-50'} overflow-hidden mb-2`}>
               <div className={`px-3 py-2 border-b ${isRealNight ? 'border-m3-outline-variant/40' : 'border-slate-200'}`}>
                 <span className={`text-xs font-semibold ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'} uppercase tracking-wide`}>
-                  {t.pollenForecast || '3-Tage-Vorhersage (DWD)'}
+                  {isOpenMeteoForecast
+                    ? (t.pollenForecast || '3-Tage-Vorhersage (DWD)').replace(' (DWD)', '')
+                    : (t.pollenForecast || '3-Tage-Vorhersage (DWD)')}
                 </span>
               </div>
               {/* Column headers */}
@@ -10220,6 +10234,7 @@ export default function WeatherApp() {
   const [dwdWarnings, setDwdWarnings] = useState([]);
   const [dwdPollenRegion, setDwdPollenRegion] = useState(null);
   const [dwdPollenForecast, setDwdPollenForecast] = useState(null);
+  const [openMeteoPollenForecast, setOpenMeteoPollenForecast] = useState(null);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [chartView, setChartView] = useState('hourly');
@@ -10963,6 +10978,7 @@ export default function WeatherApp() {
     setError(null);
     setDwdWarnings([]);
     setDwdPollenRegion(null);
+    setOpenMeteoPollenForecast(null);
     try {
       const { lat, lon } = currentLoc;
       
@@ -10974,7 +10990,7 @@ export default function WeatherApp() {
       // Separate API call for sunrise/sunset without models parameter (astronomical data is location-based, not model-dependent)
       const urlSunriseSunset = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&timezone=auto&forecast_days=1`;
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
-      const urlAirQuality = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi,pm10,pm2_5,alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&hourly=european_aqi&past_days=1&forecast_days=2&timezone=auto`;
+      const urlAirQuality = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi,pm10,pm2_5,alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&hourly=european_aqi,alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&past_days=1&forecast_days=3&timezone=auto`;
       const urlDwdPollen = 'https://opendata.dwd.de/climate_environment/health/alerts/s31fg.json';
 
       // Climate normals: fetch same month last year from archive API for historical context
@@ -11031,6 +11047,30 @@ export default function WeatherApp() {
         const aqJson = await resAirQuality.json();
         aqData = { ...(aqJson.current || {}) };
         setAirQualityHourlyData(aqJson.hourly || null);
+
+        // Compute daily max pollen from hourly data for tomorrow and day-after-tomorrow
+        if (aqJson.hourly?.time) {
+          const pollenHourlyKeys = ['alder_pollen', 'birch_pollen', 'grass_pollen', 'mugwort_pollen', 'olive_pollen', 'ragweed_pollen'];
+          // Open-Meteo time strings are in local time (timezone=auto). To compare them with the
+          // correct local calendar dates, we shift the current UTC timestamp by the response's
+          // UTC offset, so that toISOString().slice(0,10) gives the local calendar date string.
+          const utcOffsetMs = (aqJson.utc_offset_seconds ?? 0) * 1000;
+          const localNowMs = Date.now() + utcOffsetMs;
+          const tomorrowStr = new Date(localNowMs + MS_PER_DAY).toISOString().slice(0, 10);
+          const dayafterStr = new Date(localNowMs + 2 * MS_PER_DAY).toISOString().slice(0, 10);
+          const omTomorrow = {};
+          const omDayafter = {};
+          pollenHourlyKeys.forEach(k => { omTomorrow[k] = 0; omDayafter[k] = 0; });
+          aqJson.hourly.time.forEach((timeStr, i) => {
+            const dateStr = timeStr.slice(0, 10);
+            pollenHourlyKeys.forEach(k => {
+              const val = aqJson.hourly[k]?.[i] ?? 0;
+              if (dateStr === tomorrowStr) omTomorrow[k] = Math.max(omTomorrow[k], val);
+              else if (dateStr === dayafterStr) omDayafter[k] = Math.max(omDayafter[k], val);
+            });
+          });
+          setOpenMeteoPollenForecast({ tomorrow: omTomorrow, dayafter: omDayafter });
+        }
       }
 
       // For German locations, override pollen fields with DWD data (more accurate regional data)
@@ -12762,6 +12802,7 @@ export default function WeatherApp() {
           isRealNight={isRealNight}
           dwdPollenRegion={dwdPollenRegion}
           dwdPollenForecast={dwdPollenForecast}
+          openMeteoPollenForecast={openMeteoPollenForecast}
         />
       )}
       {showPrecipModal && (
