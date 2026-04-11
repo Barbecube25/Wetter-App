@@ -5531,7 +5531,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                  {/* ACTIVITY FILTER */}
                  <div className="mb-8">
                      <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
-                        <Activity size={16}/> {t.activityFilterLabel || 'Aktivitäten anpassen'}
+                        <Activity size={16}/> {t.activityFilterLabel || 'Customize Activities'}
                      </label>
                      <div className="grid grid-cols-2 gap-2 bg-m3-surface-container p-2 rounded-m3-md">
                          {ACTIVITY_DEFINITIONS.map(({ key, emoji, label }) => {
@@ -8638,7 +8638,7 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
           {activityRatings.length > 0 && (
             <div className={`p-4 border-b ${isRealNight ? 'border-m3-outline-variant/70' : 'border-slate-100'}`}>
               <div className={`text-xs font-semibold ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} uppercase tracking-wide mb-3 flex items-center gap-1`}>
-                <Activity size={11} className="text-yellow-400" /> {tr.activityMyActivities || 'Meine Aktivitäten'}
+                <Activity size={11} className="text-yellow-400" /> {tr.activityMyActivities || 'My Activities'}
               </div>
               <div className="grid grid-cols-2 gap-2">
                 {activityRatings.map(({ key, emoji, label, rating }) => (
