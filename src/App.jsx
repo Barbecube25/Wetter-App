@@ -52,6 +52,7 @@ const DOT_MIN_SWIPE_PX = 2;
 // Photography time durations (milliseconds)
 const GOLDEN_HOUR_DURATION_MS = 60 * 60 * 1000; // 60 minutes
 const BLUE_HOUR_DURATION_MS = 30 * 60 * 1000;   // 30 minutes
+const MS_PER_DAY = 24 * 60 * 60 * 1000;         // 24 hours in milliseconds
 
 // Pollen concentration thresholds (grains/m³, based on EAN standard)
 const POLLEN_MODERATE_THRESHOLD = 5;
@@ -11050,10 +11051,13 @@ export default function WeatherApp() {
         // Compute daily max pollen from hourly data for tomorrow and day-after-tomorrow
         if (aqJson.hourly?.time) {
           const pollenHourlyKeys = ['alder_pollen', 'birch_pollen', 'grass_pollen', 'mugwort_pollen', 'olive_pollen', 'ragweed_pollen'];
-          const utcOffsetSeconds = aqJson.utc_offset_seconds ?? 0;
-          const localNow = new Date(Date.now() + utcOffsetSeconds * 1000);
-          const tomorrowStr = new Date(localNow.getTime() + 86400000).toISOString().slice(0, 10);
-          const dayafterStr = new Date(localNow.getTime() + 2 * 86400000).toISOString().slice(0, 10);
+          // Open-Meteo time strings are in local time (timezone=auto). To compare them with the
+          // correct local calendar dates, we shift the current UTC timestamp by the response's
+          // UTC offset, so that toISOString().slice(0,10) gives the local calendar date string.
+          const utcOffsetMs = (aqJson.utc_offset_seconds ?? 0) * 1000;
+          const localNowMs = Date.now() + utcOffsetMs;
+          const tomorrowStr = new Date(localNowMs + MS_PER_DAY).toISOString().slice(0, 10);
+          const dayafterStr = new Date(localNowMs + 2 * MS_PER_DAY).toISOString().slice(0, 10);
           const omTomorrow = {};
           const omDayafter = {};
           pollenHourlyKeys.forEach(k => { omTomorrow[k] = 0; omDayafter[k] = 0; });
