@@ -83,6 +83,18 @@ const DEFAULT_ACTIVITY_PARAMS = {
   picnic:    { minTemp: 18, maxTemp: 28, maxWind: 20, rainOk: false },
 };
 
+// Default thresholds for the general activity advice (Regenschirm einpacken, drinnen bleiben, etc.)
+const DEFAULT_ACTIVITY_ADVICE_PARAMS = {
+  umbrellaThreshold: 0.5,  // mm precipitation to trigger "Regenschirm einpacken"
+  stormWindThreshold: 50,  // km/h wind to trigger "drinnen bleiben"
+  extremeHeatTemp: 35,     // °C for extreme heat warning
+  hotTemp: 28,             // °C for "good trip weather"
+  idealMinTemp: 12,        // °C minimum for "ideal outdoor"
+  idealMaxTemp: 25,        // °C maximum for "ideal outdoor"
+  coldTemp: 5,             // °C below which "jacket recommended"
+  freezingTemp: 0,         // °C below which frost/freezing warning
+};
+
 // Returns unified list of built-in + user-created custom activities with resolved display names
 const getEffectiveActivities = (customActivities = [], activityCustomNames = {}) => {
   const builtin = ACTIVITY_DEFINITIONS.map(act => ({
@@ -467,6 +479,15 @@ const TRANSLATIONS = {
     activityManagerNamePlaceholder: "z.B. Gemütliches drinnen",
     activityManagerDeleteConfirm: "Aktivität wirklich löschen?",
     activityManagerBuiltinNote: "Integrierte Aktivität",
+    activityAdviceParamsTitle: "Allgemeine Empfehlungs-Parameter",
+    activityAdviceUmbrellaThreshold: "Schirm ab (mm Niederschlag)",
+    activityAdviceStormWind: "Sturm / drinnen bleiben (km/h)",
+    activityAdviceExtremeHeat: "Extreme Hitze ab (°C)",
+    activityAdviceHotTemp: "Ausflugswetter ab (°C)",
+    activityAdviceIdealMin: "Ideal: Min-Temp. (°C)",
+    activityAdviceIdealMax: "Ideal: Max-Temp. (°C)",
+    activityAdviceColdTemp: "Kalt / Jacke ab (°C)",
+    activityAdviceFreezing: "Frost ab (°C)",
 
   },
   en: {
@@ -750,6 +771,15 @@ const TRANSLATIONS = {
     activityManagerNamePlaceholder: "e.g. Cozy Indoor Day",
     activityManagerDeleteConfirm: "Really delete this activity?",
     activityManagerBuiltinNote: "Built-in activity",
+    activityAdviceParamsTitle: "General Advice Parameters",
+    activityAdviceUmbrellaThreshold: "Umbrella from (mm precip.)",
+    activityAdviceStormWind: "Storm / stay indoors (km/h)",
+    activityAdviceExtremeHeat: "Extreme heat from (°C)",
+    activityAdviceHotTemp: "Trip weather from (°C)",
+    activityAdviceIdealMin: "Ideal: min. temp. (°C)",
+    activityAdviceIdealMax: "Ideal: max. temp. (°C)",
+    activityAdviceColdTemp: "Cold / jacket from (°C)",
+    activityAdviceFreezing: "Freezing from (°C)",
 
   },
   fr: {
@@ -1022,6 +1052,15 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Vent max.",
     activityParamsRainOk: "Pluie légère OK",
     activityParamsReset: "Réinitialiser",
+    activityAdviceParamsTitle: "Paramètres généraux de conseils",
+    activityAdviceUmbrellaThreshold: "Parapluie dès (mm préc.)",
+    activityAdviceStormWind: "Tempête / rester dedans (km/h)",
+    activityAdviceExtremeHeat: "Chaleur extrême dès (°C)",
+    activityAdviceHotTemp: "Météo excursion dès (°C)",
+    activityAdviceIdealMin: "Idéal : temp. min. (°C)",
+    activityAdviceIdealMax: "Idéal : temp. max. (°C)",
+    activityAdviceColdTemp: "Froid / veste dès (°C)",
+    activityAdviceFreezing: "Gel dès (°C)",
 
   },
   es: {
@@ -1294,6 +1333,15 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Viento máx.",
     activityParamsRainOk: "Lluvia ligera OK",
     activityParamsReset: "Restablecer",
+    activityAdviceParamsTitle: "Parámetros generales de consejos",
+    activityAdviceUmbrellaThreshold: "Paraguas desde (mm precip.)",
+    activityAdviceStormWind: "Tormenta / quedarse dentro (km/h)",
+    activityAdviceExtremeHeat: "Calor extremo desde (°C)",
+    activityAdviceHotTemp: "Buen tiempo para excursión (°C)",
+    activityAdviceIdealMin: "Ideal: temp. mín. (°C)",
+    activityAdviceIdealMax: "Ideal: temp. máx. (°C)",
+    activityAdviceColdTemp: "Frío / chaqueta desde (°C)",
+    activityAdviceFreezing: "Helada desde (°C)",
 
   },
   it: {
@@ -1566,6 +1614,15 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Vento max.",
     activityParamsRainOk: "Pioggia leggera OK",
     activityParamsReset: "Ripristina predefiniti",
+    activityAdviceParamsTitle: "Parametri generali di consiglio",
+    activityAdviceUmbrellaThreshold: "Ombrello da (mm prec.)",
+    activityAdviceStormWind: "Tempesta / restare dentro (km/h)",
+    activityAdviceExtremeHeat: "Caldo estremo da (°C)",
+    activityAdviceHotTemp: "Buon tempo per gita da (°C)",
+    activityAdviceIdealMin: "Ideale: temp. min. (°C)",
+    activityAdviceIdealMax: "Ideale: temp. max. (°C)",
+    activityAdviceColdTemp: "Freddo / giacca da (°C)",
+    activityAdviceFreezing: "Gelo da (°C)",
 
   },
   tr: {
@@ -1838,6 +1895,15 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Maks. rüzgar",
     activityParamsRainOk: "Hafif yağmur tamam",
     activityParamsReset: "Varsayılana sıfırla",
+    activityAdviceParamsTitle: "Genel tavsiye parametreleri",
+    activityAdviceUmbrellaThreshold: "Şemsiye (mm yağış'tan itibaren)",
+    activityAdviceStormWind: "Fırtına / içeride kal (km/h)",
+    activityAdviceExtremeHeat: "Aşırı sıcak (°C'den itibaren)",
+    activityAdviceHotTemp: "Gezi havası (°C'den itibaren)",
+    activityAdviceIdealMin: "İdeal: min. sıcaklık (°C)",
+    activityAdviceIdealMax: "İdeal: maks. sıcaklık (°C)",
+    activityAdviceColdTemp: "Soğuk / ceket (°C'den itibaren)",
+    activityAdviceFreezing: "Don (°C'den itibaren)",
 
   },
   pl: {
@@ -2110,6 +2176,15 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Maks. wiatr",
     activityParamsRainOk: "Lekki deszcz OK",
     activityParamsReset: "Przywróć domyślne",
+    activityAdviceParamsTitle: "Ogólne parametry porad",
+    activityAdviceUmbrellaThreshold: "Parasol od (mm opady)",
+    activityAdviceStormWind: "Burza / zostań w środku (km/h)",
+    activityAdviceExtremeHeat: "Ekstremalne upały od (°C)",
+    activityAdviceHotTemp: "Dobra pogoda na wycieczkę od (°C)",
+    activityAdviceIdealMin: "Idealne: min. temp. (°C)",
+    activityAdviceIdealMax: "Idealne: maks. temp. (°C)",
+    activityAdviceColdTemp: "Zimno / kurtka od (°C)",
+    activityAdviceFreezing: "Mróz od (°C)",
 
   },
   nl: {
@@ -2382,6 +2457,15 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Max. wind",
     activityParamsRainOk: "Lichte regen OK",
     activityParamsReset: "Standaard herstellen",
+    activityAdviceParamsTitle: "Algemene adviesparameters",
+    activityAdviceUmbrellaThreshold: "Paraplu vanaf (mm neerslag)",
+    activityAdviceStormWind: "Storm / binnen blijven (km/h)",
+    activityAdviceExtremeHeat: "Extreme hitte vanaf (°C)",
+    activityAdviceHotTemp: "Goed uitstapweer vanaf (°C)",
+    activityAdviceIdealMin: "Ideaal: min. temp. (°C)",
+    activityAdviceIdealMax: "Ideaal: max. temp. (°C)",
+    activityAdviceColdTemp: "Koud / jas vanaf (°C)",
+    activityAdviceFreezing: "Vorst vanaf (°C)",
 
   },
   hr: {
@@ -2654,6 +2738,15 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Maks. vjetar",
     activityParamsRainOk: "Lagana kiša OK",
     activityParamsReset: "Vrati na zadano",
+    activityAdviceParamsTitle: "Opći parametri preporuka",
+    activityAdviceUmbrellaThreshold: "Kišobran od (mm oborine)",
+    activityAdviceStormWind: "Oluja / ostani unutra (km/h)",
+    activityAdviceExtremeHeat: "Ekstremna vrućina od (°C)",
+    activityAdviceHotTemp: "Dobro izletničko vrijeme od (°C)",
+    activityAdviceIdealMin: "Idealno: min. temp. (°C)",
+    activityAdviceIdealMax: "Idealno: maks. temp. (°C)",
+    activityAdviceColdTemp: "Hladno / jakna od (°C)",
+    activityAdviceFreezing: "Mraz od (°C)",
 
   },
   el: {
@@ -2926,6 +3019,15 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Μέγ. άνεμος",
     activityParamsRainOk: "Ελαφριά βροχή OK",
     activityParamsReset: "Επαναφορά προεπιλογών",
+    activityAdviceParamsTitle: "Γενικές παράμετροι συμβουλών",
+    activityAdviceUmbrellaThreshold: "Ομπρέλα από (mm βροχής)",
+    activityAdviceStormWind: "Καταιγίδα / μείνε μέσα (km/h)",
+    activityAdviceExtremeHeat: "Ακραία ζέστη από (°C)",
+    activityAdviceHotTemp: "Καλός καιρός εκδρομής από (°C)",
+    activityAdviceIdealMin: "Ιδανικό: ελάχ. θερμ. (°C)",
+    activityAdviceIdealMax: "Ιδανικό: μέγ. θερμ. (°C)",
+    activityAdviceColdTemp: "Κρύο / σακάκι από (°C)",
+    activityAdviceFreezing: "Παγετός από (°C)",
 
   },
   da: {
@@ -3198,6 +3300,15 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Maks. vind",
     activityParamsRainOk: "Let regn OK",
     activityParamsReset: "Nulstil til standard",
+    activityAdviceParamsTitle: "Generelle rådgivningsparametre",
+    activityAdviceUmbrellaThreshold: "Paraply fra (mm nedbør)",
+    activityAdviceStormWind: "Storm / bliv indenfor (km/h)",
+    activityAdviceExtremeHeat: "Ekstrem varme fra (°C)",
+    activityAdviceHotTemp: "Godt udflugtsvejr fra (°C)",
+    activityAdviceIdealMin: "Ideelt: min. temp. (°C)",
+    activityAdviceIdealMax: "Ideelt: maks. temp. (°C)",
+    activityAdviceColdTemp: "Koldt / jakke fra (°C)",
+    activityAdviceFreezing: "Frost fra (°C)",
 
   },
   ru: {
@@ -3470,6 +3581,15 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Макс. ветер",
     activityParamsRainOk: "Лёгкий дождь OK",
     activityParamsReset: "Сбросить настройки",
+    activityAdviceParamsTitle: "Общие параметры рекомендаций",
+    activityAdviceUmbrellaThreshold: "Зонт от (мм осадков)",
+    activityAdviceStormWind: "Шторм / оставаться дома (км/ч)",
+    activityAdviceExtremeHeat: "Экстремальная жара от (°C)",
+    activityAdviceHotTemp: "Хорошая прогулочная погода от (°C)",
+    activityAdviceIdealMin: "Идеально: мин. темп. (°C)",
+    activityAdviceIdealMax: "Идеально: макс. темп. (°C)",
+    activityAdviceColdTemp: "Холодно / куртка от (°C)",
+    activityAdviceFreezing: "Мороз от (°C)",
 
   }
 };
@@ -3515,6 +3635,7 @@ const getSavedSettings = () => {
             pollenFilter: DEFAULT_POLLEN_FILTER,
             activityFilter: DEFAULT_ACTIVITY_FILTER,
             activityParams: DEFAULT_ACTIVITY_PARAMS,
+            activityAdviceParams: DEFAULT_ACTIVITY_ADVICE_PARAMS,
             customActivities: [],
             activityCustomNames: {},
             homeTerrain: null,
@@ -3544,6 +3665,12 @@ const getSavedSettings = () => {
         } else {
             merged.activityParams = { ...DEFAULT_ACTIVITY_PARAMS, ...merged.activityParams };
         }
+        // Ensure activityAdviceParams is an object; merge to pick up any new keys
+        if (!merged.activityAdviceParams || typeof merged.activityAdviceParams !== 'object') {
+            merged.activityAdviceParams = DEFAULT_ACTIVITY_ADVICE_PARAMS;
+        } else {
+            merged.activityAdviceParams = { ...DEFAULT_ACTIVITY_ADVICE_PARAMS, ...merged.activityAdviceParams };
+        }
         if (!Array.isArray(merged.customActivities)) {
             merged.customActivities = [];
         }
@@ -3561,6 +3688,7 @@ const getSavedSettings = () => {
             pollenFilter: DEFAULT_POLLEN_FILTER,
             activityFilter: DEFAULT_ACTIVITY_FILTER,
             activityParams: DEFAULT_ACTIVITY_PARAMS,
+            activityAdviceParams: DEFAULT_ACTIVITY_ADVICE_PARAMS,
             customActivities: [],
             activityCustomNames: {},
             homeTerrain: null,
@@ -3875,30 +4003,37 @@ const getTripClothingTip = ({ lang = 'de', maxTemp = 0, minTemp = 0, rainChance 
  * @param {number} precip24h - expected precipitation in next 24h in mm
  * @param {number} uvIndex - UV index
  * @param {number} code - WMO weather code
+ * @param {object|null} adviceParams - optional custom thresholds (overrides DEFAULT_ACTIVITY_ADVICE_PARAMS)
  * @returns {{ emoji: string, text: string, color: string }}
  */
-const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvIndex = 0, code = 0) => {
+const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvIndex = 0, code = 0, adviceParams = null) => {
   temp = Math.round(temp);
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
-  const hasRain = precip24h >= UMBRELLA_PRECIP_THRESHOLD || RAIN_WEATHER_CODES.includes(code);
+  const p = { ...DEFAULT_ACTIVITY_ADVICE_PARAMS, ...(adviceParams && typeof adviceParams === 'object' ? adviceParams : {}) };
+  const hasRain = precip24h >= p.umbrellaThreshold || RAIN_WEATHER_CODES.includes(code);
   // isDrizzle: drizzle codes (51-55) with low precipitation – shown as ☕ cosy-indoors rather than ☂️ umbrella.
   // hasRain stays true for these codes (they are in RAIN_WEATHER_CODES), so the umbrella branch uses
   // `hasRain && !isDrizzle` to let light drizzle fall through to the overcast/drizzle handler below.
-  const isDrizzle = [51, 53, 55].includes(code) && precip24h < UMBRELLA_PRECIP_THRESHOLD;
+  const isDrizzle = [51, 53, 55].includes(code) && precip24h < p.umbrellaThreshold;
   const isOvercast = [2, 3, 45, 48].includes(code) && !hasRain;
   const isThunderstorm = [17, 95, 96, 99].includes(code);
-  const isStorm = wind > 50;
-  const isVeryCold = temp < TEMPERATURE_THRESHOLDS_C.freezing;
-  const isNearFreezing = temp >= TEMPERATURE_THRESHOLDS_C.nearFreezingLow && temp <= TEMPERATURE_THRESHOLDS_C.freezing + 1;
-  const isCold = temp >= TEMPERATURE_THRESHOLDS_C.freezing && temp < TEMPERATURE_THRESHOLDS_C.cold;
-  const isExtremeHeat = temp >= TEMPERATURE_THRESHOLDS_C.extremeHeat;
-  const isVeryHot = temp >= 32;
-  const isHot = temp >= TEMPERATURE_THRESHOLDS_C.hot;
+  const isStorm = wind > p.stormWindThreshold;
+  const isVeryCold = temp < p.freezingTemp;
+  // Near-freezing: 3°C below freezingTemp to 1°C above (matches original nearFreezingLow offset)
+  const isNearFreezing = temp >= (p.freezingTemp - 3) && temp <= p.freezingTemp + 1;
+  const isCold = temp >= p.freezingTemp && temp < p.coldTemp;
+  const isExtremeHeat = temp >= p.extremeHeatTemp;
+  // Very hot: 3°C below extreme-heat threshold – yields sun-protection recommendation before full extreme-heat warning
+  const isVeryHot = temp >= (p.extremeHeatTemp - 3);
+  const isHot = temp >= p.hotTemp;
   const isUVHigh = uvIndex >= 6;
   const isClearOrPartly = [0, 1].includes(code);
-  const isGoodWalk = temp >= TEMPERATURE_THRESHOLDS_C.cold && temp <= 18 && wind < 25 && !hasRain;
-  const isIdealOutdoor = temp >= TEMPERATURE_THRESHOLDS_C.cool && temp <= 25 && wind < 30 && !hasRain;
-  const isCoolClear = temp >= TEMPERATURE_THRESHOLDS_C.cold && temp < TEMPERATURE_THRESHOLDS_C.cool && isClearOrPartly && wind < 30 && !hasRain;
+  // Good walk: cold...(idealMinTemp+6)°C and wind<25. The +6 gives a comfortable margin above the ideal-min start.
+  const isGoodWalk = temp >= p.coldTemp && temp <= (p.idealMinTemp + 6) && wind < 25 && !hasRain;
+  // Ideal outdoor: within the configured ideal temperature range and wind below 30 km/h (safe light-breeze limit)
+  const isIdealOutdoor = temp >= p.idealMinTemp && temp <= p.idealMaxTemp && wind < 30 && !hasRain;
+  // Cool & clear: between cold and ideal-min temps with clear skies, wind<30 km/h
+  const isCoolClear = temp >= p.coldTemp && temp < p.idealMinTemp && isClearOrPartly && wind < 30 && !hasRain;
 
   const de = lang === 'de';
   if (isThunderstorm) return { emoji: '⛈️', text: de ? 'Gewitter – Outdoor-Aktivitäten meiden' : 'Thunderstorm – avoid outdoor activities', color: 'text-red-500', score: 1,
@@ -3908,12 +4043,12 @@ const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvInd
   if (isVeryCold && wind > 20) return { emoji: '🤧', text: de ? 'Erkältungsrisiko hoch' : 'High cold risk', color: 'text-orange-500', score: 2,
     reason: de ? `Die Kombination aus Frost (${temp}°C) und Wind (${wind} km/h) lässt die gefühlte Temperatur stark sinken. Das Erkältungsrisiko ist erhöht. Schütze dich mit wärmender Kleidung und begrenze die Zeit draußen.` : `The combination of freezing temperature (${temp}°C) and wind (${wind} km/h) makes it feel much colder. The risk of catching a cold is elevated. Dress warmly and limit time spent outdoors.` };
   if (hasRain && !isDrizzle) return { emoji: '☂️', text: de ? 'Regenschirm einpacken' : 'Pack an umbrella', color: 'text-blue-500', score: 3,
-    reason: de ? `Es wird Regen erwartet${precip24h >= UMBRELLA_PRECIP_THRESHOLD ? ` (${precip24h.toFixed(1)} mm)` : ''}. Ein Regenschirm oder wasserfeste Kleidung ist empfehlenswert, wenn du nach draußen gehst.` : `Rain is expected${precip24h >= UMBRELLA_PRECIP_THRESHOLD ? ` (${precip24h.toFixed(1)} mm)` : ''}. An umbrella or waterproof clothing is recommended if you go outside.` };
+    reason: de ? `Es wird Regen erwartet${precip24h >= p.umbrellaThreshold ? ` (${precip24h.toFixed(1)} mm)` : ''}. Ein Regenschirm oder wasserfeste Kleidung ist empfehlenswert, wenn du nach draußen gehst.` : `Rain is expected${precip24h >= p.umbrellaThreshold ? ` (${precip24h.toFixed(1)} mm)` : ''}. An umbrella or waterproof clothing is recommended if you go outside.` };
   // isNearFreezing overlaps with isVeryCold for -3..0 °C; slippery risk takes priority over generic frost warning in that range
   if (isNearFreezing) return { emoji: '🧊', text: de ? 'Vorsicht, kann glatt werden' : 'Caution, may be icy', color: 'text-blue-400', score: 3,
     reason: de ? `Die Temperatur liegt nahe dem Gefrierpunkt (${temp}°C). Auf Straßen und Gehwegen kann sich Eis oder Reif gebildet haben. Bitte beim Fahren und Gehen besonders vorsichtig sein.` : `Temperatures are near freezing (${temp}°C). Roads and sidewalks may be icy or frosty. Please take extra care when driving or walking.` };
   if (isVeryCold) return { emoji: '❄️', text: de ? 'Frostiger Tag – warm anziehen' : 'Frosty – dress warmly', color: 'text-blue-400', score: 3,
-    reason: de ? `Die Temperatur liegt unter 0°C (${temp}°C). Frost kann sich bilden. Ziehe dich warm an – Schichten, Mütze und Handschuhe sind empfehlenswert.` : `Temperatures are below 0°C (${temp}°C). Frost conditions expected. Dress warmly with layers, a hat and gloves.` };
+    reason: de ? `Die Temperatur liegt unter ${p.freezingTemp}°C (${temp}°C). Frost kann sich bilden. Ziehe dich warm an – Schichten, Mütze und Handschuhe sind empfehlenswert.` : `Temperatures are below ${p.freezingTemp}°C (${temp}°C). Frost conditions expected. Dress warmly with layers, a hat and gloves.` };
   if (isDrizzle || isOvercast) return { emoji: '☕', text: de ? 'Gemütliches Drinnen-Wetter' : 'Cosy indoor weather', color: 'text-blue-400', score: 4,
     reason: de ? `${isDrizzle ? 'Es nieselt leicht' : 'Der Himmel ist bedeckt'} und mit ${temp}°C ist es draußen ungemütlich. Ein perfekter Tag zum gemütlichen Drinnenbleiben: Lesen, Kochen oder einen Film schauen.` : `${isDrizzle ? 'There is light drizzle' : 'The sky is overcast'} and at ${temp}°C it is uncomfortable outside. A perfect day to stay cosy indoors: read a book, cook, or watch a film.` };
   if (isCold) return { emoji: '🧥', text: de ? 'Kalt – Jacke empfohlen' : 'Cold – jacket recommended', color: 'text-blue-400', score: 4,
@@ -4099,6 +4234,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
   
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
   const locale = lang === 'en' ? 'en-US' : 'de-DE';
+  const reportAdviceParams = (extraData && !Array.isArray(extraData) && extraData.activityAdviceParams) ? extraData.activityAdviceParams : null;
 
   // Helper: generate a pollen summary sentence from airQuality data
   // context: 'today' | 'tomorrow' | 'thisweek' | 'nextweek'
@@ -4495,7 +4631,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         const tldrTempLabel = lang === 'en'
             ? (maxToday > 30 ? 'Hot' : maxToday > 20 ? 'Warm' : maxToday > 10 ? 'Mild' : maxToday > 0 ? 'Cool' : 'Cold')
             : (maxToday > 30 ? 'Heiß' : maxToday > 20 ? 'Warm' : maxToday > 10 ? 'Mild' : maxToday > 0 ? 'Kühl' : 'Kalt');
-        const tldrActivity = getActivityAdvice(lang, Math.round(maxToday), maxWindAvg, rainSumToday + snowSumToday, maxUV, tldrDomCode);
+        const tldrActivity = getActivityAdvice(lang, Math.round(maxToday), maxWindAvg, rainSumToday + snowSumToday, maxUV, tldrDomCode, reportAdviceParams);
         tldrLine = `${tldrEmoji} ${tldrWeatherLabel} & ${tldrTempLabel} | ${Math.round(maxToday)}° | ${tldrActivity.text}`;
         
         // Calculate snow probability (average of hours with snow > 0.1mm)
@@ -5394,12 +5530,14 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
 
 // --- 4. KOMPONENTEN ---
 // --- ACTIVITY PARAMS MODAL ---
-const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, lang, onSave, isSmallScreen = false, customActivities = [], activityCustomNames = {} }) => {
+const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, activityAdviceParams, lang, onSave, isSmallScreen = false, customActivities = [], activityCustomNames = {} }) => {
     const [localParams, setLocalParams] = useState(activityParams || DEFAULT_ACTIVITY_PARAMS);
+    const [localAdviceParams, setLocalAdviceParams] = useState(activityAdviceParams || DEFAULT_ACTIVITY_ADVICE_PARAMS);
 
     useEffect(() => {
         setLocalParams(activityParams || DEFAULT_ACTIVITY_PARAMS);
-    }, [activityParams, isOpen]);
+        setLocalAdviceParams(activityAdviceParams || DEFAULT_ACTIVITY_ADVICE_PARAMS);
+    }, [activityParams, activityAdviceParams, isOpen]);
 
     if (!isOpen) return null;
 
@@ -5416,7 +5554,14 @@ const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, 
         }));
     };
 
-    const resetAll = () => setLocalParams(DEFAULT_ACTIVITY_PARAMS);
+    const updateAdviceParam = (field, value) => {
+        setLocalAdviceParams(prev => ({ ...prev, [field]: value }));
+    };
+
+    const resetAll = () => {
+        setLocalParams(DEFAULT_ACTIVITY_PARAMS);
+        setLocalAdviceParams(DEFAULT_ACTIVITY_ADVICE_PARAMS);
+    };
 
     return (
         <div className={`fixed inset-0 z-[70] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
@@ -5430,6 +5575,151 @@ const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, 
                 </div>
 
                 <div className="overflow-y-auto px-6 py-4 flex-1 space-y-6">
+                    {/* General Activity Advice Parameters */}
+                    <div className="bg-m3-surface-container rounded-m3-md p-4">
+                        <div className="font-bold text-m3-on-surface mb-3 flex items-center gap-2">
+                            <span className="text-xl">🌦️</span>
+                            <span className="text-sm">{t.activityAdviceParamsTitle || 'General Advice Parameters'}</span>
+                        </div>
+
+                        {/* Umbrella threshold */}
+                        <div className="mb-3">
+                            <div className="flex justify-between text-xs text-m3-on-surface-variant mb-1">
+                                <span>{t.activityAdviceUmbrellaThreshold || 'Umbrella from (mm)'}</span>
+                                <span className="font-bold text-m3-on-surface">{localAdviceParams.umbrellaThreshold} mm</span>
+                            </div>
+                            <input
+                                type="range" min="0" max="5" step="0.5"
+                                value={localAdviceParams.umbrellaThreshold}
+                                onChange={e => updateAdviceParam('umbrellaThreshold', Number(e.target.value))}
+                                className="w-full accent-m3-primary"
+                            />
+                            <div className="flex justify-between text-xs text-m3-on-surface-variant mt-0.5">
+                                <span>0 mm</span><span>5 mm</span>
+                            </div>
+                        </div>
+
+                        {/* Storm wind threshold */}
+                        <div className="mb-3">
+                            <div className="flex justify-between text-xs text-m3-on-surface-variant mb-1">
+                                <span>{t.activityAdviceStormWind || 'Storm / stay indoors (km/h)'}</span>
+                                <span className="font-bold text-m3-on-surface">{localAdviceParams.stormWindThreshold} km/h</span>
+                            </div>
+                            <input
+                                type="range" min="30" max="100" step="5"
+                                value={localAdviceParams.stormWindThreshold}
+                                onChange={e => updateAdviceParam('stormWindThreshold', Number(e.target.value))}
+                                className="w-full accent-m3-primary"
+                            />
+                            <div className="flex justify-between text-xs text-m3-on-surface-variant mt-0.5">
+                                <span>30 km/h</span><span>100 km/h</span>
+                            </div>
+                        </div>
+
+                        {/* Freezing temp */}
+                        <div className="mb-3">
+                            <div className="flex justify-between text-xs text-m3-on-surface-variant mb-1">
+                                <span>{t.activityAdviceFreezing || 'Freezing from (°C)'}</span>
+                                <span className="font-bold text-m3-on-surface">{localAdviceParams.freezingTemp}°C</span>
+                            </div>
+                            <input
+                                type="range" min="-10" max={localAdviceParams.coldTemp - 1} step="1"
+                                value={localAdviceParams.freezingTemp}
+                                onChange={e => updateAdviceParam('freezingTemp', Number(e.target.value))}
+                                className="w-full accent-m3-primary"
+                            />
+                            <div className="flex justify-between text-xs text-m3-on-surface-variant mt-0.5">
+                                <span>-10°C</span><span>{localAdviceParams.coldTemp - 1}°C</span>
+                            </div>
+                        </div>
+
+                        {/* Cold temp */}
+                        <div className="mb-3">
+                            <div className="flex justify-between text-xs text-m3-on-surface-variant mb-1">
+                                <span>{t.activityAdviceColdTemp || 'Cold / jacket from (°C)'}</span>
+                                <span className="font-bold text-m3-on-surface">{localAdviceParams.coldTemp}°C</span>
+                            </div>
+                            <input
+                                type="range" min={localAdviceParams.freezingTemp + 1} max={localAdviceParams.idealMinTemp - 1} step="1"
+                                value={localAdviceParams.coldTemp}
+                                onChange={e => updateAdviceParam('coldTemp', Number(e.target.value))}
+                                className="w-full accent-m3-primary"
+                            />
+                            <div className="flex justify-between text-xs text-m3-on-surface-variant mt-0.5">
+                                <span>{localAdviceParams.freezingTemp + 1}°C</span><span>{localAdviceParams.idealMinTemp - 1}°C</span>
+                            </div>
+                        </div>
+
+                        {/* Ideal min temp */}
+                        <div className="mb-3">
+                            <div className="flex justify-between text-xs text-m3-on-surface-variant mb-1">
+                                <span>{t.activityAdviceIdealMin || 'Ideal: min. temp. (°C)'}</span>
+                                <span className="font-bold text-m3-on-surface">{localAdviceParams.idealMinTemp}°C</span>
+                            </div>
+                            <input
+                                type="range" min={localAdviceParams.coldTemp + 1} max={localAdviceParams.idealMaxTemp - 1} step="1"
+                                value={localAdviceParams.idealMinTemp}
+                                onChange={e => updateAdviceParam('idealMinTemp', Number(e.target.value))}
+                                className="w-full accent-m3-primary"
+                            />
+                            <div className="flex justify-between text-xs text-m3-on-surface-variant mt-0.5">
+                                <span>{localAdviceParams.coldTemp + 1}°C</span><span>{localAdviceParams.idealMaxTemp - 1}°C</span>
+                            </div>
+                        </div>
+
+                        {/* Ideal max temp */}
+                        <div className="mb-3">
+                            <div className="flex justify-between text-xs text-m3-on-surface-variant mb-1">
+                                <span>{t.activityAdviceIdealMax || 'Ideal: max. temp. (°C)'}</span>
+                                <span className="font-bold text-m3-on-surface">{localAdviceParams.idealMaxTemp}°C</span>
+                            </div>
+                            <input
+                                type="range" min={localAdviceParams.idealMinTemp + 1} max={localAdviceParams.hotTemp - 1} step="1"
+                                value={localAdviceParams.idealMaxTemp}
+                                onChange={e => updateAdviceParam('idealMaxTemp', Number(e.target.value))}
+                                className="w-full accent-m3-primary"
+                            />
+                            <div className="flex justify-between text-xs text-m3-on-surface-variant mt-0.5">
+                                <span>{localAdviceParams.idealMinTemp + 1}°C</span><span>{localAdviceParams.hotTemp - 1}°C</span>
+                            </div>
+                        </div>
+
+                        {/* Hot temp */}
+                        <div className="mb-3">
+                            <div className="flex justify-between text-xs text-m3-on-surface-variant mb-1">
+                                <span>{t.activityAdviceHotTemp || 'Trip weather from (°C)'}</span>
+                                <span className="font-bold text-m3-on-surface">{localAdviceParams.hotTemp}°C</span>
+                            </div>
+                            <input
+                                type="range" min={localAdviceParams.idealMaxTemp + 1} max={localAdviceParams.extremeHeatTemp - 1} step="1"
+                                value={localAdviceParams.hotTemp}
+                                onChange={e => updateAdviceParam('hotTemp', Number(e.target.value))}
+                                className="w-full accent-m3-primary"
+                            />
+                            <div className="flex justify-between text-xs text-m3-on-surface-variant mt-0.5">
+                                <span>{localAdviceParams.idealMaxTemp + 1}°C</span><span>{localAdviceParams.extremeHeatTemp - 1}°C</span>
+                            </div>
+                        </div>
+
+                        {/* Extreme heat temp */}
+                        <div className="mb-3">
+                            <div className="flex justify-between text-xs text-m3-on-surface-variant mb-1">
+                                <span>{t.activityAdviceExtremeHeat || 'Extreme heat from (°C)'}</span>
+                                <span className="font-bold text-m3-on-surface">{localAdviceParams.extremeHeatTemp}°C</span>
+                            </div>
+                            <input
+                                type="range" min={localAdviceParams.hotTemp + 1} max="50" step="1"
+                                value={localAdviceParams.extremeHeatTemp}
+                                onChange={e => updateAdviceParam('extremeHeatTemp', Number(e.target.value))}
+                                className="w-full accent-m3-primary"
+                            />
+                            <div className="flex justify-between text-xs text-m3-on-surface-variant mt-0.5">
+                                <span>{localAdviceParams.hotTemp + 1}°C</span><span>50°C</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Activity-specific parameters */}
                     {activeActivities.map((act) => {
                         const { key, emoji } = act;
                         const actLabel = getActivityDisplayName(act, lang);
@@ -5519,7 +5809,7 @@ const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, 
                         {t.activityParamsReset || 'Reset'}
                     </button>
                     <button
-                        onClick={() => { onSave(localParams); onClose(); }}
+                        onClick={() => { onSave(localParams, localAdviceParams); onClose(); }}
                         className="flex-2 flex-grow py-3 bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary font-bold rounded-m3-md shadow-m3-2 transition active:scale-95"
                     >
                         {t.save || 'Save'}
@@ -6081,8 +6371,9 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                 onClose={() => setShowActivityParams(false)}
                 activityFilter={localSettings.activityFilter || DEFAULT_ACTIVITY_FILTER}
                 activityParams={localSettings.activityParams || DEFAULT_ACTIVITY_PARAMS}
+                activityAdviceParams={localSettings.activityAdviceParams || DEFAULT_ACTIVITY_ADVICE_PARAMS}
                 lang={localSettings.language}
-                onSave={(params) => setLocalSettings({ ...localSettings, activityParams: params })}
+                onSave={(params, adviceParams) => setLocalSettings({ ...localSettings, activityParams: params, activityAdviceParams: adviceParams })}
                 isSmallScreen={isSmallScreen}
                 customActivities={localSettings.customActivities || []}
                 activityCustomNames={localSettings.activityCustomNames || {}}
@@ -9062,7 +9353,7 @@ const getScoreBadgeClass = (score, isNight) =>
       : (isNight ? 'bg-red-900/50 text-red-400' : 'bg-red-100 text-red-700');
 
 // --- ACTIVITY INDEX MODAL ---
-const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null, activityFilter = null, activityParams = null, isRealNight = false, customActivities = [], activityCustomNames = {}, onSaveSettings = null }) => {
+const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null, activityFilter = null, activityParams = null, activityAdviceParams = null, isRealNight = false, customActivities = [], activityCustomNames = {}, onSaveSettings = null }) => {
   const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
   const [selectedAdvice, setSelectedAdvice] = useState(null);
   const [showManager, setShowManager] = useState(false);
@@ -9070,11 +9361,12 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
   if (!isOpen) return null;
 
   const locale = LANG_LOCALE_MAP[lang] || 'de-DE';
+  const effectiveAdviceParams = (activityAdviceParams && typeof activityAdviceParams === 'object') ? activityAdviceParams : DEFAULT_ACTIVITY_ADVICE_PARAMS;
 
   // Use today's hours from the hourly data (max 24h)
   const todayHours = hourlyData.slice(0, 24).map(hour => {
     const wind = hour.windAvg ?? hour.wind;
-    const advice = getActivityAdvice(lang, hour.temp, wind, hour.precip, hour.uvIndex, hour.code);
+    const advice = getActivityAdvice(lang, hour.temp, wind, hour.precip, hour.uvIndex, hour.code, effectiveAdviceParams);
     return {
       time: hour.time,
       hour: hour.time.getHours(),
@@ -9396,8 +9688,9 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
           onClose={() => setShowParams(false)}
           activityFilter={activityFilter || DEFAULT_ACTIVITY_FILTER}
           activityParams={activityParams || DEFAULT_ACTIVITY_PARAMS}
+          activityAdviceParams={effectiveAdviceParams}
           lang={lang}
-          onSave={(params) => onSaveSettings({ activityParams: params })}
+          onSave={(params, adviceParams) => onSaveSettings({ activityParams: params, activityAdviceParams: adviceParams })}
           isSmallScreen={isSmallScreen}
           customActivities={customActivities}
           activityCustomNames={activityCustomNames}
@@ -12823,7 +13116,7 @@ export default function WeatherApp() {
   const effectiveTerrain = demoTerrain || (currentLocIdx === 0 ? settings.homeTerrain : null);
 
   // Create a 3-day forecast: rest of today, tomorrow, and day after tomorrow
-    const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter, dwdPollenForecast }), [processedShort, lang, airQualityData, settings.pollenFilter, dwdPollenForecast]);
+    const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter, dwdPollenForecast, activityAdviceParams: settings.activityAdviceParams }), [processedShort, lang, airQualityData, settings.pollenFilter, dwdPollenForecast, settings.activityAdviceParams]);
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter }), [processedLong, lang, airQualityData, settings.pollenFilter]);
 
@@ -13346,6 +13639,7 @@ export default function WeatherApp() {
           pollenFilter={settings.pollenFilter}
           activityFilter={settings.activityFilter}
           activityParams={settings.activityParams}
+          activityAdviceParams={settings.activityAdviceParams}
           isRealNight={isRealNight}
           customActivities={settings.customActivities || []}
           activityCustomNames={settings.activityCustomNames || {}}
@@ -13817,7 +14111,7 @@ export default function WeatherApp() {
 
           {/* Activity Index tile */}
           {(() => {
-            const advice = getActivityAdvice(lang, current.temp, current.wind, next24HoursPrecip.total, current.uvIndex, current.code);
+            const advice = getActivityAdvice(lang, current.temp, current.wind, next24HoursPrecip.total, current.uvIndex, current.code, settings.activityAdviceParams);
             const isDanger = advice.color === 'text-red-500';
             const isWarning = advice.color === 'text-orange-500';
             const activityTileBg = isDanger
