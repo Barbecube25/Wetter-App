@@ -3905,6 +3905,10 @@ const getActivityRating = (key, temp, wind, precip, uvIndex, code, customParams 
   // Helper: check if conditions meet user's ideal threshold
   const isIdeal = temp >= p.minTemp && temp <= p.maxTemp && wind < p.maxWind && (!hasRain || p.rainOk);
 
+  // The safety thresholds below use Math.min/max to extend below/above the user's chosen ideal range
+  // by activity-specific safety margins (e.g. 5–20°C beyond ideal) before penalising the score.
+  // The hardcoded fallback values (e.g. 35, -5) are the original defaults for the case where the
+  // user has not shifted their ideal range far enough to change the danger boundary.
   switch (key) {
     case 'cycling': {
       if (isThunderstorm || isStorm) return rate(1);
@@ -5400,7 +5404,7 @@ const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, 
                                         min="-20"
                                         max={p.maxTemp - 1}
                                         value={p.minTemp}
-                                        onChange={e => updateParam(key, 'minTemp', Math.min(Number(e.target.value), p.maxTemp - 1))}
+                                        onChange={e => updateParam(key, 'minTemp', Number(e.target.value))}
                                         className="w-full accent-m3-primary"
                                     />
                                     <div className="flex justify-between text-xs text-m3-on-surface-variant mt-0.5">
@@ -5419,7 +5423,7 @@ const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, 
                                         min={p.minTemp + 1}
                                         max="45"
                                         value={p.maxTemp}
-                                        onChange={e => updateParam(key, 'maxTemp', Math.max(Number(e.target.value), p.minTemp + 1))}
+                                        onChange={e => updateParam(key, 'maxTemp', Number(e.target.value))}
                                         className="w-full accent-m3-primary"
                                     />
                                     <div className="flex justify-between text-xs text-m3-on-surface-variant mt-0.5">
