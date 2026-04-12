@@ -9062,9 +9062,11 @@ const getScoreBadgeClass = (score, isNight) =>
       : (isNight ? 'bg-red-900/50 text-red-400' : 'bg-red-100 text-red-700');
 
 // --- ACTIVITY INDEX MODAL ---
-const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null, activityFilter = null, activityParams = null, isRealNight = false, customActivities = [], activityCustomNames = {} }) => {
+const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null, activityFilter = null, activityParams = null, isRealNight = false, customActivities = [], activityCustomNames = {}, onSaveSettings = null }) => {
   const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
   const [selectedAdvice, setSelectedAdvice] = useState(null);
+  const [showManager, setShowManager] = useState(false);
+  const [showParams, setShowParams] = useState(false);
   if (!isOpen) return null;
 
   const locale = LANG_LOCALE_MAP[lang] || 'de-DE';
@@ -9175,9 +9177,29 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
             <Zap size={18} className="text-yellow-500" />
             {t('activityIndex')}
           </h3>
-          <button onClick={onClose} className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'} rounded-full transition`}>
-            <X size={20} className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} />
-          </button>
+          <div className="flex items-center gap-1">
+            {onSaveSettings && (
+              <button
+                onClick={() => setShowManager(true)}
+                title={t('activityManagerTitle') || 'Aktivitäten verwalten'}
+                className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'} rounded-full transition`}
+              >
+                <Activity size={18} className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} />
+              </button>
+            )}
+            {onSaveSettings && (
+              <button
+                onClick={() => setShowParams(true)}
+                title={t('activityParamsLabel') || 'Aktivitäts-Parameter'}
+                className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'} rounded-full transition`}
+              >
+                <Settings size={18} className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} />
+              </button>
+            )}
+            <button onClick={onClose} className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'} rounded-full transition`}>
+              <X size={20} className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} />
+            </button>
+          </div>
         </div>
 
         {/* Subtitle */}
@@ -9352,6 +9374,34 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
             </div>
           </div>
         </div>
+      )}
+      {showManager && onSaveSettings && (
+        <ActivityManagerModal
+          isOpen={showManager}
+          onClose={() => setShowManager(false)}
+          lang={lang}
+          activityFilter={activityFilter || DEFAULT_ACTIVITY_FILTER}
+          activityCustomNames={activityCustomNames}
+          customActivities={customActivities}
+          onSave={({ activityFilter: af, activityCustomNames: acn, customActivities: ca }) => {
+            onSaveSettings({ activityFilter: af, activityCustomNames: acn, customActivities: ca });
+            setShowManager(false);
+          }}
+          isSmallScreen={isSmallScreen}
+        />
+      )}
+      {showParams && onSaveSettings && (
+        <ActivityParamsModal
+          isOpen={showParams}
+          onClose={() => setShowParams(false)}
+          activityFilter={activityFilter || DEFAULT_ACTIVITY_FILTER}
+          activityParams={activityParams || DEFAULT_ACTIVITY_PARAMS}
+          lang={lang}
+          onSave={(params) => onSaveSettings({ activityParams: params })}
+          isSmallScreen={isSmallScreen}
+          customActivities={customActivities}
+          activityCustomNames={activityCustomNames}
+        />
       )}
     </div>
   );
@@ -13299,6 +13349,7 @@ export default function WeatherApp() {
           isRealNight={isRealNight}
           customActivities={settings.customActivities || []}
           activityCustomNames={settings.activityCustomNames || {}}
+          onSaveSettings={(patch) => setSettings(prev => ({ ...prev, ...patch }))}
         />
       )}
       {showSettingsModal && (
