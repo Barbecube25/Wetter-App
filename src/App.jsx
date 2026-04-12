@@ -83,6 +83,33 @@ const DEFAULT_ACTIVITY_PARAMS = {
   picnic:    { minTemp: 18, maxTemp: 28, maxWind: 20, rainOk: false },
 };
 
+// Returns unified list of built-in + user-created custom activities with resolved display names
+const getEffectiveActivities = (customActivities = [], activityCustomNames = {}) => {
+  const builtin = ACTIVITY_DEFINITIONS.map(act => ({
+    key: act.key,
+    emoji: act.emoji,
+    label: act.label,
+    isCustom: false,
+    customName: activityCustomNames[act.key] || null,
+  }));
+  const custom = (customActivities || []).map(act => ({
+    key: act.key,
+    emoji: act.emoji || '⭐',
+    label: null, // Custom activities use the 'name' field
+    name: act.name || act.key,
+    isCustom: true,
+    customName: act.name || act.key,
+  }));
+  return [...builtin, ...custom];
+};
+
+// Returns the display label for an activity entry from getEffectiveActivities
+const getActivityDisplayName = (act, lang) => {
+  if (act.customName) return act.customName;
+  if (act.label) return act.label[lang] || act.label['en'] || act.key;
+  return act.name || act.key;
+};
+
 // DWD pollen regions: approximate center coordinates for each partregion (or region if no partregions)
 const DWD_POLLEN_REGIONS = [
   { region_id: 10, partregion_id: 11, lat: 54.7, lon: 8.6 },
@@ -416,7 +443,7 @@ const TRANSLATIONS = {
     stationNameLabel: "Stationsname / Ort",
     stationHintNetatmo: "Gib den Standort deiner Netatmo-Station als Ortsnamen ein.",
     orUseStation: "Oder eigene Wetterstation",
-    activityFilterLabel: "Aktivitäten anpassen",
+    activityFilterLabel: "Aktivitäten verwalten",
     activityMyActivities: "Meine Aktivitäten",
     activityRatingIdeal: "Ideal",
     activityRatingGood: "Gut",
@@ -429,6 +456,17 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Max. Wind",
     activityParamsRainOk: "Leichter Regen OK",
     activityParamsReset: "Zurücksetzen",
+    activityManagerTitle: "Aktivitäten verwalten",
+    activityManagerAdd: "Neue Aktivität hinzufügen",
+    activityManagerRename: "Umbenennen",
+    activityManagerDelete: "Löschen",
+    activityManagerSave: "Speichern",
+    activityManagerCancel: "Abbrechen",
+    activityManagerEmojiLabel: "Emoji",
+    activityManagerNameLabel: "Name",
+    activityManagerNamePlaceholder: "z.B. Gemütliches drinnen",
+    activityManagerDeleteConfirm: "Aktivität wirklich löschen?",
+    activityManagerBuiltinNote: "Integrierte Aktivität",
 
   },
   en: {
@@ -688,7 +726,7 @@ const TRANSLATIONS = {
     stationHintNetatmo: "Enter the location of your Netatmo station as a city name.",
     orUseStation: "Or personal weather station",
     startingNow: "starting now",
-    activityFilterLabel: "Customize Activities",
+    activityFilterLabel: "Manage Activities",
     activityMyActivities: "My Activities",
     activityRatingIdeal: "Ideal",
     activityRatingGood: "Good",
@@ -701,6 +739,17 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Max. Wind",
     activityParamsRainOk: "Light rain OK",
     activityParamsReset: "Reset to defaults",
+    activityManagerTitle: "Manage Activities",
+    activityManagerAdd: "Add New Activity",
+    activityManagerRename: "Rename",
+    activityManagerDelete: "Delete",
+    activityManagerSave: "Save",
+    activityManagerCancel: "Cancel",
+    activityManagerEmojiLabel: "Emoji",
+    activityManagerNameLabel: "Name",
+    activityManagerNamePlaceholder: "e.g. Cozy Indoor Day",
+    activityManagerDeleteConfirm: "Really delete this activity?",
+    activityManagerBuiltinNote: "Built-in activity",
 
   },
   fr: {
@@ -3466,6 +3515,8 @@ const getSavedSettings = () => {
             pollenFilter: DEFAULT_POLLEN_FILTER,
             activityFilter: DEFAULT_ACTIVITY_FILTER,
             activityParams: DEFAULT_ACTIVITY_PARAMS,
+            customActivities: [],
+            activityCustomNames: {},
             homeTerrain: null,
             personalStation: null
         };
@@ -3493,6 +3544,12 @@ const getSavedSettings = () => {
         } else {
             merged.activityParams = { ...DEFAULT_ACTIVITY_PARAMS, ...merged.activityParams };
         }
+        if (!Array.isArray(merged.customActivities)) {
+            merged.customActivities = [];
+        }
+        if (!merged.activityCustomNames || typeof merged.activityCustomNames !== 'object') {
+            merged.activityCustomNames = {};
+        }
         return merged;
     } catch (e) { 
         return { 
@@ -3504,6 +3561,8 @@ const getSavedSettings = () => {
             pollenFilter: DEFAULT_POLLEN_FILTER,
             activityFilter: DEFAULT_ACTIVITY_FILTER,
             activityParams: DEFAULT_ACTIVITY_PARAMS,
+            customActivities: [],
+            activityCustomNames: {},
             homeTerrain: null,
             personalStation: null
         }; 
@@ -3966,8 +4025,16 @@ const getActivityRating = (key, temp, wind, precip, uvIndex, code, customParams 
       if (isIdeal) return rate(9);
       return rate(7);
     }
-    default:
-      return rate(5);
+    default: {
+      // Generic rating for custom user-created activities based purely on user-defined params
+      if (isThunderstorm || isStorm) return rate(1);
+      if (isHeavyRain && !p.rainOk) return rate(2);
+      if (temp < Math.min(-10, p.minTemp - 20) || temp > Math.max(40, p.maxTemp + 15)) return rate(2);
+      if ((!p.rainOk && hasRain) || wind > Math.max(40, p.maxWind + 15)) return rate(4);
+      if (temp < Math.min(0, p.minTemp - 10) || temp > Math.max(35, p.maxTemp + 10)) return rate(4);
+      if (isIdeal) return rate(9);
+      return rate(6);
+    }
   }
 };
 
@@ -5327,7 +5394,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
 
 // --- 4. KOMPONENTEN ---
 // --- ACTIVITY PARAMS MODAL ---
-const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, lang, onSave, isSmallScreen = false }) => {
+const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, lang, onSave, isSmallScreen = false, customActivities = [], activityCustomNames = {} }) => {
     const [localParams, setLocalParams] = useState(activityParams || DEFAULT_ACTIVITY_PARAMS);
 
     useEffect(() => {
@@ -5337,14 +5404,15 @@ const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, 
     if (!isOpen) return null;
 
     const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
-    const activeActivities = ACTIVITY_DEFINITIONS.filter(({ key }) =>
+    const effectiveActivities = getEffectiveActivities(customActivities, activityCustomNames);
+    const activeActivities = effectiveActivities.filter(({ key }) =>
         Array.isArray(activityFilter) ? activityFilter.includes(key) : true
     );
 
     const updateParam = (key, field, value) => {
         setLocalParams(prev => ({
             ...prev,
-            [key]: { ...(prev[key] || DEFAULT_ACTIVITY_PARAMS[key]), [field]: value }
+            [key]: { ...(prev[key] || DEFAULT_ACTIVITY_PARAMS[key] || { minTemp: 10, maxTemp: 25, maxWind: 25, rainOk: false }), [field]: value }
         }));
     };
 
@@ -5362,9 +5430,11 @@ const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, 
                 </div>
 
                 <div className="overflow-y-auto px-6 py-4 flex-1 space-y-6">
-                    {activeActivities.map(({ key, emoji, label }) => {
-                        const actLabel = label[lang] || label['en'] || key;
-                        const p = localParams[key] || DEFAULT_ACTIVITY_PARAMS[key] || {};
+                    {activeActivities.map((act) => {
+                        const { key, emoji } = act;
+                        const actLabel = getActivityDisplayName(act, lang);
+                        const defaultP = DEFAULT_ACTIVITY_PARAMS[key] || { minTemp: 10, maxTemp: 25, maxWind: 25, rainOk: false };
+                        const p = { ...defaultP, ...(localParams[key] || {}) };
                         return (
                             <div key={key} className="bg-m3-surface-container rounded-m3-md p-4">
                                 <div className="font-bold text-m3-on-surface mb-3 flex items-center gap-2">
@@ -5460,10 +5530,219 @@ const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, 
     );
 };
 
+// --- ACTIVITY MANAGER MODAL ---
+const ActivityManagerModal = ({ isOpen, onClose, lang, activityFilter, activityCustomNames, customActivities, onSave, isSmallScreen = false }) => {
+    const [localFilter, setLocalFilter] = useState(activityFilter || DEFAULT_ACTIVITY_FILTER);
+    const [localCustomNames, setLocalCustomNames] = useState(activityCustomNames || {});
+    const [localCustomActivities, setLocalCustomActivities] = useState(customActivities || []);
+    const [editingKey, setEditingKey] = useState(null);
+    const [editingValue, setEditingValue] = useState('');
+    const [addingNew, setAddingNew] = useState(false);
+    const [newEmoji, setNewEmoji] = useState('⭐');
+    const [newName, setNewName] = useState('');
+    const [deleteConfirmKey, setDeleteConfirmKey] = useState(null);
+
+    useEffect(() => {
+        if (isOpen) {
+            setLocalFilter(activityFilter || DEFAULT_ACTIVITY_FILTER);
+            setLocalCustomNames(activityCustomNames || {});
+            setLocalCustomActivities(customActivities || []);
+            setEditingKey(null);
+            setEditingValue('');
+            setAddingNew(false);
+            setNewEmoji('⭐');
+            setNewName('');
+            setDeleteConfirmKey(null);
+        }
+    }, [isOpen, activityFilter, activityCustomNames, customActivities]);
+
+    if (!isOpen) return null;
+
+    const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+    const effectiveActivities = getEffectiveActivities(localCustomActivities, localCustomNames);
+
+    const toggleActivity = (key) => {
+        setLocalFilter(prev =>
+            prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+        );
+    };
+
+    const startRename = (act) => {
+        setEditingKey(act.key);
+        setEditingValue(getActivityDisplayName(act, lang));
+    };
+
+    const confirmRename = (key, isCustom) => {
+        const trimmed = editingValue.trim();
+        if (!trimmed) { setEditingKey(null); return; }
+        if (isCustom) {
+            setLocalCustomActivities(prev => prev.map(a =>
+                a.key === key ? { ...a, name: trimmed } : a
+            ));
+        } else {
+            setLocalCustomNames(prev => ({ ...prev, [key]: trimmed }));
+        }
+        setEditingKey(null);
+    };
+
+    const resetBuiltinName = (key) => {
+        setLocalCustomNames(prev => {
+            const copy = { ...prev };
+            delete copy[key];
+            return copy;
+        });
+    };
+
+    const deleteCustomActivity = (key) => {
+        setLocalCustomActivities(prev => prev.filter(a => a.key !== key));
+        setLocalFilter(prev => prev.filter(k => k !== key));
+        setDeleteConfirmKey(null);
+    };
+
+    const handleAddNew = () => {
+        const trimmed = newName.trim();
+        if (!trimmed) return;
+        const key = 'custom_' + Date.now();
+        setLocalCustomActivities(prev => [...prev, { key, emoji: newEmoji || '⭐', name: trimmed }]);
+        setLocalFilter(prev => [...prev, key]);
+        setNewName('');
+        setNewEmoji('⭐');
+        setAddingNew(false);
+    };
+
+    return (
+        <div className={`fixed inset-0 z-[80] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
+            <div className={`bg-m3-surface rounded-m3-xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-sm'} w-full max-h-[90vh] shadow-m3-5 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200`}>
+                {/* Header */}
+                <div className="flex justify-between items-center px-6 pt-6 pb-4 border-b border-m3-outline-variant flex-shrink-0">
+                    <h2 className="text-lg font-bold text-m3-on-surface flex items-center gap-2">
+                        <Activity size={20} className="text-m3-primary" />
+                        {t.activityManagerTitle || 'Aktivitäten verwalten'}
+                    </h2>
+                    <button onClick={onClose}><X className="text-m3-on-surface-variant" /></button>
+                </div>
+
+                {/* List */}
+                <div className="overflow-y-auto px-4 py-4 flex-1 space-y-2">
+                    {effectiveActivities.map((act) => {
+                        const { key, emoji, isCustom } = act;
+                        const displayName = getActivityDisplayName(act, lang);
+                        const isActive = localFilter.includes(key);
+                        const isEditing = editingKey === key;
+                        const confirmingDelete = deleteConfirmKey === key;
+
+                        return (
+                            <div key={key} className={`rounded-m3-md p-3 border transition ${isActive ? 'bg-m3-surface-container border-m3-outline-variant' : 'bg-m3-surface-container-low border-m3-outline-variant/40 opacity-60'}`}>
+                                {confirmingDelete ? (
+                                    <div className="flex items-center gap-2">
+                                        <span className="flex-1 text-sm text-m3-error font-bold">{t.activityManagerDeleteConfirm || 'Wirklich löschen?'}</span>
+                                        <button onClick={() => deleteCustomActivity(key)} className="px-3 py-1 bg-m3-error text-m3-on-error rounded-m3-sm text-xs font-bold">{t.activityManagerDelete || 'Löschen'}</button>
+                                        <button onClick={() => setDeleteConfirmKey(null)} className="px-3 py-1 bg-m3-surface-container-high text-m3-on-surface rounded-m3-sm text-xs font-bold">{t.activityManagerCancel || 'Abbrechen'}</button>
+                                    </div>
+                                ) : isEditing ? (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xl">{emoji}</span>
+                                        <input
+                                            autoFocus
+                                            value={editingValue}
+                                            onChange={e => setEditingValue(e.target.value)}
+                                            onKeyDown={e => { if (e.key === 'Enter') confirmRename(key, isCustom); if (e.key === 'Escape') setEditingKey(null); }}
+                                            className="flex-1 px-2 py-1 rounded-m3-sm border border-m3-primary bg-m3-surface text-m3-on-surface text-sm"
+                                        />
+                                        <button onClick={() => confirmRename(key, isCustom)} className="p-1 text-m3-primary"><Check size={16} /></button>
+                                        <button onClick={() => setEditingKey(null)} className="p-1 text-m3-on-surface-variant"><X size={16} /></button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        {/* Toggle */}
+                                        <button
+                                            onClick={() => toggleActivity(key)}
+                                            className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition ${isActive ? 'bg-m3-primary border-m3-primary' : 'border-m3-outline-variant'}`}
+                                        >
+                                            {isActive && <Check size={12} className="text-m3-on-primary" />}
+                                        </button>
+                                        <span className="text-xl">{emoji}</span>
+                                        <span className="flex-1 text-sm font-bold text-m3-on-surface">{displayName}</span>
+                                        {!isCustom && localCustomNames[key] && (
+                                            <button onClick={() => resetBuiltinName(key)} title="Reset" className="p-1 text-m3-on-surface-variant hover:text-m3-on-surface" >
+                                                <X size={12} />
+                                            </button>
+                                        )}
+                                        {/* Rename */}
+                                        <button onClick={() => startRename(act)} className="p-1 text-m3-on-surface-variant hover:text-m3-primary">
+                                            <Edit2 size={14} />
+                                        </button>
+                                        {/* Delete (custom only) */}
+                                        {isCustom && (
+                                            <button onClick={() => setDeleteConfirmKey(key)} className="p-1 text-m3-on-surface-variant hover:text-m3-error">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+
+                    {/* Add new activity */}
+                    {addingNew ? (
+                        <div className="rounded-m3-md p-3 border border-m3-primary bg-m3-primary-container/20 space-y-2">
+                            <div className="flex gap-2">
+                                <div className="flex flex-col gap-1 w-16">
+                                    <span className="text-xs text-m3-on-surface-variant">{t.activityManagerEmojiLabel || 'Emoji'}</span>
+                                    <input
+                                        value={newEmoji}
+                                        onChange={e => setNewEmoji(e.target.value)}
+                                        maxLength={4}
+                                        className="w-full text-center px-2 py-1 rounded-m3-sm border border-m3-outline-variant bg-m3-surface text-m3-on-surface text-lg"
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-1 flex-1">
+                                    <span className="text-xs text-m3-on-surface-variant">{t.activityManagerNameLabel || 'Name'}</span>
+                                    <input
+                                        autoFocus
+                                        value={newName}
+                                        onChange={e => setNewName(e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter') handleAddNew(); if (e.key === 'Escape') setAddingNew(false); }}
+                                        placeholder={t.activityManagerNamePlaceholder || 'z.B. Gemütliches drinnen'}
+                                        className="w-full px-2 py-1 rounded-m3-sm border border-m3-outline-variant bg-m3-surface text-m3-on-surface text-sm"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-2 justify-end">
+                                <button onClick={() => setAddingNew(false)} className="px-3 py-1 text-sm text-m3-on-surface-variant">{t.activityManagerCancel || 'Abbrechen'}</button>
+                                <button onClick={handleAddNew} disabled={!newName.trim()} className="px-4 py-1 bg-m3-primary text-m3-on-primary rounded-m3-sm text-sm font-bold disabled:opacity-40">{t.activityManagerSave || 'Speichern'}</button>
+                            </div>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => setAddingNew(true)}
+                            className="w-full py-2 px-3 border border-dashed border-m3-outline-variant rounded-m3-md text-sm text-m3-on-surface-variant hover:bg-m3-surface-container flex items-center justify-center gap-2 transition"
+                        >
+                            <Plus size={16} /> {t.activityManagerAdd || 'Neue Aktivität hinzufügen'}
+                        </button>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 pb-6 pt-4 border-t border-m3-outline-variant flex-shrink-0">
+                    <button
+                        onClick={() => onSave({ activityFilter: localFilter, activityCustomNames: localCustomNames, customActivities: localCustomActivities })}
+                        className="w-full py-3 bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary font-bold rounded-m3-md shadow-m3-2 transition active:scale-95"
+                    >
+                        {t.save || 'Speichern'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- SETTINGS MODAL (NEU) ---
 const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmallScreen = false }) => {
     const [localSettings, setLocalSettings] = useState(settings);
     const [showActivityParams, setShowActivityParams] = useState(false);
+    const [showActivityManager, setShowActivityManager] = useState(false);
 
     useEffect(() => {
         setLocalSettings(settings);
@@ -5764,37 +6043,24 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                  {/* ACTIVITY FILTER */}
                  <div className="mb-8">
                      <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
-                        <Activity size={16}/> {t.activityFilterLabel || 'Customize Activities'}
+                        <Activity size={16}/> {t.activityFilterLabel || 'Aktivitäten verwalten'}
                      </label>
-                     <div className="grid grid-cols-2 gap-2 bg-m3-surface-container p-2 rounded-m3-md mb-2">
-                         {ACTIVITY_DEFINITIONS.map(({ key, emoji, label }) => {
-                             const filter = localSettings.activityFilter || DEFAULT_ACTIVITY_FILTER;
-                             const isActive = filter.includes(key);
-                             const actLabel = label[localSettings.language] || label['en'] || key;
-                             return (
-                                 <button
-                                     key={key}
-                                     onClick={() => {
-                                         const updated = isActive
-                                             ? filter.filter(k => k !== key)
-                                             : [...filter, key];
-                                         setLocalSettings({ ...localSettings, activityFilter: updated });
-                                     }}
-                                     className={`py-2 px-3 rounded-m3-sm text-sm font-bold transition flex items-center justify-between gap-1 ${isActive ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
-                                 >
-                                     <span>{emoji} {actLabel}</span>
-                                     {isActive && <Check size={14} />}
-                                 </button>
-                             );
-                         })}
+                     <div className="flex flex-col gap-2">
+                         <button
+                             onClick={() => setShowActivityManager(true)}
+                             className="w-full py-2 px-3 bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface font-bold rounded-m3-md transition flex items-center justify-center gap-2 text-sm"
+                         >
+                             <Activity size={14} className="text-m3-primary" />
+                             {t.activityManagerTitle || 'Aktivitäten verwalten'}
+                         </button>
+                         <button
+                             onClick={() => setShowActivityParams(true)}
+                             className="w-full py-2 px-3 bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface font-bold rounded-m3-md transition flex items-center justify-center gap-2 text-sm"
+                         >
+                             <Zap size={14} className="text-yellow-500" />
+                             {t.activityParamsLabel || 'Activity Parameters'}
+                         </button>
                      </div>
-                     <button
-                         onClick={() => setShowActivityParams(true)}
-                         className="w-full py-2 px-3 bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface font-bold rounded-m3-md transition flex items-center justify-center gap-2 text-sm"
-                     >
-                         <Zap size={14} className="text-yellow-500" />
-                         {t.activityParamsLabel || 'Activity Parameters'}
-                     </button>
                  </div>
 
                  </div>
@@ -5817,6 +6083,23 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                 activityParams={localSettings.activityParams || DEFAULT_ACTIVITY_PARAMS}
                 lang={localSettings.language}
                 onSave={(params) => setLocalSettings({ ...localSettings, activityParams: params })}
+                isSmallScreen={isSmallScreen}
+                customActivities={localSettings.customActivities || []}
+                activityCustomNames={localSettings.activityCustomNames || {}}
+            />
+        )}
+        {showActivityManager && (
+            <ActivityManagerModal
+                isOpen={showActivityManager}
+                onClose={() => setShowActivityManager(false)}
+                lang={localSettings.language}
+                activityFilter={localSettings.activityFilter || DEFAULT_ACTIVITY_FILTER}
+                activityCustomNames={localSettings.activityCustomNames || {}}
+                customActivities={localSettings.customActivities || []}
+                onSave={({ activityFilter, activityCustomNames, customActivities }) => {
+                    setLocalSettings({ ...localSettings, activityFilter, activityCustomNames, customActivities });
+                    setShowActivityManager(false);
+                }}
                 isSmallScreen={isSmallScreen}
             />
         )}
@@ -8779,7 +9062,7 @@ const getScoreBadgeClass = (score, isNight) =>
       : (isNight ? 'bg-red-900/50 text-red-400' : 'bg-red-100 text-red-700');
 
 // --- ACTIVITY INDEX MODAL ---
-const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null, activityFilter = null, activityParams = null, isRealNight = false }) => {
+const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null, activityFilter = null, activityParams = null, isRealNight = false, customActivities = [], activityCustomNames = {} }) => {
   const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
   const [selectedAdvice, setSelectedAdvice] = useState(null);
   if (!isOpen) return null;
@@ -8868,15 +9151,19 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
   const activeActivityFilter = Array.isArray(activityFilter) ? activityFilter : DEFAULT_ACTIVITY_FILTER;
   const effectiveActivityParams = (activityParams && typeof activityParams === 'object') ? activityParams : DEFAULT_ACTIVITY_PARAMS;
   const currentHourData = todayHours.find(h => h.hour === currentHour) || todayHours[0];
+  const effectiveActivities = getEffectiveActivities(customActivities, activityCustomNames);
   const activityRatings = currentHourData
-    ? ACTIVITY_DEFINITIONS
+    ? effectiveActivities
         .filter(({ key }) => activeActivityFilter.includes(key))
-        .map(({ key, emoji, label }) => ({
-          key,
-          emoji,
-          label: label[lang] || label['en'] || key,
-          rating: getActivityRating(key, currentHourData.temp, currentHourData.wind, currentHourData.precip, currentHourData.uvIndex, currentHourData.code, effectiveActivityParams[key]),
-        }))
+        .map((act) => {
+          const customP = effectiveActivityParams[act.key] || {};
+          return {
+            key: act.key,
+            emoji: act.emoji,
+            label: getActivityDisplayName(act, lang),
+            rating: getActivityRating(act.key, currentHourData.temp, currentHourData.wind, currentHourData.precip, currentHourData.uvIndex, currentHourData.code, customP),
+          };
+        })
     : [];
 
   return (
@@ -13010,6 +13297,8 @@ export default function WeatherApp() {
           activityFilter={settings.activityFilter}
           activityParams={settings.activityParams}
           isRealNight={isRealNight}
+          customActivities={settings.customActivities || []}
+          activityCustomNames={settings.activityCustomNames || {}}
         />
       )}
       {showSettingsModal && (
