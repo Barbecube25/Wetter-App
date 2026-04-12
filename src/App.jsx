@@ -3,11 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Eye, Activity } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
 import { StatusBar } from '@capacitor/status-bar';
-import { registerPlugin } from '@capacitor/core';
 import packageJson from '../package.json';
-
-// Native Android plugin for updating the home screen widget
-const WidgetPlugin = registerPlugin('WidgetPlugin');
 
 // --- 1. KONSTANTEN & CONFIG & ÜBERSETZUNGEN ---
 
@@ -3993,24 +3989,6 @@ const getWeatherConfig = (code, isDay = 1, lang = 'de') => {
   if ([56, 57, 66, 67].includes(code)) return { text: t.sleet, icon: Snowflake };
   if ([17, 95, 96, 99].includes(code)) return { text: t.thunderstorm, icon: CloudLightning };
   return { text: t.unknown, icon: Info };
-};
-
-// Maps WMO weather code to a single emoji for the Android home-screen widget.
-// Uses day/night flag only for code 0 and 1 (clear / mainly clear).
-const wmoToWidgetEmoji = (code, isDay = 1) => {
-  if (code === 0) return isDay ? '☀️' : '🌙';
-  if (code === 1) return isDay ? '🌤️' : '🌙';
-  if (code === 2) return '⛅';
-  if (code === 3) return '☁️';
-  if (code === 45 || code === 48) return '🌫️';
-  if (code >= 51 && code <= 55) return '🌦️';
-  if (code >= 61 && code <= 65) return '🌧️';
-  if (code === 66 || code === 67) return '🌨️';
-  if (code >= 71 && code <= 77) return '❄️';
-  if (code >= 80 && code <= 82) return '🌦️';
-  if (code === 85 || code === 86) return '❄️';
-  if (code === 17 || code >= 95) return '⛈️';
-  return '🌡️';
 };
 
 const getMoonPhase = (d) => {
@@ -10864,7 +10842,7 @@ export default function WeatherApp() {
     }
 
     const initLocation = async () => {
-        // Check URL parameters for widget mode
+        // Check URL parameters for view mode
         const urlParams = new URLSearchParams(window.location.search);
         const view = urlParams.get('view');
         if (view) setViewMode(view);
@@ -12512,83 +12490,6 @@ export default function WeatherApp() {
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter }), [processedLong, lang, airQualityData, settings.pollenFilter]);
 
-  // Update the Android home screen widget whenever weather data or AI report changes
-  useEffect(() => {
-    if (!dailyReport || !dailyReport.summary || dailyReport.title === 'Lade...') return;
-    const kiBerichtText = dailyReport.summary.trim();
-    if (!kiBerichtText) return;
-
-    // Sentinel value that matches the Java Integer.MAX_VALUE used in WidgetPlugin / AiReportWidgetProvider
-    // to signal "no data available for this time period".
-    const NO_TEMP_VALUE = 2147483647; // Integer.MAX_VALUE
-
-    // Helper: find representative temp, WMO code, and total precipitation for a time window on today's date.
-    // Overnight windows (startHour > endHour) wrap past midnight into the next calendar day.
-    const getTimePeriod = (startHour, endHour) => {
-      const today = new Date();
-      const todayDate = today.getDate();
-      const todayMonth = today.getMonth();
-      const tomorrow = new Date(today.getTime() + 86400000);
-      const tomorrowDate = tomorrow.getDate();
-      const tomorrowMonth = tomorrow.getMonth();
-      const hours = processedShort.filter(h => {
-        const hh = h.time.getHours();
-        const isToday = h.time.getDate() === todayDate && h.time.getMonth() === todayMonth;
-        if (startHour <= endHour) {
-          return isToday && hh >= startHour && hh < endHour;
-        }
-        // Overnight window wraps past midnight; compare both date and month for month-boundary safety
-        const isTomorrow = h.time.getDate() === tomorrowDate && h.time.getMonth() === tomorrowMonth;
-        return (isToday && hh >= startHour) || (isTomorrow && hh < endHour);
-      });
-      if (hours.length === 0) return null;
-      const avgTemp = Math.round(hours.reduce((s, h) => s + h.temp, 0) / hours.length);
-      const codeFreq = hours.reduce((acc, h) => { acc[h.code] = (acc[h.code] || 0) + 1; return acc; }, {});
-      const domCode = parseInt(Object.entries(codeFreq).sort(([,a],[,b]) => b - a)[0][0]);
-      const totalPrecip = Math.round(hours.reduce((s, h) => s + (parseFloat(h.precip) || 0) + (parseFloat(h.snow) || 0), 0) * 10) / 10;
-      return { temp: avgTemp, code: domCode, precip: totalPrecip };
-    };
-
-    const morning = getTimePeriod(6, 10);
-    const noon    = getTimePeriod(10, 14);
-    const evening = getTimePeriod(16, 20);
-    const night   = getTimePeriod(21, 6);  // wraps midnight
-
-    const firstWarning = dwdWarnings && dwdWarnings.length > 0 ? dwdWarnings[0] : null;
-    const warningHeadline = firstWarning
-      ? (firstWarning.headline || firstWarning.event || firstWarning.description || '').substring(0, 60)
-      : '';
-
-    WidgetPlugin.updateAiReport({
-      report: kiBerichtText,
-      // Location
-      locationName: currentLoc?.name ?? '',
-      // Current conditions
-      currentTemp: Math.round(current?.temp ?? 0),
-      currentEmoji: wmoToWidgetEmoji(current?.code ?? 0, isRealNight ? 0 : 1),
-      currentLabel: getWeatherConfig(current?.code ?? 0, isRealNight ? 0 : 1, lang)?.text ?? '',
-      // Time periods (NO_TEMP_VALUE signals "no data" to the widget provider)
-      morningTemp: morning ? morning.temp : NO_TEMP_VALUE,
-      morningEmoji: morning ? wmoToWidgetEmoji(morning.code, 1) : '',
-      morningPrecip: morning ? morning.precip : -1,
-      noonTemp: noon ? noon.temp : NO_TEMP_VALUE,
-      noonEmoji: noon ? wmoToWidgetEmoji(noon.code, 1) : '',
-      noonPrecip: noon ? noon.precip : -1,
-      eveningTemp: evening ? evening.temp : NO_TEMP_VALUE,
-      eveningEmoji: evening ? wmoToWidgetEmoji(evening.code, 1) : '',
-      eveningPrecip: evening ? evening.precip : -1,
-      nightTemp: night ? night.temp : NO_TEMP_VALUE,
-      nightEmoji: night ? wmoToWidgetEmoji(night.code, 0) : '',
-      nightPrecip: night ? night.precip : -1,
-      // Warnings
-      warningCount: dwdWarnings ? dwdWarnings.length : 0,
-      warningText: warningHeadline,
-    }).catch(err => {
-      console.log('Widget konnte nicht aktualisiert werden (vielleicht iOS/Web?): ', err);
-    });
-  }, [dailyReport, current, processedShort, dwdWarnings, isRealNight, lang, currentLoc]);
-
-  // --- WIDGET VIEWS ---
   // Only block rendering on initial load (no data yet); during location switches, keep existing data visible.
   const isInitialLoading = loading && !shortTermData;
   // Landscape mode: Automatically show animation demo mode
