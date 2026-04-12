@@ -1,5 +1,5 @@
-const CACHE_NAME = 'wetter-app-v4'; // Version erhöht für Cache-Update
-const DYNAMIC_CACHE = 'wetter-app-dynamic-v4';
+const CACHE_NAME = 'wetter-app-v5'; // Version erhöht – Widget-Code entfernt, Weißer-Bildschirm-Fix
+const DYNAMIC_CACHE = 'wetter-app-dynamic-v5';
 
 // Dateien, die sofort gecacht werden sollen (App Shell)
 const STATIC_ASSETS = [

@@ -122,8 +122,6 @@ class ErrorBoundary extends React.Component {
 
 // Erweiterte Service Worker Registrierung
 if ('serviceWorker' in navigator) {
-  let refreshing = false; // Prevent infinite reload loop
-  
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
@@ -133,17 +131,23 @@ if ('serviceWorker' in navigator) {
         registration.update();
         
         // Reload on service worker activation (fixes white screen after update)
+        // Use sessionStorage flag to prevent reload loops across page loads
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'activated' && !refreshing) {
-                refreshing = true;
-                console.log('Neuer Service Worker aktiviert - Seite wird neu geladen');
-                // Small delay to ensure cache is cleaned
-                setTimeout(() => {
-                  window.location.reload();
-                }, 100);
+              if (newWorker.state === 'activated') {
+                // Only reload once per session to prevent infinite reload loops.
+                // sessionStorage is cleared automatically when the tab is closed.
+                const alreadyReloaded = sessionStorage.getItem('sw_reloaded');
+                if (!alreadyReloaded) {
+                  sessionStorage.setItem('sw_reloaded', '1');
+                  console.log('Neuer Service Worker aktiviert - Seite wird neu geladen');
+                  // Small delay to ensure cache is cleaned
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 100);
+                }
               }
             });
           }

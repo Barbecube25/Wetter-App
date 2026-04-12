@@ -12906,7 +12906,12 @@ export default function WeatherApp() {
   }
 
   // Erst laden, wenn Home gesetzt ist
-  if (isInitialLoading || !currentLoc) return <div className="min-h-screen bg-m3-surface flex items-center justify-center"><div className="w-12 h-12 border-4 border-m3-primary border-t-transparent rounded-full animate-spin"></div></div>;
+  if (isInitialLoading || !currentLoc) return (
+    <div className="min-h-screen bg-m3-surface flex flex-col items-center justify-center gap-4">
+      <div className="w-14 h-14 border-4 border-m3-primary border-t-transparent rounded-full animate-spin"></div>
+      <p className="text-m3-on-surface-variant text-sm font-medium">{t('loading') || 'Loading...'}</p>
+    </div>
+  );
   
   if (error) return <div className="min-h-screen flex items-center justify-center p-8 bg-m3-error-container text-m3-on-error-container font-bold">{error} <button onClick={() => setCurrentLoc(homeLoc)} className="ml-4 underline">Reset</button></div>;
 
