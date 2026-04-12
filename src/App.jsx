@@ -4019,15 +4019,20 @@ const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvInd
   const isThunderstorm = [17, 95, 96, 99].includes(code);
   const isStorm = wind > p.stormWindThreshold;
   const isVeryCold = temp < p.freezingTemp;
+  // Near-freezing: 3°C below freezingTemp to 1°C above (matches original nearFreezingLow offset)
   const isNearFreezing = temp >= (p.freezingTemp - 3) && temp <= p.freezingTemp + 1;
   const isCold = temp >= p.freezingTemp && temp < p.coldTemp;
   const isExtremeHeat = temp >= p.extremeHeatTemp;
+  // Very hot: 3°C below extreme-heat threshold – yields sun-protection recommendation before full extreme-heat warning
   const isVeryHot = temp >= (p.extremeHeatTemp - 3);
   const isHot = temp >= p.hotTemp;
   const isUVHigh = uvIndex >= 6;
   const isClearOrPartly = [0, 1].includes(code);
+  // Good walk: cold...(idealMinTemp+6)°C and wind<25. The +6 gives a comfortable margin above the ideal-min start.
   const isGoodWalk = temp >= p.coldTemp && temp <= (p.idealMinTemp + 6) && wind < 25 && !hasRain;
+  // Ideal outdoor: within the configured ideal temperature range and wind below 30 km/h (safe light-breeze limit)
   const isIdealOutdoor = temp >= p.idealMinTemp && temp <= p.idealMaxTemp && wind < 30 && !hasRain;
+  // Cool & clear: between cold and ideal-min temps with clear skies, wind<30 km/h
   const isCoolClear = temp >= p.coldTemp && temp < p.idealMinTemp && isClearOrPartly && wind < 30 && !hasRain;
 
   const de = lang === 'de';
