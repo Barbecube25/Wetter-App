@@ -75,6 +75,18 @@ const ACTIVITY_DEFINITIONS = [
 // Default activity filter: all activities enabled
 const DEFAULT_ACTIVITY_FILTER = ACTIVITY_DEFINITIONS.map(a => a.key);
 
+// Default thresholds for activity index scoring (ideal temperature range, max wind, rain tolerance)
+const DEFAULT_ACTIVITY_PARAMS = {
+  cycling:   { minTemp: 10, maxTemp: 25, maxWind: 20, rainOk: false },
+  running:   { minTemp:  8, maxTemp: 18, maxWind: 20, rainOk: false },
+  hiking:    { minTemp:  8, maxTemp: 25, maxWind: 30, rainOk: false },
+  walking:   { minTemp: 10, maxTemp: 25, maxWind: 25, rainOk: false },
+  swimming:  { minTemp: 24, maxTemp: 32, maxWind: 30, rainOk: false },
+  skiing:    { minTemp: -15, maxTemp: 0, maxWind: 40, rainOk: false },
+  gardening: { minTemp: 12, maxTemp: 25, maxWind: 25, rainOk: false },
+  picnic:    { minTemp: 18, maxTemp: 28, maxWind: 20, rainOk: false },
+};
+
 // DWD pollen regions: approximate center coordinates for each partregion (or region if no partregions)
 const DWD_POLLEN_REGIONS = [
   { region_id: 10, partregion_id: 11, lat: 54.7, lon: 8.6 },
@@ -414,6 +426,13 @@ const TRANSLATIONS = {
     activityRatingGood: "Gut",
     activityRatingFair: "Mäßig",
     activityRatingPoor: "Ungünstig",
+    activityParamsLabel: "Aktivitäts-Parameter",
+    activityParamsTitle: "Aktivitäts-Parameter anpassen",
+    activityParamsMinTemp: "Min. Temperatur",
+    activityParamsMaxTemp: "Max. Temperatur",
+    activityParamsMaxWind: "Max. Wind",
+    activityParamsRainOk: "Leichter Regen OK",
+    activityParamsReset: "Zurücksetzen",
 
   },
   en: {
@@ -679,6 +698,13 @@ const TRANSLATIONS = {
     activityRatingGood: "Good",
     activityRatingFair: "Fair",
     activityRatingPoor: "Unfavorable",
+    activityParamsLabel: "Activity Parameters",
+    activityParamsTitle: "Customize Activity Parameters",
+    activityParamsMinTemp: "Min. Temperature",
+    activityParamsMaxTemp: "Max. Temperature",
+    activityParamsMaxWind: "Max. Wind",
+    activityParamsRainOk: "Light rain OK",
+    activityParamsReset: "Reset to defaults",
 
   },
   fr: {
@@ -944,6 +970,13 @@ const TRANSLATIONS = {
     activityRatingGood: "Bien",
     activityRatingFair: "Correct",
     activityRatingPoor: "Défavorable",
+    activityParamsLabel: "Paramètres d'activité",
+    activityParamsTitle: "Personnaliser les paramètres d'activité",
+    activityParamsMinTemp: "Temp. min.",
+    activityParamsMaxTemp: "Temp. max.",
+    activityParamsMaxWind: "Vent max.",
+    activityParamsRainOk: "Pluie légère OK",
+    activityParamsReset: "Réinitialiser",
 
   },
   es: {
@@ -1209,6 +1242,13 @@ const TRANSLATIONS = {
     activityRatingGood: "Bien",
     activityRatingFair: "Regular",
     activityRatingPoor: "Desfavorable",
+    activityParamsLabel: "Parámetros de actividad",
+    activityParamsTitle: "Personalizar parámetros de actividad",
+    activityParamsMinTemp: "Temp. mín.",
+    activityParamsMaxTemp: "Temp. máx.",
+    activityParamsMaxWind: "Viento máx.",
+    activityParamsRainOk: "Lluvia ligera OK",
+    activityParamsReset: "Restablecer",
 
   },
   it: {
@@ -1474,6 +1514,13 @@ const TRANSLATIONS = {
     activityRatingGood: "Bene",
     activityRatingFair: "Discreto",
     activityRatingPoor: "Sfavorevole",
+    activityParamsLabel: "Parametri attività",
+    activityParamsTitle: "Personalizza parametri attività",
+    activityParamsMinTemp: "Temp. min.",
+    activityParamsMaxTemp: "Temp. max.",
+    activityParamsMaxWind: "Vento max.",
+    activityParamsRainOk: "Pioggia leggera OK",
+    activityParamsReset: "Ripristina predefiniti",
 
   },
   tr: {
@@ -1739,6 +1786,13 @@ const TRANSLATIONS = {
     activityRatingGood: "İyi",
     activityRatingFair: "Orta",
     activityRatingPoor: "Olumsuz",
+    activityParamsLabel: "Aktivite parametreleri",
+    activityParamsTitle: "Aktivite parametrelerini özelleştir",
+    activityParamsMinTemp: "Min. sıcaklık",
+    activityParamsMaxTemp: "Maks. sıcaklık",
+    activityParamsMaxWind: "Maks. rüzgar",
+    activityParamsRainOk: "Hafif yağmur tamam",
+    activityParamsReset: "Varsayılana sıfırla",
 
   },
   pl: {
@@ -2004,6 +2058,13 @@ const TRANSLATIONS = {
     activityRatingGood: "Dobrze",
     activityRatingFair: "Przeciętnie",
     activityRatingPoor: "Niekorzystnie",
+    activityParamsLabel: "Parametry aktywności",
+    activityParamsTitle: "Dostosuj parametry aktywności",
+    activityParamsMinTemp: "Min. temperatura",
+    activityParamsMaxTemp: "Maks. temperatura",
+    activityParamsMaxWind: "Maks. wiatr",
+    activityParamsRainOk: "Lekki deszcz OK",
+    activityParamsReset: "Przywróć domyślne",
 
   },
   nl: {
@@ -2269,6 +2330,13 @@ const TRANSLATIONS = {
     activityRatingGood: "Goed",
     activityRatingFair: "Redelijk",
     activityRatingPoor: "Ongunstig",
+    activityParamsLabel: "Activiteitsparameters",
+    activityParamsTitle: "Activiteitsparameters aanpassen",
+    activityParamsMinTemp: "Min. temperatuur",
+    activityParamsMaxTemp: "Max. temperatuur",
+    activityParamsMaxWind: "Max. wind",
+    activityParamsRainOk: "Lichte regen OK",
+    activityParamsReset: "Standaard herstellen",
 
   },
   hr: {
@@ -2534,6 +2602,13 @@ const TRANSLATIONS = {
     activityRatingGood: "Dobro",
     activityRatingFair: "Prihvatljivo",
     activityRatingPoor: "Nepovoljno",
+    activityParamsLabel: "Parametri aktivnosti",
+    activityParamsTitle: "Prilagodi parametre aktivnosti",
+    activityParamsMinTemp: "Min. temperatura",
+    activityParamsMaxTemp: "Maks. temperatura",
+    activityParamsMaxWind: "Maks. vjetar",
+    activityParamsRainOk: "Lagana kiša OK",
+    activityParamsReset: "Vrati na zadano",
 
   },
   el: {
@@ -2799,6 +2874,13 @@ const TRANSLATIONS = {
     activityRatingGood: "Καλό",
     activityRatingFair: "Μέτριο",
     activityRatingPoor: "Δυσμενές",
+    activityParamsLabel: "Παράμετροι δραστηριότητας",
+    activityParamsTitle: "Προσαρμογή παραμέτρων δραστηριότητας",
+    activityParamsMinTemp: "Ελάχ. θερμοκρασία",
+    activityParamsMaxTemp: "Μέγ. θερμοκρασία",
+    activityParamsMaxWind: "Μέγ. άνεμος",
+    activityParamsRainOk: "Ελαφριά βροχή OK",
+    activityParamsReset: "Επαναφορά προεπιλογών",
 
   },
   da: {
@@ -3064,6 +3146,13 @@ const TRANSLATIONS = {
     activityRatingGood: "Godt",
     activityRatingFair: "Rimeligt",
     activityRatingPoor: "Ugunstigt",
+    activityParamsLabel: "Aktivitetsparametre",
+    activityParamsTitle: "Tilpas aktivitetsparametre",
+    activityParamsMinTemp: "Min. temperatur",
+    activityParamsMaxTemp: "Maks. temperatur",
+    activityParamsMaxWind: "Maks. vind",
+    activityParamsRainOk: "Let regn OK",
+    activityParamsReset: "Nulstil til standard",
 
   },
   ru: {
@@ -3329,6 +3418,13 @@ const TRANSLATIONS = {
     activityRatingGood: "Хорошо",
     activityRatingFair: "Умеренно",
     activityRatingPoor: "Неблагоприятно",
+    activityParamsLabel: "Параметры активности",
+    activityParamsTitle: "Настроить параметры активности",
+    activityParamsMinTemp: "Мин. температура",
+    activityParamsMaxTemp: "Макс. температура",
+    activityParamsMaxWind: "Макс. ветер",
+    activityParamsRainOk: "Лёгкий дождь OK",
+    activityParamsReset: "Сбросить настройки",
 
   }
 };
@@ -3373,6 +3469,7 @@ const getSavedSettings = () => {
             precipUnit: 'mm',
             pollenFilter: DEFAULT_POLLEN_FILTER,
             activityFilter: DEFAULT_ACTIVITY_FILTER,
+            activityParams: DEFAULT_ACTIVITY_PARAMS,
             homeTerrain: null,
             personalStation: null
         };
@@ -3394,6 +3491,12 @@ const getSavedSettings = () => {
         if (!Array.isArray(merged.activityFilter)) {
             merged.activityFilter = DEFAULT_ACTIVITY_FILTER;
         }
+        // Ensure activityParams is an object; merge per-key so new activities get defaults
+        if (!merged.activityParams || typeof merged.activityParams !== 'object') {
+            merged.activityParams = DEFAULT_ACTIVITY_PARAMS;
+        } else {
+            merged.activityParams = { ...DEFAULT_ACTIVITY_PARAMS, ...merged.activityParams };
+        }
         return merged;
     } catch (e) { 
         return { 
@@ -3404,6 +3507,7 @@ const getSavedSettings = () => {
             precipUnit: 'mm',
             pollenFilter: DEFAULT_POLLEN_FILTER,
             activityFilter: DEFAULT_ACTIVITY_FILTER,
+            activityParams: DEFAULT_ACTIVITY_PARAMS,
             homeTerrain: null,
             personalStation: null
         }; 
@@ -3777,14 +3881,19 @@ const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvInd
 
 /**
  * Returns a suitability rating (score 1-10, color, label key) for a specific activity
- * given current weather conditions.
+ * given current weather conditions. Accepts optional custom params (minTemp, maxTemp,
+ * maxWind, rainOk) that override the activity's default thresholds.
  */
-const getActivityRating = (key, temp, wind, precip, uvIndex, code) => {
+const getActivityRating = (key, temp, wind, precip, uvIndex, code, customParams = {}) => {
   const hasRain = precip >= UMBRELLA_PRECIP_THRESHOLD || RAIN_WEATHER_CODES.includes(code);
   const isThunderstorm = [17, 95, 96, 99].includes(code);
   const isStorm = wind > 50;
   const isSnow = [71, 73, 75, 77, 85, 86].includes(code);
   const isHeavyRain = precip >= 5 || [65, 82].includes(code);
+
+  // Merge defaults with user-defined params for this activity
+  const defaults = DEFAULT_ACTIVITY_PARAMS[key] || { minTemp: 10, maxTemp: 25, maxWind: 25, rainOk: false };
+  const p = { ...defaults, ...customParams };
 
   const rate = (score) => {
     if (score >= 8) return { score, color: 'text-green-500',  labelKey: 'activityRatingIdeal' };
@@ -3793,63 +3902,68 @@ const getActivityRating = (key, temp, wind, precip, uvIndex, code) => {
     return            { score, color: 'text-red-500',    labelKey: 'activityRatingPoor'  };
   };
 
+  // Helper: check if conditions meet user's ideal threshold
+  const isIdeal = temp >= p.minTemp && temp <= p.maxTemp && wind < p.maxWind && (!hasRain || p.rainOk);
+
   switch (key) {
     case 'cycling': {
       if (isThunderstorm || isStorm) return rate(1);
-      if (hasRain || temp < 0 || temp > 37) return rate(3);
-      if (wind > 35 || temp < 5 || temp > 32) return rate(5);
-      if (temp >= 10 && temp <= 25 && wind < 20 && !hasRain) return rate(9);
+      if (!p.rainOk && (hasRain || temp < 0 || temp > 37)) return rate(3);
+      if (p.rainOk && (isHeavyRain || temp < 0 || temp > 37)) return rate(3);
+      if (wind > Math.max(35, p.maxWind + 15) || temp < Math.min(5, p.minTemp - 5) || temp > Math.max(32, p.maxTemp + 7)) return rate(5);
+      if (isIdeal) return rate(9);
       return rate(7);
     }
     case 'running': {
       if (isThunderstorm || isStorm) return rate(1);
-      if (temp < -5 || temp > 35) return rate(2);
-      if (isHeavyRain || wind > 40) return rate(3);
-      if (hasRain || temp < 0 || temp > 30) return rate(4);
-      if (temp >= 8 && temp <= 18 && wind < 20 && !hasRain) return rate(9);
+      if (temp < Math.min(-5, p.minTemp - 13) || temp > Math.max(35, p.maxTemp + 17)) return rate(2);
+      if (isHeavyRain || wind > Math.max(40, p.maxWind + 20)) return rate(3);
+      if (!p.rainOk && (hasRain || temp < Math.min(0, p.minTemp - 8) || temp > Math.max(30, p.maxTemp + 12))) return rate(4);
+      if (p.rainOk && (temp < Math.min(0, p.minTemp - 8) || temp > Math.max(30, p.maxTemp + 12))) return rate(4);
+      if (isIdeal) return rate(9);
       return rate(7);
     }
     case 'hiking': {
       if (isThunderstorm || isStorm) return rate(1);
-      if (temp < -10 || isHeavyRain) return rate(2);
-      if (temp < 0 || hasRain || wind > 45) return rate(4);
-      if (temp >= 8 && temp <= 25 && wind < 30 && !hasRain) return rate(9);
+      if (temp < Math.min(-10, p.minTemp - 18) || isHeavyRain) return rate(2);
+      if (temp < Math.min(0, p.minTemp - 8) || (!p.rainOk && hasRain) || wind > Math.max(45, p.maxWind + 15)) return rate(4);
+      if (isIdeal) return rate(9);
       return rate(6);
     }
     case 'walking': {
       if (isThunderstorm || isStorm) return rate(1);
-      if (isHeavyRain || temp < -10 || temp > 38) return rate(2);
-      if (hasRain || temp < -5 || temp > 35 || wind > 40) return rate(4);
-      if (temp >= 10 && temp <= 25 && wind < 25 && !hasRain) return rate(9);
+      if (isHeavyRain || temp < Math.min(-10, p.minTemp - 20) || temp > Math.max(38, p.maxTemp + 13)) return rate(2);
+      if ((!p.rainOk && hasRain) || temp < Math.min(-5, p.minTemp - 15) || temp > Math.max(35, p.maxTemp + 10) || wind > Math.max(40, p.maxWind + 15)) return rate(4);
+      if (isIdeal) return rate(9);
       return rate(6);
     }
     case 'swimming': {
       if (isThunderstorm || isStorm) return rate(1);
-      if (hasRain || temp < 18) return rate(2);
-      if (temp < 22) return rate(4);
-      if (temp >= 24 && temp <= 32 && !hasRain) return rate(9);
+      if ((!p.rainOk && hasRain) || temp < Math.min(18, p.minTemp - 6)) return rate(2);
+      if (temp < Math.min(22, p.minTemp - 2)) return rate(4);
+      if (isIdeal) return rate(9);
       return rate(7);
     }
     case 'skiing': {
       if (isThunderstorm) return rate(1);
-      if (temp > 5 || (hasRain && !isSnow)) return rate(2);
-      if (temp > 2 || isHeavyRain) return rate(4);
-      if (isSnow && temp <= 0 && wind < 40) return rate(9);
-      if (temp <= 0 && wind < 40) return rate(7);
+      if (temp > Math.max(5, p.maxTemp + 5) || (!p.rainOk && hasRain && !isSnow)) return rate(2);
+      if (temp > Math.max(2, p.maxTemp + 2) || isHeavyRain) return rate(4);
+      if (isSnow && isIdeal) return rate(9);
+      if (isIdeal) return rate(7);
       return rate(5);
     }
     case 'gardening': {
       if (isThunderstorm || isStorm) return rate(1);
-      if (isHeavyRain || temp > 38 || temp < -5) return rate(2);
-      if (hasRain || temp < 5 || temp > 33 || wind > 40) return rate(4);
-      if (temp >= 12 && temp <= 25 && wind < 25 && !hasRain) return rate(9);
+      if (isHeavyRain || temp > Math.max(38, p.maxTemp + 13) || temp < Math.min(-5, p.minTemp - 17)) return rate(2);
+      if ((!p.rainOk && hasRain) || temp < Math.min(5, p.minTemp - 7) || temp > Math.max(33, p.maxTemp + 8) || wind > Math.max(40, p.maxWind + 15)) return rate(4);
+      if (isIdeal) return rate(9);
       return rate(6);
     }
     case 'picnic': {
       if (isThunderstorm || isStorm) return rate(1);
-      if (hasRain || temp < 10 || temp > 35 || wind > 35) return rate(2);
-      if (temp < 15 || temp > 30 || wind > 25) return rate(5);
-      if (temp >= 18 && temp <= 28 && wind < 20 && !hasRain) return rate(9);
+      if ((!p.rainOk && hasRain) || temp < Math.min(10, p.minTemp - 8) || temp > Math.max(35, p.maxTemp + 7) || wind > Math.max(35, p.maxWind + 15)) return rate(2);
+      if (temp < Math.min(15, p.minTemp - 3) || temp > Math.max(30, p.maxTemp + 2) || wind > Math.max(25, p.maxWind + 5)) return rate(5);
+      if (isIdeal) return rate(9);
       return rate(7);
     }
     default:
@@ -5230,9 +5344,144 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
 };
 
 // --- 4. KOMPONENTEN ---
+// --- ACTIVITY PARAMS MODAL ---
+const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, lang, onSave, isSmallScreen = false }) => {
+    const [localParams, setLocalParams] = useState(activityParams || DEFAULT_ACTIVITY_PARAMS);
+
+    useEffect(() => {
+        setLocalParams(activityParams || DEFAULT_ACTIVITY_PARAMS);
+    }, [activityParams, isOpen]);
+
+    if (!isOpen) return null;
+
+    const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+    const activeActivities = ACTIVITY_DEFINITIONS.filter(({ key }) =>
+        Array.isArray(activityFilter) ? activityFilter.includes(key) : true
+    );
+
+    const updateParam = (key, field, value) => {
+        setLocalParams(prev => ({
+            ...prev,
+            [key]: { ...(prev[key] || DEFAULT_ACTIVITY_PARAMS[key]), [field]: value }
+        }));
+    };
+
+    const resetAll = () => setLocalParams(DEFAULT_ACTIVITY_PARAMS);
+
+    return (
+        <div className={`fixed inset-0 z-[70] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
+            <div className={`bg-m3-surface rounded-m3-xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-sm'} w-full max-h-[90vh] shadow-m3-5 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200`}>
+                <div className="flex justify-between items-center px-6 pt-6 pb-4 border-b border-m3-outline-variant flex-shrink-0">
+                    <h2 className="text-lg font-bold text-m3-on-surface flex items-center gap-2">
+                        <Zap size={20} className="text-yellow-500" />
+                        {t.activityParamsTitle || 'Activity Parameters'}
+                    </h2>
+                    <button onClick={onClose}><X className="text-m3-on-surface-variant" /></button>
+                </div>
+
+                <div className="overflow-y-auto px-6 py-4 flex-1 space-y-6">
+                    {activeActivities.map(({ key, emoji, label }) => {
+                        const actLabel = label[lang] || label['en'] || key;
+                        const p = localParams[key] || DEFAULT_ACTIVITY_PARAMS[key] || {};
+                        return (
+                            <div key={key} className="bg-m3-surface-container rounded-m3-md p-4">
+                                <div className="font-bold text-m3-on-surface mb-3 flex items-center gap-2">
+                                    <span className="text-xl">{emoji}</span> {actLabel}
+                                </div>
+
+                                {/* Min Temperature */}
+                                <div className="mb-3">
+                                    <div className="flex justify-between text-xs text-m3-on-surface-variant mb-1">
+                                        <span>{t.activityParamsMinTemp || 'Min. Temp.'}</span>
+                                        <span className="font-bold text-m3-on-surface">{p.minTemp}°C</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="-20"
+                                        max={p.maxTemp - 1}
+                                        value={p.minTemp}
+                                        onChange={e => updateParam(key, 'minTemp', Math.min(Number(e.target.value), p.maxTemp - 1))}
+                                        className="w-full accent-m3-primary"
+                                    />
+                                    <div className="flex justify-between text-xs text-m3-on-surface-variant mt-0.5">
+                                        <span>-20°C</span><span>+{p.maxTemp - 1}°C</span>
+                                    </div>
+                                </div>
+
+                                {/* Max Temperature */}
+                                <div className="mb-3">
+                                    <div className="flex justify-between text-xs text-m3-on-surface-variant mb-1">
+                                        <span>{t.activityParamsMaxTemp || 'Max. Temp.'}</span>
+                                        <span className="font-bold text-m3-on-surface">{p.maxTemp}°C</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min={p.minTemp + 1}
+                                        max="45"
+                                        value={p.maxTemp}
+                                        onChange={e => updateParam(key, 'maxTemp', Math.max(Number(e.target.value), p.minTemp + 1))}
+                                        className="w-full accent-m3-primary"
+                                    />
+                                    <div className="flex justify-between text-xs text-m3-on-surface-variant mt-0.5">
+                                        <span>{p.minTemp + 1}°C</span><span>45°C</span>
+                                    </div>
+                                </div>
+
+                                {/* Max Wind */}
+                                <div className="mb-3">
+                                    <div className="flex justify-between text-xs text-m3-on-surface-variant mb-1">
+                                        <span>{t.activityParamsMaxWind || 'Max. Wind'}</span>
+                                        <span className="font-bold text-m3-on-surface">{p.maxWind} km/h</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="5"
+                                        max="70"
+                                        value={p.maxWind}
+                                        onChange={e => updateParam(key, 'maxWind', Number(e.target.value))}
+                                        className="w-full accent-m3-primary"
+                                    />
+                                    <div className="flex justify-between text-xs text-m3-on-surface-variant mt-0.5">
+                                        <span>5 km/h</span><span>70 km/h</span>
+                                    </div>
+                                </div>
+
+                                {/* Rain OK toggle */}
+                                <button
+                                    onClick={() => updateParam(key, 'rainOk', !p.rainOk)}
+                                    className={`w-full flex items-center justify-between py-2 px-3 rounded-m3-sm text-sm font-bold transition ${p.rainOk ? 'bg-m3-primary-container text-m3-on-primary-container' : 'bg-m3-surface-container-high text-m3-on-surface-variant'}`}
+                                >
+                                    <span>💧 {t.activityParamsRainOk || 'Light rain OK'}</span>
+                                    {p.rainOk && <Check size={14} />}
+                                </button>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <div className="px-6 pb-6 pt-4 border-t border-m3-outline-variant flex-shrink-0 flex gap-2">
+                    <button
+                        onClick={resetAll}
+                        className="flex-1 py-3 bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface font-bold rounded-m3-md transition text-sm"
+                    >
+                        {t.activityParamsReset || 'Reset'}
+                    </button>
+                    <button
+                        onClick={() => { onSave(localParams); onClose(); }}
+                        className="flex-2 flex-grow py-3 bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary font-bold rounded-m3-md shadow-m3-2 transition active:scale-95"
+                    >
+                        {t.save || 'Save'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- SETTINGS MODAL (NEU) ---
 const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmallScreen = false }) => {
     const [localSettings, setLocalSettings] = useState(settings);
+    const [showActivityParams, setShowActivityParams] = useState(false);
 
     useEffect(() => {
         setLocalSettings(settings);
@@ -5243,6 +5492,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
     const t = TRANSLATIONS[localSettings.language] || TRANSLATIONS['de'];
 
     return (
+        <>
         <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
              <div className={`bg-m3-surface rounded-m3-xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-sm'} w-full max-h-[90vh] shadow-m3-5 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200`}>
                  <div className="flex justify-between items-center px-6 pt-6 pb-4 border-b border-m3-outline-variant flex-shrink-0">
@@ -5534,7 +5784,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                      <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
                         <Activity size={16}/> {t.activityFilterLabel || 'Customize Activities'}
                      </label>
-                     <div className="grid grid-cols-2 gap-2 bg-m3-surface-container p-2 rounded-m3-md">
+                     <div className="grid grid-cols-2 gap-2 bg-m3-surface-container p-2 rounded-m3-md mb-2">
                          {ACTIVITY_DEFINITIONS.map(({ key, emoji, label }) => {
                              const filter = localSettings.activityFilter || DEFAULT_ACTIVITY_FILTER;
                              const isActive = filter.includes(key);
@@ -5556,6 +5806,13 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                              );
                          })}
                      </div>
+                     <button
+                         onClick={() => setShowActivityParams(true)}
+                         className="w-full py-2 px-3 bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface font-bold rounded-m3-md transition flex items-center justify-center gap-2 text-sm"
+                     >
+                         <Zap size={14} className="text-yellow-500" />
+                         {t.activityParamsLabel || 'Activity Parameters'}
+                     </button>
                  </div>
 
                  </div>
@@ -5570,6 +5827,18 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                  </div>
              </div>
         </div>
+        {showActivityParams && (
+            <ActivityParamsModal
+                isOpen={showActivityParams}
+                onClose={() => setShowActivityParams(false)}
+                activityFilter={localSettings.activityFilter || DEFAULT_ACTIVITY_FILTER}
+                activityParams={localSettings.activityParams || DEFAULT_ACTIVITY_PARAMS}
+                lang={localSettings.language}
+                onSave={(params) => setLocalSettings({ ...localSettings, activityParams: params })}
+                isSmallScreen={isSmallScreen}
+            />
+        )}
+        </>
     );
 };
 
@@ -8528,7 +8797,7 @@ const getScoreBadgeClass = (score, isNight) =>
       : (isNight ? 'bg-red-900/50 text-red-400' : 'bg-red-100 text-red-700');
 
 // --- ACTIVITY INDEX MODAL ---
-const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null, activityFilter = null, isRealNight = false }) => {
+const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null, activityFilter = null, activityParams = null, isRealNight = false }) => {
   const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
   const [selectedAdvice, setSelectedAdvice] = useState(null);
   if (!isOpen) return null;
@@ -8615,6 +8884,7 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
 
   // Compute per-activity ratings based on current hour's weather
   const activeActivityFilter = Array.isArray(activityFilter) ? activityFilter : DEFAULT_ACTIVITY_FILTER;
+  const effectiveActivityParams = (activityParams && typeof activityParams === 'object') ? activityParams : DEFAULT_ACTIVITY_PARAMS;
   const currentHourData = todayHours.find(h => h.hour === currentHour) || todayHours[0];
   const activityRatings = currentHourData
     ? ACTIVITY_DEFINITIONS
@@ -8623,7 +8893,7 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
           key,
           emoji,
           label: label[lang] || label['en'] || key,
-          rating: getActivityRating(key, currentHourData.temp, currentHourData.wind, currentHourData.precip, currentHourData.uvIndex, currentHourData.code),
+          rating: getActivityRating(key, currentHourData.temp, currentHourData.wind, currentHourData.precip, currentHourData.uvIndex, currentHourData.code, effectiveActivityParams[key]),
         }))
     : [];
 
@@ -12828,6 +13098,7 @@ export default function WeatherApp() {
           airQualityData={airQualityData}
           pollenFilter={settings.pollenFilter}
           activityFilter={settings.activityFilter}
+          activityParams={settings.activityParams}
           isRealNight={isRealNight}
         />
       )}
