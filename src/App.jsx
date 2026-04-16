@@ -4139,6 +4139,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
   let confidence = null;
   let structuredDetails = null; // New field for list view
   let tripDetails = null;
+  let visualData = null; // New field for visual metric chips
 
   if (type === 'trip') {
       const { location, mode, startDate, endDate, summary: daySummary, items, reliability } = data;
@@ -4430,6 +4431,20 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
             : (maxToday > 30 ? 'Heiß' : maxToday > 20 ? 'Warm' : maxToday > 10 ? 'Mild' : maxToday > 0 ? 'Kühl' : 'Kalt');
         const tldrActivity = getActivityAdvice(lang, Math.round(maxToday), maxWindAvg, rainSumToday + snowSumToday, maxUV, tldrDomCode);
         tldrLine = `${tldrEmoji} ${tldrWeatherLabel} & ${tldrTempLabel} | ${Math.round(maxToday)}° | ${tldrActivity.text}`;
+        
+        // Build visual data for metric chips
+        const maxPrecipProbToday = Math.max(...todayData.map(d => d.precipProb || 0));
+        visualData = {
+          currentTemp: Math.round(current.temp),
+          feelsLike: (current.appTemp !== null && current.appTemp !== undefined && Math.abs(current.appTemp - current.temp) > 2) ? Math.round(current.appTemp) : null,
+          maxTemp: Math.round(maxToday),
+          minTemp: Math.round(minToday),
+          rainSum: parseFloat((rainSumToday + snowSumToday).toFixed(1)),
+          rainProb: maxPrecipProbToday,
+          maxWind: Math.round(maxWind),
+          maxUV: Math.round(maxUV),
+          code: tldrDomCode,
+        };
         
         // Calculate snow probability (average of hours with snow > 0.1mm)
         const hoursWithSnow = todayData.filter(d => parseFloat(d.snow || 0) > 0.1);
@@ -5322,7 +5337,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
       : "Vergleich der maximalen Tagestemperaturen über alle 4 Modelle: ICON (Deutsch), GFS (USA), AROME (Französisch) und GEM (Kanadisch) über die nächsten 6 Tage.";
   }
 
-  return { title, summary, details, structuredDetails, tripDetails, warning, confidence, type };
+  return { title, summary, details, structuredDetails, tripDetails, warning, confidence, type, visualData };
 };
 
 // --- 4. KOMPONENTEN ---
@@ -7993,11 +8008,11 @@ const renderWithColoredTemps = (text) => {
 const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, getWindUnitLabel, formatPrecip, getPrecipUnitLabel, getTempUnitSymbol }) => {
   const [expanded, setExpanded] = useState(false);
   if (!report) return null;
-  const { title, summary, details, warning: localWarning, confidence, structuredDetails, tripDetails } = report;
+  const { title, summary, details, warning: localWarning, confidence, structuredDetails, tripDetails, visualData } = report;
   
   const hasDwd = dwdWarnings && dwdWarnings.length > 0;
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
-  const showDetails = report.type !== 'daily' || (Array.isArray(structuredDetails) && structuredDetails.length > 0);
+  const showDetails = true; // always allow expanding for more details
   const getWindUnitLabelSafe = getWindUnitLabel || (() => 'km/h');
   const formatWindSafe = formatWind || ((val) => (val ?? '--'));
   const getPrecipUnitLabelSafe = getPrecipUnitLabel || (() => 'mm');
@@ -8079,29 +8094,81 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
             {/* NOTE: We might need to run temp conversion on summary string but that's complex with regex. For now summary remains as generated (mostly C) unless we rebuild AI report completely with units. */}
             {(report.type === 'daily' || report.type === 'longterm') ? (
               <div className="relative z-10">
-                {summary.split('\n\n').map((section, idx) => (
-                  <div key={idx}>
-                    {idx === 0 ? (
-                      <div className="bg-m3-primary/10 rounded-lg px-3 py-2 mb-3 text-m3-body-medium font-bold text-m3-on-surface">
-                        {renderWithColoredTemps(section)}
-                      </div>
-                    ) : (
-                      <>
-                        {idx > 1 && <hr className="border-m3-outline-variant/40 my-3" />}
-                        <p className="text-m3-body-large text-m3-on-surface leading-relaxed font-semibold whitespace-pre-line">
+                {/* For daily: only show first section (TL;DR) in main view; rest moves to expandable */}
+                {summary.split('\n\n').map((section, idx) => {
+                  if (report.type === 'daily' && idx > 0) return null;
+                  return (
+                    <div key={idx}>
+                      {idx === 0 ? (
+                        <div className="bg-m3-primary/10 rounded-lg px-3 py-2 mb-3 text-m3-body-medium font-bold text-m3-on-surface">
                           {renderWithColoredTemps(section)}
-                        </p>
-                      </>
+                        </div>
+                      ) : (
+                        <>
+                          {idx > 1 && <hr className="border-m3-outline-variant/40 my-3" />}
+                          <p className="text-m3-body-large text-m3-on-surface leading-relaxed font-semibold whitespace-pre-line">
+                            {renderWithColoredTemps(section)}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* Visual Metric Chips – daily report only */}
+                {report.type === 'daily' && visualData && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {/* Temperature range */}
+                    <div className="flex items-center gap-1.5 bg-m3-surface-container-high rounded-full px-3 py-1 text-sm font-bold border border-m3-outline-variant">
+                      <Thermometer size={14} className="text-blue-400 shrink-0"/>
+                      <span className="text-blue-400">{tempFunc ? tempFunc(visualData.minTemp) : visualData.minTemp}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}</span>
+                      <div className="w-6 h-1.5 rounded-full bg-gradient-to-r from-blue-400 to-red-400 shrink-0"/>
+                      <span className="text-red-400">{tempFunc ? tempFunc(visualData.maxTemp) : visualData.maxTemp}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}</span>
+                    </div>
+                    {/* Rain amount */}
+                    {visualData.rainSum > 0.1 && (
+                      <div className="flex items-center gap-1 bg-blue-500/10 rounded-full px-3 py-1 text-sm font-bold text-blue-500 border border-blue-400/30">
+                        <Droplets size={14} className="shrink-0"/>
+                        <span>{formatPrecipSafe(visualData.rainSum)}{getPrecipUnitLabelSafe()}</span>
+                      </div>
+                    )}
+                    {/* Rain probability */}
+                    {visualData.rainProb >= 15 && (
+                      <div className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border ${visualData.rainProb >= 60 ? 'bg-blue-600/20 text-blue-600 border-blue-500/30' : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant'}`}>
+                        <Umbrella size={14} className="shrink-0"/>
+                        <span>{visualData.rainProb}%</span>
+                      </div>
+                    )}
+                    {/* Wind */}
+                    {visualData.maxWind >= 20 && (
+                      <div className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border border-m3-outline-variant bg-m3-surface-container-high ${getWindColorClass(visualData.maxWind, false)}`}>
+                        <Wind size={14} className="shrink-0"/>
+                        <span>{formatWindSafe(visualData.maxWind)} {getWindUnitLabelSafe()}</span>
+                      </div>
+                    )}
+                    {/* UV */}
+                    {visualData.maxUV >= 3 && (
+                      <div className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border ${visualData.maxUV >= 8 ? 'bg-red-500/20 text-red-500 border-red-400/30' : visualData.maxUV >= 6 ? 'bg-orange-400/20 text-orange-500 border-orange-400/30' : 'bg-yellow-300/20 text-yellow-600 border-yellow-400/30'}`}>
+                        <Sun size={14} className="shrink-0"/>
+                        <span>UV {visualData.maxUV}</span>
+                      </div>
+                    )}
+                    {/* Feels like */}
+                    {visualData.feelsLike !== null && (
+                      <div className="flex items-center gap-1 bg-m3-surface-container-high rounded-full px-3 py-1 text-sm font-bold border border-m3-outline-variant text-m3-on-surface-variant">
+                        <Activity size={14} className="shrink-0"/>
+                        <span>{tempFunc ? tempFunc(visualData.feelsLike) : visualData.feelsLike}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}</span>
+                      </div>
                     )}
                   </div>
-                ))}
+                )}
               </div>
             ) : (
               <p className="text-m3-body-large text-m3-on-surface leading-relaxed font-semibold relative z-10 whitespace-pre-line">{renderWithColoredTemps(summary)}</p>
             )}
             
             {/* Toggle Button */}
-            {showDetails && (details || structuredDetails || showTripDetails) && (
+            {showDetails && (report.type === 'daily' || details || structuredDetails || showTripDetails) && (
                 <button 
                     onClick={() => setExpanded(!expanded)} 
                     className="mt-3 text-m3-label-large font-bold text-m3-primary flex items-center gap-1 hover:text-m3-primary/80 transition-colors"
@@ -8116,6 +8183,20 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
             <div className="px-4 pb-4 pt-0 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="h-px w-full bg-indigo-200/50 dark:bg-white/10 mb-3"></div>
                 
+                {/* Daily report: show remaining text sections (today details, tomorrow, etc.) */}
+                {report.type === 'daily' && summary.split('\n\n').length > 1 && (
+                  <div className="space-y-1 mb-4">
+                    {summary.split('\n\n').slice(1).map((section, idx) => (
+                      <div key={idx}>
+                        {idx > 0 && <hr className="border-m3-outline-variant/40 my-2" />}
+                        <p className="text-m3-body-medium text-m3-on-surface leading-relaxed whitespace-pre-line">
+                          {renderWithColoredTemps(section)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {/* Trip Details (Horizontal View) */}
                 {showTripDetails && (
                   <div className="overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
