@@ -6135,10 +6135,31 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   if (month === 11 && dayOfMonth >= 1 && dayOfMonth <= 25) detectedEvent = 'christmas';
   // New Year's Eve: Dec 31
   else if (month === 11 && dayOfMonth === 31) detectedEvent = 'newyear';
-  // Easter: Narrower range around typical Easter dates (late March to mid-April)
-  else if ((month === 2 && dayOfMonth >= 25) || (month === 3 && dayOfMonth <= 20)) detectedEvent = 'easter';
-  // Halloween: Oct 20-31
-  else if (month === 9 && dayOfMonth >= 20 && dayOfMonth <= 31) detectedEvent = 'halloween';
+  // Easter: Calculate actual Easter date (Meeus/Jones/Butcher algorithm) and show from Palm Sunday to Easter Monday
+  else {
+    const year = d.getFullYear();
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const dd = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - dd - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const easterMonth = Math.floor((h + l - 7 * m + 114) / 31) - 1; // 0-indexed
+    const easterDay = ((h + l - 7 * m + 114) % 31) + 1;
+    const easterDate = new Date(year, easterMonth, easterDay);
+    const palmSunday = new Date(easterDate); palmSunday.setDate(easterDate.getDate() - 7);
+    const easterMonday = new Date(easterDate); easterMonday.setDate(easterDate.getDate() + 1);
+    const today = new Date(year, month, dayOfMonth);
+    if (today >= palmSunday && today <= easterMonday) detectedEvent = 'easter';
+    // Halloween: Oct 20-31
+    else if (month === 9 && dayOfMonth >= 20 && dayOfMonth <= 31) detectedEvent = 'halloween';
+  }
   const event = demoEvent || detectedEvent;
 
   
