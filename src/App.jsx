@@ -3826,7 +3826,6 @@ const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvInd
   // hasRain stays true for these codes (they are in RAIN_WEATHER_CODES), so the umbrella branch uses
   // `hasRain && !isDrizzle` to let light drizzle fall through to the overcast/drizzle handler below.
   const isDrizzle = [51, 53, 55].includes(code) && precip24h < UMBRELLA_PRECIP_THRESHOLD;
-  const isOvercast = [2, 3, 45, 48].includes(code) && !hasRain;
   const isThunderstorm = [17, 95, 96, 99].includes(code);
   const isStorm = wind > 50;
   const isVeryCold = temp < TEMPERATURE_THRESHOLDS_C.freezing;
@@ -3855,8 +3854,8 @@ const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvInd
     reason: de ? `Die Temperatur liegt nahe dem Gefrierpunkt (${temp}°C). Auf Straßen und Gehwegen kann sich Eis oder Reif gebildet haben. Bitte beim Fahren und Gehen besonders vorsichtig sein.` : `Temperatures are near freezing (${temp}°C). Roads and sidewalks may be icy or frosty. Please take extra care when driving or walking.` };
   if (isVeryCold) return { emoji: '❄️', text: de ? 'Frostiger Tag – warm anziehen' : 'Frosty – dress warmly', color: 'text-blue-400', score: 3,
     reason: de ? `Die Temperatur liegt unter 0°C (${temp}°C). Frost kann sich bilden. Ziehe dich warm an – Schichten, Mütze und Handschuhe sind empfehlenswert.` : `Temperatures are below 0°C (${temp}°C). Frost conditions expected. Dress warmly with layers, a hat and gloves.` };
-  if (isDrizzle || isOvercast) return { emoji: '☕', text: de ? 'Gemütliches Drinnen-Wetter' : 'Cosy indoor weather', color: 'text-blue-400', score: 4,
-    reason: de ? `${isDrizzle ? 'Es nieselt leicht' : 'Der Himmel ist bedeckt'} und mit ${temp}°C ist es draußen ungemütlich. Ein perfekter Tag zum gemütlichen Drinnenbleiben: Lesen, Kochen oder einen Film schauen.` : `${isDrizzle ? 'There is light drizzle' : 'The sky is overcast'} and at ${temp}°C it is uncomfortable outside. A perfect day to stay cosy indoors: read a book, cook, or watch a film.` };
+  if (isDrizzle) return { emoji: '☕', text: de ? 'Gemütliches Drinnen-Wetter' : 'Cosy indoor weather', color: 'text-blue-400', score: 4,
+    reason: de ? `Es nieselt leicht und mit ${temp}°C ist es draußen ungemütlich. Ein perfekter Tag zum gemütlichen Drinnenbleiben: Lesen, Kochen oder einen Film schauen.` : `There is light drizzle and at ${temp}°C it is uncomfortable outside. A perfect day to stay cosy indoors: read a book, cook, or watch a film.` };
   if (isCold) return { emoji: '🧥', text: de ? 'Kalt – Jacke empfohlen' : 'Cold – jacket recommended', color: 'text-blue-400', score: 4,
     reason: de ? `Mit ${temp}°C ist es heute kalt. Eine Jacke ist empfohlen. Dennoch ideal für kurze Aktivitäten im Freien oder Spaziergänge, wenn man sich warm genug anzieht.` : `With ${temp}°C it is cold today. A jacket is recommended. Still suitable for short outdoor activities or walks if you dress warmly.` };
   if (isExtremeHeat) return { emoji: '🥵', text: de ? 'Extrem heiß – ausreichend trinken' : 'Extreme heat – stay hydrated', color: 'text-red-500', score: 2,
