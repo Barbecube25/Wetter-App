@@ -6790,71 +6790,65 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       {/* Show trees for most terrains, but not for city, desert, or lakeside */}
       {!['city', 'desert', 'lakeside', 'forest'].includes(terrainType) && (
         <>
-          {/* Baum Links - Rand (Deciduous tree) */}
+          {/* Baum Links - Rand (Laubbaum) */}
           <g transform="translate(40, 120)">
             <g className={treeAnim}>
                 <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
                 {showDeciduousLeaves ? (
-                  <>
-                    <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
-                    <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
-                  </>
+                  <ellipse cx="10" cy="4" rx="10" ry="9" fill={treeLeaf} />
                 ) : bareBranches}
             </g>
           </g>
 
-          {/* Baumgruppe Rechts (Deciduous tree) */}
+          {/* Baumgruppe Rechts (Laubbaum) */}
           <g transform="translate(280, 135) scale(0.9)">
             <g className={treeAnim} style={{animationDelay: '0.5s'}}>
                 <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
                 {showDeciduousLeaves ? (
-                  <>
-                    <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
-                    <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
-                  </>
+                  <ellipse cx="10" cy="4" rx="10" ry="9" fill={treeLeaf} />
                 ) : bareBranches}
             </g>
           </g>
           
-          {/* Baum Rechts - Rand (Evergreen - Pine tree) */}
+          {/* Baum Rechts - Rand (Laubbaum) */}
           <g transform="translate(320, 134) scale(0.8)">
             <g className={treeAnim} style={{animationDelay: '0.7s'}}>
                 <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-                <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
-                <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
+                {showDeciduousLeaves ? (
+                  <ellipse cx="10" cy="4" rx="10" ry="9" fill={treeLeaf} />
+                ) : bareBranches}
             </g>
           </g>
 
           {/* Zusätzliche Bäume auf der Wiese */}
           
-          {/* Kleiner Baum zwischen Links und Haus (Deciduous tree) */}
+          {/* Kleiner Baum zwischen Links und Haus (Laubbaum) */}
           <g transform="translate(100, 130) scale(0.7)">
             <g className={treeAnim} style={{animationDelay: '0.3s'}}>
                 <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
                 {showDeciduousLeaves ? (
-                  <>
-                    <path d="M10 0 L20 15 H0 Z" fill={treeLeaf} />
-                    <path d="M10 -10 L18 5 H2 Z" fill={treeLeaf} />
-                  </>
+                  <ellipse cx="10" cy="4" rx="10" ry="9" fill={treeLeaf} />
                 ) : bareBranches}
             </g>
           </g>
 
-          {/* Kleiner Baum rechts vom Haus (Evergreen - Pine tree) */}
+          {/* Kleiner Baum rechts vom Haus (Laubbaum) */}
           <g transform="translate(230, 128) scale(0.75)">
             <g className={treeAnim} style={{animationDelay: '0.4s'}}>
                 <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-                <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
-                <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
+                {showDeciduousLeaves ? (
+                  <ellipse cx="10" cy="4" rx="10" ry="9" fill={treeLeaf} />
+                ) : bareBranches}
             </g>
           </g>
 
-          {/* Zusätzlicher kleiner Baum links (Evergreen - Pine tree) */}
+          {/* Zusätzlicher kleiner Baum links (Laubbaum) */}
           <g transform="translate(70, 135) scale(0.65)">
             <g className={treeAnim} style={{animationDelay: '0.6s'}}>
                 <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-                <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
-                <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
+                {showDeciduousLeaves ? (
+                  <ellipse cx="10" cy="4" rx="10" ry="9" fill={treeLeaf} />
+                ) : bareBranches}
             </g>
           </g>
         </>
@@ -6863,20 +6857,22 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       {/* Lakeside: Just a few trees, not as many */}
       {terrainType === 'lakeside' && (
         <>
-          {/* Single tree on left */}
+          {/* Single tree on left (Laubbaum) */}
           <g transform="translate(40, 125)">
             <g className={treeAnim}>
                 <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-                <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
-                <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
+                {showDeciduousLeaves ? (
+                  <ellipse cx="10" cy="4" rx="10" ry="9" fill={treeLeaf} />
+                ) : bareBranches}
             </g>
           </g>
-          {/* Single tree on right */}
+          {/* Single tree on right (Laubbaum) */}
           <g transform="translate(90, 130) scale(0.85)">
             <g className={treeAnim} style={{animationDelay: '0.4s'}}>
                 <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-                <path d="M10 0 L20 15 H0 Z" fill={evergreenColor} />
-                <path d="M10 -10 L18 5 H2 Z" fill={evergreenColor} />
+                {showDeciduousLeaves ? (
+                  <ellipse cx="10" cy="4" rx="10" ry="9" fill={treeLeaf} />
+                ) : bareBranches}
             </g>
           </g>
         </>
