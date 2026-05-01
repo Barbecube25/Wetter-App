@@ -9015,7 +9015,7 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
                     role="button"
                     tabIndex={0}
                     onClick={() => setSelectedActivityChart({ key, emoji, label })}
-                    onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setSelectedActivityChart({ key, emoji, label })}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedActivityChart({ key, emoji, label }); } }}
                     className={`flex items-center gap-2 p-2 rounded-xl border cursor-pointer hover:opacity-80 active:scale-95 transition-all ${
                       isRealNight
                         ? 'bg-m3-dark-surface-container-high/60 border-m3-outline-variant/50'
@@ -9210,9 +9210,9 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
               </div>
               {/* Chart legend */}
               <div className="flex items-center gap-3 px-4 pt-3 text-xs">
-                <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-green-400/60" />{ tr.activityRatingIdeal || 'Ideal' } (≥7)</span>
-                <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-yellow-400/60" />{ tr.activityRatingFair || 'Mäßig' } (4–6)</span>
-                <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-red-400/60" />{ tr.activityRatingPoor || 'Ungünstig' } (&lt;4)</span>
+                <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-green-400/60" />{ t('activityRatingIdeal') } (≥7)</span>
+                <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-yellow-400/60" />{ t('activityRatingFair') } (4–6)</span>
+                <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-red-400/60" />{ t('activityRatingPoor') } (&lt;4)</span>
               </div>
               {/* Chart body */}
               <div className="px-2 pb-4 pt-2">
@@ -9242,7 +9242,7 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
                       tickLine={false}
                     />
                     <Tooltip
-                      formatter={(val) => [`${val}/10`]}
+                      formatter={(val) => `${val}/10`}
                       labelFormatter={(label) => label}
                       contentStyle={{
                         background: isRealNight ? '#1e293b' : '#fff',
