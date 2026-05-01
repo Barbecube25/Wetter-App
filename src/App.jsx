@@ -8883,6 +8883,7 @@ const getScoreBadgeClass = (score, isNight) =>
 const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null, activityFilter = null, activityParams = null, isRealNight = false }) => {
   const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
   const [selectedAdvice, setSelectedAdvice] = useState(null);
+  const [selectedActivityChart, setSelectedActivityChart] = useState(null);
   if (!isOpen) return null;
 
   const locale = LANG_LOCALE_MAP[lang] || 'de-DE';
@@ -9011,7 +9012,11 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
                 {activityRatings.map(({ key, emoji, label, rating }) => (
                   <div
                     key={key}
-                    className={`flex items-center gap-2 p-2 rounded-xl border ${
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedActivityChart({ key, emoji, label })}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedActivityChart({ key, emoji, label }); } }}
+                    className={`flex items-center gap-2 p-2 rounded-xl border cursor-pointer hover:opacity-80 active:scale-95 transition-all ${
                       isRealNight
                         ? 'bg-m3-dark-surface-container-high/60 border-m3-outline-variant/50'
                         : 'bg-slate-50 border-slate-100'
@@ -9167,6 +9172,102 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
           </div>
         </div>
       )}
+
+      {/* Activity 24h chart popup */}
+      {selectedActivityChart && (() => {
+        const { key, emoji, label } = selectedActivityChart;
+        const effectiveParams = (activityParams && typeof activityParams === 'object') ? activityParams : DEFAULT_ACTIVITY_PARAMS;
+        const chartData = todayHours.map(h => ({
+          displayTime: String(h.hour).padStart(2, '0') + ':00',
+          score: getActivityRating(key, h.temp, h.wind, h.precip, h.uvIndex, h.code, effectiveParams[key]).score,
+        }));
+        return (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="activity-chart-title"
+            className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-150"
+            onClick={() => setSelectedActivityChart(null)}
+          >
+            <div
+              className={`${isRealNight ? 'bg-m3-dark-surface-container-high' : 'bg-white'} rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150`}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Chart header */}
+              <div className={`p-4 border-b ${isRealNight ? 'border-m3-outline-variant/70' : 'border-slate-100'} flex items-center gap-3`}>
+                <span className="text-3xl flex-shrink-0" aria-hidden="true">{emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <div id="activity-chart-title" className={`font-bold text-sm ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'} leading-tight`}>{label}</div>
+                  <div className={`text-xs mt-0.5 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'}`}>{t('activityIndex24h')}</div>
+                </div>
+                <button
+                  onClick={() => setSelectedActivityChart(null)}
+                  aria-label={t('activityReasonClose')}
+                  className={`p-1.5 ${isRealNight ? 'hover:bg-m3-dark-surface-container' : 'hover:bg-slate-100'} rounded-full transition flex-shrink-0`}
+                >
+                  <X size={18} aria-hidden="true" className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} />
+                </button>
+              </div>
+              {/* Chart legend */}
+              <div className="flex items-center gap-3 px-4 pt-3 text-xs">
+                <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-green-400/60" />{ t('activityRatingIdeal') } (≥7)</span>
+                <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-yellow-400/60" />{ t('activityRatingFair') } (4–6)</span>
+                <span className="flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-sm bg-red-400/60" />{ t('activityRatingPoor') } (&lt;4)</span>
+              </div>
+              {/* Chart body */}
+              <div className="px-2 pb-4 pt-2">
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                    {/* Background color zones */}
+                    <ReferenceArea y1={7} y2={10} fill="#4ade80" fillOpacity={0.20} ifOverflow="hidden" />
+                    <ReferenceArea y1={4} y2={7} fill="#facc15" fillOpacity={0.20} ifOverflow="hidden" />
+                    <ReferenceArea y1={0} y2={4} fill="#f87171" fillOpacity={0.25} ifOverflow="hidden" />
+                    {/* Current hour marker */}
+                    {chartData[currentHour] && (
+                      <ReferenceLine x={chartData[currentHour].displayTime} stroke={isRealNight ? '#a78bfa' : '#6750A4'} strokeWidth={1.5} strokeDasharray="4 3" />
+                    )}
+                    <CartesianGrid strokeDasharray="3 3" stroke={isRealNight ? '#334155' : '#f1f5f9'} vertical={false} />
+                    <XAxis
+                      dataKey="displayTime"
+                      tick={{ fontSize: 9, fill: '#94a3b8' }}
+                      axisLine={false}
+                      tickLine={false}
+                      interval={3}
+                    />
+                    <YAxis
+                      domain={[0, 10]}
+                      ticks={[0, 2, 4, 6, 8, 10]}
+                      tick={{ fontSize: 9, fill: '#94a3b8' }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      formatter={(val) => `${val}/10`}
+                      labelFormatter={(label) => label}
+                      contentStyle={{
+                        background: isRealNight ? '#1e293b' : '#fff',
+                        border: 'none',
+                        borderRadius: 8,
+                        fontSize: 12,
+                        color: isRealNight ? '#e2e8f0' : '#1e293b',
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="score"
+                      stroke={isRealNight ? '#facc15' : '#d97706'}
+                      strokeWidth={2.5}
+                      dot={false}
+                      activeDot={{ r: 4 }}
+                      connectNulls
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };
