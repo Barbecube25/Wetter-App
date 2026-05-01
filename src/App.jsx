@@ -5422,6 +5422,10 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
   return { title, summary, details, structuredDetails, tripDetails, warning, confidence, type, visualData };
 };
 
+// Helper: resolve a multilingual or plain string activity label
+const resolveActivityLabel = (label, lang) =>
+    typeof label === 'object' ? (label[lang] || label['en'] || '') : (label || '');
+
 // --- 4. KOMPONENTEN ---
 // --- ACTIVITY PARAMS MODAL ---
 const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, activityDefs, lang, onSave, isSmallScreen = false }) => {
@@ -5463,7 +5467,7 @@ const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, 
 
                 <div className="overflow-y-auto px-6 py-4 flex-1 space-y-6">
                     {activeActivities.map(({ key, emoji, label }) => {
-                        const actLabel = typeof label === 'object' ? (label[lang] || label['en'] || key) : (label || key);
+                        const actLabel = resolveActivityLabel(label, lang) || key;
                         const defaultP = DEFAULT_ACTIVITY_PARAMS[key] || { minTemp: 10, maxTemp: 25, maxWind: 25, rainOk: false, cloudOk: true };
                         const p = { ...defaultP, ...(localParams[key] || {}) };
                         return (
@@ -5602,7 +5606,8 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
     const addNewActivity = () => {
         const name = newActivityName.trim();
         if (!name) return;
-        const key = 'custom_' + Date.now();
+        // Use timestamp + random suffix to avoid collisions when multiple activities are created quickly
+        const key = 'custom_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
         const newDef = { key, emoji: newActivityEmoji || '🏃', label: name };
         const newParams = { minTemp: 10, maxTemp: 25, maxWind: 25, rainOk: false, cloudOk: true };
         setLocalSettings(prev => ({
@@ -5976,7 +5981,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                                                      type="text"
                                                      value={editEmoji}
                                                      onChange={e => setEditEmoji(e.target.value)}
-                                                     maxLength={2}
+                                                     maxLength={8}
                                                      className="w-12 text-center py-1 px-2 bg-m3-surface-container-high text-m3-on-surface rounded-m3-sm border border-m3-outline-variant text-sm"
                                                      placeholder="😀"
                                                  />
@@ -6036,7 +6041,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                                      type="text"
                                      value={newActivityEmoji}
                                      onChange={e => setNewActivityEmoji(e.target.value)}
-                                     maxLength={2}
+                                     maxLength={8}
                                      className="w-12 text-center py-1.5 px-2 bg-m3-surface-container-high text-m3-on-surface rounded-m3-sm border border-m3-outline-variant text-sm"
                                      placeholder="😀"
                                  />
@@ -9243,22 +9248,27 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
   const activeActivityFilter = Array.isArray(activityFilter) ? activityFilter : DEFAULT_ACTIVITY_FILTER;
   const effectiveActivityParams = (activityParams && typeof activityParams === 'object') ? activityParams : DEFAULT_ACTIVITY_PARAMS;
   const currentHourData = todayHours.find(h => h.hour === currentHour) || todayHours[0];
-  // Combine built-in and custom activity definitions
   const effectiveCustomDefs = Array.isArray(customActivityDefs) ? customActivityDefs : [];
-  const allActivityDefs = [
-    ...ACTIVITY_DEFINITIONS,
-    ...effectiveCustomDefs.map(c => ({ key: c.key, emoji: c.emoji, label: c.label }))
-  ];
-  const activityRatings = currentHourData
-    ? allActivityDefs
-        .filter(({ key }) => activeActivityFilter.includes(key) || effectiveCustomDefs.some(c => c.key === key))
+  // Build activity ratings: built-in filtered by activityFilter, custom activities always included
+  const builtInRatings = currentHourData
+    ? ACTIVITY_DEFINITIONS
+        .filter(({ key }) => activeActivityFilter.includes(key))
         .map(({ key, emoji, label }) => ({
           key,
           emoji,
-          label: typeof label === 'object' ? (label[lang] || label['en'] || key) : (label || key),
+          label: resolveActivityLabel(label, lang) || key,
           rating: getActivityRating(key, currentHourData.temp, currentHourData.wind, currentHourData.precip, currentHourData.uvIndex, currentHourData.code, effectiveActivityParams[key]),
         }))
     : [];
+  const customRatings = currentHourData
+    ? effectiveCustomDefs.map(({ key, emoji, label }) => ({
+          key,
+          emoji,
+          label: resolveActivityLabel(label, lang) || key,
+          rating: getActivityRating(key, currentHourData.temp, currentHourData.wind, currentHourData.precip, currentHourData.uvIndex, currentHourData.code, effectiveActivityParams[key]),
+        }))
+    : [];
+  const activityRatings = [...builtInRatings, ...customRatings];
 
   return (
     <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
