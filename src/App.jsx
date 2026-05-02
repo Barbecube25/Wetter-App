@@ -9486,16 +9486,35 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
 
 // --- THUNDERSTORM RISK HELPERS ---
 
+// Named constants for thunderstorm thresholds (meteorological/DWD criteria)
+const CAPE_EXTREME_THRESHOLD = 3000;  // J/kg – extreme instability, potential supercells
+const CAPE_HIGH_THRESHOLD    = 1500;  // J/kg – large instability, severe thunderstorms possible
+const CAPE_MOD_THRESHOLD     = 500;   // J/kg – moderate instability
+const CAPE_LOW_THRESHOLD     = 100;   // J/kg – weak convection
+const GUST_EXTREME_THRESHOLD = 140;   // km/h – Stufe 4: extreme Orkanböen
+const GUST_SEVERE_THRESHOLD  = 100;   // km/h – Stufe 3: Orkanböen
+const GUST_STRONG_THRESHOLD  = 60;    // km/h – Stufe 2: markante Böen
+// Forecast window for thunderstorm analysis (hours)
+const THUNDERSTORM_FORECAST_HOURS = 24;
+// Mapping from risk level (0–4) to translation key
+const THUNDERSTORM_RISK_LEVEL_KEYS = [
+  'thunderstormNone',
+  'thunderstormLow',
+  'thunderstormModerate',
+  'thunderstormHigh',
+  'thunderstormExtreme',
+];
+
 // Returns a risk level 0-4 based on CAPE, Lifted Index, precipitation probability and weather code
 const calcThunderstormRiskLevel = (cape, liftedIndex, precipProb, weatherCode, windGust) => {
   const isActiveThunderstorm = [17, 95, 96, 99].includes(weatherCode);
   if (isActiveThunderstorm) return 4;
 
   let capeRisk = 0;
-  if (cape >= 3000) capeRisk = 4;
-  else if (cape >= 1500) capeRisk = 3;
-  else if (cape >= 500) capeRisk = 2;
-  else if (cape >= 100) capeRisk = 1;
+  if (cape >= CAPE_EXTREME_THRESHOLD) capeRisk = 4;
+  else if (cape >= CAPE_HIGH_THRESHOLD) capeRisk = 3;
+  else if (cape >= CAPE_MOD_THRESHOLD) capeRisk = 2;
+  else if (cape >= CAPE_LOW_THRESHOLD) capeRisk = 1;
 
   let liRisk = 0;
   if (liftedIndex !== null && liftedIndex !== undefined) {
@@ -9505,31 +9524,33 @@ const calcThunderstormRiskLevel = (cape, liftedIndex, precipProb, weatherCode, w
     else if (liftedIndex < 0) liRisk = 1;
   }
 
+  // Precipitation probability contribution: high precip prob raises the floor
   let precipRisk = 0;
   if (precipProb >= 70) precipRisk = 3;
   else if (precipProb >= 50) precipRisk = 2;
   else if (precipProb >= 30) precipRisk = 1;
 
-  // Combine: use max of atmospheric instability metrics, tempered by precip probability
+  // Atmospheric instability is the primary driver; precip probability raises the combined score
   const atmosphericRisk = Math.max(capeRisk, liRisk);
-  // Require at least some precip probability for a meaningful risk
+  // Without any precip probability and only weak instability, return no risk
   if (precipRisk === 0 && atmosphericRisk <= 1) return 0;
-  return Math.min(4, atmosphericRisk);
+  // Allow precip probability to boost or confirm risk, capped by atmospheric instability + 1
+  return Math.min(4, Math.max(atmosphericRisk, precipRisk > 0 ? Math.min(precipRisk, atmosphericRisk + 1) : 0));
 };
 
 // Returns an intensity label key based on max wind gust and CAPE
 const calcThunderstormIntensity = (windGust, cape) => {
-  if (windGust > 140 || cape > 4000) return 'thunderstormIntensitySevere';
-  if (windGust > 100 || cape > 2000) return 'thunderstormIntensityStrong';
-  if (windGust > 60 || cape > 500) return 'thunderstormIntensityModerate';
+  if (windGust > GUST_EXTREME_THRESHOLD || cape > 4 * CAPE_HIGH_THRESHOLD) return 'thunderstormIntensitySevere';
+  if (windGust > GUST_SEVERE_THRESHOLD  || cape > 2 * CAPE_HIGH_THRESHOLD) return 'thunderstormIntensityStrong';
+  if (windGust > GUST_STRONG_THRESHOLD  || cape > CAPE_MOD_THRESHOLD)      return 'thunderstormIntensityModerate';
   return 'thunderstormIntensityLight';
 };
 
 // Returns DWD-style warning level (1-4) based on peak risk and intensity
 const getThunderstormWarningLevel = (peakRisk, maxGust) => {
-  if (peakRisk >= 4 || maxGust > 140) return 4;
-  if (peakRisk >= 3 || maxGust > 100) return 3;
-  if (peakRisk >= 2 || maxGust > 60) return 2;
+  if (peakRisk >= 4 || maxGust > GUST_EXTREME_THRESHOLD) return 4;
+  if (peakRisk >= 3 || maxGust > GUST_SEVERE_THRESHOLD)  return 3;
+  if (peakRisk >= 2 || maxGust > GUST_STRONG_THRESHOLD)  return 2;
   if (peakRisk >= 1) return 1;
   return 0;
 };
@@ -9539,7 +9560,7 @@ const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallSc
   const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
   if (!isOpen) return null;
 
-  const next24 = hourlyData.slice(0, 24).map(hour => {
+  const next24 = hourlyData.slice(0, THUNDERSTORM_FORECAST_HOURS).map(hour => {
     const risk = calcThunderstormRiskLevel(
       hour.cape ?? 0,
       hour.liftedIndex,
@@ -9566,7 +9587,7 @@ const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallSc
   const maxGust = Math.max(...next24.map(h => h.gust));
   const warnLevel = getThunderstormWarningLevel(peakRisk, maxGust);
 
-  const riskLabelKey = ['thunderstormNone', 'thunderstormLow', 'thunderstormModerate', 'thunderstormHigh', 'thunderstormExtreme'][peakRisk] || 'thunderstormNone';
+  const riskLabelKey = THUNDERSTORM_RISK_LEVEL_KEYS[peakRisk] || THUNDERSTORM_RISK_LEVEL_KEYS[0];
   const riskColors = [
     { bg: isRealNight ? 'bg-green-900/20' : 'bg-green-50', text: isRealNight ? 'text-green-400' : 'text-green-700', border: isRealNight ? 'border-green-700/30' : 'border-green-200' },
     { bg: isRealNight ? 'bg-yellow-900/20' : 'bg-yellow-50', text: isRealNight ? 'text-yellow-400' : 'text-yellow-700', border: isRealNight ? 'border-yellow-700/30' : 'border-yellow-200' },
@@ -9638,7 +9659,7 @@ const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallSc
               <div className="text-right">
                 {hour.risk > 0 ? (
                   <>
-                    <div className={`text-sm font-bold ${riskColors[hour.risk]?.text}`}>{t(['thunderstormNone','thunderstormLow','thunderstormModerate','thunderstormHigh','thunderstormExtreme'][hour.risk])}</div>
+                    <div className={`text-sm font-bold ${riskColors[hour.risk]?.text}`}>{t(THUNDERSTORM_RISK_LEVEL_KEYS[hour.risk])}</div>
                     <div className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'}`}>
                       {hour.intensity} · CAPE {Math.round(hour.cape)} J/kg
                     </div>
@@ -14112,12 +14133,12 @@ export default function WeatherApp() {
 
           {/* Thunderstorm Risk tile */}
           {(() => {
-            const thunderHours = processedShort.slice(0, 24);
+            const thunderHours = processedShort.slice(0, THUNDERSTORM_FORECAST_HOURS);
             const peakRisk = thunderHours.reduce((max, h) => {
               const r = calcThunderstormRiskLevel(h.cape ?? 0, h.liftedIndex, h.precipProb ?? 0, h.code ?? 0, h.gust ?? 0);
               return r > max ? r : max;
             }, 0);
-            const riskLabelKey = ['thunderstormNone', 'thunderstormLow', 'thunderstormModerate', 'thunderstormHigh', 'thunderstormExtreme'][peakRisk];
+            const riskLabelKey = THUNDERSTORM_RISK_LEVEL_KEYS[peakRisk];
             const riskEmoji = ['✅', '🟡', '🟠', '🔴', '🟣'][peakRisk];
             const riskTextColor = [
               (isRealNight ? 'text-green-400' : 'text-green-700'),
