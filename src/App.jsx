@@ -8347,7 +8347,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                     {visualData.rainProb >= 15 && (
                       <div className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border ${visualData.rainProb >= 60 ? 'bg-blue-600/20 text-blue-600 border-blue-500/30' : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant'}`}>
                         <Umbrella size={14} className="shrink-0"/>
-                        <span>{visualData.rainProb}%</span>
+                        <span>{Math.round(visualData.rainProb)}%</span>
                       </div>
                     )}
                     {/* Wind */}
