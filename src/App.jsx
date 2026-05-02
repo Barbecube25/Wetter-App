@@ -429,6 +429,24 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Max. Wind",
     activityParamsRainOk: "Leichter Regen OK",
     activityParamsReset: "Zurücksetzen",
+    thunderstormRisk: "Gewitterrisiko",
+    thunderstormRiskDetails: "Gewitterrisiko Details",
+    thunderstormNone: "Kein Gewitter erwartet",
+    thunderstormLow: "Gering",
+    thunderstormModerate: "Mäßig",
+    thunderstormHigh: "Hoch",
+    thunderstormExtreme: "Extrem",
+    thunderstormPeakAt: "Höchstes Risiko um",
+    thunderstormIntensity: "Stärke",
+    thunderstormIntensityLight: "Leicht",
+    thunderstormIntensityModerate: "Mäßig",
+    thunderstormIntensityStrong: "Stark",
+    thunderstormIntensitySevere: "Unwetter",
+    thunderstormChance: "Wahrscheinlichkeit",
+    thunderstormNext24h: "Nächste 24 Stunden",
+    thunderstormWarningLevel: "Warnstufe",
+    cape: "CAPE (Instabilitätsenergie)",
+    liftedIndex: "Lifted Index (Stabilität)",
 
   },
   en: {
@@ -701,6 +719,24 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Max. Wind",
     activityParamsRainOk: "Light rain OK",
     activityParamsReset: "Reset to defaults",
+    thunderstormRisk: "Thunderstorm Risk",
+    thunderstormRiskDetails: "Thunderstorm Risk Details",
+    thunderstormNone: "No thunderstorm expected",
+    thunderstormLow: "Low",
+    thunderstormModerate: "Moderate",
+    thunderstormHigh: "High",
+    thunderstormExtreme: "Extreme",
+    thunderstormPeakAt: "Peak risk at",
+    thunderstormIntensity: "Intensity",
+    thunderstormIntensityLight: "Light",
+    thunderstormIntensityModerate: "Moderate",
+    thunderstormIntensityStrong: "Strong",
+    thunderstormIntensitySevere: "Severe",
+    thunderstormChance: "Probability",
+    thunderstormNext24h: "Next 24 hours",
+    thunderstormWarningLevel: "Warning level",
+    cape: "CAPE (Instability energy)",
+    liftedIndex: "Lifted Index (Stability)",
 
   },
   fr: {
@@ -973,6 +1009,24 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Vent max.",
     activityParamsRainOk: "Pluie légère OK",
     activityParamsReset: "Réinitialiser",
+    thunderstormRisk: "Risque d'orage",
+    thunderstormRiskDetails: "Détails du risque d'orage",
+    thunderstormNone: "Aucun orage prévu",
+    thunderstormLow: "Faible",
+    thunderstormModerate: "Modéré",
+    thunderstormHigh: "Élevé",
+    thunderstormExtreme: "Extrême",
+    thunderstormPeakAt: "Risque max à",
+    thunderstormIntensity: "Intensité",
+    thunderstormIntensityLight: "Légère",
+    thunderstormIntensityModerate: "Modérée",
+    thunderstormIntensityStrong: "Forte",
+    thunderstormIntensitySevere: "Violente",
+    thunderstormChance: "Probabilité",
+    thunderstormNext24h: "24 prochaines heures",
+    thunderstormWarningLevel: "Niveau d'alerte",
+    cape: "CAPE (Énergie d'instabilité)",
+    liftedIndex: "Indice de levée (Stabilité)",
 
   },
   es: {
@@ -1245,6 +1299,24 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Viento máx.",
     activityParamsRainOk: "Lluvia ligera OK",
     activityParamsReset: "Restablecer",
+    thunderstormRisk: "Riesgo de tormenta",
+    thunderstormRiskDetails: "Detalles del riesgo de tormenta",
+    thunderstormNone: "No se esperan tormentas",
+    thunderstormLow: "Bajo",
+    thunderstormModerate: "Moderado",
+    thunderstormHigh: "Alto",
+    thunderstormExtreme: "Extremo",
+    thunderstormPeakAt: "Riesgo máximo a las",
+    thunderstormIntensity: "Intensidad",
+    thunderstormIntensityLight: "Ligera",
+    thunderstormIntensityModerate: "Moderada",
+    thunderstormIntensityStrong: "Fuerte",
+    thunderstormIntensitySevere: "Severa",
+    thunderstormChance: "Probabilidad",
+    thunderstormNext24h: "Próximas 24 horas",
+    thunderstormWarningLevel: "Nivel de aviso",
+    cape: "CAPE (Energía de inestabilidad)",
+    liftedIndex: "Índice de elevación (Estabilidad)",
 
   },
   it: {
@@ -1517,6 +1589,24 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Vento max.",
     activityParamsRainOk: "Pioggia leggera OK",
     activityParamsReset: "Ripristina predefiniti",
+    thunderstormRisk: "Rischio temporale",
+    thunderstormRiskDetails: "Dettagli rischio temporale",
+    thunderstormNone: "Nessun temporale previsto",
+    thunderstormLow: "Basso",
+    thunderstormModerate: "Moderato",
+    thunderstormHigh: "Alto",
+    thunderstormExtreme: "Estremo",
+    thunderstormPeakAt: "Rischio massimo alle",
+    thunderstormIntensity: "Intensità",
+    thunderstormIntensityLight: "Leggero",
+    thunderstormIntensityModerate: "Moderato",
+    thunderstormIntensityStrong: "Forte",
+    thunderstormIntensitySevere: "Violento",
+    thunderstormChance: "Probabilità",
+    thunderstormNext24h: "Prossime 24 ore",
+    thunderstormWarningLevel: "Livello di allerta",
+    cape: "CAPE (Energia d'instabilità)",
+    liftedIndex: "Indice lifted (Stabilità)",
 
   },
   tr: {
@@ -1789,6 +1879,24 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Maks. rüzgar",
     activityParamsRainOk: "Hafif yağmur tamam",
     activityParamsReset: "Varsayılana sıfırla",
+    thunderstormRisk: "Fırtına Riski",
+    thunderstormRiskDetails: "Fırtına Riski Detayları",
+    thunderstormNone: "Fırtına beklenmiyor",
+    thunderstormLow: "Düşük",
+    thunderstormModerate: "Orta",
+    thunderstormHigh: "Yüksek",
+    thunderstormExtreme: "Çok yüksek",
+    thunderstormPeakAt: "En yüksek risk saat",
+    thunderstormIntensity: "Şiddet",
+    thunderstormIntensityLight: "Hafif",
+    thunderstormIntensityModerate: "Orta",
+    thunderstormIntensityStrong: "Güçlü",
+    thunderstormIntensitySevere: "Şiddetli",
+    thunderstormChance: "Olasılık",
+    thunderstormNext24h: "Sonraki 24 saat",
+    thunderstormWarningLevel: "Uyarı seviyesi",
+    cape: "CAPE (Kararsızlık enerjisi)",
+    liftedIndex: "Lifted İndeks (Kararlılık)",
 
   },
   pl: {
@@ -2061,6 +2169,24 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Maks. wiatr",
     activityParamsRainOk: "Lekki deszcz OK",
     activityParamsReset: "Przywróć domyślne",
+    thunderstormRisk: "Ryzyko burzy",
+    thunderstormRiskDetails: "Szczegóły ryzyka burzy",
+    thunderstormNone: "Brak burz",
+    thunderstormLow: "Niskie",
+    thunderstormModerate: "Umiarkowane",
+    thunderstormHigh: "Wysokie",
+    thunderstormExtreme: "Ekstremalne",
+    thunderstormPeakAt: "Największe ryzyko o",
+    thunderstormIntensity: "Intensywność",
+    thunderstormIntensityLight: "Słaba",
+    thunderstormIntensityModerate: "Umiarkowana",
+    thunderstormIntensityStrong: "Silna",
+    thunderstormIntensitySevere: "Gwałtowna",
+    thunderstormChance: "Prawdopodobieństwo",
+    thunderstormNext24h: "Kolejne 24 godziny",
+    thunderstormWarningLevel: "Poziom ostrzeżenia",
+    cape: "CAPE (Energia niestabilności)",
+    liftedIndex: "Wskaźnik uniesienia (Stabilność)",
 
   },
   nl: {
@@ -2333,6 +2459,24 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Max. wind",
     activityParamsRainOk: "Lichte regen OK",
     activityParamsReset: "Standaard herstellen",
+    thunderstormRisk: "Onweerrisico",
+    thunderstormRiskDetails: "Onweerrisico details",
+    thunderstormNone: "Geen onweer verwacht",
+    thunderstormLow: "Laag",
+    thunderstormModerate: "Matig",
+    thunderstormHigh: "Hoog",
+    thunderstormExtreme: "Extreem",
+    thunderstormPeakAt: "Hoogste risico om",
+    thunderstormIntensity: "Intensiteit",
+    thunderstormIntensityLight: "Licht",
+    thunderstormIntensityModerate: "Matig",
+    thunderstormIntensityStrong: "Sterk",
+    thunderstormIntensitySevere: "Hevig",
+    thunderstormChance: "Kans",
+    thunderstormNext24h: "Komende 24 uur",
+    thunderstormWarningLevel: "Waarschuwingsniveau",
+    cape: "CAPE (Instabiliteitsenergie)",
+    liftedIndex: "Lifted Index (Stabiliteit)",
 
   },
   hr: {
@@ -2605,6 +2749,24 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Maks. vjetar",
     activityParamsRainOk: "Lagana kiša OK",
     activityParamsReset: "Vrati na zadano",
+    thunderstormRisk: "Rizik od grmljavine",
+    thunderstormRiskDetails: "Detalji rizika od grmljavine",
+    thunderstormNone: "Nema grmljavine",
+    thunderstormLow: "Nizak",
+    thunderstormModerate: "Umjeren",
+    thunderstormHigh: "Visok",
+    thunderstormExtreme: "Ekstreman",
+    thunderstormPeakAt: "Najveći rizik u",
+    thunderstormIntensity: "Intenzitet",
+    thunderstormIntensityLight: "Slaba",
+    thunderstormIntensityModerate: "Umjerena",
+    thunderstormIntensityStrong: "Jaka",
+    thunderstormIntensitySevere: "Žestoka",
+    thunderstormChance: "Vjerojatnost",
+    thunderstormNext24h: "Sljedećih 24 sata",
+    thunderstormWarningLevel: "Razina upozorenja",
+    cape: "CAPE (Energija nestabilnosti)",
+    liftedIndex: "Lifted indeks (Stabilnost)",
 
   },
   el: {
@@ -2877,6 +3039,24 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Μέγ. άνεμος",
     activityParamsRainOk: "Ελαφριά βροχή OK",
     activityParamsReset: "Επαναφορά προεπιλογών",
+    thunderstormRisk: "Κίνδυνος καταιγίδας",
+    thunderstormRiskDetails: "Λεπτομέρειες κινδύνου καταιγίδας",
+    thunderstormNone: "Δεν αναμένεται καταιγίδα",
+    thunderstormLow: "Χαμηλός",
+    thunderstormModerate: "Μέτριος",
+    thunderstormHigh: "Υψηλός",
+    thunderstormExtreme: "Ακραίος",
+    thunderstormPeakAt: "Μέγιστος κίνδυνος στις",
+    thunderstormIntensity: "Ένταση",
+    thunderstormIntensityLight: "Ελαφρά",
+    thunderstormIntensityModerate: "Μέτρια",
+    thunderstormIntensityStrong: "Ισχυρή",
+    thunderstormIntensitySevere: "Σφοδρή",
+    thunderstormChance: "Πιθανότητα",
+    thunderstormNext24h: "Επόμενες 24 ώρες",
+    thunderstormWarningLevel: "Επίπεδο προειδοποίησης",
+    cape: "CAPE (Ενέργεια αστάθειας)",
+    liftedIndex: "Lifted Index (Σταθερότητα)",
 
   },
   da: {
@@ -3149,6 +3329,24 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Maks. vind",
     activityParamsRainOk: "Let regn OK",
     activityParamsReset: "Nulstil til standard",
+    thunderstormRisk: "Tordenvejrsrisiko",
+    thunderstormRiskDetails: "Tordenvejrsrisiko detaljer",
+    thunderstormNone: "Intet tordenvejr forventet",
+    thunderstormLow: "Lav",
+    thunderstormModerate: "Moderat",
+    thunderstormHigh: "Høj",
+    thunderstormExtreme: "Ekstrem",
+    thunderstormPeakAt: "Højeste risiko kl.",
+    thunderstormIntensity: "Intensitet",
+    thunderstormIntensityLight: "Let",
+    thunderstormIntensityModerate: "Moderat",
+    thunderstormIntensityStrong: "Stærk",
+    thunderstormIntensitySevere: "Voldsom",
+    thunderstormChance: "Sandsynlighed",
+    thunderstormNext24h: "Næste 24 timer",
+    thunderstormWarningLevel: "Advarselsniveau",
+    cape: "CAPE (Instabilitetsenergi)",
+    liftedIndex: "Lifted Index (Stabilitet)",
 
   },
   ru: {
@@ -3421,6 +3619,24 @@ const TRANSLATIONS = {
     activityParamsMaxWind: "Макс. ветер",
     activityParamsRainOk: "Лёгкий дождь OK",
     activityParamsReset: "Сбросить настройки",
+    thunderstormRisk: "Риск грозы",
+    thunderstormRiskDetails: "Детали риска грозы",
+    thunderstormNone: "Грозы не ожидается",
+    thunderstormLow: "Низкий",
+    thunderstormModerate: "Умеренный",
+    thunderstormHigh: "Высокий",
+    thunderstormExtreme: "Экстремальный",
+    thunderstormPeakAt: "Наибольший риск в",
+    thunderstormIntensity: "Интенсивность",
+    thunderstormIntensityLight: "Слабая",
+    thunderstormIntensityModerate: "Умеренная",
+    thunderstormIntensityStrong: "Сильная",
+    thunderstormIntensitySevere: "Жестокая",
+    thunderstormChance: "Вероятность",
+    thunderstormNext24h: "Следующие 24 часа",
+    thunderstormWarningLevel: "Уровень предупреждения",
+    cape: "CAPE (Энергия неустойчивости)",
+    liftedIndex: "Индекс подъёма (Устойчивость)",
 
   }
 };
@@ -9268,6 +9484,186 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
   );
 };
 
+// --- THUNDERSTORM RISK HELPERS ---
+
+// Returns a risk level 0-4 based on CAPE, Lifted Index, precipitation probability and weather code
+const calcThunderstormRiskLevel = (cape, liftedIndex, precipProb, weatherCode, windGust) => {
+  const isActiveThunderstorm = [17, 95, 96, 99].includes(weatherCode);
+  if (isActiveThunderstorm) return 4;
+
+  let capeRisk = 0;
+  if (cape >= 3000) capeRisk = 4;
+  else if (cape >= 1500) capeRisk = 3;
+  else if (cape >= 500) capeRisk = 2;
+  else if (cape >= 100) capeRisk = 1;
+
+  let liRisk = 0;
+  if (liftedIndex !== null && liftedIndex !== undefined) {
+    if (liftedIndex <= -6) liRisk = 4;
+    else if (liftedIndex <= -4) liRisk = 3;
+    else if (liftedIndex <= -2) liRisk = 2;
+    else if (liftedIndex < 0) liRisk = 1;
+  }
+
+  let precipRisk = 0;
+  if (precipProb >= 70) precipRisk = 3;
+  else if (precipProb >= 50) precipRisk = 2;
+  else if (precipProb >= 30) precipRisk = 1;
+
+  // Combine: use max of atmospheric instability metrics, tempered by precip probability
+  const atmosphericRisk = Math.max(capeRisk, liRisk);
+  // Require at least some precip probability for a meaningful risk
+  if (precipRisk === 0 && atmosphericRisk <= 1) return 0;
+  return Math.min(4, atmosphericRisk);
+};
+
+// Returns an intensity label key based on max wind gust and CAPE
+const calcThunderstormIntensity = (windGust, cape) => {
+  if (windGust > 140 || cape > 4000) return 'thunderstormIntensitySevere';
+  if (windGust > 100 || cape > 2000) return 'thunderstormIntensityStrong';
+  if (windGust > 60 || cape > 500) return 'thunderstormIntensityModerate';
+  return 'thunderstormIntensityLight';
+};
+
+// Returns DWD-style warning level (1-4) based on peak risk and intensity
+const getThunderstormWarningLevel = (peakRisk, maxGust) => {
+  if (peakRisk >= 4 || maxGust > 140) return 4;
+  if (peakRisk >= 3 || maxGust > 100) return 3;
+  if (peakRisk >= 2 || maxGust > 60) return 2;
+  if (peakRisk >= 1) return 1;
+  return 0;
+};
+
+// --- THUNDERSTORM RISK MODAL ---
+const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallScreen = false, isRealNight = false }) => {
+  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
+  if (!isOpen) return null;
+
+  const next24 = hourlyData.slice(0, 24).map(hour => {
+    const risk = calcThunderstormRiskLevel(
+      hour.cape ?? 0,
+      hour.liftedIndex,
+      hour.precipProb ?? 0,
+      hour.code ?? 0,
+      hour.gust ?? 0
+    );
+    const intensityKey = calcThunderstormIntensity(hour.gust ?? 0, hour.cape ?? 0);
+    return {
+      time: hour.time,
+      displayTime: hour.time.toLocaleTimeString(lang === 'de' ? 'de-DE' : 'en-US', { hour: '2-digit', minute: '2-digit' }),
+      risk,
+      intensity: t(intensityKey),
+      cape: hour.cape ?? 0,
+      liftedIndex: hour.liftedIndex,
+      precipProb: hour.precipProb ?? 0,
+      gust: hour.gust ?? 0,
+      code: hour.code ?? 0,
+    };
+  });
+
+  const peakEntry = next24.reduce((max, h) => h.risk > max.risk ? h : max, next24[0] || { risk: 0 });
+  const peakRisk = peakEntry?.risk ?? 0;
+  const maxGust = Math.max(...next24.map(h => h.gust));
+  const warnLevel = getThunderstormWarningLevel(peakRisk, maxGust);
+
+  const riskLabelKey = ['thunderstormNone', 'thunderstormLow', 'thunderstormModerate', 'thunderstormHigh', 'thunderstormExtreme'][peakRisk] || 'thunderstormNone';
+  const riskColors = [
+    { bg: isRealNight ? 'bg-green-900/20' : 'bg-green-50', text: isRealNight ? 'text-green-400' : 'text-green-700', border: isRealNight ? 'border-green-700/30' : 'border-green-200' },
+    { bg: isRealNight ? 'bg-yellow-900/20' : 'bg-yellow-50', text: isRealNight ? 'text-yellow-400' : 'text-yellow-700', border: isRealNight ? 'border-yellow-700/30' : 'border-yellow-200' },
+    { bg: isRealNight ? 'bg-orange-900/20' : 'bg-orange-50', text: isRealNight ? 'text-orange-400' : 'text-orange-700', border: isRealNight ? 'border-orange-700/30' : 'border-orange-200' },
+    { bg: isRealNight ? 'bg-red-900/20' : 'bg-red-50', text: isRealNight ? 'text-red-400' : 'text-red-700', border: isRealNight ? 'border-red-700/30' : 'border-red-200' },
+    { bg: isRealNight ? 'bg-purple-900/30' : 'bg-purple-50', text: isRealNight ? 'text-purple-400' : 'text-purple-800', border: isRealNight ? 'border-purple-700/40' : 'border-purple-200' },
+  ];
+  const riskEmojis = ['✅', '🟡', '🟠', '🔴', '🟣'];
+  const riskColor = riskColors[peakRisk] || riskColors[0];
+
+  const hourRiskColor = (risk) => {
+    if (risk === 0) return isRealNight ? 'bg-m3-dark-surface-container-high/40' : 'bg-slate-50/50';
+    return riskColors[risk]?.bg + ' border ' + riskColors[risk]?.border;
+  };
+
+  const liDisplay = (li) => {
+    if (li === null || li === undefined) return '–';
+    return li.toFixed(1);
+  };
+
+  return (
+    <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
+      <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-white'} rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-md'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
+        {/* Header */}
+        <div className={`p-4 border-b ${isRealNight ? 'border-m3-outline-variant/70 bg-m3-dark-surface-container-high/50' : 'border-slate-100 bg-slate-50/50'} flex justify-between items-center sticky top-0`}>
+          <h3 className={`font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'} flex items-center gap-2`}>
+            <CloudLightning size={18} className="text-yellow-500" />
+            {t('thunderstormRiskDetails')}
+          </h3>
+          <button onClick={onClose} className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'} rounded-full transition`}>
+            <X size={20} className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} />
+          </button>
+        </div>
+
+        {/* Summary */}
+        <div className={`p-4 border-b ${riskColor.bg} ${riskColor.border} border`}>
+          <div className="flex justify-between items-center mb-2">
+            <span className={`text-sm font-medium ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-600'}`}>{t('thunderstormNext24h')}</span>
+            <span className={`text-xl font-bold ${riskColor.text} flex items-center gap-1`}>
+              {riskEmojis[peakRisk]} {t(riskLabelKey)}
+            </span>
+          </div>
+          {peakRisk > 0 && peakEntry && (
+            <div className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'} flex gap-4 flex-wrap`}>
+              <span>⚡ {t('thunderstormPeakAt')} {peakEntry.displayTime}</span>
+              <span>💨 {t('thunderstormIntensity')}: {peakEntry.intensity}</span>
+              {warnLevel > 0 && <span>⚠️ {t('thunderstormWarningLevel')}: {warnLevel}</span>}
+            </div>
+          )}
+          {peakRisk > 0 && (
+            <div className={`mt-2 text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'} space-y-0.5`}>
+              <div>{t('cape')}: <span className="font-semibold">{Math.round(peakEntry?.cape ?? 0)} J/kg</span></div>
+              <div>{t('liftedIndex')}: <span className="font-semibold">{liDisplay(peakEntry?.liftedIndex)}</span></div>
+            </div>
+          )}
+        </div>
+
+        {/* Hourly list */}
+        <div className="overflow-y-auto p-4 space-y-1.5">
+          {next24.map((hour, idx) => (
+            <div
+              key={idx}
+              className={`flex justify-between items-center p-2.5 rounded-xl transition-colors ${hourRiskColor(hour.risk)}`}
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="text-base leading-none">{riskEmojis[hour.risk]}</span>
+                <span className={`font-medium text-sm ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-700'}`}>{hour.displayTime}</span>
+              </div>
+              <div className="text-right">
+                {hour.risk > 0 ? (
+                  <>
+                    <div className={`text-sm font-bold ${riskColors[hour.risk]?.text}`}>{t(['thunderstormNone','thunderstormLow','thunderstormModerate','thunderstormHigh','thunderstormExtreme'][hour.risk])}</div>
+                    <div className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'}`}>
+                      {hour.intensity} · CAPE {Math.round(hour.cape)} J/kg
+                    </div>
+                  </>
+                ) : (
+                  <span className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'}`}>{t('thunderstormNone')}</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer info */}
+        <div className={`p-4 border-t ${isRealNight ? 'border-m3-outline-variant/70 bg-m3-dark-surface-container-high/30' : 'border-slate-100 bg-slate-50/30'}`}>
+          <p className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'}`}>
+            {lang === 'de'
+              ? 'Basiert auf CAPE (Konvektionsenergie), Lifted Index (Atmosphärenstabilität) und Windböen. Warnstufe entspricht DWD-Kriterien.'
+              : 'Based on CAPE (convective energy), Lifted Index (atmospheric stability) and wind gusts. Warning levels follow DWD criteria.'}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- LOCATION MODAL ---
 const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAddCurrentLocation, onDeleteLocation, currentLoc, onRenameLocation, onRenameHome, homeLoc, lang='de', isSmallScreen = false }) => {
     const [searchQuery, setSearchQuery] = useState("");
@@ -10701,6 +11097,7 @@ export default function WeatherApp() {
   const [showSettingsModal, setShowSettingsModal] = useState(false); // NEU
   const [showPrecipModal, setShowPrecipModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
+  const [showThunderstormModal, setShowThunderstormModal] = useState(false);
   const [showPollenModal, setShowPollenModal] = useState(false);
   const [activeDetailModal, setActiveDetailModal] = useState(null);
   const [viewMode, setViewMode] = useState(null);
@@ -11433,7 +11830,7 @@ export default function WeatherApp() {
       const { lat, lon } = currentLoc;
       
       const modelsShort = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless";
-      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,rain,snowfall,weathercode,wind_speed_10m,relative_humidity_2m,cloud_cover&hourly=temperature_2m,precipitation,snowfall,weathercode,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,cloud_cover,pressure_msl,visibility&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2&past_hours=12`;
+      const urlShort = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,rain,snowfall,weathercode,wind_speed_10m,relative_humidity_2m,cloud_cover&hourly=temperature_2m,precipitation,snowfall,weathercode,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day,apparent_temperature,relative_humidity_2m,dewpoint_2m,uv_index,precipitation_probability,cloud_cover,pressure_msl,visibility,cape,lifted_index&models=${modelsShort}&minutely_15=precipitation&timezone=auto&forecast_days=2&past_hours=12`;
       
       const modelsLong = "icon_seamless,gfs_seamless,arome_seamless,gem_seamless"; 
       const urlLong = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,precipitation_probability_max&models=${modelsLong}&timezone=auto&forecast_days=14`;
@@ -11633,7 +12030,7 @@ export default function WeatherApp() {
   }, [loading, lastUpdated, isRefreshing]);
 
   // --- PULL-TO-REFRESH & SWIPE GESTURE HANDLERS ---
-  const isAnyModalOpen = showFeedback || !!activeDetailModal || showPrecipModal || showActivityModal || showSettingsModal || showLocationModal || showPollenModal || !!selectedTripForPopup || showNewTripModal;
+  const isAnyModalOpen = showFeedback || !!activeDetailModal || showPrecipModal || showActivityModal || showThunderstormModal || showSettingsModal || showLocationModal || showPollenModal || !!selectedTripForPopup || showNewTripModal;
 
   const handleTouchStart = (e) => {
     // Do not activate gestures when a modal/overlay is open
@@ -12348,6 +12745,8 @@ export default function WeatherApp() {
         cloudCover: getAvg('cloud_cover'),
         pressure: getVal('pressure_msl'),
         visibility: getVal('visibility'),
+        cape: getVal('cape'),
+        liftedIndex: getVal('lifted_index'),
         reliability: reliability
       });
     }
@@ -13205,6 +13604,16 @@ export default function WeatherApp() {
           isRealNight={isRealNight}
         />
       )}
+      {showThunderstormModal && (
+        <ThunderstormModal
+          isOpen={showThunderstormModal}
+          onClose={() => setShowThunderstormModal(false)}
+          hourlyData={processedShort}
+          lang={lang}
+          isSmallScreen={isSmallScreen}
+          isRealNight={isRealNight}
+        />
+      )}
       {showSettingsModal && (
           <SettingsModal 
              isOpen={showSettingsModal}
@@ -13695,6 +14104,52 @@ export default function WeatherApp() {
                 {getDominantPollen && !getDominantPollen.pausing && (
                   <div className="text-xs mt-1 text-m3-on-surface-variant truncate">
                     🌿 {getDominantPollen.label}: {getDominantPollen.level}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Thunderstorm Risk tile */}
+          {(() => {
+            const thunderHours = processedShort.slice(0, 24);
+            const peakRisk = thunderHours.reduce((max, h) => {
+              const r = calcThunderstormRiskLevel(h.cape ?? 0, h.liftedIndex, h.precipProb ?? 0, h.code ?? 0, h.gust ?? 0);
+              return r > max ? r : max;
+            }, 0);
+            const riskLabelKey = ['thunderstormNone', 'thunderstormLow', 'thunderstormModerate', 'thunderstormHigh', 'thunderstormExtreme'][peakRisk];
+            const riskEmoji = ['✅', '🟡', '🟠', '🔴', '🟣'][peakRisk];
+            const riskTextColor = [
+              (isRealNight ? 'text-green-400' : 'text-green-700'),
+              (isRealNight ? 'text-yellow-400' : 'text-yellow-700'),
+              (isRealNight ? 'text-orange-400' : 'text-orange-700'),
+              (isRealNight ? 'text-red-400' : 'text-red-600'),
+              (isRealNight ? 'text-purple-400' : 'text-purple-800'),
+            ][peakRisk];
+            const tileBgThunder = peakRisk >= 3
+              ? (isRealNight ? 'bg-red-950/40 border-red-900/40' : 'bg-red-50 border-red-200')
+              : peakRisk === 2
+                ? (isRealNight ? 'bg-orange-950/40 border-orange-900/40' : 'bg-orange-50 border-orange-200')
+                : tileBg;
+            const peakEntry = thunderHours.reduce((best, h) => {
+              const r = calcThunderstormRiskLevel(h.cape ?? 0, h.liftedIndex, h.precipProb ?? 0, h.code ?? 0, h.gust ?? 0);
+              return r > calcThunderstormRiskLevel(best.cape ?? 0, best.liftedIndex, best.precipProb ?? 0, best.code ?? 0, best.gust ?? 0) ? h : best;
+            }, thunderHours[0] || {});
+            return (
+              <div
+                className={`${tileBgThunder} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col cursor-pointer active:scale-95 transition-transform`}
+                onClick={() => setShowThunderstormModal(true)}
+              >
+                <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                  <CloudLightning size={14} /> {t('thunderstormRisk')}
+                </div>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className="text-lg leading-none">{riskEmoji}</span>
+                  <span className={`text-m3-label-large font-bold ${riskTextColor} leading-tight`}>{t(riskLabelKey)}</span>
+                </div>
+                {peakRisk > 0 && peakEntry?.time && (
+                  <div className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mt-0.5`}>
+                    {t('thunderstormPeakAt')} {peakEntry.time.toLocaleTimeString(lang === 'de' ? 'de-DE' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 )}
               </div>
