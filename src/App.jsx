@@ -4456,13 +4456,15 @@ const getMoonPhaseSVGPath = (phase, r = 12) => {
   return `M 0,${-r} A ${r},${r} 0 0,${outerSweep} 0,${r} A ${termRx},${r} 0 0,${termSweep} 0,${-r}`;
 };
 
+// Duration of one synodic (lunar) month in milliseconds (29.53059 days = 2551443 seconds).
+const LUNAR_CYCLE_MS = 2551443 * 1000;
+
 // Returns the exact fractional moon phase (0 = new moon, 0.5 = full moon, approaching 1 = waning crescent).
 const getMoonPhaseExact = (date) => {
   if (!date) return 0;
   const dateObj = new Date(date);
   const newMoon = new Date(2000, 0, 6, 18, 14).getTime();
-  const phaseDurationMs = 2551443 * 1000;
-  let fraction = ((dateObj.getTime() - newMoon) % phaseDurationMs) / phaseDurationMs;
+  let fraction = ((dateObj.getTime() - newMoon) % LUNAR_CYCLE_MS) / LUNAR_CYCLE_MS;
   if (fraction < 0) fraction += 1;
   return fraction;
 };
@@ -4472,11 +4474,10 @@ const getMoonIllumination = (fraction) => Math.round((1 - Math.cos(fraction * 2 
 
 // Returns a Date for the next occurrence of a given target phase fraction after a reference date.
 const getNextMoonDate = (refDate, targetFraction) => {
-  const phaseDurationMs = 2551443 * 1000;
   const fraction = getMoonPhaseExact(refDate);
   let diff = targetFraction - fraction;
   if (diff <= 0) diff += 1;
-  return new Date(new Date(refDate).getTime() + diff * phaseDurationMs);
+  return new Date(new Date(refDate).getTime() + diff * LUNAR_CYCLE_MS);
 };
 
 // --- 3. KI LOGIK (REVISED - MIT STRUKTURIERTEN DATEN & SPRACHE) ---
@@ -9844,7 +9845,8 @@ const MoonPhaseModal = ({ isOpen, onClose, date, lang = 'de', isSmallScreen = fa
   const daysToFull = Math.ceil((nextFull.getTime() - refDate.getTime()) / msPerDay);
   const daysToNew = Math.ceil((nextNew.getTime() - refDate.getTime()) / msPerDay);
 
-  const locale = lang === 'de' ? 'de-DE' : lang === 'fr' ? 'fr-FR' : lang === 'es' ? 'es-ES' : lang === 'it' ? 'it-IT' : lang === 'pl' ? 'pl-PL' : lang === 'nl' ? 'nl-NL' : lang === 'ru' ? 'ru-RU' : 'en-US';
+  const localeMap = { de: 'de-DE', fr: 'fr-FR', es: 'es-ES', it: 'it-IT', tr: 'tr-TR', pl: 'pl-PL', nl: 'nl-NL', hr: 'hr-HR', el: 'el-GR', da: 'da-DK', ru: 'ru-RU' };
+  const locale = localeMap[lang] || 'en-US';
 
   const formatDays = (days) => {
     if (days === 0) return t('moonToday');
@@ -9984,9 +9986,7 @@ const MoonPhaseModal = ({ isOpen, onClose, date, lang = 'de', isSmallScreen = fa
                   }`}
                 >
                   <span className={`text-[10px] font-medium ${isToday ? (isRealNight ? 'text-indigo-300' : 'text-indigo-600') : nightSubText}`}>
-                    {isToday
-                      ? (lang === 'de' ? 'H' : 'T')
-                      : d.toLocaleDateString(locale, { weekday: 'narrow' })}
+                    {d.toLocaleDateString(locale, { weekday: 'narrow' })}
                   </span>
                   <span className="text-base leading-none">{MOON_PHASE_EMOJIS[p]}</span>
                   <span className={`text-[9px] ${nightSubText}`}>{ill}%</span>
