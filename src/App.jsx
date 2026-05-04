@@ -447,6 +447,24 @@ const TRANSLATIONS = {
     thunderstormWarningLevel: "Warnstufe",
     cape: "CAPE (Instabilitätsenergie)",
     liftedIndex: "Lifted Index (Stabilität)",
+    moonPhase: "Mondphase",
+    moonPhaseDetails: "Mondphasen Details",
+    moonPhaseNew: "Neumond",
+    moonPhaseWaxingCrescent: "Zunehmende Sichel",
+    moonPhaseFirstQuarter: "Erstes Viertel",
+    moonPhaseWaxingGibbous: "Zunehmender Mond",
+    moonPhaseFull: "Vollmond",
+    moonPhaseWaningGibbous: "Abnehmender Mond",
+    moonPhaseLastQuarter: "Letztes Viertel",
+    moonPhaseWaningCrescent: "Abnehmende Sichel",
+    moonIllumination: "Beleuchtung",
+    moonNextFull: "Nächster Vollmond",
+    moonNextNew: "Nächster Neumond",
+    moonPhase7Days: "7-Tage Mondphasen",
+    moonIn: "in",
+    moonDays: "Tagen",
+    moonToday: "Heute",
+    moonTomorrow: "Morgen",
 
   },
   en: {
@@ -737,6 +755,24 @@ const TRANSLATIONS = {
     thunderstormWarningLevel: "Warning level",
     cape: "CAPE (Instability energy)",
     liftedIndex: "Lifted Index (Stability)",
+    moonPhase: "Moon Phase",
+    moonPhaseDetails: "Moon Phase Details",
+    moonPhaseNew: "New Moon",
+    moonPhaseWaxingCrescent: "Waxing Crescent",
+    moonPhaseFirstQuarter: "First Quarter",
+    moonPhaseWaxingGibbous: "Waxing Gibbous",
+    moonPhaseFull: "Full Moon",
+    moonPhaseWaningGibbous: "Waning Gibbous",
+    moonPhaseLastQuarter: "Last Quarter",
+    moonPhaseWaningCrescent: "Waning Crescent",
+    moonIllumination: "Illumination",
+    moonNextFull: "Next Full Moon",
+    moonNextNew: "Next New Moon",
+    moonPhase7Days: "7-Day Moon Phases",
+    moonIn: "in",
+    moonDays: "days",
+    moonToday: "Today",
+    moonTomorrow: "Tomorrow",
 
   },
   fr: {
@@ -1027,6 +1063,24 @@ const TRANSLATIONS = {
     thunderstormWarningLevel: "Niveau d'alerte",
     cape: "CAPE (Énergie d'instabilité)",
     liftedIndex: "Indice de levée (Stabilité)",
+    moonPhase: "Phase lunaire",
+    moonPhaseDetails: "Détails de la phase lunaire",
+    moonPhaseNew: "Nouvelle lune",
+    moonPhaseWaxingCrescent: "Croissant croissant",
+    moonPhaseFirstQuarter: "Premier quartier",
+    moonPhaseWaxingGibbous: "Gibbeuse croissante",
+    moonPhaseFull: "Pleine lune",
+    moonPhaseWaningGibbous: "Gibbeuse décroissante",
+    moonPhaseLastQuarter: "Dernier quartier",
+    moonPhaseWaningCrescent: "Croissant décroissant",
+    moonIllumination: "Illumination",
+    moonNextFull: "Prochaine pleine lune",
+    moonNextNew: "Prochaine nouvelle lune",
+    moonPhase7Days: "Phases lunaires 7 jours",
+    moonIn: "dans",
+    moonDays: "jours",
+    moonToday: "Aujourd'hui",
+    moonTomorrow: "Demain",
 
   },
   es: {
@@ -1317,6 +1371,24 @@ const TRANSLATIONS = {
     thunderstormWarningLevel: "Nivel de aviso",
     cape: "CAPE (Energía de inestabilidad)",
     liftedIndex: "Índice de elevación (Estabilidad)",
+    moonPhase: "Fase lunar",
+    moonPhaseDetails: "Detalles de la fase lunar",
+    moonPhaseNew: "Luna nueva",
+    moonPhaseWaxingCrescent: "Creciente creciente",
+    moonPhaseFirstQuarter: "Cuarto creciente",
+    moonPhaseWaxingGibbous: "Gibosa creciente",
+    moonPhaseFull: "Luna llena",
+    moonPhaseWaningGibbous: "Gibosa menguante",
+    moonPhaseLastQuarter: "Cuarto menguante",
+    moonPhaseWaningCrescent: "Creciente menguante",
+    moonIllumination: "Iluminación",
+    moonNextFull: "Próxima luna llena",
+    moonNextNew: "Próxima luna nueva",
+    moonPhase7Days: "Fases lunares 7 días",
+    moonIn: "en",
+    moonDays: "días",
+    moonToday: "Hoy",
+    moonTomorrow: "Mañana",
 
   },
   it: {
@@ -1607,6 +1679,24 @@ const TRANSLATIONS = {
     thunderstormWarningLevel: "Livello di allerta",
     cape: "CAPE (Energia d'instabilità)",
     liftedIndex: "Indice lifted (Stabilità)",
+    moonPhase: "Fase lunare",
+    moonPhaseDetails: "Dettagli della fase lunare",
+    moonPhaseNew: "Novilunio",
+    moonPhaseWaxingCrescent: "Falce crescente",
+    moonPhaseFirstQuarter: "Primo quarto",
+    moonPhaseWaxingGibbous: "Gibbosa crescente",
+    moonPhaseFull: "Luna piena",
+    moonPhaseWaningGibbous: "Gibbosa calante",
+    moonPhaseLastQuarter: "Ultimo quarto",
+    moonPhaseWaningCrescent: "Falce calante",
+    moonIllumination: "Illuminazione",
+    moonNextFull: "Prossima luna piena",
+    moonNextNew: "Prossimo novilunio",
+    moonPhase7Days: "Fasi lunari 7 giorni",
+    moonIn: "tra",
+    moonDays: "giorni",
+    moonToday: "Oggi",
+    moonTomorrow: "Domani",
 
   },
   tr: {
@@ -1897,6 +1987,24 @@ const TRANSLATIONS = {
     thunderstormWarningLevel: "Uyarı seviyesi",
     cape: "CAPE (Kararsızlık enerjisi)",
     liftedIndex: "Lifted İndeks (Kararlılık)",
+    moonPhase: "Ay Fazı",
+    moonPhaseDetails: "Ay Fazı Detayları",
+    moonPhaseNew: "Yeni Ay",
+    moonPhaseWaxingCrescent: "Hilal (Büyüyen)",
+    moonPhaseFirstQuarter: "İlk Dördün",
+    moonPhaseWaxingGibbous: "Şişman (Büyüyen)",
+    moonPhaseFull: "Dolunay",
+    moonPhaseWaningGibbous: "Şişman (Küçülen)",
+    moonPhaseLastQuarter: "Son Dördün",
+    moonPhaseWaningCrescent: "Hilal (Küçülen)",
+    moonIllumination: "Aydınlanma",
+    moonNextFull: "Sonraki Dolunay",
+    moonNextNew: "Sonraki Yeni Ay",
+    moonPhase7Days: "7 Günlük Ay Fazları",
+    moonIn: "in",
+    moonDays: "gün içinde",
+    moonToday: "Bugün",
+    moonTomorrow: "Yarın",
 
   },
   pl: {
@@ -2187,6 +2295,24 @@ const TRANSLATIONS = {
     thunderstormWarningLevel: "Poziom ostrzeżenia",
     cape: "CAPE (Energia niestabilności)",
     liftedIndex: "Wskaźnik uniesienia (Stabilność)",
+    moonPhase: "Faza Księżyca",
+    moonPhaseDetails: "Szczegóły fazy księżyca",
+    moonPhaseNew: "Nów",
+    moonPhaseWaxingCrescent: "Przybywający sierp",
+    moonPhaseFirstQuarter: "Pierwsza kwadra",
+    moonPhaseWaxingGibbous: "Przybywający garb",
+    moonPhaseFull: "Pełnia",
+    moonPhaseWaningGibbous: "Ubywający garb",
+    moonPhaseLastQuarter: "Ostatnia kwadra",
+    moonPhaseWaningCrescent: "Ubywający sierp",
+    moonIllumination: "Oświetlenie",
+    moonNextFull: "Następna pełnia",
+    moonNextNew: "Następny nów",
+    moonPhase7Days: "Fazy księżyca 7 dni",
+    moonIn: "za",
+    moonDays: "dni",
+    moonToday: "Dziś",
+    moonTomorrow: "Jutro",
 
   },
   nl: {
@@ -2477,6 +2603,24 @@ const TRANSLATIONS = {
     thunderstormWarningLevel: "Waarschuwingsniveau",
     cape: "CAPE (Instabiliteitsenergie)",
     liftedIndex: "Lifted Index (Stabiliteit)",
+    moonPhase: "Maanfase",
+    moonPhaseDetails: "Maanfase Details",
+    moonPhaseNew: "Nieuwe maan",
+    moonPhaseWaxingCrescent: "Wassende sikkel",
+    moonPhaseFirstQuarter: "Eerste kwartier",
+    moonPhaseWaxingGibbous: "Wassend gibbous",
+    moonPhaseFull: "Volle maan",
+    moonPhaseWaningGibbous: "Afnemend gibbous",
+    moonPhaseLastQuarter: "Laatste kwartier",
+    moonPhaseWaningCrescent: "Afnemende sikkel",
+    moonIllumination: "Verlichting",
+    moonNextFull: "Volgende volle maan",
+    moonNextNew: "Volgende nieuwe maan",
+    moonPhase7Days: "7-daagse maanfasen",
+    moonIn: "over",
+    moonDays: "dagen",
+    moonToday: "Vandaag",
+    moonTomorrow: "Morgen",
 
   },
   hr: {
@@ -2767,6 +2911,24 @@ const TRANSLATIONS = {
     thunderstormWarningLevel: "Razina upozorenja",
     cape: "CAPE (Energija nestabilnosti)",
     liftedIndex: "Lifted indeks (Stabilnost)",
+    moonPhase: "Faza Mjeseca",
+    moonPhaseDetails: "Detalji faze Mjeseca",
+    moonPhaseNew: "Mlađak",
+    moonPhaseWaxingCrescent: "Mladi Mjesec",
+    moonPhaseFirstQuarter: "Prva četvrt",
+    moonPhaseWaxingGibbous: "Rastući gibbous",
+    moonPhaseFull: "Pun Mjesec",
+    moonPhaseWaningGibbous: "Opadajući gibbous",
+    moonPhaseLastQuarter: "Zadnja četvrt",
+    moonPhaseWaningCrescent: "Stari Mjesec",
+    moonIllumination: "Osvjetljenje",
+    moonNextFull: "Sljedeći pun Mjesec",
+    moonNextNew: "Sljedeći mlađak",
+    moonPhase7Days: "Faze Mjeseca 7 dana",
+    moonIn: "za",
+    moonDays: "dana",
+    moonToday: "Danas",
+    moonTomorrow: "Sutra",
 
   },
   el: {
@@ -3057,6 +3219,24 @@ const TRANSLATIONS = {
     thunderstormWarningLevel: "Επίπεδο προειδοποίησης",
     cape: "CAPE (Ενέργεια αστάθειας)",
     liftedIndex: "Lifted Index (Σταθερότητα)",
+    moonPhase: "Φάση Σελήνης",
+    moonPhaseDetails: "Λεπτομέρειες φάσης σελήνης",
+    moonPhaseNew: "Νέα Σελήνη",
+    moonPhaseWaxingCrescent: "Αυξανόμενη Μηνίσκος",
+    moonPhaseFirstQuarter: "Πρώτο Τέταρτο",
+    moonPhaseWaxingGibbous: "Αυξανόμενη Αμφίκυρτη",
+    moonPhaseFull: "Πανσέληνος",
+    moonPhaseWaningGibbous: "Φθίνουσα Αμφίκυρτη",
+    moonPhaseLastQuarter: "Τελευταίο Τέταρτο",
+    moonPhaseWaningCrescent: "Φθίνουσα Μηνίσκος",
+    moonIllumination: "Φωτισμός",
+    moonNextFull: "Επόμενη πανσέληνος",
+    moonNextNew: "Επόμενη νέα σελήνη",
+    moonPhase7Days: "Φάσεις σελήνης 7 ημερών",
+    moonIn: "σε",
+    moonDays: "ημέρες",
+    moonToday: "Σήμερα",
+    moonTomorrow: "Αύριο",
 
   },
   da: {
@@ -3347,6 +3527,24 @@ const TRANSLATIONS = {
     thunderstormWarningLevel: "Advarselsniveau",
     cape: "CAPE (Instabilitetsenergi)",
     liftedIndex: "Lifted Index (Stabilitet)",
+    moonPhase: "Månefase",
+    moonPhaseDetails: "Månefase detaljer",
+    moonPhaseNew: "Nymåne",
+    moonPhaseWaxingCrescent: "Voksende halvmåne",
+    moonPhaseFirstQuarter: "Første kvarter",
+    moonPhaseWaxingGibbous: "Voksende gibbous",
+    moonPhaseFull: "Fuldmåne",
+    moonPhaseWaningGibbous: "Aftagende gibbous",
+    moonPhaseLastQuarter: "Sidste kvarter",
+    moonPhaseWaningCrescent: "Aftagende halvmåne",
+    moonIllumination: "Belysning",
+    moonNextFull: "Næste fuldmåne",
+    moonNextNew: "Næste nymåne",
+    moonPhase7Days: "7-dages månefaser",
+    moonIn: "om",
+    moonDays: "dage",
+    moonToday: "I dag",
+    moonTomorrow: "I morgen",
 
   },
   ru: {
@@ -3637,6 +3835,24 @@ const TRANSLATIONS = {
     thunderstormWarningLevel: "Уровень предупреждения",
     cape: "CAPE (Энергия неустойчивости)",
     liftedIndex: "Индекс подъёма (Устойчивость)",
+    moonPhase: "Фаза Луны",
+    moonPhaseDetails: "Детали фазы Луны",
+    moonPhaseNew: "Новолуние",
+    moonPhaseWaxingCrescent: "Молодой серп",
+    moonPhaseFirstQuarter: "Первая четверть",
+    moonPhaseWaxingGibbous: "Растущая горбатая",
+    moonPhaseFull: "Полнолуние",
+    moonPhaseWaningGibbous: "Убывающая горбатая",
+    moonPhaseLastQuarter: "Последняя четверть",
+    moonPhaseWaningCrescent: "Старый серп",
+    moonIllumination: "Освещённость",
+    moonNextFull: "Следующее полнолуние",
+    moonNextNew: "Следующее новолуние",
+    moonPhase7Days: "Фазы луны на 7 дней",
+    moonIn: "через",
+    moonDays: "дн.",
+    moonToday: "Сегодня",
+    moonTomorrow: "Завтра",
 
   }
 };
@@ -4238,6 +4454,29 @@ const getMoonPhaseSVGPath = (phase, r = 12) => {
     return `M 0,${-r} A ${r},${r} 0 0,${outerSweep} 0,${r} L 0,${-r}`;
   }
   return `M 0,${-r} A ${r},${r} 0 0,${outerSweep} 0,${r} A ${termRx},${r} 0 0,${termSweep} 0,${-r}`;
+};
+
+// Returns the exact fractional moon phase (0 = new moon, 0.5 = full moon, approaching 1 = waning crescent).
+const getMoonPhaseExact = (date) => {
+  if (!date) return 0;
+  const dateObj = new Date(date);
+  const newMoon = new Date(2000, 0, 6, 18, 14).getTime();
+  const phaseDurationMs = 2551443 * 1000;
+  let fraction = ((dateObj.getTime() - newMoon) % phaseDurationMs) / phaseDurationMs;
+  if (fraction < 0) fraction += 1;
+  return fraction;
+};
+
+// Returns the illuminated percentage of the moon (0–100) given an exact phase fraction.
+const getMoonIllumination = (fraction) => Math.round((1 - Math.cos(fraction * 2 * Math.PI)) / 2 * 100);
+
+// Returns a Date for the next occurrence of a given target phase fraction after a reference date.
+const getNextMoonDate = (refDate, targetFraction) => {
+  const phaseDurationMs = 2551443 * 1000;
+  const fraction = getMoonPhaseExact(refDate);
+  let diff = targetFraction - fraction;
+  if (diff <= 0) diff += 1;
+  return new Date(new Date(refDate).getTime() + diff * phaseDurationMs);
 };
 
 // --- 3. KI LOGIK (REVISED - MIT STRUKTURIERTEN DATEN & SPRACHE) ---
@@ -9555,6 +9794,212 @@ const getThunderstormWarningLevel = (peakRisk, maxGust) => {
   return 0;
 };
 
+// --- MOON PHASE MODAL ---
+const MOON_PHASE_KEYS = [
+  'moonPhaseNew', 'moonPhaseWaxingCrescent', 'moonPhaseFirstQuarter', 'moonPhaseWaxingGibbous',
+  'moonPhaseFull', 'moonPhaseWaningGibbous', 'moonPhaseLastQuarter', 'moonPhaseWaningCrescent',
+];
+
+const MOON_PHASE_EMOJIS = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'];
+
+const MOON_PHASE_DESCRIPTIONS = {
+  de: [
+    'Neumond: Die Mondscheibe ist unsichtbar – perfekte Nächte für Sternbeobachtungen. Traditionell gilt der Neumond als Beginn neuer Zyklen.',
+    'Zunehmende Sichel: Der Mond wächst. Eine schmale Lichtsichel ist am Abendhimmel sichtbar. Gute Zeit für neue Projekte.',
+    'Erstes Viertel: Die rechte Hälfte des Mondes leuchtet. Ein klarer Halbmond am Abendhimmel.',
+    'Zunehmender Mond: Mehr als die Hälfte ist beleuchtet. Der Mond geht bereits mittags auf und ist hell am Nachthimmel.',
+    'Vollmond: Die gesamte Mondscheibe strahlt. Die hellste Mondphase – Ebbe und Flut sind am stärksten ausgeprägt.',
+    'Abnehmender Mond: Die beleuchtete Fläche schrumpft. Der Mond geht nach Mitternacht auf, ideal für spätnächtliche Beobachtungen.',
+    'Letztes Viertel: Die linke Hälfte leuchtet. Der Mond steht gegen Mitternacht im Osten.',
+    'Abnehmende Sichel: Eine schmale Sichel am Morgenhimmel vor Sonnenaufgang. Der Mondzyklus nähert sich seinem Ende.',
+  ],
+  en: [
+    'New Moon: The lunar disc is invisible – perfect nights for stargazing. Traditionally seen as the start of new cycles.',
+    'Waxing Crescent: The moon is growing. A thin crescent is visible in the evening sky. A good time for new beginnings.',
+    'First Quarter: The right half of the moon is illuminated. A clear half-moon in the evening sky.',
+    'Waxing Gibbous: More than half is lit. The moon rises around noon and shines brightly through the night.',
+    'Full Moon: The entire lunar disc glows. The brightest moon phase – tides are at their strongest.',
+    'Waning Gibbous: The illuminated area shrinks. The moon rises after midnight, ideal for late-night observations.',
+    'Last Quarter: The left half is illuminated. The moon stands in the east around midnight.',
+    'Waning Crescent: A thin crescent before sunrise in the morning sky. The lunar cycle is nearing its end.',
+  ],
+};
+
+const MoonPhaseModal = ({ isOpen, onClose, date, lang = 'de', isSmallScreen = false, isRealNight = false }) => {
+  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
+  if (!isOpen) return null;
+
+  const refDate = date ? new Date(date) : new Date();
+  const phaseDiscrete = getMoonPhase(refDate);
+  const phaseExact = getMoonPhaseExact(refDate);
+  const illumination = getMoonIllumination(phaseExact);
+  const phaseName = t(MOON_PHASE_KEYS[phaseDiscrete]);
+  const phaseEmoji = MOON_PHASE_EMOJIS[phaseDiscrete];
+  const descriptions = MOON_PHASE_DESCRIPTIONS[lang] || MOON_PHASE_DESCRIPTIONS['en'];
+  const phaseDescription = descriptions[phaseDiscrete];
+
+  const nextFull = getNextMoonDate(refDate, 0.5);
+  const nextNew = getNextMoonDate(refDate, 0);
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const daysToFull = Math.ceil((nextFull.getTime() - refDate.getTime()) / msPerDay);
+  const daysToNew = Math.ceil((nextNew.getTime() - refDate.getTime()) / msPerDay);
+
+  const locale = lang === 'de' ? 'de-DE' : lang === 'fr' ? 'fr-FR' : lang === 'es' ? 'es-ES' : lang === 'it' ? 'it-IT' : lang === 'pl' ? 'pl-PL' : lang === 'nl' ? 'nl-NL' : lang === 'ru' ? 'ru-RU' : 'en-US';
+
+  const formatDays = (days) => {
+    if (days === 0) return t('moonToday');
+    if (days === 1) return t('moonTomorrow');
+    return `${t('moonIn')} ${days} ${t('moonDays')}`;
+  };
+
+  // Build 7-day preview
+  const sevenDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(refDate.getTime() + i * msPerDay);
+    const p = getMoonPhase(d);
+    const ill = getMoonIllumination(getMoonPhaseExact(d));
+    return { d, p, ill, isToday: i === 0 };
+  });
+
+  // Moon SVG size for large display
+  const moonR = 48;
+
+  const nightText = isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface';
+  const nightSubText = isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant';
+  const nightBg = isRealNight ? 'bg-m3-dark-surface-container' : 'bg-white';
+  const nightBgHigh = isRealNight ? 'bg-m3-dark-surface-container-high/50' : 'bg-slate-50/50';
+  const nightBorder = isRealNight ? 'border-m3-outline-variant/70' : 'border-slate-100';
+  const nightCard = isRealNight ? 'bg-m3-dark-surface-container-highest/60' : 'bg-slate-50';
+  const nightCardBorder = isRealNight ? 'border-m3-outline-variant/40' : 'border-slate-200';
+
+  return (
+    <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
+      <div className={`${nightBg} rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-md'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
+        {/* Header */}
+        <div className={`p-4 border-b ${nightBorder} ${nightBgHigh} flex justify-between items-center sticky top-0`}>
+          <h3 className={`font-bold ${nightText} flex items-center gap-2`}>
+            <Moon size={18} className="text-indigo-400" />
+            {t('moonPhaseDetails')}
+          </h3>
+          <button onClick={onClose} className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'} rounded-full transition`}>
+            <X size={20} className={nightSubText} />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto">
+          {/* Main phase display */}
+          <div className={`p-6 flex flex-col items-center border-b ${nightBorder}`}>
+            {/* Large moon SVG */}
+            <div className="relative mb-4">
+              <svg width={moonR * 2 + 32} height={moonR * 2 + 32} viewBox={`${-moonR - 16} ${-moonR - 16} ${(moonR + 16) * 2} ${(moonR + 16) * 2}`}>
+                {/* Glow for non-new-moon */}
+                {phaseDiscrete !== 0 && (
+                  <circle
+                    r={moonR + 8}
+                    fill="white"
+                    opacity={phaseDiscrete === 4 ? '0.18' : '0.07'}
+                    style={{ filter: 'blur(8px)' }}
+                  />
+                )}
+                {/* Dark disc background */}
+                <circle r={moonR} fill="#1e1b4b" />
+                {/* Illuminated portion */}
+                {phaseDiscrete === 4 ? (
+                  <circle r={moonR} fill="white" opacity="0.92" />
+                ) : phaseDiscrete === 0 ? null : (
+                  <path d={getMoonPhaseSVGPath(phaseDiscrete, moonR)} fill="white" opacity="0.9" />
+                )}
+                {/* Subtle surface texture for full/partial moons */}
+                {phaseDiscrete !== 0 && (
+                  <>
+                    <circle cx={moonR * 0.25} cy={-moonR * 0.2} r={moonR * 0.08} fill="rgba(0,0,0,0.12)" />
+                    <circle cx={-moonR * 0.3} cy={moonR * 0.1} r={moonR * 0.05} fill="rgba(0,0,0,0.1)" />
+                    <circle cx={moonR * 0.1} cy={moonR * 0.35} r={moonR * 0.06} fill="rgba(0,0,0,0.09)" />
+                  </>
+                )}
+              </svg>
+            </div>
+
+            {/* Phase name + emoji */}
+            <div className={`text-2xl font-bold ${nightText} mb-1 flex items-center gap-2`}>
+              <span>{phaseEmoji}</span>
+              <span>{phaseName}</span>
+            </div>
+
+            {/* Illumination */}
+            <div className={`text-sm font-medium ${nightSubText} mb-3`}>
+              {t('moonIllumination')}: <span className={`font-bold ${nightText}`}>{illumination}%</span>
+            </div>
+
+            {/* Illumination bar */}
+            <div className={`w-full max-w-[220px] h-2 rounded-full ${isRealNight ? 'bg-m3-dark-surface-container-highest' : 'bg-slate-200'} overflow-hidden mb-4`}>
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-indigo-300 via-white to-indigo-100"
+                style={{ width: `${illumination}%` }}
+              />
+            </div>
+
+            {/* Description */}
+            {phaseDescription && (
+              <p className={`text-sm ${nightSubText} text-center leading-relaxed max-w-xs`}>
+                {phaseDescription}
+              </p>
+            )}
+          </div>
+
+          {/* Next full / new moon */}
+          <div className={`p-4 grid grid-cols-2 gap-3 border-b ${nightBorder}`}>
+            <div className={`${nightCard} border ${nightCardBorder} rounded-2xl p-3 flex flex-col items-center gap-1`}>
+              <span className="text-xl">🌕</span>
+              <span className={`text-xs font-semibold ${nightSubText}`}>{t('moonNextFull')}</span>
+              <span className={`text-sm font-bold ${nightText}`}>
+                {nextFull.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' })}
+              </span>
+              <span className={`text-xs ${isRealNight ? 'text-indigo-400' : 'text-indigo-600'} font-medium`}>
+                {formatDays(daysToFull)}
+              </span>
+            </div>
+            <div className={`${nightCard} border ${nightCardBorder} rounded-2xl p-3 flex flex-col items-center gap-1`}>
+              <span className="text-xl">🌑</span>
+              <span className={`text-xs font-semibold ${nightSubText}`}>{t('moonNextNew')}</span>
+              <span className={`text-sm font-bold ${nightText}`}>
+                {nextNew.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' })}
+              </span>
+              <span className={`text-xs ${isRealNight ? 'text-indigo-400' : 'text-indigo-600'} font-medium`}>
+                {formatDays(daysToNew)}
+              </span>
+            </div>
+          </div>
+
+          {/* 7-day preview */}
+          <div className="p-4">
+            <h4 className={`text-xs font-bold uppercase tracking-wide ${nightSubText} mb-3`}>{t('moonPhase7Days')}</h4>
+            <div className="grid grid-cols-7 gap-1">
+              {sevenDays.map(({ d, p, ill, isToday }, idx) => (
+                <div
+                  key={idx}
+                  className={`flex flex-col items-center gap-0.5 p-1.5 rounded-xl ${
+                    isToday
+                      ? (isRealNight ? 'bg-indigo-900/50 border border-indigo-600/50' : 'bg-indigo-50 border border-indigo-200')
+                      : ''
+                  }`}
+                >
+                  <span className={`text-[10px] font-medium ${isToday ? (isRealNight ? 'text-indigo-300' : 'text-indigo-600') : nightSubText}`}>
+                    {isToday
+                      ? (lang === 'de' ? 'H' : 'T')
+                      : d.toLocaleDateString(locale, { weekday: 'narrow' })}
+                  </span>
+                  <span className="text-base leading-none">{MOON_PHASE_EMOJIS[p]}</span>
+                  <span className={`text-[9px] ${nightSubText}`}>{ill}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- THUNDERSTORM RISK MODAL ---
 const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallScreen = false, isRealNight = false }) => {
   const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
@@ -11120,6 +11565,7 @@ export default function WeatherApp() {
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [showThunderstormModal, setShowThunderstormModal] = useState(false);
   const [showPollenModal, setShowPollenModal] = useState(false);
+  const [showMoonModal, setShowMoonModal] = useState(false);
   const [activeDetailModal, setActiveDetailModal] = useState(null);
   const [viewMode, setViewMode] = useState(null);
   const [showFabMenu, setShowFabMenu] = useState(false); // FAB menu state
@@ -12051,7 +12497,7 @@ export default function WeatherApp() {
   }, [loading, lastUpdated, isRefreshing]);
 
   // --- PULL-TO-REFRESH & SWIPE GESTURE HANDLERS ---
-  const isAnyModalOpen = showFeedback || !!activeDetailModal || showPrecipModal || showActivityModal || showThunderstormModal || showSettingsModal || showLocationModal || showPollenModal || !!selectedTripForPopup || showNewTripModal;
+  const isAnyModalOpen = showFeedback || !!activeDetailModal || showPrecipModal || showActivityModal || showThunderstormModal || showSettingsModal || showLocationModal || showPollenModal || showMoonModal || !!selectedTripForPopup || showNewTripModal;
 
   const handleTouchStart = (e) => {
     // Do not activate gestures when a modal/overlay is open
@@ -13635,6 +14081,16 @@ export default function WeatherApp() {
           isRealNight={isRealNight}
         />
       )}
+      {showMoonModal && (
+        <MoonPhaseModal
+          isOpen={showMoonModal}
+          onClose={() => setShowMoonModal(false)}
+          date={processedShort[0]?.time || new Date()}
+          lang={lang}
+          isSmallScreen={isSmallScreen}
+          isRealNight={isRealNight}
+        />
+      )}
       {showSettingsModal && (
           <SettingsModal 
              isOpen={showSettingsModal}
@@ -14173,6 +14629,45 @@ export default function WeatherApp() {
                     {t('thunderstormPeakAt')} {peakEntry.time.toLocaleTimeString(lang === 'de' ? 'de-DE' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 )}
+              </div>
+            );
+          })()}
+
+          {/* Moon Phase tile */}
+          {(() => {
+            const refDate = processedShort[0]?.time || new Date();
+            const moonPhaseDiscrete = getMoonPhase(refDate);
+            const moonPhaseEx = getMoonPhaseExact(refDate);
+            const moonIllum = getMoonIllumination(moonPhaseEx);
+            const moonEmoji = MOON_PHASE_EMOJIS[moonPhaseDiscrete];
+            const moonName = t(MOON_PHASE_KEYS[moonPhaseDiscrete]);
+            const moonR = 16;
+            return (
+              <div
+                className={`${tileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col cursor-pointer active:scale-95 transition-transform`}
+                onClick={() => setShowMoonModal(true)}
+              >
+                <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                  <Moon size={14} /> {t('moonPhase')}
+                </div>
+                <div className="flex items-center gap-2 mb-1">
+                  <svg width={moonR * 2 + 6} height={moonR * 2 + 6} viewBox={`${-moonR - 3} ${-moonR - 3} ${(moonR + 3) * 2} ${(moonR + 3) * 2}`} className="flex-shrink-0">
+                    <circle r={moonR} fill={isRealNight ? '#1e1b4b' : '#1e293b'} />
+                    {moonPhaseDiscrete === 4 ? (
+                      <circle r={moonR} fill="white" opacity="0.9" />
+                    ) : moonPhaseDiscrete !== 0 ? (
+                      <path d={getMoonPhaseSVGPath(moonPhaseDiscrete, moonR)} fill="white" opacity="0.9" />
+                    ) : null}
+                  </svg>
+                  <div>
+                    <div className={`text-m3-label-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'} leading-tight`}>
+                      {moonEmoji} {moonName}
+                    </div>
+                    <div className={`text-xs font-medium ${isRealNight ? 'text-indigo-400' : 'text-indigo-600'} mt-0.5`}>
+                      {moonIllum}% {t('moonIllumination')}
+                    </div>
+                  </div>
+                </div>
               </div>
             );
           })()}
