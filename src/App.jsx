@@ -8707,8 +8707,8 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                       {visualData.tomorrowMinTemp !== null && (
                         <>
                           <hr className="border-m3-outline-variant/40"/>
-                          <div className="flex flex-wrap gap-2 items-center">
-                            <span className="text-xs font-semibold text-m3-on-surface-variant shrink-0">🌅 {t.tomorrow}:</span>
+                          <span className="text-xs font-semibold text-m3-on-surface-variant">🌅 {t.tomorrow}:</span>
+                          <div className="flex flex-wrap gap-2">
                             {/* Tomorrow temperature range */}
                             <div className="flex items-center gap-1.5 bg-m3-surface-container-high rounded-full px-3 py-1 font-extrabold border border-m3-outline-variant">
                               <Thermometer size={14} className="text-blue-400 shrink-0"/>
