@@ -4931,6 +4931,10 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         const tsWarnTomorrow = getThunderstormWarningLevel(tsRiskTomorrow, tsGustTomorrow);
         const tomorrowMinTemp = tomorrowDayData.length > 0 ? Math.round(Math.min(...tomorrowDayData.map(d => d.temp))) : null;
         const tomorrowMaxTemp = tomorrowDayData.length > 0 ? Math.round(Math.max(...tomorrowDayData.map(d => d.temp))) : null;
+        const tomorrowRainProb = tomorrowDayData.length > 0 ? Math.max(...tomorrowDayData.map(d => d.precipProb || 0)) : 0;
+        const tomorrowRainSum = tomorrowDayData.length > 0 ? parseFloat((tomorrowDayData.reduce((acc, d) => acc + parseFloat(d.precip || 0), 0) + tomorrowDayData.reduce((acc, d) => acc + parseFloat(d.snow || 0), 0)).toFixed(1)) : 0;
+        const tomorrowMaxWind = tomorrowDayData.length > 0 ? Math.round(Math.max(...tomorrowDayData.map(d => d.gust || 0))) : 0;
+        const tomorrowMaxUV = tomorrowDayData.length > 0 ? Math.round(Math.max(...tomorrowDayData.map(d => d.uvIndex || 0))) : 0;
 
         visualData = {
           currentTemp: Math.round(current.temp),
@@ -4948,6 +4952,10 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
           pollenTopLabel: pollenLevelToday.label,
           tomorrowMinTemp,
           tomorrowMaxTemp,
+          tomorrowRainProb,
+          tomorrowRainSum,
+          tomorrowMaxWind,
+          tomorrowMaxUV,
           thunderstormRiskTomorrow: tsRiskTomorrow,
           thunderstormWarnLevelTomorrow: tsWarnTomorrow,
           pollenLevelTomorrow: pollenLevelTomorrow.level,
@@ -8708,6 +8716,34 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                               <div className="w-5 h-1.5 rounded-full bg-gradient-to-r from-blue-400 to-red-400 shrink-0"/>
                               <span className="text-red-400 text-sm">{tempFunc ? tempFunc(visualData.tomorrowMaxTemp) : visualData.tomorrowMaxTemp}{tempUnit}</span>
                             </div>
+                            {/* Rain amount – tomorrow */}
+                            {visualData.tomorrowRainSum > 0.1 && (
+                              <div className="flex items-center gap-1 bg-blue-500/10 rounded-full px-3 py-1 text-sm font-bold text-blue-500 border border-blue-400/30">
+                                <Droplets size={14} className="shrink-0"/>
+                                <span>{formatPrecipSafe(visualData.tomorrowRainSum)}{getPrecipUnitLabelSafe()}</span>
+                              </div>
+                            )}
+                            {/* Rain probability – tomorrow */}
+                            {visualData.tomorrowRainProb >= 15 && (
+                              <div className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border ${visualData.tomorrowRainProb >= 60 ? 'bg-blue-600/20 text-blue-600 border-blue-500/30' : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant'}`}>
+                                <Umbrella size={14} className="shrink-0"/>
+                                <span>{Math.round(visualData.tomorrowRainProb)}%</span>
+                              </div>
+                            )}
+                            {/* Wind – tomorrow */}
+                            {visualData.tomorrowMaxWind >= 20 && (
+                              <div className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border border-m3-outline-variant bg-m3-surface-container-high ${getWindColorClass(visualData.tomorrowMaxWind, false)}`}>
+                                <Wind size={14} className="shrink-0"/>
+                                <span>{formatWindSafe(visualData.tomorrowMaxWind)} {getWindUnitLabelSafe()}</span>
+                              </div>
+                            )}
+                            {/* UV – tomorrow */}
+                            {visualData.tomorrowMaxUV >= 3 && (
+                              <div className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border ${visualData.tomorrowMaxUV >= 8 ? 'bg-red-500/20 text-red-500 border-red-400/30' : visualData.tomorrowMaxUV >= 6 ? 'bg-orange-400/20 text-orange-500 border-orange-400/30' : 'bg-yellow-300/20 text-yellow-600 border-yellow-400/30'}`}>
+                                <Sun size={14} className="shrink-0"/>
+                                <span>UV {visualData.tomorrowMaxUV}</span>
+                              </div>
+                            )}
                             {/* Thunderstorm chip – tomorrow */}
                             {visualData.thunderstormRiskTomorrow > 0 && (
                               <div className={tsChipClass(visualData.thunderstormWarnLevelTomorrow)}>
