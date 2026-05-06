@@ -9905,7 +9905,8 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
   }));
 
   const selectedActivity = activeActivities.find(a => a.key === selectedActivityKey) || activeActivities[0];
-  const selectedTime = times[Math.min(selectedHourIdx, Math.max(0, times.length - 1))] || null;
+  const safeHourIdx = (selectedHourIdx >= 0 && selectedHourIdx < times.length) ? selectedHourIdx : 0;
+  const selectedTime = times[safeHourIdx] || null;
   const effectiveActivityParams = (activityParams && typeof activityParams === 'object') ? activityParams : DEFAULT_ACTIVITY_PARAMS;
   const rating = (selectedActivity && selectedTime)
     ? getActivityRating(
