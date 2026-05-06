@@ -9875,6 +9875,128 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
   );
 };
 
+// --- ACTIVITY CHECK MODAL ---
+const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallScreen = false, activityFilter = null, activityParams = null, isRealNight = false }) => {
+  const isGerman = lang === 'de';
+  const activeActivities = useMemo(() => {
+    const filter = Array.isArray(activityFilter) ? activityFilter : DEFAULT_ACTIVITY_FILTER;
+    return ACTIVITY_DEFINITIONS.filter(({ key }) => filter.includes(key));
+  }, [activityFilter]);
+  const [selectedActivityKey, setSelectedActivityKey] = useState(activeActivities[0]?.key || 'walking');
+  const [selectedHourIdx, setSelectedHourIdx] = useState(0);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setSelectedActivityKey(activeActivities[0]?.key || 'walking');
+    setSelectedHourIdx(0);
+  }, [isOpen, activeActivities]);
+
+  if (!isOpen) return null;
+
+  const locale = LANG_LOCALE_MAP[lang] || 'de-DE';
+  const times = hourlyData.slice(0, 24).map((hour, idx) => ({
+    idx,
+    label: hour.time.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
+    temp: Math.round(hour.temp ?? 0),
+    wind: Math.round((hour.windAvg ?? hour.wind) ?? 0),
+    precip: hour.precip ?? 0,
+    uvIndex: hour.uvIndex ?? 0,
+    code: hour.code ?? 0,
+  }));
+
+  const selectedActivity = activeActivities.find(a => a.key === selectedActivityKey) || activeActivities[0];
+  const selectedTime = times[Math.min(selectedHourIdx, Math.max(0, times.length - 1))] || null;
+  const effectiveActivityParams = (activityParams && typeof activityParams === 'object') ? activityParams : DEFAULT_ACTIVITY_PARAMS;
+  const rating = (selectedActivity && selectedTime)
+    ? getActivityRating(
+        selectedActivity.key,
+        selectedTime.temp,
+        selectedTime.wind,
+        selectedTime.precip,
+        selectedTime.uvIndex,
+        selectedTime.code,
+        effectiveActivityParams[selectedActivity.key]
+      )
+    : null;
+  const isGood = !!rating && rating.score >= 6;
+
+  return (
+    <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
+      <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-white'} rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-md'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
+        <div className={`p-4 border-b ${isRealNight ? 'border-m3-outline-variant/70 bg-m3-dark-surface-container-high/50' : 'border-slate-100 bg-slate-50/50'} flex justify-between items-center sticky top-0`}>
+          <h3 className={`font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'} flex items-center gap-2`}>
+            <Activity size={18} className="text-m3-primary" />
+            {isGerman ? 'Aktivitäten-Check' : 'Activity Check'}
+          </h3>
+          <button onClick={onClose} className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'} rounded-full transition`}>
+            <X size={20} className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto p-4 space-y-4">
+          <div>
+            <label className={`block text-xs font-semibold uppercase tracking-wide mb-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'}`}>
+              {isGerman ? 'Aktivität' : 'Activity'}
+            </label>
+            <select
+              value={selectedActivity?.key || ''}
+              onChange={(e) => setSelectedActivityKey(e.target.value)}
+              className={`w-full p-3 rounded-xl border ${isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant text-m3-dark-on-surface' : 'bg-white border-slate-200 text-slate-800'} text-sm`}
+            >
+              {activeActivities.map(({ key, emoji, label }) => (
+                <option key={key} value={key}>
+                  {emoji} {label[lang] || label.en}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={`block text-xs font-semibold uppercase tracking-wide mb-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'}`}>
+              {isGerman ? 'Uhrzeit' : 'Time'}
+            </label>
+            <select
+              value={selectedHourIdx}
+              onChange={(e) => setSelectedHourIdx(Number(e.target.value))}
+              className={`w-full p-3 rounded-xl border ${isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant text-m3-dark-on-surface' : 'bg-white border-slate-200 text-slate-800'} text-sm`}
+            >
+              {times.map((time) => (
+                <option key={time.idx} value={time.idx}>{time.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {rating && selectedActivity && selectedTime ? (
+            <div className={`rounded-2xl border p-4 ${isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/70' : 'bg-slate-50 border-slate-200'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-2xl">{selectedActivity.emoji}</span>
+                <span className={`text-sm font-semibold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'}`}>
+                  {(selectedActivity.label[lang] || selectedActivity.label.en)} · {selectedTime.label}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className={`text-base font-bold ${rating.color}`}>{isGood ? (isGerman ? 'Gut' : 'Good') : (isGerman ? 'Schlecht' : 'Bad')}</span>
+                <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full leading-none ${getScoreBadgeClass(rating.score, isRealNight)}`}>
+                  {rating.score}/10
+                </span>
+              </div>
+              <div className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'}`}>
+                {isGerman
+                  ? `Wetterwerte um ${selectedTime.label}: ${selectedTime.temp}°C, ${selectedTime.wind} km/h Wind, ${selectedTime.precip.toFixed(1)} mm Niederschlag.`
+                  : `Weather at ${selectedTime.label}: ${selectedTime.temp}°C, ${selectedTime.wind} km/h wind, ${selectedTime.precip.toFixed(1)} mm precipitation.`}
+              </div>
+            </div>
+          ) : (
+            <div className={`rounded-xl p-3 text-sm ${isRealNight ? 'bg-m3-dark-surface-container-high text-m3-dark-on-surface-variant' : 'bg-slate-50 text-slate-500'}`}>
+              {isGerman ? 'Keine Stunden-Daten verfügbar.' : 'No hourly data available.'}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- THUNDERSTORM RISK HELPERS ---
 
 // Named constants for thunderstorm thresholds (meteorological/DWD criteria)
@@ -11714,6 +11836,7 @@ export default function WeatherApp() {
   const [showSettingsModal, setShowSettingsModal] = useState(false); // NEU
   const [showPrecipModal, setShowPrecipModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
+  const [showActivityCheckModal, setShowActivityCheckModal] = useState(false);
   const [showThunderstormModal, setShowThunderstormModal] = useState(false);
   const [showPollenModal, setShowPollenModal] = useState(false);
   const [showMoonModal, setShowMoonModal] = useState(false);
@@ -12648,7 +12771,7 @@ export default function WeatherApp() {
   }, [loading, lastUpdated, isRefreshing]);
 
   // --- PULL-TO-REFRESH & SWIPE GESTURE HANDLERS ---
-  const isAnyModalOpen = showFeedback || !!activeDetailModal || showPrecipModal || showActivityModal || showThunderstormModal || showSettingsModal || showLocationModal || showPollenModal || showMoonModal || !!selectedTripForPopup || showNewTripModal;
+  const isAnyModalOpen = showFeedback || !!activeDetailModal || showPrecipModal || showActivityModal || showActivityCheckModal || showThunderstormModal || showSettingsModal || showLocationModal || showPollenModal || showMoonModal || !!selectedTripForPopup || showNewTripModal;
 
   const handleTouchStart = (e) => {
     // Do not activate gestures when a modal/overlay is open
@@ -14222,6 +14345,18 @@ export default function WeatherApp() {
           isRealNight={isRealNight}
         />
       )}
+      {showActivityCheckModal && (
+        <ActivityCheckModal
+          isOpen={showActivityCheckModal}
+          onClose={() => setShowActivityCheckModal(false)}
+          hourlyData={processedShort}
+          lang={lang}
+          isSmallScreen={isSmallScreen}
+          activityFilter={settings.activityFilter}
+          activityParams={settings.activityParams}
+          isRealNight={isRealNight}
+        />
+      )}
       {showThunderstormModal && (
         <ThunderstormModal
           isOpen={showThunderstormModal}
@@ -14539,6 +14674,26 @@ export default function WeatherApp() {
           </div>
         </div>
         )}
+
+        {/* Activity check tile between navigation and details toggle */}
+        <button
+          onClick={() => setShowActivityCheckModal(true)}
+          className={`w-full flex items-center justify-between gap-3 ${isRealNight ? 'bg-m3-dark-surface-container/90 hover:bg-m3-dark-surface-container text-m3-dark-on-surface' : 'bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface'} rounded-m3-2xl p-3 shadow-m3-1 transition-all active:scale-[0.99]`}
+          aria-label={lang === 'de' ? 'Aktivitäten-Check öffnen' : 'Open activity check'}
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center ${isRealNight ? 'bg-m3-dark-primary/20 text-m3-dark-primary' : 'bg-m3-primary/15 text-m3-primary'}`}>
+              <Activity size={18} />
+            </div>
+            <div className="text-left min-w-0">
+              <div className="text-m3-label-large font-semibold truncate">{lang === 'de' ? 'Aktivitäten-Check' : 'Activity Check'}</div>
+              <div className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} truncate`}>
+                {lang === 'de' ? 'Aktivität und Uhrzeit prüfen' : 'Check activity for a selected time'}
+              </div>
+            </div>
+          </div>
+          <ArrowRight size={18} className={`${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} flex-shrink-0`} />
+        </button>
 
         {/* Toggle button for weather detail tiles */}
         <button
