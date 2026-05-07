@@ -13772,8 +13772,8 @@ export default function WeatherApp() {
   const detailTileBaseClass = 'h-full px-3 py-3 flex flex-col justify-between gap-2';
   const detailTileSurfaceClass = `rounded-m3-2xl shadow-m3-2 border ${detailTileBaseClass}`;
   const detailTileInteractiveClass = `${detailTileSurfaceClass} cursor-pointer transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]`;
-  const detailTileLabelClass = `flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-[11px] font-semibold uppercase tracking-[0.04em]`;
-  const detailTileValueClass = 'text-[1.35rem] sm:text-[1.55rem] leading-tight font-extrabold';
+  const detailTileLabelClass = `flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small font-bold uppercase tracking-wide`;
+  const detailTileValueClass = 'text-m3-headline-medium leading-none font-black';
   const detailTileMetaClass = 'text-xs font-semibold leading-tight truncate';
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
 
