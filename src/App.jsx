@@ -13773,8 +13773,8 @@ export default function WeatherApp() {
   const detailTileSurfaceClass = `rounded-m3-2xl shadow-m3-2 border ${detailTileBaseClass}`;
   const detailTileInteractiveClass = `${detailTileSurfaceClass} cursor-pointer transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]`;
   const detailTileLabelClass = `w-full flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small font-bold`;
-  const detailTileValueClass = 'text-[clamp(1rem,2.6vw,1.55rem)] leading-tight font-black break-words [overflow-wrap:anywhere]';
-  const detailTileMetaClass = 'text-[clamp(0.68rem,1.5vw,0.82rem)] font-semibold leading-tight break-words [overflow-wrap:anywhere]';
+  const detailTileValueClass = 'text-base sm:text-lg md:text-xl leading-tight font-black break-words [overflow-wrap:anywhere]';
+  const detailTileMetaClass = 'text-[11px] sm:text-xs font-semibold leading-tight break-words [overflow-wrap:anywhere]';
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
 
   // Helper function to get responsive layout dimensions based on device orientation and size
