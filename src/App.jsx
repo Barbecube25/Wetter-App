@@ -13769,12 +13769,12 @@ export default function WeatherApp() {
   const cardBg = isRealNight ? 'bg-m3-dark-surface-container/90 border-m3-outline-variant/70 text-m3-dark-on-surface' : 'bg-m3-surface-container/80 border-m3-outline-variant/40 text-m3-on-surface';
   const tileBg = isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/50 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant';
   // Uniform tile design with fixed visual rhythm and larger, prominent values.
-  const detailTileBaseClass = 'h-full px-3 py-3 flex flex-col items-center justify-center text-center gap-2';
+  const detailTileBaseClass = 'h-full px-3 py-3 flex flex-col items-center justify-center text-center gap-2 [container-type:inline-size]';
   const detailTileSurfaceClass = `rounded-m3-2xl shadow-m3-2 border ${detailTileBaseClass}`;
   const detailTileInteractiveClass = `${detailTileSurfaceClass} cursor-pointer transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]`;
-  const detailTileLabelClass = `w-full flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small font-bold`;
-  const detailTileValueClass = 'text-base sm:text-lg md:text-xl lg:text-2xl leading-tight font-black break-words [overflow-wrap:anywhere]';
-  const detailTileMetaClass = 'text-[11px] sm:text-xs font-semibold leading-tight break-words [overflow-wrap:anywhere]';
+  const detailTileLabelClass = `w-full flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small text-[clamp(0.62rem,6.5cqi,0.82rem)] leading-tight font-bold`;
+  const detailTileValueClass = 'text-base sm:text-lg md:text-xl lg:text-2xl text-[clamp(1rem,12cqi,1.7rem)] leading-tight font-black break-words [overflow-wrap:anywhere]';
+  const detailTileMetaClass = 'text-[11px] sm:text-xs text-[clamp(0.62rem,5.5cqi,0.85rem)] font-semibold leading-tight break-words [overflow-wrap:anywhere]';
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
 
   // Helper function to get responsive layout dimensions based on device orientation and size
@@ -14746,7 +14746,7 @@ export default function WeatherApp() {
               <Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }} /> {t('wind')}
             </div>
             <div className={`${detailTileValueClass} ${windColorClass}`}>
-              {formatWind(current.wind)} <span className="text-m3-body-small">{getWindUnitLabel()}</span>
+              {formatWind(current.wind)} <span className={detailTileMetaClass}>{getWindUnitLabel()}</span>
             </div>
             {current.gust > current.wind && (
               <div className={`${detailTileMetaClass} ${getWindColorClass(current.gust, isRealNight)}`}>
@@ -14771,7 +14771,7 @@ export default function WeatherApp() {
                  <Gauge size={14} /> {t('pressure')}
                </div>
                <div className={`${detailTileValueClass} ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
-                 {Math.round(current.pressure)} <span className="text-m3-body-small">hPa</span>
+                 {Math.round(current.pressure)} <span className={detailTileMetaClass}>hPa</span>
                </div>
              </div>
            )}
