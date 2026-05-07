@@ -13768,13 +13768,13 @@ export default function WeatherApp() {
   const textColor = isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface';
   const cardBg = isRealNight ? 'bg-m3-dark-surface-container/90 border-m3-outline-variant/70 text-m3-dark-on-surface' : 'bg-m3-surface-container/80 border-m3-outline-variant/40 text-m3-on-surface';
   const tileBg = isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/50 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant';
-  // Denser tile layout for better space usage and larger, clearer metric values.
-  const detailTileBaseClass = 'px-3 py-2.5 min-h-[84px] h-full flex flex-col justify-between gap-1';
-  const detailTileSurfaceClass = `rounded-m3-xl shadow-m3-1 border ${detailTileBaseClass}`;
-  const detailTileInteractiveClass = `${detailTileSurfaceClass} cursor-pointer active:scale-95 transition-transform duration-200`;
-  const detailTileLabelClass = `flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`;
-  const detailTileValueClass = 'text-m3-headline-small leading-tight font-bold';
-  const detailTileMetaClass = 'text-xs font-medium leading-tight mt-1';
+  // Uniform tile design with fixed visual rhythm and larger, prominent values.
+  const detailTileBaseClass = 'h-full px-3 py-3 flex flex-col justify-between gap-2';
+  const detailTileSurfaceClass = `rounded-m3-2xl shadow-m3-2 border ${detailTileBaseClass}`;
+  const detailTileInteractiveClass = `${detailTileSurfaceClass} cursor-pointer transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]`;
+  const detailTileLabelClass = `flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-[11px] font-semibold uppercase tracking-[0.04em]`;
+  const detailTileValueClass = 'text-[1.35rem] sm:text-[1.55rem] leading-tight font-extrabold';
+  const detailTileMetaClass = 'text-xs font-semibold leading-tight truncate';
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
 
   // Helper function to get responsive layout dimensions based on device orientation and size
@@ -14726,7 +14726,7 @@ export default function WeatherApp() {
           }`}
         >
           {/* Weather Details Grid - First row (4 tiles) */}
-          <div className={`grid grid-cols-2 sm:grid-cols-4 auto-rows-fr ${isSmallScreen ? 'gap-2' : 'gap-4'}`}>
+          <div className={`grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'auto-rows-[136px] gap-2' : 'auto-rows-[148px] gap-4'}`}>
           <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('uv')}>
             <div className={detailTileLabelClass}>
               <Sun size={14} /> {t('uv')}
@@ -14764,7 +14764,7 @@ export default function WeatherApp() {
         </div>
         
         {/* Additional Weather Details Grid - Second row (4 tiles) */}
-        <div className={`grid grid-cols-2 sm:grid-cols-4 auto-rows-fr ${isSmallScreen ? 'gap-2' : 'gap-4'}`}>
+        <div className={`grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'auto-rows-[136px] gap-2' : 'auto-rows-[148px] gap-4'}`}>
           {current.pressure !== null && current.pressure !== undefined && (
             <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('pressure')}>
                <div className={detailTileLabelClass}>
@@ -14840,23 +14840,23 @@ export default function WeatherApp() {
               <div className={`${detailTileValueClass} text-m3-on-tertiary-container mb-2`}>
                 {formatPrecip(next24HoursPrecip.total)} {getPrecipUnitLabel()}
               </div>
-              {/* Action buttons */}
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => setShowPrecipModal(true)}
-                  className="flex-1 bg-m3-on-tertiary-container/10 hover:bg-m3-on-tertiary-container/20 active:scale-95 transition-all rounded-lg px-2 py-1 flex items-center justify-center gap-1"
-                >
-                  <Info size={14} className="text-m3-on-tertiary-container" />
-                  <span className="text-xs font-medium text-m3-on-tertiary-container">Details</span>
-                </button>
-                <button 
-                  onClick={() => setActiveTab('radar')}
-                  className="flex-1 bg-m3-on-tertiary-container/10 hover:bg-m3-on-tertiary-container/20 active:scale-95 transition-all rounded-lg px-2 py-1 flex items-center justify-center gap-1"
-                >
-                  <MapIcon size={14} className="text-m3-on-tertiary-container" />
-                  <span className="text-xs font-medium text-m3-on-tertiary-container">Radar</span>
-                </button>
-              </div>
+               {/* Compact action buttons to keep tile heights consistent */}
+               <div className="flex gap-2">
+                 <button 
+                   onClick={() => setShowPrecipModal(true)}
+                   className="flex-1 bg-m3-on-tertiary-container/10 hover:bg-m3-on-tertiary-container/20 active:scale-95 transition-all rounded-lg px-2 py-1 flex items-center justify-center"
+                   aria-label={lang === 'de' ? 'Niederschlagsdetails öffnen' : 'Open precipitation details'}
+                 >
+                   <Info size={14} className="text-m3-on-tertiary-container" />
+                 </button>
+                 <button 
+                   onClick={() => setActiveTab('radar')}
+                   className="flex-1 bg-m3-on-tertiary-container/10 hover:bg-m3-on-tertiary-container/20 active:scale-95 transition-all rounded-lg px-2 py-1 flex items-center justify-center"
+                   aria-label={lang === 'de' ? 'Radar öffnen' : 'Open radar'}
+                 >
+                   <MapIcon size={14} className="text-m3-on-tertiary-container" />
+                 </button>
+               </div>
             </div>
           ) : (
             <div className={`${tileBg} ${detailTileSurfaceClass}`}>
