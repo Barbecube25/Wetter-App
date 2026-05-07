@@ -13768,15 +13768,16 @@ export default function WeatherApp() {
   const textColor = isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface';
   const cardBg = isRealNight ? 'bg-m3-dark-surface-container/90 border-m3-outline-variant/70 text-m3-dark-on-surface' : 'bg-m3-surface-container/80 border-m3-outline-variant/40 text-m3-on-surface';
   const tileBg = isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/50 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant';
-  // Uniform tile design with fixed visual rhythm and compact spacing.
-  const detailTileBaseClass = 'h-full px-2.5 py-2.5 flex flex-col items-center justify-center text-center gap-1.5 [container-type:inline-size]';
+  // Uniform tile design with centered content and fixed visual rhythm.
+  const detailTileBaseClass = 'h-full px-2.5 py-2.5 flex flex-col items-center justify-center text-center gap-2 [container-type:inline-size]';
   const detailTileSurfaceClass = `rounded-m3-2xl shadow-m3-2 border ${detailTileBaseClass}`;
   const detailTileInteractiveClass = `${detailTileSurfaceClass} cursor-pointer transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]`;
   // Font clamps are tuned for 2-column/4-column tile layouts: min keeps readability on tiny tiles,
   // cqi keeps text tied to tile width, max avoids oversized typography on wide screens.
   const detailTileLabelClass = `w-full flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-[clamp(0.62rem,6.5cqi,0.82rem)] leading-tight font-bold`;
-  const detailTileValueClass = 'text-[clamp(1rem,12cqi,1.7rem)] leading-tight font-black break-words [overflow-wrap:anywhere]';
-  const detailTileMetaClass = 'text-[clamp(0.62rem,5.5cqi,0.85rem)] font-semibold leading-tight break-words [overflow-wrap:anywhere]';
+  const detailTileValueClass = 'w-full text-center text-[clamp(1rem,12cqi,1.7rem)] leading-tight font-black break-words [overflow-wrap:anywhere]';
+  const detailTileMetaClass = 'w-full text-center text-[clamp(0.62rem,5.5cqi,0.85rem)] font-semibold leading-tight break-words [overflow-wrap:anywhere]';
+  const detailTilesGridClass = `grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'auto-rows-[124px] gap-2' : 'auto-rows-[136px] gap-3'}`;
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
 
   // Helper function to get responsive layout dimensions based on device orientation and size
@@ -14728,7 +14729,7 @@ export default function WeatherApp() {
           }`}
         >
           {/* Weather Details Grid - First row (4 tiles) */}
-          <div className={`grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'auto-rows-[124px] gap-2' : 'auto-rows-[136px] gap-3'}`}>
+          <div className={detailTilesGridClass}>
           <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('uv')}>
             <div className={detailTileLabelClass}>
               <Sun size={14} /> {t('uv')}
@@ -14766,7 +14767,7 @@ export default function WeatherApp() {
         </div>
         
         {/* Additional Weather Details Grid - Second row (4 tiles) */}
-        <div className={`grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'auto-rows-[124px] gap-2' : 'auto-rows-[136px] gap-3'}`}>
+        <div className={detailTilesGridClass}>
           {current.pressure !== null && current.pressure !== undefined && (
             <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('pressure')}>
                <div className={detailTileLabelClass}>
