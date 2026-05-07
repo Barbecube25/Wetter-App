@@ -7767,8 +7767,8 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
         <span className="text-m3-label-large font-bold text-m3-on-surface">{t.nextHours}</span>
       </div>
       
-      <div className="overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
-        <div className="flex gap-3 w-max">
+      <div className="overflow-y-auto max-h-[520px] pr-1">
+        <div className="flex flex-col gap-3">
           {hourlyData.map((hour, idx) => {
             const WeatherIcon = getWeatherConfig(hour.code, hour.isDay, lang).icon;
             const isNow = idx === 0;
@@ -7783,7 +7783,7 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
             return (
               <div 
                 key={hour.time.toISOString()} 
-                className={`flex flex-col items-center backdrop-blur-sm rounded-m3-xl p-3 min-w-[160px] w-[160px] shadow-m3-1 hover:shadow-m3-2 transition-all ${isNow ? 'bg-m3-primary/15 border-2 border-m3-primary/60' : `${surfaceBg} border border-m3-outline-variant/30`}`}
+                className={`flex flex-col items-center backdrop-blur-sm rounded-m3-xl p-3 w-full shadow-m3-1 hover:shadow-m3-2 transition-all ${isNow ? 'bg-m3-primary/15 border-2 border-m3-primary/60' : `${surfaceBg} border border-m3-outline-variant/30`}`}
               >
                 {/* Time & Date */}
                 <div className={`text-base font-bold mb-0.5 ${isNow ? 'text-m3-primary' : 'text-m3-on-surface'}`}>
@@ -15113,8 +15113,8 @@ export default function WeatherApp() {
              <div className="space-y-4">
                <AIReportBox report={longtermReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
                <h3 className="text-sm font-bold uppercase tracking-wide opacity-90 ml-2">{t('longtermList')}</h3>
-               <div className="overflow-x-auto pb-4 -mx-5 px-5 scrollbar-hide"> 
-                  <div className="flex gap-3 w-max">
+               <div className="overflow-y-auto max-h-[520px] pr-1"> 
+                  <div className="flex flex-col gap-3">
                     {processedLong.map((day, i) => {
                       const DayIcon = getWeatherConfig(day.code, 1, lang).icon;
                       const confColor = getConfidenceColor(day.reliability);
@@ -15123,7 +15123,7 @@ export default function WeatherApp() {
                       if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
 
                       return (
-                        <div key={i} className={`flex flex-col items-center ${isRealNight ? 'bg-m3-dark-surface-container/80' : 'bg-m3-surface-container/80'} backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl p-3 min-w-[160px] w-[160px] shadow-m3-1 hover:shadow-m3-2 transition-all relative group`}>
+                        <div key={i} className={`flex flex-col items-center ${isRealNight ? 'bg-m3-dark-surface-container/80' : 'bg-m3-surface-container/80'} backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl p-3 w-full shadow-m3-1 hover:shadow-m3-2 transition-all relative group`}>
                           {/* Day & Date */}
                           <div className="text-base font-bold mb-0.5 text-m3-on-surface">{day.dayName}</div>
                           <div className="text-xs mb-2 font-medium text-m3-on-surface-variant">{day.dateShort}</div>
