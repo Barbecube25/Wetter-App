@@ -125,7 +125,7 @@ const createActivityKeyFromName = (name = '') =>
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '')
-    .slice(0, ACTIVITY_KEY_MAX_LENGTH)) || `activity_${Date.now().toString(36)}`;
+    .slice(0, ACTIVITY_KEY_MAX_LENGTH)) || `activity_${Math.random().toString(36).slice(2, 10)}`;
 
 const ensureUniqueActivityKey = (baseKey, existingDefinitions) => {
   const existing = new Set((existingDefinitions || []).map(a => a.key));
@@ -4379,9 +4379,9 @@ const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvInd
  * given current weather conditions. Accepts optional custom params (minTemp, maxTemp,
  * maxWind, rainOk, cloudOk) that override the activity's default thresholds.
  */
-const getActivityRating = (key, temp, wind, precip, uvIndex, code, cloudCover = 0, customParams = {}) => {
+const getActivityRating = (key, temp, wind, precip, uvIndex, code, cloudCover = null, customParams = {}) => {
   const hasRain = precip >= UMBRELLA_PRECIP_THRESHOLD || RAIN_WEATHER_CODES.includes(code);
-  const hasDenseClouds = cloudCover >= DENSE_CLOUD_THRESHOLD || code === OVERCAST_WEATHER_CODE;
+  const hasDenseClouds = code === OVERCAST_WEATHER_CODE || (typeof cloudCover === 'number' && cloudCover >= DENSE_CLOUD_THRESHOLD);
   const isThunderstorm = [17, 95, 96, 99].includes(code);
   const isStorm = wind > 50;
   const isSnow = [71, 73, 75, 77, 85, 86].includes(code);
@@ -6121,8 +6121,9 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
             const key = ensureUniqueActivityKey(createActivityKeyFromName(trimmedName), activityDefinitions);
             const newActivity = { key, emoji: trimmedEmoji, label: { de: trimmedName, en: trimmedName } };
             const nextDefinitions = [...activityDefinitions, newActivity];
+            const cleanedCurrentParams = normalizeActivityParams(localSettings.activityParams, activityDefinitions);
             updateActivityState(nextDefinitions, [...(localSettings.activityFilter || []), key], {
-                ...(localSettings.activityParams || {}),
+                ...cleanedCurrentParams,
                 [key]: getActivityDefaultParams(key)
             });
             setActivityEditor(null);
@@ -6562,7 +6563,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                         <input
                             value={activityEditor.name}
                             onChange={(e) => setActivityEditor({ ...activityEditor, name: e.target.value })}
-                            placeholder={localSettings.language === 'de' ? 'Name' : 'Name'}
+                            placeholder="Name"
                             className="w-full py-2 px-3 rounded-m3-md border border-m3-outline-variant bg-m3-surface-container text-m3-on-surface"
                         />
                         <input
@@ -9771,7 +9772,7 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
       precip: hour.precip ?? 0,
       uvIndex: hour.uvIndex ?? 0,
       code: hour.code ?? 0,
-      cloudCover: hour.cloudCover ?? 0,
+      cloudCover: hour.cloudCover ?? null,
       advice,
     };
   });
@@ -10172,7 +10173,7 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
     precip: hour.precip ?? 0,
     uvIndex: hour.uvIndex ?? 0,
     code: hour.code ?? 0,
-    cloudCover: hour.cloudCover ?? 0,
+    cloudCover: hour.cloudCover ?? null,
   }));
 
   const selectedActivity = activeActivities.find(a => a.key === selectedActivityKey) || activeActivities[0];
