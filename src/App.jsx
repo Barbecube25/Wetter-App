@@ -13768,8 +13768,8 @@ export default function WeatherApp() {
   const textColor = isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface';
   const cardBg = isRealNight ? 'bg-m3-dark-surface-container/90 border-m3-outline-variant/70 text-m3-dark-on-surface' : 'bg-m3-surface-container/80 border-m3-outline-variant/40 text-m3-on-surface';
   const tileBg = isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/50 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant';
-  // Uniform tile design with fixed visual rhythm and larger, prominent values.
-  const detailTileBaseClass = 'h-full px-3 py-3 flex flex-col items-center justify-center text-center gap-2 [container-type:inline-size]';
+  // Uniform tile design with fixed visual rhythm and compact spacing.
+  const detailTileBaseClass = 'h-full px-2.5 py-2.5 flex flex-col items-center justify-center text-center gap-1.5 [container-type:inline-size]';
   const detailTileSurfaceClass = `rounded-m3-2xl shadow-m3-2 border ${detailTileBaseClass}`;
   const detailTileInteractiveClass = `${detailTileSurfaceClass} cursor-pointer transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]`;
   // Font clamps are tuned for 2-column/4-column tile layouts: min keeps readability on tiny tiles,
@@ -14728,7 +14728,7 @@ export default function WeatherApp() {
           }`}
         >
           {/* Weather Details Grid - First row (4 tiles) */}
-          <div className={`grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'auto-rows-[136px] gap-2' : 'auto-rows-[148px] gap-4'}`}>
+          <div className={`grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'auto-rows-[124px] gap-2' : 'auto-rows-[136px] gap-3'}`}>
           <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('uv')}>
             <div className={detailTileLabelClass}>
               <Sun size={14} /> {t('uv')}
@@ -14766,7 +14766,7 @@ export default function WeatherApp() {
         </div>
         
         {/* Additional Weather Details Grid - Second row (4 tiles) */}
-        <div className={`grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'auto-rows-[136px] gap-2' : 'auto-rows-[148px] gap-4'}`}>
+        <div className={`grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'auto-rows-[124px] gap-2' : 'auto-rows-[136px] gap-3'}`}>
           {current.pressure !== null && current.pressure !== undefined && (
             <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('pressure')}>
                <div className={detailTileLabelClass}>
