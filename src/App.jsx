@@ -13769,11 +13769,11 @@ export default function WeatherApp() {
   const cardBg = isRealNight ? 'bg-m3-dark-surface-container/90 border-m3-outline-variant/70 text-m3-dark-on-surface' : 'bg-m3-surface-container/80 border-m3-outline-variant/40 text-m3-on-surface';
   const tileBg = isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/50 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant';
   // Denser tile layout for better space usage and larger, clearer metric values.
-  const detailTileBaseClass = 'px-3 py-2.5 min-h-[84px] h-full flex flex-col justify-start gap-1';
+  const detailTileBaseClass = 'px-3 py-2.5 min-h-[84px] h-full flex flex-col justify-between gap-1';
   const detailTileSurfaceClass = `rounded-m3-xl shadow-m3-1 border ${detailTileBaseClass}`;
   const detailTileInteractiveClass = `${detailTileSurfaceClass} cursor-pointer active:scale-95 transition-transform duration-200`;
   const detailTileLabelClass = `flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`;
-  const detailTileValueClass = 'text-[1.45rem] leading-tight font-bold';
+  const detailTileValueClass = 'text-m3-headline-small leading-tight font-bold';
   const detailTileMetaClass = 'text-xs font-medium leading-tight mt-1';
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
 
@@ -14865,7 +14865,7 @@ export default function WeatherApp() {
               </div>
               <div className="flex items-center gap-1 mt-1">
                 <Sun size={16} className="text-green-500 flex-shrink-0" />
-                <span className="text-base font-bold text-green-600 leading-tight">{t('noPrecipSight')}</span>
+                <span className={`${detailTileValueClass} text-green-600`}>{t('noPrecipSight')}</span>
               </div>
             </div>
           )}
@@ -14893,7 +14893,7 @@ export default function WeatherApp() {
                     </span>
                   )}
                 </div>
-                <div className={`text-base font-bold ${advice.color} leading-tight`}>{advice.text}</div>
+                <div className={`${detailTileValueClass} ${advice.color}`}>{advice.text}</div>
                 {getDominantPollen && !getDominantPollen.pausing && (
                   <div className={`${detailTileMetaClass} text-m3-on-surface-variant truncate`}>
                     🌿 {getDominantPollen.label}: {getDominantPollen.level}
@@ -14938,7 +14938,7 @@ export default function WeatherApp() {
                 </div>
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <span className="text-lg leading-none">{riskEmoji}</span>
-                  <span className={`text-base font-bold ${riskTextColor} leading-tight`}>{t(riskLabelKey)}</span>
+                  <span className={`${detailTileValueClass} ${riskTextColor}`}>{t(riskLabelKey)}</span>
                 </div>
                 {peakRisk > 0 && peakEntry?.time && (
                   <div className={`${detailTileMetaClass} ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mt-0.5`}>
@@ -14976,7 +14976,7 @@ export default function WeatherApp() {
                     ) : null}
                   </svg>
                     <div>
-                      <div className={`text-base font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'} leading-tight`}>
+                      <div className={`${detailTileValueClass} ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
                         {moonEmoji} {moonName}
                       </div>
                       <div className={`${detailTileMetaClass} ${isRealNight ? 'text-indigo-400' : 'text-indigo-600'} mt-0.5`}>
