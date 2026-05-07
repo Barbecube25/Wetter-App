@@ -13768,10 +13768,13 @@ export default function WeatherApp() {
   const textColor = isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface';
   const cardBg = isRealNight ? 'bg-m3-dark-surface-container/90 border-m3-outline-variant/70 text-m3-dark-on-surface' : 'bg-m3-surface-container/80 border-m3-outline-variant/40 text-m3-on-surface';
   const tileBg = isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/50 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant';
-  // Slightly reduced tile min-height so detailed values are denser and don't look lost in empty space.
-  const detailTileBaseClass = 'px-3 py-2.5 min-h-[96px] h-full flex flex-col justify-between gap-1.5';
+  // Denser tile layout for better space usage and larger, clearer metric values.
+  const detailTileBaseClass = 'px-3 py-2.5 min-h-[84px] h-full flex flex-col justify-start gap-1';
   const detailTileSurfaceClass = `rounded-m3-xl shadow-m3-1 border ${detailTileBaseClass}`;
   const detailTileInteractiveClass = `${detailTileSurfaceClass} cursor-pointer active:scale-95 transition-transform duration-200`;
+  const detailTileLabelClass = `flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`;
+  const detailTileValueClass = 'text-[1.45rem] leading-tight font-bold';
+  const detailTileMetaClass = 'text-xs font-medium leading-tight mt-1';
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
 
   // Helper function to get responsive layout dimensions based on device orientation and size
@@ -14725,38 +14728,38 @@ export default function WeatherApp() {
           {/* Weather Details Grid - First row (4 tiles) */}
           <div className={`grid grid-cols-2 sm:grid-cols-4 auto-rows-fr ${isSmallScreen ? 'gap-2' : 'gap-4'}`}>
           <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('uv')}>
-            <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+            <div className={detailTileLabelClass}>
               <Sun size={14} /> {t('uv')}
             </div>
-            <div className={`text-m3-title-large font-bold ${getUvColorClass(current.uvIndex, isRealNight)}`}>{current.uvIndex}</div>
+            <div className={`${detailTileValueClass} ${getUvColorClass(current.uvIndex, isRealNight)}`}>{current.uvIndex}</div>
           </div>
           
           <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('humidity')}>
-            <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+            <div className={detailTileLabelClass}>
               <Waves size={14} /> {t('humidity')}
             </div>
-            <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{current.humidity}%</div>
+            <div className={`${detailTileValueClass} ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{current.humidity}%</div>
           </div>
           
           <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('wind')}>
-            <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+            <div className={detailTileLabelClass}>
               <Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }} /> {t('wind')}
             </div>
-            <div className={`text-m3-title-large font-bold ${windColorClass}`}>
+            <div className={`${detailTileValueClass} ${windColorClass}`}>
               {formatWind(current.wind)} <span className="text-m3-body-small">{getWindUnitLabel()}</span>
             </div>
             {current.gust > current.wind && (
-              <div className={`text-xs font-medium ${getWindColorClass(current.gust, isRealNight)} mt-1`}>
+              <div className={`${detailTileMetaClass} ${getWindColorClass(current.gust, isRealNight)}`}>
                 {t('gusts')} {formatWind(current.gust)} {getWindUnitLabel()}
               </div>
             )}
           </div>
           
           <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('dewPoint')}>
-            <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+            <div className={detailTileLabelClass}>
               <Thermometer size={14} /> {t('dewPoint')}
             </div>
-            <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{formatTemp(current.dewPoint)}{getTempUnitSymbol()}</div>
+            <div className={`${detailTileValueClass} ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{formatTemp(current.dewPoint)}{getTempUnitSymbol()}</div>
           </div>
         </div>
         
@@ -14764,41 +14767,41 @@ export default function WeatherApp() {
         <div className={`grid grid-cols-2 sm:grid-cols-4 auto-rows-fr ${isSmallScreen ? 'gap-2' : 'gap-4'}`}>
           {current.pressure !== null && current.pressure !== undefined && (
             <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('pressure')}>
-              <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
-                <Gauge size={14} /> {t('pressure')}
-              </div>
-              <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
-                {Math.round(current.pressure)} <span className="text-m3-body-small">hPa</span>
-              </div>
-            </div>
-          )}
+               <div className={detailTileLabelClass}>
+                 <Gauge size={14} /> {t('pressure')}
+               </div>
+               <div className={`${detailTileValueClass} ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
+                 {Math.round(current.pressure)} <span className="text-m3-body-small">hPa</span>
+               </div>
+             </div>
+           )}
           
           {current.visibility !== null && current.visibility !== undefined && current.visibility > 0 && (
             <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('visibility')}>
-              <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
-                <Eye size={14} /> {t('visibility')}
-              </div>
-              <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
-                {settings.windUnit === 'mph'
-                  ? `${(current.visibility / 1609.34).toFixed(1)} mi`
-                  : `${(current.visibility / 1000).toFixed(1)} km`}
+               <div className={detailTileLabelClass}>
+                 <Eye size={14} /> {t('visibility')}
+               </div>
+               <div className={`${detailTileValueClass} ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
+                 {settings.windUnit === 'mph'
+                   ? `${(current.visibility / 1609.34).toFixed(1)} mi`
+                   : `${(current.visibility / 1000).toFixed(1)} km`}
               </div>
             </div>
           )}
           
           {airQualityData && airQualityData.european_aqi !== undefined && (
             <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('airQuality')}>
-              <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
-                <Activity size={14} /> {t('airQuality')}
-              </div>
-              <div className={`text-m3-title-large font-bold ${getAQIColor(airQualityData.european_aqi, isRealNight)}`}>
-                {Math.round(airQualityData.european_aqi)}
-              </div>
-              <div className={`text-xs font-medium ${getAQIColor(airQualityData.european_aqi, isRealNight)} mt-1`}>
-                {getAQILabel(airQualityData.european_aqi)}
-              </div>
-            </div>
-          )}
+               <div className={detailTileLabelClass}>
+                 <Activity size={14} /> {t('airQuality')}
+               </div>
+               <div className={`${detailTileValueClass} ${getAQIColor(airQualityData.european_aqi, isRealNight)}`}>
+                 {Math.round(airQualityData.european_aqi)}
+               </div>
+               <div className={`${detailTileMetaClass} ${getAQIColor(airQualityData.european_aqi, isRealNight)}`}>
+                 {getAQILabel(airQualityData.european_aqi)}
+               </div>
+             </div>
+           )}
 
           {/* Pollen tile */}
           {getDominantPollen && (
@@ -14806,22 +14809,22 @@ export default function WeatherApp() {
               className={`${tileBg} ${detailTileInteractiveClass}`}
               onClick={() => setShowPollenModal(true)}
             >
-              <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
-                <Sparkles size={14} /> {t('pollen')}
-              </div>
-              {getDominantPollen.pausing ? (
-                <div className={`text-xs font-medium mt-1 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
-                  {t('pollenPause')}
-                </div>
-              ) : (
-                <>
-                  <div className={`text-m3-title-medium font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
-                    {getDominantPollen.label}
-                  </div>
-                  <div className={`text-xs font-medium mt-1 ${getDominantPollen.val >= POLLEN_HIGH_THRESHOLD ? 'text-orange-500' : getDominantPollen.val >= POLLEN_MODERATE_THRESHOLD ? 'text-yellow-500' : (isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant')}`}>
-                    {getDominantPollen.level} ({Math.round(getDominantPollen.val)})
-                  </div>
-                </>
+               <div className={detailTileLabelClass}>
+                 <Sparkles size={14} /> {t('pollen')}
+               </div>
+               {getDominantPollen.pausing ? (
+                 <div className={`${detailTileMetaClass} ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
+                   {t('pollenPause')}
+                 </div>
+               ) : (
+                 <>
+                   <div className={`${detailTileValueClass} ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
+                     {getDominantPollen.label}
+                   </div>
+                   <div className={`${detailTileMetaClass} ${getDominantPollen.val >= POLLEN_HIGH_THRESHOLD ? 'text-orange-500' : getDominantPollen.val >= POLLEN_MODERATE_THRESHOLD ? 'text-yellow-500' : (isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant')}`}>
+                     {getDominantPollen.level} ({Math.round(getDominantPollen.val)})
+                   </div>
+                 </>
               )}
             </div>
           )}
@@ -14834,7 +14837,7 @@ export default function WeatherApp() {
               <div className="flex items-center gap-2 text-m3-on-tertiary-container text-m3-label-small mb-1">
                 {next24HoursPrecip.snow > 0.1 ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
               </div>
-              <div className="text-m3-title-large font-bold text-m3-on-tertiary-container mb-2">
+              <div className={`${detailTileValueClass} text-m3-on-tertiary-container mb-2`}>
                 {formatPrecip(next24HoursPrecip.total)} {getPrecipUnitLabel()}
               </div>
               {/* Action buttons */}
@@ -14857,12 +14860,12 @@ export default function WeatherApp() {
             </div>
           ) : (
             <div className={`${tileBg} ${detailTileSurfaceClass}`}>
-              <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+              <div className={detailTileLabelClass}>
                 <CloudRain size={14}/> {t('precip24h')}
               </div>
               <div className="flex items-center gap-1 mt-1">
                 <Sun size={16} className="text-green-500 flex-shrink-0" />
-                <span className={`text-m3-label-medium font-bold text-green-600 leading-tight`}>{t('noPrecipSight')}</span>
+                <span className="text-base font-bold text-green-600 leading-tight">{t('noPrecipSight')}</span>
               </div>
             </div>
           )}
@@ -14879,7 +14882,7 @@ export default function WeatherApp() {
                 : tileBg;
             return (
               <div className={`${activityTileBg} ${detailTileInteractiveClass}`} onClick={() => setShowActivityModal(true)}>
-                <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                <div className={detailTileLabelClass}>
                   <Zap size={14} /> {t('activityIndex')}
                 </div>
                 <div className="flex items-center gap-1.5 mb-1">
@@ -14890,9 +14893,9 @@ export default function WeatherApp() {
                     </span>
                   )}
                 </div>
-                <div className={`text-m3-label-medium font-bold ${advice.color} leading-tight`}>{advice.text}</div>
+                <div className={`text-base font-bold ${advice.color} leading-tight`}>{advice.text}</div>
                 {getDominantPollen && !getDominantPollen.pausing && (
-                  <div className="text-xs mt-1 text-m3-on-surface-variant truncate">
+                  <div className={`${detailTileMetaClass} text-m3-on-surface-variant truncate`}>
                     🌿 {getDominantPollen.label}: {getDominantPollen.level}
                   </div>
                 )}
@@ -14930,15 +14933,15 @@ export default function WeatherApp() {
                 className={`${tileBgThunder} ${detailTileInteractiveClass}`}
                 onClick={() => setShowThunderstormModal(true)}
               >
-                <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                <div className={detailTileLabelClass}>
                   <CloudLightning size={14} /> {t('thunderstormRisk')}
                 </div>
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <span className="text-lg leading-none">{riskEmoji}</span>
-                  <span className={`text-m3-label-large font-bold ${riskTextColor} leading-tight`}>{t(riskLabelKey)}</span>
+                  <span className={`text-base font-bold ${riskTextColor} leading-tight`}>{t(riskLabelKey)}</span>
                 </div>
                 {peakRisk > 0 && peakEntry?.time && (
-                  <div className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mt-0.5`}>
+                  <div className={`${detailTileMetaClass} ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mt-0.5`}>
                     {t('thunderstormPeakAt')} {peakEntry.time.toLocaleTimeString(lang === 'de' ? 'de-DE' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 )}
@@ -14960,7 +14963,7 @@ export default function WeatherApp() {
                 className={`${tileBg} ${detailTileInteractiveClass}`}
                 onClick={() => setShowMoonModal(true)}
               >
-                <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                <div className={detailTileLabelClass}>
                   <Moon size={14} /> {t('moonPhase')}
                 </div>
                 <div className="flex items-center gap-2 mb-1">
@@ -14972,14 +14975,14 @@ export default function WeatherApp() {
                       <path d={getMoonPhaseSVGPath(moonPhaseDiscrete, moonR)} fill="white" opacity="0.9" />
                     ) : null}
                   </svg>
-                  <div>
-                    <div className={`text-m3-label-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'} leading-tight`}>
-                      {moonEmoji} {moonName}
+                    <div>
+                      <div className={`text-base font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'} leading-tight`}>
+                        {moonEmoji} {moonName}
+                      </div>
+                      <div className={`${detailTileMetaClass} ${isRealNight ? 'text-indigo-400' : 'text-indigo-600'} mt-0.5`}>
+                        {moonIllum}% {t('moonIllumination')}
+                      </div>
                     </div>
-                    <div className={`text-xs font-medium ${isRealNight ? 'text-indigo-400' : 'text-indigo-600'} mt-0.5`}>
-                      {moonIllum}% {t('moonIllumination')}
-                    </div>
-                  </div>
                 </div>
               </div>
             );
