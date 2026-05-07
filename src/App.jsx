@@ -13769,7 +13769,7 @@ export default function WeatherApp() {
   const cardBg = isRealNight ? 'bg-m3-dark-surface-container/90 border-m3-outline-variant/70 text-m3-dark-on-surface' : 'bg-m3-surface-container/80 border-m3-outline-variant/40 text-m3-on-surface';
   const tileBg = isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/50 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant';
   const detailTileBaseClass = 'rounded-m3-xl px-3 py-2.5 shadow-m3-1 border min-h-[96px] h-full flex flex-col justify-between gap-1.5';
-  const detailTileInteractiveClass = `${detailTileBaseClass} cursor-pointer active:scale-[0.98] transition-all`;
+  const detailTileInteractiveClass = `${detailTileBaseClass} cursor-pointer active:scale-[0.98] transition-transform`;
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
 
   // Helper function to get responsive layout dimensions based on device orientation and size
