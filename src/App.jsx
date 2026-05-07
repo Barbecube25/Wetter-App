@@ -9068,8 +9068,8 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
       return `${config.format(val)}${config.unit ? (config.unit === '%' ? config.unit : ` ${config.unit}`) : ''}`;
     };
     return (
-      <div className={`${isRealNight ? 'bg-m3-dark-surface-container border-m3-outline-variant/70' : 'bg-white border-slate-100'} rounded-xl shadow-lg p-2 text-xs border`}>
-        <div className={`font-bold ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-600'} mb-1`}>{label}</div>
+      <div className={`${isRealNight ? 'bg-m3-dark-surface-container border-m3-outline-variant/70' : 'bg-m3-surface-container border-m3-outline-variant/40'} rounded-xl shadow-m3-2 p-2 text-xs border`}>
+        <div className={`font-bold ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mb-1`}>{label}</div>
         {payload.map((p, i) => (
           <div key={i} style={{ color: p.color }} className="font-medium">
             {p.name}: {formatDisplay(p.value)}
@@ -9081,25 +9081,25 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
 
   return (
     <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
-      <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-white'} rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-lg'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
+      <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-lg'} w-full shadow-m3-5 overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh] border border-m3-outline-variant/40`}>
         {/* Header */}
-        <div className={`p-4 border-b ${isRealNight ? 'border-m3-outline-variant/70 bg-m3-dark-surface-container-high/50' : 'border-slate-100 bg-slate-50/50'} flex justify-between items-center sticky top-0`}>
-          <h3 className={`font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'} flex items-center gap-2`}>
+        <div className={`p-4 border-b ${isRealNight ? 'border-m3-outline-variant/70 bg-m3-dark-surface-container-high/50' : 'border-m3-outline-variant/40 bg-m3-surface-container-high/60'} flex justify-between items-center sticky top-0`}>
+          <h3 className={`font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'} flex items-center gap-2`}>
             {config.icon}
             {config.label} – {t('trendTitle')}
           </h3>
-          <button onClick={onClose} className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'} rounded-full transition`}>
-            <X size={20} className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} />
+          <button onClick={onClose} className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-m3-surface-container-high'} rounded-full transition`}>
+            <X size={20} className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} />
           </button>
         </div>
 
         {/* Chart */}
         <div className="p-4 overflow-y-auto">
           {chartData.length === 0 ? (
-            <div className={`text-center ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} py-8`}>–</div>
+            <div className={`text-center ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} py-8`}>–</div>
           ) : (
             <>
-              <div className={`flex items-center gap-4 text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} mb-2 justify-between`}>
+              <div className={`flex items-center gap-4 text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mb-2 justify-between`}>
                 {nowIndex > 0 ? <span>← 12h</span> : <span />}
                 {nowLabel && <span className="font-bold text-violet-600 flex items-center gap-1">
                   <span className="inline-block w-2 h-2 rounded-full bg-violet-600" aria-hidden="true"></span>
@@ -13768,6 +13768,8 @@ export default function WeatherApp() {
   const textColor = isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface';
   const cardBg = isRealNight ? 'bg-m3-dark-surface-container/90 border-m3-outline-variant/70 text-m3-dark-on-surface' : 'bg-m3-surface-container/80 border-m3-outline-variant/40 text-m3-on-surface';
   const tileBg = isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/50 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant';
+  const detailTileBaseClass = 'rounded-m3-xl px-3 py-2.5 shadow-m3-1 border min-h-[96px] h-full flex flex-col justify-between gap-1.5';
+  const detailTileInteractiveClass = `${detailTileBaseClass} cursor-pointer active:scale-[0.98] transition-all`;
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
 
   // Helper function to get responsive layout dimensions based on device orientation and size
@@ -14720,21 +14722,21 @@ export default function WeatherApp() {
         >
           {/* Weather Details Grid - First row (4 tiles) */}
           <div className={`grid grid-cols-2 sm:grid-cols-4 auto-rows-fr ${isSmallScreen ? 'gap-2' : 'gap-4'}`}>
-          <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[110px] h-full flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('uv')}>
+          <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('uv')}>
             <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Sun size={14} /> {t('uv')}
             </div>
             <div className={`text-m3-title-large font-bold ${getUvColorClass(current.uvIndex, isRealNight)}`}>{current.uvIndex}</div>
           </div>
           
-          <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[110px] h-full flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('humidity')}>
+          <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('humidity')}>
             <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Waves size={14} /> {t('humidity')}
             </div>
             <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{current.humidity}%</div>
           </div>
           
-          <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[110px] h-full flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('wind')}>
+          <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('wind')}>
             <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }} /> {t('wind')}
             </div>
@@ -14748,7 +14750,7 @@ export default function WeatherApp() {
             )}
           </div>
           
-          <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[110px] h-full flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('dewPoint')}>
+          <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('dewPoint')}>
             <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Thermometer size={14} /> {t('dewPoint')}
             </div>
@@ -14759,7 +14761,7 @@ export default function WeatherApp() {
         {/* Additional Weather Details Grid - Second row (4 tiles) */}
         <div className={`grid grid-cols-2 sm:grid-cols-4 auto-rows-fr ${isSmallScreen ? 'gap-2' : 'gap-4'}`}>
           {current.pressure !== null && current.pressure !== undefined && (
-            <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[110px] h-full flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('pressure')}>
+            <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('pressure')}>
               <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                 <Gauge size={14} /> {t('pressure')}
               </div>
@@ -14770,7 +14772,7 @@ export default function WeatherApp() {
           )}
           
           {current.visibility !== null && current.visibility !== undefined && current.visibility > 0 && (
-            <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[110px] h-full flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('visibility')}>
+            <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('visibility')}>
               <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                 <Eye size={14} /> {t('visibility')}
               </div>
@@ -14783,7 +14785,7 @@ export default function WeatherApp() {
           )}
           
           {airQualityData && airQualityData.european_aqi !== undefined && (
-            <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[110px] h-full flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('airQuality')}>
+            <div className={`${tileBg} ${detailTileInteractiveClass}`} onClick={() => setActiveDetailModal('airQuality')}>
               <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                 <Activity size={14} /> {t('airQuality')}
               </div>
@@ -14799,7 +14801,7 @@ export default function WeatherApp() {
           {/* Pollen tile */}
           {getDominantPollen && (
             <div
-              className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[110px] h-full flex flex-col cursor-pointer active:scale-95 transition-transform`}
+              className={`${tileBg} ${detailTileInteractiveClass}`}
               onClick={() => setShowPollenModal(true)}
             >
               <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
@@ -14825,7 +14827,7 @@ export default function WeatherApp() {
 
           {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) ? (
             <div 
-              className="bg-m3-tertiary-container rounded-m3-xl p-2 border border-m3-tertiary shadow-m3-1 relative overflow-hidden min-h-[110px] h-full flex flex-col"
+              className="bg-m3-tertiary-container rounded-m3-xl px-3 py-2.5 border border-m3-tertiary shadow-m3-1 relative overflow-hidden min-h-[96px] h-full flex flex-col justify-between gap-1.5"
             >
               <div className="flex items-center gap-2 text-m3-on-tertiary-container text-m3-label-small mb-1">
                 {next24HoursPrecip.snow > 0.1 ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
@@ -14852,7 +14854,7 @@ export default function WeatherApp() {
               </div>
             </div>
           ) : (
-            <div className={`${tileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[110px] h-full flex flex-col`}>
+            <div className={`${tileBg} ${detailTileBaseClass}`}>
               <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                 <CloudRain size={14}/> {t('precip24h')}
               </div>
@@ -14874,7 +14876,7 @@ export default function WeatherApp() {
                 ? (isRealNight ? 'bg-orange-950/40 border-orange-900/40' : 'bg-orange-50 border-orange-200')
                 : tileBg;
             return (
-              <div className={`${activityTileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[110px] h-full flex flex-col cursor-pointer active:scale-95 transition-transform`} onClick={() => setShowActivityModal(true)}>
+              <div className={`${activityTileBg} ${detailTileInteractiveClass}`} onClick={() => setShowActivityModal(true)}>
                 <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                   <Zap size={14} /> {t('activityIndex')}
                 </div>
@@ -14923,7 +14925,7 @@ export default function WeatherApp() {
             }, thunderHours[0] || {});
             return (
               <div
-                className={`${tileBgThunder} rounded-m3-xl p-2 border shadow-m3-1 min-h-[110px] h-full flex flex-col cursor-pointer active:scale-95 transition-transform`}
+                className={`${tileBgThunder} ${detailTileInteractiveClass}`}
                 onClick={() => setShowThunderstormModal(true)}
               >
                 <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
@@ -14953,7 +14955,7 @@ export default function WeatherApp() {
             const moonR = 16;
             return (
               <div
-                className={`${tileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[110px] h-full flex flex-col cursor-pointer active:scale-95 transition-transform`}
+                className={`${tileBg} ${detailTileInteractiveClass}`}
                 onClick={() => setShowMoonModal(true)}
               >
                 <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
