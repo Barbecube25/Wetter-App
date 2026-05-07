@@ -28,6 +28,9 @@ const NIGHT_START_HOUR = 20;
 const LIGHT_PRECIP_THRESHOLD = 0.1;
 const STRONG_PRECIP_THRESHOLD = 0.5;
 const UMBRELLA_PRECIP_THRESHOLD = 0.5;
+const DENSE_CLOUD_THRESHOLD = 85;
+const OVERCAST_WEATHER_CODE = 3;
+const ACTIVITY_KEY_MAX_LENGTH = 32;
 // WMO weather codes that indicate rain/drizzle/showers (used for activity index rain detection)
 const RAIN_WEATHER_CODES = [51, 53, 55, 61, 63, 65, 80, 81, 82];
 const isAboveThreshold = (precipValue, snowValue, threshold) => precipValue > threshold || snowValue > threshold;
@@ -122,7 +125,7 @@ const createActivityKeyFromName = (name = '') =>
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '')
-    .slice(0, 32)) || `activity_${Date.now().toString(36)}`;
+    .slice(0, ACTIVITY_KEY_MAX_LENGTH)) || `activity_${Date.now().toString(36)}`;
 
 const ensureUniqueActivityKey = (baseKey, existingDefinitions) => {
   const existing = new Set((existingDefinitions || []).map(a => a.key));
@@ -4378,7 +4381,7 @@ const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvInd
  */
 const getActivityRating = (key, temp, wind, precip, uvIndex, code, cloudCover = 0, customParams = {}) => {
   const hasRain = precip >= UMBRELLA_PRECIP_THRESHOLD || RAIN_WEATHER_CODES.includes(code);
-  const hasDenseClouds = cloudCover >= 85 || code === 3;
+  const hasDenseClouds = cloudCover >= DENSE_CLOUD_THRESHOLD || code === OVERCAST_WEATHER_CODE;
   const isThunderstorm = [17, 95, 96, 99].includes(code);
   const isStorm = wind > 50;
   const isSnow = [71, 73, 75, 77, 85, 86].includes(code);
@@ -6071,6 +6074,8 @@ const ActivityParamsModal = ({ isOpen, onClose, activityDefinitions, activityFil
 const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmallScreen = false }) => {
     const [localSettings, setLocalSettings] = useState(settings);
     const [showActivityParams, setShowActivityParams] = useState(false);
+    const [activityEditor, setActivityEditor] = useState(null);
+    const [deleteCandidate, setDeleteCandidate] = useState(null);
     const activityDefinitions = useMemo(
         () => normalizeActivityDefinitions(localSettings?.activityDefinitions),
         [localSettings?.activityDefinitions]
@@ -6078,6 +6083,8 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
 
     useEffect(() => {
         setLocalSettings(settings);
+        setActivityEditor(null);
+        setDeleteCandidate(null);
     }, [settings, isOpen]);
 
     if (!isOpen) return null;
@@ -6095,38 +6102,62 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
             activityParams: normalizeActivityParams(nextParams, normalizedDefinitions)
         });
     };
-    const addActivity = () => {
-        const name = window.prompt(t.addActivity || 'Add activity');
-        if (!name || !name.trim()) return;
-        const emoji = window.prompt('Emoji', '🏃') || '🏃';
-        const key = ensureUniqueActivityKey(createActivityKeyFromName(name), activityDefinitions);
-        const newActivity = { key, emoji: emoji.trim() || '🏃', label: { de: name.trim(), en: name.trim() } };
-        const nextDefinitions = [...activityDefinitions, newActivity];
-        updateActivityState(nextDefinitions, [...(localSettings.activityFilter || []), key], {
-            ...(localSettings.activityParams || {}),
-            [key]: getActivityDefaultParams(key)
+    const openAddActivity = () => {
+        setActivityEditor({ mode: 'add', key: null, name: '', emoji: '🏃' });
+    };
+    const openEditActivity = (activity) => {
+        setActivityEditor({
+            mode: 'edit',
+            key: activity.key,
+            name: getActivityLabel(activity, localSettings.language),
+            emoji: activity.emoji || '🏃'
         });
     };
-    const editActivity = (activity) => {
-        const currentLabel = getActivityLabel(activity, localSettings.language);
-        const name = window.prompt(t.editActivity || 'Edit activity', currentLabel);
-        if (!name || !name.trim()) return;
-        const emoji = window.prompt('Emoji', activity.emoji || '🏃');
-        const nextDefinitions = activityDefinitions.map(a =>
-            a.key === activity.key
-                ? { ...a, emoji: (emoji || a.emoji || '🏃').trim() || '🏃', label: { ...(a.label || {}), [localSettings.language]: name.trim(), en: a.label?.en || name.trim(), de: a.label?.de || name.trim() } }
-                : a
-        );
+    const saveActivityEditor = () => {
+        if (!activityEditor || !activityEditor.name?.trim()) return;
+        const trimmedName = activityEditor.name.trim();
+        const trimmedEmoji = (activityEditor.emoji || '🏃').trim() || '🏃';
+        if (activityEditor.mode === 'add') {
+            const key = ensureUniqueActivityKey(createActivityKeyFromName(trimmedName), activityDefinitions);
+            const newActivity = { key, emoji: trimmedEmoji, label: { de: trimmedName, en: trimmedName } };
+            const nextDefinitions = [...activityDefinitions, newActivity];
+            updateActivityState(nextDefinitions, [...(localSettings.activityFilter || []), key], {
+                ...(localSettings.activityParams || {}),
+                [key]: getActivityDefaultParams(key)
+            });
+            setActivityEditor(null);
+            return;
+        }
+        const nextDefinitions = activityDefinitions.map(a => {
+            if (a.key !== activityEditor.key) return a;
+            const nextLabel = { ...(a.label || {}) };
+            nextLabel[localSettings.language] = trimmedName;
+            if (!nextLabel.en) nextLabel.en = trimmedName;
+            if (!nextLabel.de) nextLabel.de = trimmedName;
+            return { ...a, emoji: trimmedEmoji, label: nextLabel };
+        });
         updateActivityState(nextDefinitions, localSettings.activityFilter, localSettings.activityParams);
+        setActivityEditor(null);
     };
-    const deleteActivity = (activity) => {
-        if (activityDefinitions.length <= 1) return;
-        if (!window.confirm(`${t.deleteActivity || 'Delete activity'}: ${getActivityLabel(activity, localSettings.language)}?`)) return;
+    const confirmDeleteActivity = () => {
+        if (!deleteCandidate || activityDefinitions.length <= 1) return;
+        const activity = deleteCandidate;
         const nextDefinitions = activityDefinitions.filter(a => a.key !== activity.key);
         const nextFilter = (localSettings.activityFilter || []).filter(key => key !== activity.key);
         const nextParams = { ...(localSettings.activityParams || {}) };
         delete nextParams[activity.key];
         updateActivityState(nextDefinitions, nextFilter, nextParams);
+        setDeleteCandidate(null);
+    };
+    const addActivity = () => {
+        openAddActivity();
+    };
+    const editActivity = (activity) => {
+        openEditActivity(activity);
+    };
+    const deleteActivity = (activity) => {
+        if (activityDefinitions.length <= 1) return;
+        setDeleteCandidate(activity);
     };
 
     return (
@@ -6468,6 +6499,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                                   disabled={activityDefinitions.length <= 1}
                                   className="p-1.5 rounded-md text-m3-on-surface-variant hover:text-m3-error hover:bg-m3-error-container/30 disabled:opacity-50 disabled:cursor-not-allowed"
                                   aria-label={t.deleteActivity || 'Delete activity'}
+                                  title={activityDefinitions.length <= 1 ? (localSettings.language === 'de' ? 'Mindestens eine Aktivität muss bestehen bleiben.' : 'At least one activity must remain.') : (t.deleteActivity || 'Delete activity')}
                                 >
                                   <Trash2 size={14} />
                                 </button>
@@ -6519,6 +6551,70 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                  onSave={(params) => setLocalSettings({ ...localSettings, activityParams: normalizeActivityParams(params, activityDefinitions) })}
                  isSmallScreen={isSmallScreen}
              />
+        )}
+        {activityEditor && (
+            <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                <div className="w-full max-w-sm bg-m3-surface rounded-m3-xl shadow-m3-5 p-5">
+                    <div className="text-base font-bold text-m3-on-surface mb-4">
+                        {activityEditor.mode === 'add' ? (t.addActivity || 'Add activity') : (t.editActivity || 'Edit activity')}
+                    </div>
+                    <div className="space-y-3">
+                        <input
+                            value={activityEditor.name}
+                            onChange={(e) => setActivityEditor({ ...activityEditor, name: e.target.value })}
+                            placeholder={localSettings.language === 'de' ? 'Name' : 'Name'}
+                            className="w-full py-2 px-3 rounded-m3-md border border-m3-outline-variant bg-m3-surface-container text-m3-on-surface"
+                        />
+                        <input
+                            value={activityEditor.emoji}
+                            onChange={(e) => setActivityEditor({ ...activityEditor, emoji: e.target.value })}
+                            placeholder="Emoji"
+                            className="w-full py-2 px-3 rounded-m3-md border border-m3-outline-variant bg-m3-surface-container text-m3-on-surface"
+                        />
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                        <button
+                            onClick={() => setActivityEditor(null)}
+                            className="flex-1 py-2 rounded-m3-md bg-m3-surface-container text-m3-on-surface font-bold"
+                        >
+                            {t.cancel || 'Cancel'}
+                        </button>
+                        <button
+                            onClick={saveActivityEditor}
+                            disabled={!activityEditor.name?.trim()}
+                            className="flex-1 py-2 rounded-m3-md bg-m3-primary text-m3-on-primary font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {t.save || 'Save'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+        {deleteCandidate && (
+            <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                <div className="w-full max-w-sm bg-m3-surface rounded-m3-xl shadow-m3-5 p-5">
+                    <div className="text-base font-bold text-m3-on-surface mb-2">{t.deleteActivity || 'Delete activity'}</div>
+                    <p className="text-sm text-m3-on-surface-variant mb-4">
+                        {localSettings.language === 'de'
+                            ? `Möchtest du "${getActivityLabel(deleteCandidate, localSettings.language)}" wirklich löschen?`
+                            : `Do you really want to delete "${getActivityLabel(deleteCandidate, localSettings.language)}"?`}
+                    </p>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setDeleteCandidate(null)}
+                            className="flex-1 py-2 rounded-m3-md bg-m3-surface-container text-m3-on-surface font-bold"
+                        >
+                            {t.cancel || 'Cancel'}
+                        </button>
+                        <button
+                            onClick={confirmDeleteActivity}
+                            className="flex-1 py-2 rounded-m3-md bg-m3-error-container text-m3-on-error-container font-bold"
+                        >
+                            {t.deleteActivity || 'Delete activity'}
+                        </button>
+                    </div>
+                </div>
+            </div>
         )}
         </>
     );
