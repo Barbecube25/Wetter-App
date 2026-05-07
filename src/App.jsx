@@ -490,6 +490,10 @@ const TRANSLATIONS = {
     addActivity: "Aktivität hinzufügen",
     editActivity: "Aktivität bearbeiten",
     deleteActivity: "Aktivität löschen",
+    activityAtLeastOneRequired: "Mindestens eine Aktivität muss bestehen bleiben.",
+    activityDeleteConfirm: "Möchtest du \"{name}\" wirklich löschen?",
+    activityNamePlaceholder: "Name",
+    activityEmojiPlaceholder: "Emoji",
     thunderstormRisk: "Gewitterrisiko",
     thunderstormRiskDetails: "Gewitterrisiko Details",
     thunderstormNone: "Kein Gewitter erwartet",
@@ -803,6 +807,10 @@ const TRANSLATIONS = {
     addActivity: "Add activity",
     editActivity: "Edit activity",
     deleteActivity: "Delete activity",
+    activityAtLeastOneRequired: "At least one activity must remain.",
+    activityDeleteConfirm: "Do you really want to delete \"{name}\"?",
+    activityNamePlaceholder: "Name",
+    activityEmojiPlaceholder: "Emoji",
     thunderstormRisk: "Thunderstorm Risk",
     thunderstormRiskDetails: "Thunderstorm Risk Details",
     thunderstormNone: "No thunderstorm expected",
@@ -1110,7 +1118,16 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Temp. max.",
     activityParamsMaxWind: "Vent max.",
     activityParamsRainOk: "Pluie légère OK",
+    activityParamsCloudOk: "Couverture nuageuse OK",
     activityParamsReset: "Réinitialiser",
+    manageActivities: "Gérer les activités",
+    addActivity: "Ajouter une activité",
+    editActivity: "Modifier l'activité",
+    deleteActivity: "Supprimer l'activité",
+    activityAtLeastOneRequired: "Au moins une activité doit rester.",
+    activityDeleteConfirm: "Voulez-vous vraiment supprimer \"{name}\" ?",
+    activityNamePlaceholder: "Nom",
+    activityEmojiPlaceholder: "Emoji",
     thunderstormRisk: "Risque d'orage",
     thunderstormRiskDetails: "Détails du risque d'orage",
     thunderstormNone: "Aucun orage prévu",
@@ -1418,7 +1435,16 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Temp. máx.",
     activityParamsMaxWind: "Viento máx.",
     activityParamsRainOk: "Lluvia ligera OK",
+    activityParamsCloudOk: "Nubosidad OK",
     activityParamsReset: "Restablecer",
+    manageActivities: "Gestionar actividades",
+    addActivity: "Añadir actividad",
+    editActivity: "Editar actividad",
+    deleteActivity: "Eliminar actividad",
+    activityAtLeastOneRequired: "Debe quedar al menos una actividad.",
+    activityDeleteConfirm: "¿Realmente quieres eliminar \"{name}\"?",
+    activityNamePlaceholder: "Nombre",
+    activityEmojiPlaceholder: "Emoji",
     thunderstormRisk: "Riesgo de tormenta",
     thunderstormRiskDetails: "Detalles del riesgo de tormenta",
     thunderstormNone: "No se esperan tormentas",
@@ -1726,7 +1752,16 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Temp. max.",
     activityParamsMaxWind: "Vento max.",
     activityParamsRainOk: "Pioggia leggera OK",
+    activityParamsCloudOk: "Nuvolosità OK",
     activityParamsReset: "Ripristina predefiniti",
+    manageActivities: "Gestisci attività",
+    addActivity: "Aggiungi attività",
+    editActivity: "Modifica attività",
+    deleteActivity: "Elimina attività",
+    activityAtLeastOneRequired: "Deve rimanere almeno un'attività.",
+    activityDeleteConfirm: "Vuoi davvero eliminare \"{name}\"?",
+    activityNamePlaceholder: "Nome",
+    activityEmojiPlaceholder: "Emoji",
     thunderstormRisk: "Rischio temporale",
     thunderstormRiskDetails: "Dettagli rischio temporale",
     thunderstormNone: "Nessun temporale previsto",
@@ -2034,7 +2069,16 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Maks. sıcaklık",
     activityParamsMaxWind: "Maks. rüzgar",
     activityParamsRainOk: "Hafif yağmur tamam",
+    activityParamsCloudOk: "Bulutluluk uygun",
     activityParamsReset: "Varsayılana sıfırla",
+    manageActivities: "Aktiviteleri yönet",
+    addActivity: "Aktivite ekle",
+    editActivity: "Aktiviteyi düzenle",
+    deleteActivity: "Aktiviteyi sil",
+    activityAtLeastOneRequired: "En az bir aktivite kalmalıdır.",
+    activityDeleteConfirm: "\"{name}\" aktivitesini gerçekten silmek istiyor musun?",
+    activityNamePlaceholder: "Ad",
+    activityEmojiPlaceholder: "Emoji",
     thunderstormRisk: "Fırtına Riski",
     thunderstormRiskDetails: "Fırtına Riski Detayları",
     thunderstormNone: "Fırtına beklenmiyor",
@@ -2342,7 +2386,16 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Maks. temperatura",
     activityParamsMaxWind: "Maks. wiatr",
     activityParamsRainOk: "Lekki deszcz OK",
+    activityParamsCloudOk: "Zachmurzenie OK",
     activityParamsReset: "Przywróć domyślne",
+    manageActivities: "Zarządzaj aktywnościami",
+    addActivity: "Dodaj aktywność",
+    editActivity: "Edytuj aktywność",
+    deleteActivity: "Usuń aktywność",
+    activityAtLeastOneRequired: "Musi pozostać co najmniej jedna aktywność.",
+    activityDeleteConfirm: "Czy na pewno chcesz usunąć „{name}”?",
+    activityNamePlaceholder: "Nazwa",
+    activityEmojiPlaceholder: "Emoji",
     thunderstormRisk: "Ryzyko burzy",
     thunderstormRiskDetails: "Szczegóły ryzyka burzy",
     thunderstormNone: "Brak burz",
@@ -2650,7 +2703,16 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Max. temperatuur",
     activityParamsMaxWind: "Max. wind",
     activityParamsRainOk: "Lichte regen OK",
+    activityParamsCloudOk: "Bewolking OK",
     activityParamsReset: "Standaard herstellen",
+    manageActivities: "Activiteiten beheren",
+    addActivity: "Activiteit toevoegen",
+    editActivity: "Activiteit bewerken",
+    deleteActivity: "Activiteit verwijderen",
+    activityAtLeastOneRequired: "Er moet minimaal één activiteit overblijven.",
+    activityDeleteConfirm: "Weet je zeker dat je \"{name}\" wilt verwijderen?",
+    activityNamePlaceholder: "Naam",
+    activityEmojiPlaceholder: "Emoji",
     thunderstormRisk: "Onweerrisico",
     thunderstormRiskDetails: "Onweerrisico details",
     thunderstormNone: "Geen onweer verwacht",
@@ -2958,7 +3020,16 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Maks. temperatura",
     activityParamsMaxWind: "Maks. vjetar",
     activityParamsRainOk: "Lagana kiša OK",
+    activityParamsCloudOk: "Naoblaka OK",
     activityParamsReset: "Vrati na zadano",
+    manageActivities: "Upravljanje aktivnostima",
+    addActivity: "Dodaj aktivnost",
+    editActivity: "Uredi aktivnost",
+    deleteActivity: "Izbriši aktivnost",
+    activityAtLeastOneRequired: "Mora ostati barem jedna aktivnost.",
+    activityDeleteConfirm: "Želite li stvarno izbrisati \"{name}\"?",
+    activityNamePlaceholder: "Naziv",
+    activityEmojiPlaceholder: "Emoji",
     thunderstormRisk: "Rizik od grmljavine",
     thunderstormRiskDetails: "Detalji rizika od grmljavine",
     thunderstormNone: "Nema grmljavine",
@@ -3266,7 +3337,16 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Μέγ. θερμοκρασία",
     activityParamsMaxWind: "Μέγ. άνεμος",
     activityParamsRainOk: "Ελαφριά βροχή OK",
+    activityParamsCloudOk: "Συννεφιά OK",
     activityParamsReset: "Επαναφορά προεπιλογών",
+    manageActivities: "Διαχείριση δραστηριοτήτων",
+    addActivity: "Προσθήκη δραστηριότητας",
+    editActivity: "Επεξεργασία δραστηριότητας",
+    deleteActivity: "Διαγραφή δραστηριότητας",
+    activityAtLeastOneRequired: "Πρέπει να παραμείνει τουλάχιστον μία δραστηριότητα.",
+    activityDeleteConfirm: "Θέλεις σίγουρα να διαγράψεις το \"{name}\";",
+    activityNamePlaceholder: "Όνομα",
+    activityEmojiPlaceholder: "Emoji",
     thunderstormRisk: "Κίνδυνος καταιγίδας",
     thunderstormRiskDetails: "Λεπτομέρειες κινδύνου καταιγίδας",
     thunderstormNone: "Δεν αναμένεται καταιγίδα",
@@ -3574,7 +3654,16 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Maks. temperatur",
     activityParamsMaxWind: "Maks. vind",
     activityParamsRainOk: "Let regn OK",
+    activityParamsCloudOk: "Skydække OK",
     activityParamsReset: "Nulstil til standard",
+    manageActivities: "Administrer aktiviteter",
+    addActivity: "Tilføj aktivitet",
+    editActivity: "Rediger aktivitet",
+    deleteActivity: "Slet aktivitet",
+    activityAtLeastOneRequired: "Mindst én aktivitet skal bevares.",
+    activityDeleteConfirm: "Vil du virkelig slette \"{name}\"?",
+    activityNamePlaceholder: "Navn",
+    activityEmojiPlaceholder: "Emoji",
     thunderstormRisk: "Tordenvejrsrisiko",
     thunderstormRiskDetails: "Tordenvejrsrisiko detaljer",
     thunderstormNone: "Intet tordenvejr forventet",
@@ -3882,7 +3971,16 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Макс. температура",
     activityParamsMaxWind: "Макс. ветер",
     activityParamsRainOk: "Лёгкий дождь OK",
+    activityParamsCloudOk: "Облачность допустима",
     activityParamsReset: "Сбросить настройки",
+    manageActivities: "Управление активностями",
+    addActivity: "Добавить активность",
+    editActivity: "Редактировать активность",
+    deleteActivity: "Удалить активность",
+    activityAtLeastOneRequired: "Должна остаться хотя бы одна активность.",
+    activityDeleteConfirm: "Вы действительно хотите удалить \"{name}\"?",
+    activityNamePlaceholder: "Название",
+    activityEmojiPlaceholder: "Emoji",
     thunderstormRisk: "Риск грозы",
     thunderstormRiskDetails: "Детали риска грозы",
     thunderstormNone: "Грозы не ожидается",
@@ -6500,7 +6598,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                                   disabled={activityDefinitions.length <= 1}
                                   className="p-1.5 rounded-md text-m3-on-surface-variant hover:text-m3-error hover:bg-m3-error-container/30 disabled:opacity-50 disabled:cursor-not-allowed"
                                   aria-label={t.deleteActivity || 'Delete activity'}
-                                  title={activityDefinitions.length <= 1 ? (localSettings.language === 'de' ? 'Mindestens eine Aktivität muss bestehen bleiben.' : 'At least one activity must remain.') : (t.deleteActivity || 'Delete activity')}
+                                  title={activityDefinitions.length <= 1 ? (t.activityAtLeastOneRequired || 'At least one activity must remain.') : (t.deleteActivity || 'Delete activity')}
                                 >
                                   <Trash2 size={14} />
                                 </button>
@@ -6563,13 +6661,13 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                         <input
                             value={activityEditor.name}
                             onChange={(e) => setActivityEditor({ ...activityEditor, name: e.target.value })}
-                            placeholder="Name"
+                            placeholder={t.activityNamePlaceholder || 'Name'}
                             className="w-full py-2 px-3 rounded-m3-md border border-m3-outline-variant bg-m3-surface-container text-m3-on-surface"
                         />
                         <input
                             value={activityEditor.emoji}
                             onChange={(e) => setActivityEditor({ ...activityEditor, emoji: e.target.value })}
-                            placeholder="Emoji"
+                            placeholder={t.activityEmojiPlaceholder || 'Emoji'}
                             className="w-full py-2 px-3 rounded-m3-md border border-m3-outline-variant bg-m3-surface-container text-m3-on-surface"
                         />
                     </div>
@@ -6596,9 +6694,8 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                 <div className="w-full max-w-sm bg-m3-surface rounded-m3-xl shadow-m3-5 p-5">
                     <div className="text-base font-bold text-m3-on-surface mb-2">{t.deleteActivity || 'Delete activity'}</div>
                     <p className="text-sm text-m3-on-surface-variant mb-4">
-                        {localSettings.language === 'de'
-                            ? `Möchtest du "${getActivityLabel(deleteCandidate, localSettings.language)}" wirklich löschen?`
-                            : `Do you really want to delete "${getActivityLabel(deleteCandidate, localSettings.language)}"?`}
+                        {(t.activityDeleteConfirm || 'Do you really want to delete "{name}"?')
+                            .replace('{name}', getActivityLabel(deleteCandidate, localSettings.language))}
                     </p>
                     <div className="flex gap-2">
                         <button
