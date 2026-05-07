@@ -7781,30 +7781,32 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
             const dateStr = formatDateShort(hour.time, lang);
             const surfaceBg = isRealNight ? 'bg-m3-dark-surface-container/80' : 'bg-m3-surface-container/80';
             return (
-              <div 
-                key={hour.time.toISOString()} 
-                className={`flex flex-col items-center backdrop-blur-sm rounded-m3-xl p-3 w-full shadow-m3-1 hover:shadow-m3-2 transition-all ${isNow ? 'bg-m3-primary/15 border-2 border-m3-primary/60' : `${surfaceBg} border border-m3-outline-variant/30`}`}
+              <div
+                key={hour.time.toISOString()}
+                className={`grid grid-cols-[auto_auto_1fr_auto_auto] items-center gap-2 backdrop-blur-sm rounded-m3-xl px-3 py-2 w-full shadow-m3-1 hover:shadow-m3-2 transition-all ${isNow ? 'bg-m3-primary/15 border-2 border-m3-primary/60' : `${surfaceBg} border border-m3-outline-variant/30`}`}
               >
                 {/* Time & Date */}
-                <div className={`text-base font-bold mb-0.5 ${isNow ? 'text-m3-primary' : 'text-m3-on-surface'}`}>
-                  {isNow ? t.now : hour.displayTime}
+                <div className="flex flex-col min-w-[64px]">
+                  <div className={`text-sm font-bold leading-tight ${isNow ? 'text-m3-primary' : 'text-m3-on-surface'}`}>
+                    {isNow ? t.now : hour.displayTime}
+                  </div>
+                  <div className="text-xs font-medium text-m3-on-surface-variant leading-tight">{dateStr}</div>
                 </div>
-                <div className="text-xs mb-2 font-medium text-m3-on-surface-variant">{dateStr}</div>
 
                 {/* Icon */}
-                <WeatherIcon size={48} className="mb-2 text-m3-on-surface" />
+                <WeatherIcon size={24} className="text-m3-on-surface" />
 
                 {/* Temp Range */}
-                <div className="flex items-center gap-2 mb-2 w-full justify-center">
-                  <span className="text-2xl font-bold text-blue-400">{formatTemp(minTemp)}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}</span>
-                  <div className="h-1 w-6 bg-white/10 rounded-full overflow-hidden">
+                <div className="flex items-center gap-1 min-w-0">
+                  <span className="text-sm font-bold text-blue-400">{formatTemp(minTemp)}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}</span>
+                  <div className="h-1 w-4 bg-white/10 rounded-full overflow-hidden">
                     <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
                   </div>
-                  <span className="text-2xl font-bold text-red-400">{formatTemp(maxTemp)}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}</span>
+                  <span className="text-sm font-bold text-red-400">{formatTemp(maxTemp)}{getTempUnitSymbol ? getTempUnitSymbol() : '°'}</span>
                 </div>
 
                 {/* Precipitation Badge */}
-                <div className="mb-1 min-h-[16px] flex flex-col items-center justify-center w-full gap-0.5">
+                <div className="min-h-[16px] flex items-center justify-end min-w-[72px]">
                   {rainValue > 0.1 && snowValue > 0.1 ? (
                     <>
                       <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><CloudRain size={10}/> {formatPrecip ? formatPrecip(rainValue) : rainValue.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}</span>
@@ -7821,10 +7823,10 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
 
                 {/* Wind Badge */}
                 {formatWind && getWindUnitLabel && (
-                  <div className="flex flex-col items-center gap-0.5 mb-1 w-full">
-                    <div className="flex items-center justify-center gap-1 w-full">
+                  <div className="flex items-center justify-end gap-1 min-w-[76px]">
+                    <div className="flex items-center justify-end gap-1">
                       <Navigation size={12} style={{ transform: `rotate(${hour.dir || 0}deg)` }} />
-                      <span className={`text-sm font-bold ${getWindColorClass(hour.wind || 0, isRealNight)}`}>{formatWind(hour.wind || 0)} {getWindUnitLabel()}</span>
+                      <span className={`text-xs font-bold ${getWindColorClass(hour.wind || 0, isRealNight)}`}>{formatWind(hour.wind || 0)} {getWindUnitLabel()}</span>
                     </div>
                   </div>
                 )}
@@ -15123,24 +15125,26 @@ export default function WeatherApp() {
                       if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
 
                       return (
-                        <div key={i} className={`flex flex-col items-center ${isRealNight ? 'bg-m3-dark-surface-container/80' : 'bg-m3-surface-container/80'} backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl p-3 w-full shadow-m3-1 hover:shadow-m3-2 transition-all relative group`}>
+                        <div key={i} className={`grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 ${isRealNight ? 'bg-m3-dark-surface-container/80' : 'bg-m3-surface-container/80'} backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl px-3 py-2 w-full shadow-m3-1 hover:shadow-m3-2 transition-all relative group`}>
                           {/* Day & Date */}
-                          <div className="text-base font-bold mb-0.5 text-m3-on-surface">{day.dayName}</div>
-                          <div className="text-xs mb-2 font-medium text-m3-on-surface-variant">{day.dateShort}</div>
+                          <div className="flex flex-col min-w-0">
+                            <div className="text-sm font-bold text-m3-on-surface truncate">{day.dayName}</div>
+                            <div className="text-xs font-medium text-m3-on-surface-variant truncate">{day.dateShort}</div>
+                          </div>
                           
                           {/* Icon */}
-                          <DayIcon size={48} className="mb-2 text-m3-on-surface" />
+                          <DayIcon size={24} className="text-m3-on-surface" />
                           
                           {/* Temp Range */}
-                          <div className="flex items-center gap-2 mb-2 w-full justify-center">
-                            <span className="text-2xl font-bold text-blue-400">{formatTemp(day.min)}{getTempUnitSymbol()}</span>
-                            <div className="h-1 w-6 bg-white/10 rounded-full overflow-hidden">
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm font-bold text-blue-400">{formatTemp(day.min)}{getTempUnitSymbol()}</span>
+                            <div className="h-1 w-4 bg-white/10 rounded-full overflow-hidden">
                                <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
                             </div>
-                            <span className="text-2xl font-bold text-red-400">{formatTemp(day.max)}{getTempUnitSymbol()}</span>
+                            <span className="text-sm font-bold text-red-400">{formatTemp(day.max)}{getTempUnitSymbol()}</span>
                          </div>
                           
-                           <div className="mb-1 min-h-[16px] flex flex-col items-center justify-center w-full gap-0.5">
+                           <div className="min-h-[16px] flex items-center justify-end min-w-[72px]">
                               {parseFloat(day.rain) > 0.1 && parseFloat(day.snow) > 0.1 ? (
                                 // Mixed precipitation - show both
                                 <>
@@ -15155,24 +15159,15 @@ export default function WeatherApp() {
                                 <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {formatPrecip(day.rain)}{getPrecipUnitLabel()}</span>
                               ) : ( <span className="opacity-20 text-xs">-</span> )}
                            </div>
-                           <div className={`text-xs mb-2 ${probColor} h-3`}>{day.prob > 0 ? `${day.prob}% ${t('probability')}` : ''}</div>
-                           
                            {/* Wind */}
-                           <div className="flex flex-col items-center gap-0.5 mb-2 w-full">
-                               <div className="flex items-center justify-center gap-1 w-full">
+                           <div className="flex items-center justify-end min-w-[76px]">
+                               <div className="flex items-center justify-end gap-1">
                                   <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
-                                  <span className={`text-sm font-bold ${getWindColorClass(day.wind, isRealNight)}`}>{formatWind(day.wind)} {getWindUnitLabel()}</span>
+                                  <span className={`text-xs font-bold ${getWindColorClass(day.wind, isRealNight)}`}>{formatWind(day.wind)} {getWindUnitLabel()}</span>
                                </div>
-                               <span className={`text-xs font-medium ${getWindColorClass(day.gust, isRealNight)}`}>{t('gusts')} {formatWind(day.gust)} {getWindUnitLabel()}</span>
                            </div>
-
-                           {/* Reliability Indicator */}
-                           <div className={`mt-1 text-xs flex items-center gap-1 border border-m3-outline-variant/30 ${isRealNight ? 'bg-m3-dark-surface-container-highest/50' : 'bg-m3-surface-container-highest/50'} px-2 py-0.5 rounded-full`}>
-                              <ShieldCheck size={10} className={confColor} />
-                              <span className={confColor}>{day.reliability}% {t('safe')}</span>
-                           </div>
-                           
-                        </div>
+                            
+                         </div>
                       );
                     })}
                   </div>
