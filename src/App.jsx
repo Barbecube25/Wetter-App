@@ -13772,9 +13772,9 @@ export default function WeatherApp() {
   const detailTileBaseClass = 'h-full px-3 py-3 flex flex-col items-center justify-center text-center gap-2 [container-type:inline-size]';
   const detailTileSurfaceClass = `rounded-m3-2xl shadow-m3-2 border ${detailTileBaseClass}`;
   const detailTileInteractiveClass = `${detailTileSurfaceClass} cursor-pointer transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]`;
-  const detailTileLabelClass = `w-full flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small text-[clamp(0.62rem,6.5cqi,0.82rem)] leading-tight font-bold`;
-  const detailTileValueClass = 'text-base sm:text-lg md:text-xl lg:text-2xl text-[clamp(1rem,12cqi,1.7rem)] leading-tight font-black break-words [overflow-wrap:anywhere]';
-  const detailTileMetaClass = 'text-[11px] sm:text-xs text-[clamp(0.62rem,5.5cqi,0.85rem)] font-semibold leading-tight break-words [overflow-wrap:anywhere]';
+  const detailTileLabelClass = `w-full flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-[clamp(0.62rem,6.5cqi,0.82rem)] leading-tight font-bold`;
+  const detailTileValueClass = 'text-[clamp(1rem,12cqi,1.7rem)] leading-tight font-black break-words [overflow-wrap:anywhere]';
+  const detailTileMetaClass = 'text-[clamp(0.62rem,5.5cqi,0.85rem)] font-semibold leading-tight break-words [overflow-wrap:anywhere]';
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
 
   // Helper function to get responsive layout dimensions based on device orientation and size
