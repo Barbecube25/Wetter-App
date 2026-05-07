@@ -13768,8 +13768,9 @@ export default function WeatherApp() {
   const textColor = isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface';
   const cardBg = isRealNight ? 'bg-m3-dark-surface-container/90 border-m3-outline-variant/70 text-m3-dark-on-surface' : 'bg-m3-surface-container/80 border-m3-outline-variant/40 text-m3-on-surface';
   const tileBg = isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/50 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant';
-  const detailTileBaseClass = 'rounded-m3-xl px-3 py-2.5 shadow-m3-1 border min-h-[96px] h-full flex flex-col justify-between gap-1.5';
-  const detailTileInteractiveClass = `${detailTileBaseClass} cursor-pointer active:scale-[0.98] transition-transform`;
+  const detailTileBaseClass = 'px-3 py-2.5 min-h-[96px] h-full flex flex-col justify-between gap-1.5';
+  const detailTileSurfaceClass = `rounded-m3-xl shadow-m3-1 border ${detailTileBaseClass}`;
+  const detailTileInteractiveClass = `${detailTileSurfaceClass} cursor-pointer active:scale-[0.98] transition-transform duration-200`;
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
 
   // Helper function to get responsive layout dimensions based on device orientation and size
@@ -14827,7 +14828,7 @@ export default function WeatherApp() {
 
           {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) ? (
             <div 
-              className="bg-m3-tertiary-container rounded-m3-xl px-3 py-2.5 border border-m3-tertiary shadow-m3-1 relative overflow-hidden min-h-[96px] h-full flex flex-col justify-between gap-1.5"
+              className={`bg-m3-tertiary-container border-m3-tertiary ${detailTileSurfaceClass} relative overflow-hidden`}
             >
               <div className="flex items-center gap-2 text-m3-on-tertiary-container text-m3-label-small mb-1">
                 {next24HoursPrecip.snow > 0.1 ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
@@ -14854,7 +14855,7 @@ export default function WeatherApp() {
               </div>
             </div>
           ) : (
-            <div className={`${tileBg} ${detailTileBaseClass}`}>
+            <div className={`${tileBg} ${detailTileSurfaceClass}`}>
               <div className={`flex items-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                 <CloudRain size={14}/> {t('precip24h')}
               </div>
