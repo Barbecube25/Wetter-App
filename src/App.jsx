@@ -7790,7 +7790,7 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
                   <div className={`text-sm font-bold leading-tight ${isNow ? 'text-m3-primary' : 'text-m3-on-surface'}`}>
                     {isNow ? t.now : hour.displayTime}
                   </div>
-                  <div className="text-[10px] font-medium text-m3-on-surface-variant leading-tight">{dateStr}</div>
+                  <div className="text-xs font-medium text-m3-on-surface-variant leading-tight">{dateStr}</div>
                 </div>
 
                 {/* Icon */}
@@ -15129,7 +15129,7 @@ export default function WeatherApp() {
                           {/* Day & Date */}
                           <div className="flex flex-col min-w-0">
                             <div className="text-sm font-bold text-m3-on-surface truncate">{day.dayName}</div>
-                            <div className="text-[10px] font-medium text-m3-on-surface-variant truncate">{day.dateShort}</div>
+                            <div className="text-xs font-medium text-m3-on-surface-variant truncate">{day.dateShort}</div>
                           </div>
                           
                           {/* Icon */}
