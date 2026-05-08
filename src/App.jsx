@@ -11303,7 +11303,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                     {currentStep.content === 'units' && (
                         <div className="space-y-4">
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
-                                <div className="text-sm font-bold text-m3-on-surface mb-3">{t.units}: {t.feelsLike || 'Temperatur'}</div>
+                                <div className="text-sm font-bold text-m3-on-surface mb-3">{t.tutorialTempUnitLabel || 'Temperatur'}</div>
                                 <div className="grid grid-cols-3 gap-2">
                                     {[
                                         { key: 'celsius', label: '°C' },
