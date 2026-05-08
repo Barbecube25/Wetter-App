@@ -8521,6 +8521,9 @@ const renderWithColoredTemps = (text) => {
 
 const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, getWindUnitLabel, formatPrecip, getPrecipUnitLabel, getTempUnitSymbol }) => {
   const [expanded, setExpanded] = useState(false);
+  const [activeQuickDay, setActiveQuickDay] = useState('today');
+  const [quickViewSwipeOffset, setQuickViewSwipeOffset] = useState(0);
+  const touchStartXRef = useRef(null);
   if (!report) return null;
   const { title, summary, details, warning: localWarning, confidence, structuredDetails, tripDetails, visualData } = report;
   
@@ -8532,6 +8535,36 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
   const getPrecipUnitLabelSafe = getPrecipUnitLabel || (() => 'mm');
   const formatPrecipSafe = formatPrecip || ((val) => (val ?? '--'));
   const showTripDetails = report.type === 'trip' && Array.isArray(tripDetails) && tripDetails.length > 0;
+  const quickViewSwipeThreshold = 50;
+
+  useEffect(() => {
+    if (activeQuickDay === 'tomorrow' && (!visualData || visualData.tomorrowMinTemp === null)) {
+      setActiveQuickDay('today');
+    }
+  }, [activeQuickDay, visualData]);
+
+  const handleQuickViewTouchStart = (e) => {
+    touchStartXRef.current = e.touches?.[0]?.clientX ?? null;
+    setQuickViewSwipeOffset(0);
+  };
+
+  const handleQuickViewTouchMove = (e) => {
+    if (touchStartXRef.current === null) return;
+    const currentX = e.touches?.[0]?.clientX;
+    if (typeof currentX !== 'number') return;
+    const rawDelta = currentX - touchStartXRef.current;
+    const clampedDelta = Math.max(-90, Math.min(90, rawDelta));
+    setQuickViewSwipeOffset(clampedDelta);
+  };
+
+  const handleQuickViewTouchEnd = () => {
+    if (Math.abs(quickViewSwipeOffset) >= quickViewSwipeThreshold) {
+      if (quickViewSwipeOffset < 0 && activeQuickDay === 'today') setActiveQuickDay('tomorrow');
+      if (quickViewSwipeOffset > 0 && activeQuickDay === 'tomorrow') setActiveQuickDay('today');
+    }
+    touchStartXRef.current = null;
+    setQuickViewSwipeOffset(0);
+  };
   
   let maxSeverityLevel = 0; 
   if (hasDwd) {
@@ -8633,136 +8666,147 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                 {report.type === 'daily' && visualData && (() => {
                   const tempUnit = getTempUnitSymbol ? getTempUnitSymbol() : '°';
                   const tsChipClass = (wl) => wl >= 4
-                    ? 'flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border bg-purple-500/20 text-purple-700 border-purple-400/40'
-                    : wl >= 3 ? 'flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border bg-red-500/20 text-red-600 border-red-400/40'
-                    : wl >= 2 ? 'flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border bg-orange-400/20 text-orange-600 border-orange-400/40'
-                    : 'flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border bg-yellow-300/20 text-yellow-700 border-yellow-400/40';
+                    ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-purple-500/20 text-purple-700 border-purple-400/40'
+                    : wl >= 3 ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-red-500/20 text-red-600 border-red-400/40'
+                    : wl >= 2 ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-orange-400/20 text-orange-600 border-orange-400/40'
+                    : 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-yellow-300/20 text-yellow-700 border-yellow-400/40';
                   const pollenChipClass = (lvl) => lvl >= 4
-                    ? 'flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border bg-red-500/15 text-red-600 border-red-400/40'
-                    : lvl >= 3 ? 'flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border bg-orange-400/15 text-orange-600 border-orange-400/40'
-                    : lvl >= 2 ? 'flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border bg-yellow-300/15 text-yellow-700 border-yellow-400/40'
-                    : 'flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border bg-green-500/15 text-green-700 border-green-400/40';
+                    ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-red-500/15 text-red-600 border-red-400/40'
+                    : lvl >= 3 ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-orange-400/15 text-orange-600 border-orange-400/40'
+                    : lvl >= 2 ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-yellow-300/15 text-yellow-700 border-yellow-400/40'
+                    : 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-green-500/15 text-green-700 border-green-400/40';
                   const pollenLevelLabel = (lvl) => lvl >= 4 ? t.pollenVeryHigh : lvl >= 3 ? t.pollenHigh : lvl >= 2 ? t.pollenModerate : t.pollenLow;
+                  const quickDays = [
+                    {
+                      key: 'today',
+                      label: t.today,
+                      minTemp: visualData.minTemp,
+                      maxTemp: visualData.maxTemp,
+                      rainSum: visualData.rainSum,
+                      rainProb: visualData.rainProb,
+                      maxWind: visualData.maxWind,
+                      maxUV: visualData.maxUV,
+                      feelsLike: visualData.feelsLike,
+                      thunderstormRisk: visualData.thunderstormRisk,
+                      thunderstormWarnLevel: visualData.thunderstormWarnLevel,
+                      pollenLevel: visualData.pollenLevel,
+                      pollenTopLabel: visualData.pollenTopLabel,
+                    },
+                  ];
+                  if (visualData.tomorrowMinTemp !== null) {
+                    quickDays.push({
+                      key: 'tomorrow',
+                      label: t.tomorrow,
+                      minTemp: visualData.tomorrowMinTemp,
+                      maxTemp: visualData.tomorrowMaxTemp,
+                      rainSum: visualData.tomorrowRainSum,
+                      rainProb: visualData.tomorrowRainProb,
+                      maxWind: visualData.tomorrowMaxWind,
+                      maxUV: visualData.tomorrowMaxUV,
+                      feelsLike: null,
+                      thunderstormRisk: visualData.thunderstormRiskTomorrow,
+                      thunderstormWarnLevel: visualData.thunderstormWarnLevelTomorrow,
+                      pollenLevel: visualData.pollenLevelTomorrow,
+                      pollenTopLabel: visualData.pollenTopLabelTomorrow,
+                    });
+                  }
+
+                  const activeQuickDayIndex = Math.max(0, quickDays.findIndex((day) => day.key === activeQuickDay));
+                  const renderQuickDayChips = (day) => (
+                    <div className="flex flex-wrap gap-2">
+                      <div className="flex items-center gap-1.5 bg-m3-surface-container-high rounded-full px-3 py-1.5 font-extrabold border border-m3-outline-variant shadow-sm">
+                        <Thermometer size={16} className="text-blue-400 shrink-0"/>
+                        <span className="text-blue-400 text-base">{tempFunc ? tempFunc(day.minTemp) : day.minTemp}{tempUnit}</span>
+                        <div className="w-6 h-1.5 rounded-full bg-gradient-to-r from-blue-400 to-red-400 shrink-0"/>
+                        <span className="text-red-400 text-base">{tempFunc ? tempFunc(day.maxTemp) : day.maxTemp}{tempUnit}</span>
+                      </div>
+                      {day.rainSum > 0.1 && (
+                        <div className="flex items-center gap-1 bg-blue-500/10 rounded-full px-3 py-1.5 text-base font-bold text-blue-500 border border-blue-400/30">
+                          <Droplets size={14} className="shrink-0"/>
+                          <span>{formatPrecipSafe(day.rainSum)}{getPrecipUnitLabelSafe()}</span>
+                        </div>
+                      )}
+                      {day.rainProb >= 15 && (
+                        <div className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border ${day.rainProb >= 60 ? 'bg-blue-600/20 text-blue-600 border-blue-500/30' : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant'}`}>
+                          <Umbrella size={14} className="shrink-0"/>
+                          <span>{Math.round(day.rainProb)}%</span>
+                        </div>
+                      )}
+                      {day.maxWind >= 20 && (
+                        <div className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border border-m3-outline-variant bg-m3-surface-container-high ${getWindColorClass(day.maxWind, false)}`}>
+                          <Wind size={14} className="shrink-0"/>
+                          <span>{formatWindSafe(day.maxWind)} {getWindUnitLabelSafe()}</span>
+                        </div>
+                      )}
+                      {day.maxUV >= 3 && (
+                        <div className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border ${day.maxUV >= 8 ? 'bg-red-500/20 text-red-500 border-red-400/30' : day.maxUV >= 6 ? 'bg-orange-400/20 text-orange-500 border-orange-400/30' : 'bg-yellow-300/20 text-yellow-600 border-yellow-400/30'}`}>
+                          <Sun size={14} className="shrink-0"/>
+                          <span>UV {day.maxUV}</span>
+                        </div>
+                      )}
+                      {day.feelsLike !== null && (
+                        <div className="flex items-center gap-1 bg-m3-surface-container-high rounded-full px-3 py-1.5 text-base font-bold border border-m3-outline-variant text-m3-on-surface-variant">
+                          <Activity size={14} className="shrink-0"/>
+                          <span>{tempFunc ? tempFunc(day.feelsLike) : day.feelsLike}{tempUnit}</span>
+                        </div>
+                      )}
+                      {day.thunderstormRisk > 0 && (
+                        <div className={tsChipClass(day.thunderstormWarnLevel)}>
+                          <CloudLightning size={14} className="shrink-0"/>
+                          <span>{t.thunderstormWarningLevel} {day.thunderstormWarnLevel}</span>
+                        </div>
+                      )}
+                      {day.pollenLevel > 0 && (
+                        <div className={pollenChipClass(day.pollenLevel)}>
+                          <Leaf size={14} className="shrink-0"/>
+                          <span>{day.pollenTopLabel ? `${day.pollenTopLabel} · ` : ''}{pollenLevelLabel(day.pollenLevel)}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
                   return (
                     <div className="space-y-2 mb-2">
-                      {/* Today row */}
-                      <div className="flex flex-wrap gap-2">
-                        {/* Temperature range – more prominent */}
-                        <div className="flex items-center gap-1.5 bg-m3-surface-container-high rounded-full px-3 py-1.5 font-extrabold border border-m3-outline-variant shadow-sm">
-                          <Thermometer size={16} className="text-blue-400 shrink-0"/>
-                          <span className="text-blue-400 text-base">{tempFunc ? tempFunc(visualData.minTemp) : visualData.minTemp}{tempUnit}</span>
-                          <div className="w-6 h-1.5 rounded-full bg-gradient-to-r from-blue-400 to-red-400 shrink-0"/>
-                          <span className="text-red-400 text-base">{tempFunc ? tempFunc(visualData.maxTemp) : visualData.maxTemp}{tempUnit}</span>
+                      {quickDays.length > 1 && (
+                        <div className="grid grid-cols-2 gap-2">
+                          {quickDays.map((day) => (
+                            <button
+                              key={day.key}
+                              onClick={() => setActiveQuickDay(day.key)}
+                              className={`rounded-lg px-3 py-2 text-base font-bold border transition-all duration-300 ${
+                                activeQuickDay === day.key
+                                  ? 'bg-m3-primary-container text-m3-on-primary-container border-m3-primary shadow-sm'
+                                  : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant'
+                              }`}
+                            >
+                              {day.label}
+                            </button>
+                          ))}
                         </div>
-                        {/* Rain amount */}
-                        {visualData.rainSum > 0.1 && (
-                          <div className="flex items-center gap-1 bg-blue-500/10 rounded-full px-3 py-1 text-sm font-bold text-blue-500 border border-blue-400/30">
-                            <Droplets size={14} className="shrink-0"/>
-                            <span>{formatPrecipSafe(visualData.rainSum)}{getPrecipUnitLabelSafe()}</span>
-                          </div>
-                        )}
-                        {/* Rain probability */}
-                        {visualData.rainProb >= 15 && (
-                          <div className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border ${visualData.rainProb >= 60 ? 'bg-blue-600/20 text-blue-600 border-blue-500/30' : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant'}`}>
-                            <Umbrella size={14} className="shrink-0"/>
-                            <span>{Math.round(visualData.rainProb)}%</span>
-                          </div>
-                        )}
-                        {/* Wind */}
-                        {visualData.maxWind >= 20 && (
-                          <div className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border border-m3-outline-variant bg-m3-surface-container-high ${getWindColorClass(visualData.maxWind, false)}`}>
-                            <Wind size={14} className="shrink-0"/>
-                            <span>{formatWindSafe(visualData.maxWind)} {getWindUnitLabelSafe()}</span>
-                          </div>
-                        )}
-                        {/* UV */}
-                        {visualData.maxUV >= 3 && (
-                          <div className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border ${visualData.maxUV >= 8 ? 'bg-red-500/20 text-red-500 border-red-400/30' : visualData.maxUV >= 6 ? 'bg-orange-400/20 text-orange-500 border-orange-400/30' : 'bg-yellow-300/20 text-yellow-600 border-yellow-400/30'}`}>
-                            <Sun size={14} className="shrink-0"/>
-                            <span>UV {visualData.maxUV}</span>
-                          </div>
-                        )}
-                        {/* Feels like */}
-                        {visualData.feelsLike !== null && (
-                          <div className="flex items-center gap-1 bg-m3-surface-container-high rounded-full px-3 py-1 text-sm font-bold border border-m3-outline-variant text-m3-on-surface-variant">
-                            <Activity size={14} className="shrink-0"/>
-                            <span>{tempFunc ? tempFunc(visualData.feelsLike) : visualData.feelsLike}{tempUnit}</span>
-                          </div>
-                        )}
-                        {/* Thunderstorm chip – today */}
-                        {visualData.thunderstormRisk > 0 && (
-                          <div className={tsChipClass(visualData.thunderstormWarnLevel)}>
-                            <CloudLightning size={14} className="shrink-0"/>
-                            <span>{t.thunderstormWarningLevel} {visualData.thunderstormWarnLevel}</span>
-                          </div>
-                        )}
-                        {/* Pollen chip – today */}
-                        {visualData.pollenLevel > 0 && (
-                          <div className={pollenChipClass(visualData.pollenLevel)}>
-                            <Leaf size={14} className="shrink-0"/>
-                            <span>{visualData.pollenTopLabel ? `${visualData.pollenTopLabel} · ` : ''}{pollenLevelLabel(visualData.pollenLevel)}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Separator + Tomorrow row */}
-                      {visualData.tomorrowMinTemp !== null && (
-                        <>
-                          <hr className="border-m3-outline-variant/40"/>
-                          <span className="text-xs font-semibold text-m3-on-surface-variant">🌅 {t.tomorrow}:</span>
-                          <div className="flex flex-wrap gap-2">
-                            {/* Tomorrow temperature range */}
-                            <div className="flex items-center gap-1.5 bg-m3-surface-container-high rounded-full px-3 py-1 font-extrabold border border-m3-outline-variant">
-                              <Thermometer size={14} className="text-blue-400 shrink-0"/>
-                              <span className="text-blue-400 text-sm">{tempFunc ? tempFunc(visualData.tomorrowMinTemp) : visualData.tomorrowMinTemp}{tempUnit}</span>
-                              <div className="w-5 h-1.5 rounded-full bg-gradient-to-r from-blue-400 to-red-400 shrink-0"/>
-                              <span className="text-red-400 text-sm">{tempFunc ? tempFunc(visualData.tomorrowMaxTemp) : visualData.tomorrowMaxTemp}{tempUnit}</span>
-                            </div>
-                            {/* Rain amount – tomorrow */}
-                            {visualData.tomorrowRainSum > 0.1 && (
-                              <div className="flex items-center gap-1 bg-blue-500/10 rounded-full px-3 py-1 text-sm font-bold text-blue-500 border border-blue-400/30">
-                                <Droplets size={14} className="shrink-0"/>
-                                <span>{formatPrecipSafe(visualData.tomorrowRainSum)}{getPrecipUnitLabelSafe()}</span>
-                              </div>
-                            )}
-                            {/* Rain probability – tomorrow */}
-                            {visualData.tomorrowRainProb >= 15 && (
-                              <div className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border ${visualData.tomorrowRainProb >= 60 ? 'bg-blue-600/20 text-blue-600 border-blue-500/30' : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant'}`}>
-                                <Umbrella size={14} className="shrink-0"/>
-                                <span>{Math.round(visualData.tomorrowRainProb)}%</span>
-                              </div>
-                            )}
-                            {/* Wind – tomorrow */}
-                            {visualData.tomorrowMaxWind >= 20 && (
-                              <div className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border border-m3-outline-variant bg-m3-surface-container-high ${getWindColorClass(visualData.tomorrowMaxWind, false)}`}>
-                                <Wind size={14} className="shrink-0"/>
-                                <span>{formatWindSafe(visualData.tomorrowMaxWind)} {getWindUnitLabelSafe()}</span>
-                              </div>
-                            )}
-                            {/* UV – tomorrow */}
-                            {visualData.tomorrowMaxUV >= 3 && (
-                              <div className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold border ${visualData.tomorrowMaxUV >= 8 ? 'bg-red-500/20 text-red-500 border-red-400/30' : visualData.tomorrowMaxUV >= 6 ? 'bg-orange-400/20 text-orange-500 border-orange-400/30' : 'bg-yellow-300/20 text-yellow-600 border-yellow-400/30'}`}>
-                                <Sun size={14} className="shrink-0"/>
-                                <span>UV {visualData.tomorrowMaxUV}</span>
-                              </div>
-                            )}
-                            {/* Thunderstorm chip – tomorrow */}
-                            {visualData.thunderstormRiskTomorrow > 0 && (
-                              <div className={tsChipClass(visualData.thunderstormWarnLevelTomorrow)}>
-                                <CloudLightning size={14} className="shrink-0"/>
-                                <span>{t.thunderstormWarningLevel} {visualData.thunderstormWarnLevelTomorrow}</span>
-                              </div>
-                            )}
-                            {/* Pollen chip – tomorrow */}
-                            {visualData.pollenLevelTomorrow > 0 && (
-                              <div className={pollenChipClass(visualData.pollenLevelTomorrow)}>
-                                <Leaf size={14} className="shrink-0"/>
-                                <span>{visualData.pollenTopLabelTomorrow ? `${visualData.pollenTopLabelTomorrow} · ` : ''}{pollenLevelLabel(visualData.pollenLevelTomorrow)}</span>
-                              </div>
-                            )}
-                          </div>
-                        </>
                       )}
+
+                      <div
+                        className="overflow-hidden rounded-xl border border-m3-outline-variant/50 bg-m3-surface-container-high/50"
+                        onTouchStart={quickDays.length > 1 ? handleQuickViewTouchStart : undefined}
+                        onTouchMove={quickDays.length > 1 ? handleQuickViewTouchMove : undefined}
+                        onTouchEnd={quickDays.length > 1 ? handleQuickViewTouchEnd : undefined}
+                        onTouchCancel={quickDays.length > 1 ? handleQuickViewTouchEnd : undefined}
+                      >
+                        <div
+                          className="flex transition-transform duration-500 ease-out"
+                          style={{
+                            transform: `translateX(calc(${-activeQuickDayIndex * 100}% + ${quickViewSwipeOffset}px))`,
+                          }}
+                        >
+                          {quickDays.map((day) => (
+                            <div key={day.key} className="w-full shrink-0 p-3">
+                              <div className="text-base font-extrabold text-m3-on-surface-variant mb-2">
+                                <span role="img" aria-label={lang === 'en' ? 'partly cloudy' : 'teilweise bewölkt'}>🌤️</span> {day.label}
+                              </div>
+                              {renderQuickDayChips(day)}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   );
                 })()}
