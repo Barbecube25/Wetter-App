@@ -2,24 +2,36 @@
 
 Eine moderne Wetter-App mit React, Vite und Capacitor.
 
-## Einrichtung (Schnellstart)
+## Einrichtung am Anfang (Schnellstart + neue Schritte)
+
+### 1) Web-App lokal starten
 
 ```bash
-# 1) Abhängigkeiten installieren
+# Abhängigkeiten installieren
 npm install
 
-# 2) Entwicklungsserver starten
+# Entwicklungsserver starten
 npm run dev
 ```
 
 Die App ist dann unter `http://localhost:5173` verfügbar.
 
-Für Android-Builds:
+### 2) Android-Projekt mit aktuellem Stand vorbereiten
 
 ```bash
-npm run android:sync
+# Web Build + Capacitor Sync (empfohlener Start)
+npm run prepare:aab
+
+# Android Studio öffnen
 npm run android:open
 ```
+
+### 3) Wichtige neue Doku direkt nach der Einrichtung
+
+- 📱 [ANDROID_STUDIO_ANLEITUNG.md](./ANDROID_STUDIO_ANLEITUNG.md) – kompletter Android-Setup-Workflow
+- 🖥️ [FULLSCREEN_AND_NOTIFICATIONS.md](./FULLSCREEN_AND_NOTIFICATIONS.md) – Vollbildmodus & Benachrichtigungsstatus
+- 📦 [BUILD_AAB_ANLEITUNG.md](./BUILD_AAB_ANLEITUNG.md) – AAB-Build und Release
+- 🏪 [play-store-screenshots/README.md](./play-store-screenshots/README.md) – neue Play-Store-Screenshots & Upload-Hilfe
 
 ## Features
 
