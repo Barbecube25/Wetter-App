@@ -8560,7 +8560,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
   };
 
   const handleQuickViewTouchEnd = (e) => {
-    if (e) e.stopPropagation();
+    e.stopPropagation();
     if (Math.abs(quickViewSwipeOffset) >= quickViewSwipeThreshold) {
       if (quickViewSwipeOffset < 0 && activeQuickDay === 'today') setActiveQuickDay('tomorrow');
       if (quickViewSwipeOffset > 0 && activeQuickDay === 'tomorrow') setActiveQuickDay('today');
