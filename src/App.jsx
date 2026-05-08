@@ -11062,6 +11062,7 @@ const LANGUAGE_FLAGS = {
 const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de', isSmallScreen = false }) => {
     const [step, setStep] = useState(0);
     const [homeLocation, setHomeLocation] = useState(null);
+    const [unitsConfirmed, setUnitsConfirmed] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
@@ -11196,52 +11197,22 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
             content: 'language'
         },
         {
+            title: t.units,
+            desc: t.tutorialUnitsStepDesc || 'Wähle zu Beginn deine Maßeinheiten für Temperatur, Wind und Niederschlag.',
+            icon: Thermometer,
+            content: 'units'
+        },
+        {
             title: t.tutorialHomeTitle,
             desc: t.tutorialHomeDesc,
             icon: Home,
             content: 'home'
         },
         {
-            title: t.tutorialOverviewTitle,
-            desc: t.tutorialOverviewDesc,
-            icon: List,
-            content: 'tab'
-        },
-        {
-            title: t.tutorialWeatherTilesTitle,
-            desc: t.tutorialWeatherTilesDesc,
-            icon: TrendingUp,
-            content: 'weatherTiles'
-        },
-        {
-            title: t.tutorialPollenFilterTitle,
-            desc: t.tutorialPollenFilterDesc,
-            icon: Sparkles,
-            content: 'pollenFilter'
-        },
-        {
-            title: t.tutorialLongtermTitle,
-            desc: t.tutorialLongtermDesc,
-            icon: CalendarDays,
-            content: 'tab'
-        },
-        {
-            title: t.tutorialRadarTitle,
-            desc: t.tutorialRadarDesc,
-            icon: MapIcon,
-            content: 'tab'
-        },
-        {
-            title: t.tutorialChartTitle,
-            desc: t.tutorialChartDesc,
-            icon: BarChart2,
-            content: 'tab'
-        },
-        {
-            title: t.tutorialTravelTitle,
-            desc: t.tutorialTravelDesc,
-            icon: Plane,
-            content: 'tab'
+            title: t.tutorialCapabilitiesTitle || 'Das kann die App',
+            desc: t.tutorialCapabilitiesDesc || 'Hier siehst du die wichtigsten Funktionen auf einen Blick.',
+            icon: Star,
+            content: 'capabilities'
         },
         {
             title: t.tutorialSettingsTitle,
@@ -11326,6 +11297,90 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                                     {settings.language === l && <Check size={16} />}
                                 </button>
                             ))}
+                        </div>
+                    )}
+
+                    {currentStep.content === 'units' && (
+                        <div className="space-y-4">
+                            <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
+                                <div className="text-sm font-bold text-m3-on-surface mb-3">{t.units}: {t.feelsLike || 'Temperatur'}</div>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                        { key: 'celsius', label: '°C' },
+                                        { key: 'fahrenheit', label: '°F' },
+                                        { key: 'kelvin', label: 'K' }
+                                    ].map((option) => (
+                                        <button
+                                            key={option.key}
+                                            onClick={() => setSettings({ ...settings, unit: option.key })}
+                                            className={`py-2 rounded-m3-sm text-sm font-bold transition ${
+                                                settings.unit === option.key
+                                                    ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container'
+                                                    : 'bg-m3-surface text-m3-on-surface-variant hover:text-m3-on-surface'
+                                            }`}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
+                                <div className="text-sm font-bold text-m3-on-surface mb-3">{t.wind}</div>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {[
+                                        { key: 'kmh', label: 'km/h' },
+                                        { key: 'ms', label: 'm/s' },
+                                        { key: 'mph', label: 'mph' },
+                                        { key: 'beaufort', label: 'Bft' }
+                                    ].map((option) => (
+                                        <button
+                                            key={option.key}
+                                            onClick={() => setSettings({ ...settings, windUnit: option.key })}
+                                            className={`py-2 rounded-m3-sm text-sm font-bold transition ${
+                                                settings.windUnit === option.key
+                                                    ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container'
+                                                    : 'bg-m3-surface text-m3-on-surface-variant hover:text-m3-on-surface'
+                                            }`}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
+                                <div className="text-sm font-bold text-m3-on-surface mb-3">{t.precip}</div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {[
+                                        { key: 'mm', label: 'mm' },
+                                        { key: 'in', label: 'in' }
+                                    ].map((option) => (
+                                        <button
+                                            key={option.key}
+                                            onClick={() => setSettings({ ...settings, precipUnit: option.key })}
+                                            className={`py-2 rounded-m3-sm text-sm font-bold transition ${
+                                                settings.precipUnit === option.key
+                                                    ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container'
+                                                    : 'bg-m3-surface text-m3-on-surface-variant hover:text-m3-on-surface'
+                                            }`}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => setUnitsConfirmed(true)}
+                                className={`w-full py-3 rounded-m3-md font-bold transition ${
+                                    unitsConfirmed
+                                        ? 'bg-m3-tertiary-container text-m3-on-tertiary-container'
+                                        : 'bg-m3-primary text-m3-on-primary hover:bg-m3-primary/90'
+                                }`}
+                            >
+                                {unitsConfirmed ? (t.tutorialUnitsConfirmed || 'Einheiten bestätigt') : (t.tutorialUnitsConfirm || 'Einheiten bestätigen')}
+                            </button>
                         </div>
                     )}
                     
@@ -11573,6 +11628,27 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                             </div>
                         </div>
                     )}
+
+                    {currentStep.content === 'capabilities' && (
+                        <div className="space-y-3">
+                            <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
+                                <div className="font-bold text-m3-on-surface mb-1">🧠 {t.dailyReport}</div>
+                                <p className="text-xs text-m3-on-surface-variant">{t.tutorialOverviewDesc}</p>
+                            </div>
+                            <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
+                                <div className="font-bold text-m3-on-surface mb-1">📈 {t.trend} & {t.longterm}</div>
+                                <p className="text-xs text-m3-on-surface-variant">{t.tutorialLongtermDesc}</p>
+                            </div>
+                            <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
+                                <div className="font-bold text-m3-on-surface mb-1">🌧️ {t.precipRadar}</div>
+                                <p className="text-xs text-m3-on-surface-variant">{t.tutorialRadarDesc}</p>
+                            </div>
+                            <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
+                                <div className="font-bold text-m3-on-surface mb-1">🧳 {t.travelPlanner}</div>
+                                <p className="text-xs text-m3-on-surface-variant">{t.tutorialTravelDesc}</p>
+                            </div>
+                        </div>
+                    )}
                     
                     {isLastStep && (
                         <div className="bg-m3-tertiary-container rounded-m3-lg p-6 text-center border border-m3-tertiary mt-4">
@@ -11597,9 +11673,9 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                     )}
                     <button
                         onClick={handleNext}
-                        disabled={currentStep.content === 'home' && !homeLocation}
+                        disabled={(currentStep.content === 'home' && !homeLocation) || (currentStep.content === 'units' && !unitsConfirmed)}
                         className={`flex-1 py-3 bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary font-bold rounded-m3-md shadow-m3-2 transition flex items-center justify-center gap-2 ${
-                            currentStep.content === 'home' && !homeLocation ? 'opacity-50 cursor-not-allowed' : ''
+                            (currentStep.content === 'home' && !homeLocation) || (currentStep.content === 'units' && !unitsConfirmed) ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
                     >
                         {isLastStep ? t.tutorialFinish : t.tutorialNext}
