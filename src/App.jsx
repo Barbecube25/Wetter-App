@@ -11182,6 +11182,11 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
         setSearchResults([]);
         setSearchQuery("");
     };
+
+    const updateUnitSetting = (key, value) => {
+        setUnitsConfirmed(false);
+        setSettings({ ...settings, [key]: value });
+    };
     
     const steps = [
         {
@@ -11225,6 +11230,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
     const currentStep = steps[step];
     const Icon = currentStep.icon;
     const isLastStep = step === steps.length - 1;
+    const isNextDisabled = (currentStep.content === 'home' && !homeLocation) || (currentStep.content === 'units' && !unitsConfirmed);
     
     const handleNext = () => {
         if (isLastStep) {
@@ -11312,10 +11318,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                                     ].map((option) => (
                                         <button
                                             key={option.key}
-                                            onClick={() => {
-                                                setUnitsConfirmed(false);
-                                                setSettings({ ...settings, unit: option.key });
-                                            }}
+                                            onClick={() => updateUnitSetting('unit', option.key)}
                                             className={`py-2 rounded-m3-sm text-sm font-bold transition ${
                                                 settings.unit === option.key
                                                     ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container'
@@ -11339,10 +11342,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                                     ].map((option) => (
                                         <button
                                             key={option.key}
-                                            onClick={() => {
-                                                setUnitsConfirmed(false);
-                                                setSettings({ ...settings, windUnit: option.key });
-                                            }}
+                                            onClick={() => updateUnitSetting('windUnit', option.key)}
                                             className={`py-2 rounded-m3-sm text-sm font-bold transition ${
                                                 settings.windUnit === option.key
                                                     ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container'
@@ -11364,10 +11364,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                                     ].map((option) => (
                                         <button
                                             key={option.key}
-                                            onClick={() => {
-                                                setUnitsConfirmed(false);
-                                                setSettings({ ...settings, precipUnit: option.key });
-                                            }}
+                                            onClick={() => updateUnitSetting('precipUnit', option.key)}
                                             className={`py-2 rounded-m3-sm text-sm font-bold transition ${
                                                 settings.precipUnit === option.key
                                                     ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container'
@@ -11682,9 +11679,9 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                     )}
                     <button
                         onClick={handleNext}
-                        disabled={(currentStep.content === 'home' && !homeLocation) || (currentStep.content === 'units' && !unitsConfirmed)}
+                        disabled={isNextDisabled}
                         className={`flex-1 py-3 bg-m3-primary hover:bg-m3-primary/90 text-m3-on-primary font-bold rounded-m3-md shadow-m3-2 transition flex items-center justify-center gap-2 ${
-                            (currentStep.content === 'home' && !homeLocation) || (currentStep.content === 'units' && !unitsConfirmed) ? 'opacity-50 cursor-not-allowed' : ''
+                            isNextDisabled ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
                     >
                         {isLastStep ? t.tutorialFinish : t.tutorialNext}
