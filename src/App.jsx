@@ -8523,7 +8523,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
   const [expanded, setExpanded] = useState(false);
   const [activeQuickDay, setActiveQuickDay] = useState('today');
   const [quickViewSwipeOffset, setQuickViewSwipeOffset] = useState(0);
-  const quickViewTouchStartXRef = useRef(null);
+  const touchStartXRef = useRef(null);
   if (!report) return null;
   const { title, summary, details, warning: localWarning, confidence, structuredDetails, tripDetails, visualData } = report;
   
@@ -8535,6 +8535,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
   const getPrecipUnitLabelSafe = getPrecipUnitLabel || (() => 'mm');
   const formatPrecipSafe = formatPrecip || ((val) => (val ?? '--'));
   const showTripDetails = report.type === 'trip' && Array.isArray(tripDetails) && tripDetails.length > 0;
+  const quickViewSwipeThreshold = 50;
 
   useEffect(() => {
     if (activeQuickDay === 'tomorrow' && (!visualData || visualData.tomorrowMinTemp === null)) {
@@ -8543,25 +8544,25 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
   }, [activeQuickDay, visualData]);
 
   const handleQuickViewTouchStart = (e) => {
-    quickViewTouchStartXRef.current = e.touches?.[0]?.clientX ?? null;
+    touchStartXRef.current = e.touches?.[0]?.clientX ?? null;
     setQuickViewSwipeOffset(0);
   };
 
   const handleQuickViewTouchMove = (e) => {
-    if (quickViewTouchStartXRef.current === null) return;
+    if (touchStartXRef.current === null) return;
     const currentX = e.touches?.[0]?.clientX;
     if (typeof currentX !== 'number') return;
-    const rawDelta = currentX - quickViewTouchStartXRef.current;
+    const rawDelta = currentX - touchStartXRef.current;
     const clampedDelta = Math.max(-90, Math.min(90, rawDelta));
     setQuickViewSwipeOffset(clampedDelta);
   };
 
   const handleQuickViewTouchEnd = () => {
-    if (Math.abs(quickViewSwipeOffset) >= SWIPE_THRESHOLD_PX) {
+    if (Math.abs(quickViewSwipeOffset) >= quickViewSwipeThreshold) {
       if (quickViewSwipeOffset < 0 && activeQuickDay === 'today') setActiveQuickDay('tomorrow');
       if (quickViewSwipeOffset > 0 && activeQuickDay === 'tomorrow') setActiveQuickDay('today');
     }
-    quickViewTouchStartXRef.current = null;
+    touchStartXRef.current = null;
     setQuickViewSwipeOffset(0);
   };
   
@@ -8798,7 +8799,9 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                         >
                           {quickDays.map((day) => (
                             <div key={day.key} className="w-full shrink-0 p-3">
-                              <div className="text-sm font-extrabold text-m3-on-surface-variant mb-2">🌤️ {day.label}</div>
+                              <div className="text-base font-extrabold text-m3-on-surface-variant mb-2">
+                                <span role="img" aria-label={lang === 'en' ? 'partly cloudy' : 'teilweise bewölkt'}>🌤️</span> {day.label}
+                              </div>
                               {renderQuickDayChips(day)}
                             </div>
                           ))}
