@@ -2,6 +2,25 @@
 
 Eine moderne Wetter-App mit React, Vite und Capacitor.
 
+## Einrichtung (Schnellstart)
+
+```bash
+# 1) Abhängigkeiten installieren
+npm install
+
+# 2) Entwicklungsserver starten
+npm run dev
+```
+
+Die App ist dann unter `http://localhost:5173` verfügbar.
+
+Für Android-Builds:
+
+```bash
+npm run android:sync
+npm run android:open
+```
+
 ## Features
 
 - 📍 GPS-basierte Standorterkennung
