@@ -8544,13 +8544,13 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
   }, [activeQuickDay, visualData]);
 
   const handleQuickViewTouchStart = (e) => {
-    e?.stopPropagation?.();
+    e.stopPropagation();
     touchStartXRef.current = e.touches?.[0]?.clientX ?? null;
     setQuickViewSwipeOffset(0);
   };
 
   const handleQuickViewTouchMove = (e) => {
-    e?.stopPropagation?.();
+    e.stopPropagation();
     if (touchStartXRef.current === null) return;
     const currentX = e.touches?.[0]?.clientX;
     if (typeof currentX !== 'number') return;
@@ -8560,7 +8560,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
   };
 
   const handleQuickViewTouchEnd = (e) => {
-    e?.stopPropagation?.();
+    e.stopPropagation();
     if (Math.abs(quickViewSwipeOffset) >= quickViewSwipeThreshold) {
       if (quickViewSwipeOffset < 0 && activeQuickDay === 'today') setActiveQuickDay('tomorrow');
       if (quickViewSwipeOffset > 0 && activeQuickDay === 'tomorrow') setActiveQuickDay('today');
