@@ -11198,7 +11198,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
         },
         {
             title: t.units,
-            desc: t.tutorialUnitsStepDesc || 'Wähle zu Beginn deine Maßeinheiten für Temperatur, Wind und Niederschlag.',
+            desc: t.tutorialSettingsDesc,
             icon: Thermometer,
             content: 'units'
         },
@@ -11209,8 +11209,8 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
             content: 'home'
         },
         {
-            title: t.tutorialCapabilitiesTitle || 'Das kann die App',
-            desc: t.tutorialCapabilitiesDesc || 'Hier siehst du die wichtigsten Funktionen auf einen Blick.',
+            title: t.tutorialOverviewTitle,
+            desc: t.tutorialOverviewDesc,
             icon: Star,
             content: 'capabilities'
         },
@@ -11303,7 +11303,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                     {currentStep.content === 'units' && (
                         <div className="space-y-4">
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
-                                <div className="text-sm font-bold text-m3-on-surface mb-3">{t.tutorialTempUnitLabel || 'Temperatur'}</div>
+                                <div className="text-sm font-bold text-m3-on-surface mb-3">{t.units}</div>
                                 <div className="grid grid-cols-3 gap-2">
                                     {[
                                         { key: 'celsius', label: '°C' },
@@ -11312,7 +11312,10 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                                     ].map((option) => (
                                         <button
                                             key={option.key}
-                                            onClick={() => setSettings({ ...settings, unit: option.key })}
+                                            onClick={() => {
+                                                setUnitsConfirmed(false);
+                                                setSettings({ ...settings, unit: option.key });
+                                            }}
                                             className={`py-2 rounded-m3-sm text-sm font-bold transition ${
                                                 settings.unit === option.key
                                                     ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container'
@@ -11336,7 +11339,10 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                                     ].map((option) => (
                                         <button
                                             key={option.key}
-                                            onClick={() => setSettings({ ...settings, windUnit: option.key })}
+                                            onClick={() => {
+                                                setUnitsConfirmed(false);
+                                                setSettings({ ...settings, windUnit: option.key });
+                                            }}
                                             className={`py-2 rounded-m3-sm text-sm font-bold transition ${
                                                 settings.windUnit === option.key
                                                     ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container'
@@ -11358,7 +11364,10 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                                     ].map((option) => (
                                         <button
                                             key={option.key}
-                                            onClick={() => setSettings({ ...settings, precipUnit: option.key })}
+                                            onClick={() => {
+                                                setUnitsConfirmed(false);
+                                                setSettings({ ...settings, precipUnit: option.key });
+                                            }}
                                             className={`py-2 rounded-m3-sm text-sm font-bold transition ${
                                                 settings.precipUnit === option.key
                                                     ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container'
@@ -11379,7 +11388,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                                         : 'bg-m3-primary text-m3-on-primary hover:bg-m3-primary/90'
                                 }`}
                             >
-                                {unitsConfirmed ? (t.tutorialUnitsConfirmed || 'Einheiten bestätigt') : (t.tutorialUnitsConfirm || 'Einheiten bestätigen')}
+                                {unitsConfirmed ? `${t.save} ✓` : t.save}
                             </button>
                         </div>
                     )}
