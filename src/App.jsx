@@ -8647,7 +8647,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                   return (
                     <div key={idx}>
                       {idx === 0 ? (
-                        <div className="bg-m3-primary/10 rounded-lg px-3 py-2 mb-3 text-m3-body-medium font-bold text-m3-on-surface">
+                        <div className="bg-m3-primary/10 dark:bg-m3-dark-primary/20 rounded-lg px-3 py-2 mb-3 text-m3-body-medium font-bold text-m3-on-surface">
                           {renderWithColoredTemps(section)}
                         </div>
                       ) : (
@@ -8666,15 +8666,15 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                 {report.type === 'daily' && visualData && (() => {
                   const tempUnit = getTempUnitSymbol ? getTempUnitSymbol() : '°';
                   const tsChipClass = (wl) => wl >= 4
-                    ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-purple-500/20 text-purple-700 border-purple-400/40'
-                    : wl >= 3 ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-red-500/20 text-red-600 border-red-400/40'
-                    : wl >= 2 ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-orange-400/20 text-orange-600 border-orange-400/40'
-                    : 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-yellow-300/20 text-yellow-700 border-yellow-400/40';
+                    ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-400/40'
+                    : wl >= 3 ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-red-500/20 text-red-600 dark:text-red-400 border-red-400/40'
+                    : wl >= 2 ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-orange-400/20 text-orange-600 dark:text-orange-400 border-orange-400/40'
+                    : 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-yellow-300/20 text-yellow-700 dark:text-yellow-400 border-yellow-400/40';
                   const pollenChipClass = (lvl) => lvl >= 4
-                    ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-red-500/15 text-red-600 border-red-400/40'
-                    : lvl >= 3 ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-orange-400/15 text-orange-600 border-orange-400/40'
-                    : lvl >= 2 ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-yellow-300/15 text-yellow-700 border-yellow-400/40'
-                    : 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-green-500/15 text-green-700 border-green-400/40';
+                    ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-red-500/15 text-red-600 dark:text-red-400 border-red-400/40'
+                    : lvl >= 3 ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-orange-400/15 text-orange-600 dark:text-orange-400 border-orange-400/40'
+                    : lvl >= 2 ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-yellow-300/15 text-yellow-700 dark:text-yellow-400 border-yellow-400/40'
+                    : 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-green-500/15 text-green-700 dark:text-green-400 border-green-400/40';
                   const pollenLevelLabel = (lvl) => lvl >= 4 ? t.pollenVeryHigh : lvl >= 3 ? t.pollenHigh : lvl >= 2 ? t.pollenModerate : t.pollenLow;
                   const quickDays = [
                     {
@@ -8727,7 +8727,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                         </div>
                       )}
                       {day.rainProb >= 15 && (
-                        <div className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border ${day.rainProb >= 60 ? 'bg-blue-600/20 text-blue-600 border-blue-500/30' : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant'}`}>
+                        <div className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border ${day.rainProb >= 60 ? 'bg-blue-600/20 text-blue-600 dark:text-blue-400 border-blue-500/30' : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant'}`}>
                           <Umbrella size={14} className="shrink-0"/>
                           <span>{Math.round(day.rainProb)}%</span>
                         </div>
@@ -8739,7 +8739,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                         </div>
                       )}
                       {day.maxUV >= 3 && (
-                        <div className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border ${day.maxUV >= 8 ? 'bg-red-500/20 text-red-500 border-red-400/30' : day.maxUV >= 6 ? 'bg-orange-400/20 text-orange-500 border-orange-400/30' : 'bg-yellow-300/20 text-yellow-600 border-yellow-400/30'}`}>
+                        <div className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border ${day.maxUV >= 8 ? 'bg-red-500/20 text-red-500 dark:text-red-400 border-red-400/30' : day.maxUV >= 6 ? 'bg-orange-400/20 text-orange-500 dark:text-orange-400 border-orange-400/30' : 'bg-yellow-300/20 text-yellow-600 dark:text-yellow-400 border-yellow-400/30'}`}>
                           <Sun size={14} className="shrink-0"/>
                           <span>UV {day.maxUV}</span>
                         </div>
