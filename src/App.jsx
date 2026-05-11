@@ -7902,7 +7902,6 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
         let minutelyTotal = 0;
         let minutelyEventStart = null;
         let minutelyEventEnd = null;
-        let inMinutelyEvent = false;
         let minutelySlots = 0;
         
         // Find index for "now"
@@ -7921,7 +7920,7 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
             // Check next 2 hours (8 x 15-minute slots)
             for(let i=startIndex; i < Math.min(startIndex + MINUTELY_NOWCAST_WINDOW_SLOTS, mTime.length); i++) {
                 const slotPrecip = mPrecip[i] || 0;
-                const slotRate = slotPrecip * MINUTELY_TO_HOURLY_RATE_FACTOR; // mm per slot -> mm/h intensity
+                const slotRate = slotPrecip * MINUTELY_TO_HOURLY_RATE_FACTOR; // slotPrecip is mm per 15-minute slot -> convert to mm/h
                 if (!result.minutelyStart && slotPrecip > LIGHT_PRECIP_THRESHOLD) {
                      result.minutelyStart = new Date(mTime[i]);
                  }
@@ -7940,18 +7939,10 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
                   if (!minutelyEventStart) {
                     minutelyEventStart = new Date(mTime[i]);
                   }
-                  inMinutelyEvent = true;
-                } else if (inMinutelyEvent && !minutelyEventEnd && i > startIndex) {
-                  const previousSlotTime = new Date(mTime[i - 1]).getTime();
-                  minutelyEventEnd = new Date(previousSlotTime + MINUTELY_SLOT_DURATION_MINUTES * 60 * 1000);
-                  inMinutelyEvent = false;
+                  const slotStartTime = new Date(mTime[i]).getTime();
+                  minutelyEventEnd = new Date(slotStartTime + MINUTELY_SLOT_DURATION_MINUTES * 60 * 1000);
                 }
             }
-        }
-        if (inMinutelyEvent && !minutelyEventEnd) {
-          const lastSlotIndex = Math.min(startIndex + MINUTELY_NOWCAST_WINDOW_SLOTS - 1, mTime.length - 1);
-          const lastSlotTime = new Date(mTime[lastSlotIndex]).getTime();
-          minutelyEventEnd = new Date(lastSlotTime + MINUTELY_SLOT_DURATION_MINUTES * 60 * 1000);
         }
         result.strongStart = strongMinutelyStart;
         minutelyNowcast = {
@@ -7960,7 +7951,7 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
           total: minutelyTotal,
           peakRate: minutelyPeak,
           peakTime: minutelyPeakTime,
-          durationHours: minutelySlots > 0 ? Number(((minutelySlots * MINUTELY_SLOT_DURATION_MINUTES) / 60).toFixed(2)) : 0
+          durationHours: minutelySlots > 0 ? (Math.round((minutelySlots * MINUTELY_SLOT_DURATION_MINUTES * 100) / 60) / 100) : 0
         };
     }
 
