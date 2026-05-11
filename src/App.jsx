@@ -11678,9 +11678,11 @@ const TRIP_PREVIEW_CACHE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
 const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, formatTemp, getTempUnitSymbol, lang }) => {
     const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
     const cachedWeather = tripPreviewCache[trip.id];
-    const isCacheStale = !cachedWeather || !cachedWeather.fetchedAt || (Date.now() - cachedWeather.fetchedAt > TRIP_PREVIEW_CACHE_TTL_MS);
-    const shouldRefreshWeather = isCacheStale || cachedWeather?.provisional === true;
-    const [weather, setWeather] = useState(cachedWeather || null);
+    const cachedFetchedAt = cachedWeather?.fetchedAt;
+    const hasProvisionalCache = cachedWeather?.provisional === true;
+    const isCacheStale = !cachedWeather || !cachedFetchedAt || (Date.now() - cachedFetchedAt > TRIP_PREVIEW_CACHE_TTL_MS);
+    const shouldRefreshWeather = isCacheStale || hasProvisionalCache;
+    const [weather, setWeather] = useState(isCacheStale && !hasProvisionalCache ? null : (cachedWeather || null));
     const [loading, setLoading] = useState(shouldRefreshWeather && !cachedWeather);
 
     // Check if trip is too far in the future for forecast data
@@ -11688,16 +11690,24 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
     const isTooFarFuture = daysUntilTrip > TRIP_FORECAST_LIMIT_DAYS;
 
     useEffect(() => {
-        if (cachedWeather) {
+        if (cachedWeather && (!isCacheStale || hasProvisionalCache)) {
             setWeather(cachedWeather);
-            if (!shouldRefreshWeather) {
-                setLoading(false);
-            }
+        } else if (!cachedWeather || isCacheStale) {
+            setWeather(null);
         }
-    }, [cachedWeather, shouldRefreshWeather]);
+        if (!shouldRefreshWeather) {
+            setLoading(false);
+        }
+    }, [cachedWeather, isCacheStale, hasProvisionalCache, shouldRefreshWeather]);
 
     useEffect(() => {
-        if (isTooFarFuture) { setLoading(false); return; }
+        if (isTooFarFuture) {
+            setLoading(false);
+            if (!cachedWeather || (isCacheStale && !hasProvisionalCache)) {
+                setWeather(null);
+            }
+            return;
+        }
         if (cachedWeather && !shouldRefreshWeather) {
             setWeather(cachedWeather);
             setLoading(false);
@@ -11728,7 +11738,7 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
             }
         };
         fetchPreview();
-    }, [trip.id, trip.lat, trip.lon, trip.startDate, isTooFarFuture, cachedWeather, shouldRefreshWeather, setTripPreviewCache]);
+    }, [trip.id, trip.lat, trip.lon, trip.startDate, isTooFarFuture, cachedWeather, isCacheStale, hasProvisionalCache, shouldRefreshWeather]);
 
     if (isTooFarFuture) {
         return (
