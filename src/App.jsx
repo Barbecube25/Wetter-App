@@ -30,6 +30,7 @@ const STRONG_PRECIP_THRESHOLD = 0.5;
 const UMBRELLA_PRECIP_THRESHOLD = 0.5;
 const MINUTELY_SLOT_DURATION_MINUTES = 15;
 const MINUTELY_NOWCAST_WINDOW_SLOTS = 8;
+const MINUTELY_TO_HOURLY_RATE_FACTOR = 60 / MINUTELY_SLOT_DURATION_MINUTES;
 // WMO weather codes that indicate rain/drizzle/showers (used for activity index rain detection)
 const RAIN_WEATHER_CODES = [51, 53, 55, 61, 63, 65, 80, 81, 82];
 const isAboveThreshold = (precipValue, snowValue, threshold) => precipValue > threshold || snowValue > threshold;
@@ -7920,7 +7921,7 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
             // Check next 2 hours (8 x 15-minute slots)
             for(let i=startIndex; i < Math.min(startIndex + MINUTELY_NOWCAST_WINDOW_SLOTS, mTime.length); i++) {
                 const slotPrecip = mPrecip[i] || 0;
-                const slotRate = slotPrecip * (60 / MINUTELY_SLOT_DURATION_MINUTES); // mm per 15 min -> mm/h intensity
+                const slotRate = slotPrecip * MINUTELY_TO_HOURLY_RATE_FACTOR; // mm per slot -> mm/h intensity
                 if (!result.minutelyStart && mPrecip[i] > LIGHT_PRECIP_THRESHOLD) {
                      result.minutelyStart = new Date(mTime[i]);
                  }
@@ -7941,13 +7942,16 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
                   }
                   inMinutelyEvent = true;
                 } else if (inMinutelyEvent && !minutelyEventEnd) {
-                  minutelyEventEnd = new Date(mTime[i]);
+                  const previousSlotTime = new Date(mTime[i - 1]).getTime();
+                  minutelyEventEnd = new Date(previousSlotTime + MINUTELY_SLOT_DURATION_MINUTES * 60 * 1000);
                   inMinutelyEvent = false;
                 }
             }
         }
         if (inMinutelyEvent && !minutelyEventEnd) {
-          minutelyEventEnd = new Date(mTime[Math.min(startIndex + MINUTELY_NOWCAST_WINDOW_SLOTS - 1, mTime.length - 1)]);
+          const lastSlotIndex = Math.min(startIndex + MINUTELY_NOWCAST_WINDOW_SLOTS - 1, mTime.length - 1);
+          const lastSlotTime = new Date(mTime[lastSlotIndex]).getTime();
+          minutelyEventEnd = new Date(lastSlotTime + MINUTELY_SLOT_DURATION_MINUTES * 60 * 1000);
         }
         result.strongStart = strongMinutelyStart;
         minutelyNowcast = {
@@ -7956,7 +7960,7 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
           total: minutelyTotal,
           peakRate: minutelyPeak,
           peakTime: minutelyPeakTime,
-          durationHours: minutelySlots > 0 ? Math.max(1, Math.round((minutelySlots * MINUTELY_SLOT_DURATION_MINUTES) / 60)) : 0
+          durationHours: minutelySlots > 0 ? Math.max(MINUTELY_SLOT_DURATION_MINUTES / 60, Number(((minutelySlots * MINUTELY_SLOT_DURATION_MINUTES) / 60).toFixed(2))) : 0
         };
     }
 
@@ -8115,9 +8119,9 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
         result.type = 'rain_later';
         result.startTime = minutelyNowcast.start;
         result.endTime = minutelyNowcast.end || null;
-        result.duration = minutelyNowcast.durationHours || 1;
-        result.amount = minutelyNowcast.total || 0;
-        result.rainAmount = minutelyNowcast.total || 0;
+        result.duration = minutelyNowcast.durationHours || (MINUTELY_SLOT_DURATION_MINUTES / 60);
+        result.amount = Math.max(total24hPrecip, minutelyNowcast.total || 0);
+        result.rainAmount = Math.max(total24hRain, minutelyNowcast.total || 0);
         result.maxIntensity = Math.max(result.maxIntensity, minutelyNowcast.peakRate || 0);
         result.peakTime = minutelyNowcast.peakTime || minutelyNowcast.start;
         result.isSnow = false;
