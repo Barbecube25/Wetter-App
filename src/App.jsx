@@ -6862,7 +6862,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
     </>
   );
 
-  const renderTreeSpecies = (species = 'deciduous', animationDelay = '0s') => {
+  const renderTreeSpecies = (species = 'deciduous', animationDelay) => {
     const animStyle = animationDelay ? { animationDelay } : undefined;
 
     if (species === 'pine') {
