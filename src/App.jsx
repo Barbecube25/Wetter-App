@@ -7887,11 +7887,20 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
        hourlyForecast: [] // Array of {time, amount, rain, snow} for next hours
     };
 
+    let minutelyNowcast = null;
+
     // 1. Check Minutely Data for precise start time (Next 2 hours)
     if (minutelyData && minutelyData.precipitation) {
         const mTime = minutelyData.time;
         const mPrecip = minutelyData.precipitation;
         let strongMinutelyStart = null;
+        let minutelyPeak = 0;
+        let minutelyPeakTime = null;
+        let minutelyTotal = 0;
+        let minutelyEventStart = null;
+        let minutelyEventEnd = null;
+        let inMinutelyEvent = false;
+        let minutelySlots = 0;
         
         // Find index for "now"
         const nowMs = now.getTime();
@@ -7908,15 +7917,45 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
         if (startIndex !== -1) {
             // Check next 2 hours (8 * 15min slots)
             for(let i=startIndex; i < Math.min(startIndex + 8, mTime.length); i++) {
+                const slotPrecip = mPrecip[i] || 0;
+                const slotRate = slotPrecip * 4; // 15-min value -> mm/h for intensity
                 if (!result.minutelyStart && mPrecip[i] > LIGHT_PRECIP_THRESHOLD) {
                      result.minutelyStart = new Date(mTime[i]);
-                }
-                if (!strongMinutelyStart && mPrecip[i] > STRONG_PRECIP_THRESHOLD) {
+                 }
+                if (!strongMinutelyStart && slotRate > STRONG_PRECIP_THRESHOLD) {
                      strongMinutelyStart = new Date(mTime[i]);
+                 }
+
+                if (slotRate > minutelyPeak) {
+                  minutelyPeak = slotRate;
+                  minutelyPeakTime = new Date(mTime[i]);
+                }
+
+                if (slotPrecip > LIGHT_PRECIP_THRESHOLD) {
+                  minutelyTotal += slotPrecip;
+                  minutelySlots++;
+                  if (!minutelyEventStart) {
+                    minutelyEventStart = new Date(mTime[i]);
+                  }
+                  inMinutelyEvent = true;
+                } else if (inMinutelyEvent && !minutelyEventEnd) {
+                  minutelyEventEnd = new Date(mTime[i]);
+                  inMinutelyEvent = false;
                 }
             }
         }
+        if (inMinutelyEvent && !minutelyEventEnd) {
+          minutelyEventEnd = new Date(mTime[Math.min(startIndex + 7, mTime.length - 1)]);
+        }
         result.strongStart = strongMinutelyStart;
+        minutelyNowcast = {
+          start: minutelyEventStart,
+          end: minutelyEventEnd,
+          total: minutelyTotal,
+          peakRate: minutelyPeak,
+          peakTime: minutelyPeakTime,
+          durationHours: minutelySlots > 0 ? Math.max(1, Math.round((minutelySlots * 15) / 60)) : 0
+        };
     }
 
     // Calculate total precipitation for next 24 hours (for display on tile)
@@ -7996,9 +8035,9 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
         }
     }
     
-    // Use 24h totals for display
-    result.amount = total24hPrecip;
-    result.rainAmount = total24hRain;
+    // Use 24h totals for display (fallback to short-term nowcast total if hourly misses small rain cells)
+    result.amount = Math.max(total24hPrecip, minutelyNowcast?.total || 0);
+    result.rainAmount = Math.max(total24hRain, minutelyNowcast?.total || 0);
     result.snowAmount = total24hSnow;
     
     result.peakTime = peakTime;
@@ -8069,6 +8108,15 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
                 result.type = result.isSnow ? 'snow_later' : 'rain_later';
             }
         }
+    } else if (minutelyNowcast?.start) {
+        // Fallback: detect upcoming rain from high-frequency nowcast even when hourly forecast misses small rain cells
+        result.type = 'rain_later';
+        result.startTime = minutelyNowcast.start;
+        result.endTime = minutelyNowcast.end || null;
+        result.duration = minutelyNowcast.durationHours || 1;
+        result.maxIntensity = Math.max(result.maxIntensity, minutelyNowcast.peakRate || 0);
+        result.peakTime = minutelyNowcast.peakTime || minutelyNowcast.start;
+        result.isSnow = false;
     }
     
     return result;
