@@ -8519,7 +8519,7 @@ const renderWithColoredTemps = (text) => {
   });
 };
 
-const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, getWindUnitLabel, formatPrecip, getPrecipUnitLabel, getTempUnitSymbol, isRealNight = false }) => {
+const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, getWindUnitLabel, formatPrecip, getPrecipUnitLabel, getTempUnitSymbol, isRealNight = false, onOpenDetailModal = null, onOpenPollenModal = null, onOpenThunderstormModal = null, onOpenPrecipModal = null }) => {
   const [expanded, setExpanded] = useState(false);
   const [activeQuickDay, setActiveQuickDay] = useState('today');
   const [quickViewSwipeOffset, setQuickViewSwipeOffset] = useState(0);
@@ -8724,35 +8724,53 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                   const activeQuickDayIndex = Math.max(0, quickDays.findIndex((day) => day.key === activeQuickDay));
                   const renderQuickDayChips = (day) => (
                     <div className="flex flex-wrap gap-2">
-                      <div className="flex items-center gap-1.5 bg-m3-surface-container-high rounded-full px-3 py-1.5 font-extrabold border border-m3-outline-variant shadow-sm">
-                        <Thermometer size={16} className="text-blue-400 shrink-0"/>
-                        <span className="text-blue-400 text-base">{tempFunc ? tempFunc(day.minTemp) : day.minTemp}{tempUnit}</span>
-                        <div className="w-6 h-1.5 rounded-full bg-gradient-to-r from-blue-400 to-red-400 shrink-0"/>
-                        <span className="text-red-400 text-base">{tempFunc ? tempFunc(day.maxTemp) : day.maxTemp}{tempUnit}</span>
+                      {/* Temperature card – cleaner min/max display */}
+                      <div className={`flex items-stretch rounded-2xl border shadow-sm overflow-hidden ${isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/60' : 'bg-m3-surface-container-high border-m3-outline-variant'}`}>
+                        <div className="flex flex-col items-center justify-center px-4 py-2 gap-0.5">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${isRealNight ? 'text-blue-300/70' : 'text-blue-400/80'}`}>min</span>
+                          <span className={`text-xl font-extrabold ${isRealNight ? 'text-blue-300' : 'text-blue-500'}`}>{tempFunc ? tempFunc(day.minTemp) : day.minTemp}{tempUnit}</span>
+                        </div>
+                        <div className={`w-px self-stretch ${isRealNight ? 'bg-m3-outline-variant/40' : 'bg-m3-outline-variant/60'}`}/>
+                        <div className="flex flex-col items-center justify-center px-4 py-2 gap-0.5">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${isRealNight ? 'text-red-300/70' : 'text-red-400/80'}`}>max</span>
+                          <span className={`text-xl font-extrabold ${isRealNight ? 'text-red-300' : 'text-red-500'}`}>{tempFunc ? tempFunc(day.maxTemp) : day.maxTemp}{tempUnit}</span>
+                        </div>
                       </div>
                       {day.rainSum > 0.1 && (
-                        <div className="flex items-center gap-1 bg-blue-500/10 rounded-full px-3 py-1.5 text-base font-bold text-blue-500 border border-blue-400/30">
+                        <button
+                          onClick={onOpenPrecipModal ? () => onOpenPrecipModal() : undefined}
+                          className={`flex items-center gap-1 bg-blue-500/10 rounded-full px-3 py-1.5 text-base font-bold text-blue-500 border border-blue-400/30 ${onOpenPrecipModal ? 'cursor-pointer active:scale-95 transition-transform' : ''}`}
+                        >
                           <Droplets size={14} className="shrink-0"/>
                           <span>{formatPrecipSafe(day.rainSum)}{getPrecipUnitLabelSafe()}</span>
-                        </div>
+                        </button>
                       )}
                       {day.rainProb >= 15 && (
-                        <div className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border ${day.rainProb >= 60 ? 'bg-blue-600/20 text-blue-600 dark:text-blue-400 border-blue-500/30' : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant'}`}>
+                        <button
+                          onClick={onOpenPrecipModal ? () => onOpenPrecipModal() : undefined}
+                          className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border ${day.rainProb >= 60 ? 'bg-blue-600/20 text-blue-600 dark:text-blue-400 border-blue-500/30' : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant'} ${onOpenPrecipModal ? 'cursor-pointer active:scale-95 transition-transform' : ''}`}
+                        >
                           <Umbrella size={14} className="shrink-0"/>
                           <span>{Math.round(day.rainProb)}%</span>
-                        </div>
+                        </button>
                       )}
                       {day.maxWind >= 20 && (
-                        <div className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border border-m3-outline-variant bg-m3-surface-container-high ${getWindColorClass(day.maxWind, false)}`}>
+                        <button
+                          onClick={onOpenDetailModal ? () => onOpenDetailModal('wind') : undefined}
+                          className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border border-m3-outline-variant bg-m3-surface-container-high ${getWindColorClass(day.maxWind, false)} ${onOpenDetailModal ? 'cursor-pointer active:scale-95 transition-transform' : ''}`}
+                        >
                           <Wind size={14} className="shrink-0"/>
                           <span>{formatWindSafe(day.maxWind)} {getWindUnitLabelSafe()}</span>
-                        </div>
+                        </button>
                       )}
                       {day.maxUV >= 3 && (
-                        <div className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border ${day.maxUV >= 8 ? 'bg-red-500/20 text-red-500 dark:text-red-400 border-red-400/30' : day.maxUV >= 6 ? 'bg-orange-400/20 text-orange-500 dark:text-orange-400 border-orange-400/30' : 'bg-yellow-300/20 text-yellow-600 dark:text-yellow-400 border-yellow-400/30'}`}>
+                        <button
+                          onClick={onOpenDetailModal ? () => onOpenDetailModal('uv') : undefined}
+                          className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border ${day.maxUV >= 8 ? 'bg-red-500/20 text-red-500 dark:text-red-400 border-red-400/30' : day.maxUV >= 6 ? 'bg-orange-400/20 text-orange-500 dark:text-orange-400 border-orange-400/30' : 'bg-yellow-300/20 text-yellow-600 dark:text-yellow-400 border-yellow-400/30'} ${onOpenDetailModal ? 'cursor-pointer active:scale-95 transition-transform' : ''}`}
+                        >
                           <Sun size={14} className="shrink-0"/>
                           <span>UV {day.maxUV}</span>
-                        </div>
+                        </button>
                       )}
                       {day.feelsLike !== null && (
                         <div className="flex items-center gap-1 bg-m3-surface-container-high rounded-full px-3 py-1.5 text-base font-bold border border-m3-outline-variant text-m3-on-surface-variant">
@@ -8761,16 +8779,22 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                         </div>
                       )}
                       {day.thunderstormRisk > 0 && (
-                        <div className={tsChipClass(day.thunderstormWarnLevel)}>
+                        <button
+                          onClick={onOpenThunderstormModal ? () => onOpenThunderstormModal() : undefined}
+                          className={`${tsChipClass(day.thunderstormWarnLevel)} ${onOpenThunderstormModal ? 'cursor-pointer active:scale-95 transition-transform' : ''}`}
+                        >
                           <CloudLightning size={14} className="shrink-0"/>
                           <span>{t.thunderstormWarningLevel} {day.thunderstormWarnLevel}</span>
-                        </div>
+                        </button>
                       )}
                       {day.pollenLevel > 0 && (
-                        <div className={pollenChipClass(day.pollenLevel)}>
+                        <button
+                          onClick={onOpenPollenModal ? () => onOpenPollenModal() : undefined}
+                          className={`${pollenChipClass(day.pollenLevel)} ${onOpenPollenModal ? 'cursor-pointer active:scale-95 transition-transform' : ''}`}
+                        >
                           <Leaf size={14} className="shrink-0"/>
                           <span>{day.pollenTopLabel ? `${day.pollenTopLabel} · ` : ''}{pollenLevelLabel(day.pollenLevel)}</span>
-                        </div>
+                        </button>
                       )}
                     </div>
                   );
@@ -14212,12 +14236,67 @@ export default function WeatherApp() {
                 <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
             </div>
             <h2 className="text-2xl font-bold mb-4 text-slate-800">{t('dailyReport')}</h2>
-             <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} />
+             <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenDetailModal={setActiveDetailModal} onOpenPollenModal={() => setShowPollenModal(true)} onOpenThunderstormModal={() => setShowThunderstormModal(true)} onOpenPrecipModal={() => setShowPrecipModal(true)} />
             {processedShort.length > 0 && <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} isRealNight={isRealNight} />}
             <div className="mt-8">
                  <h2 className="text-2xl font-bold mb-4 text-slate-800">{t('trend')}</h2>
                  <AIReportBox report={longtermReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} />
             </div>
+            {activeDetailModal && (
+              <WeatherDetailModal
+                isOpen={!!activeDetailModal}
+                onClose={() => setActiveDetailModal(null)}
+                metric={activeDetailModal}
+                historyData={processedHistory}
+                forecastData={processedShort}
+                airQualityChartData={airQualityChartData}
+                lang={lang}
+                settings={settings}
+                formatTemp={formatTemp}
+                getTempUnitSymbol={getTempUnitSymbol}
+                formatWind={formatWind}
+                getWindUnitLabel={getWindUnitLabel}
+                isSmallScreen={isSmallScreen}
+                isRealNight={isRealNight}
+              />
+            )}
+            {showPollenModal && (
+              <PollenDetailsModal
+                isOpen={showPollenModal}
+                onClose={() => setShowPollenModal(false)}
+                airQualityData={airQualityData}
+                lang={lang}
+                isSmallScreen={isSmallScreen}
+                pollenFilter={settings.pollenFilter}
+                isRealNight={isRealNight}
+                dwdPollenRegion={dwdPollenRegion}
+                dwdPollenForecast={dwdPollenForecast}
+                openMeteoPollenForecast={openMeteoPollenForecast}
+              />
+            )}
+            {showPrecipModal && (
+              <PrecipitationDetailsModal
+                isOpen={showPrecipModal}
+                onClose={() => setShowPrecipModal(false)}
+                hourlyData={processedShort}
+                lang={lang}
+                formatPrecip={formatPrecip}
+                getPrecipUnitLabel={getPrecipUnitLabel}
+                setActiveTab={setActiveTab}
+                isSmallScreen={isSmallScreen}
+                isRealNight={isRealNight}
+              />
+            )}
+            {showThunderstormModal && (
+              <ThunderstormModal
+                isOpen={showThunderstormModal}
+                onClose={() => setShowThunderstormModal(false)}
+                hourlyData={processedShort}
+                lang={lang}
+                isSmallScreen={isSmallScreen}
+                isRealNight={isRealNight}
+              />
+            )}
         </div>
      );
   }
@@ -15044,7 +15123,7 @@ export default function WeatherApp() {
           
           {activeTab === 'overview' && (
             <div className="space-y-4">
-               <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} />
+               <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenDetailModal={setActiveDetailModal} onOpenPollenModal={() => setShowPollenModal(true)} onOpenThunderstormModal={() => setShowThunderstormModal(true)} onOpenPrecipModal={() => setShowPrecipModal(true)} />
                
                {/* Historical context: temperature anomaly vs. last year's monthly average */}
                {climateNormals !== null && processedShort.length > 0 && (() => {
