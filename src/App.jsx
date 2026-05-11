@@ -7922,7 +7922,7 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
             for(let i=startIndex; i < Math.min(startIndex + MINUTELY_NOWCAST_WINDOW_SLOTS, mTime.length); i++) {
                 const slotPrecip = mPrecip[i] || 0;
                 const slotRate = slotPrecip * MINUTELY_TO_HOURLY_RATE_FACTOR; // mm per slot -> mm/h intensity
-                if (!result.minutelyStart && mPrecip[i] > LIGHT_PRECIP_THRESHOLD) {
+                if (!result.minutelyStart && slotPrecip > LIGHT_PRECIP_THRESHOLD) {
                      result.minutelyStart = new Date(mTime[i]);
                  }
                 if (!strongMinutelyStart && slotRate > STRONG_PRECIP_THRESHOLD) {
@@ -7941,7 +7941,7 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
                     minutelyEventStart = new Date(mTime[i]);
                   }
                   inMinutelyEvent = true;
-                } else if (inMinutelyEvent && !minutelyEventEnd) {
+                } else if (inMinutelyEvent && !minutelyEventEnd && i > startIndex) {
                   const previousSlotTime = new Date(mTime[i - 1]).getTime();
                   minutelyEventEnd = new Date(previousSlotTime + MINUTELY_SLOT_DURATION_MINUTES * 60 * 1000);
                   inMinutelyEvent = false;
@@ -7960,7 +7960,7 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
           total: minutelyTotal,
           peakRate: minutelyPeak,
           peakTime: minutelyPeakTime,
-          durationHours: minutelySlots > 0 ? Math.max(MINUTELY_SLOT_DURATION_MINUTES / 60, Number(((minutelySlots * MINUTELY_SLOT_DURATION_MINUTES) / 60).toFixed(2))) : 0
+          durationHours: minutelySlots > 0 ? Number(((minutelySlots * MINUTELY_SLOT_DURATION_MINUTES) / 60).toFixed(2)) : 0
         };
     }
 
@@ -8120,8 +8120,10 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
         result.startTime = minutelyNowcast.start;
         result.endTime = minutelyNowcast.end || null;
         result.duration = minutelyNowcast.durationHours || (MINUTELY_SLOT_DURATION_MINUTES / 60);
-        result.amount = Math.max(total24hPrecip, minutelyNowcast.total || 0);
-        result.rainAmount = Math.max(total24hRain, minutelyNowcast.total || 0);
+        if (total24hPrecip <= 0 && total24hRain <= 0) {
+          result.amount = minutelyNowcast.total || 0;
+          result.rainAmount = minutelyNowcast.total || 0;
+        }
         result.maxIntensity = Math.max(result.maxIntensity, minutelyNowcast.peakRate || 0);
         result.peakTime = minutelyNowcast.peakTime || minutelyNowcast.start;
         result.isSnow = false;
