@@ -6862,6 +6862,40 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
     </>
   );
 
+  const renderTreeSpecies = (species = 'deciduous', animationDelay = '0s') => {
+    const animStyle = animationDelay ? { animationDelay } : undefined;
+
+    if (species === 'pine') {
+      return (
+        <g className={treeAnim} style={animStyle}>
+          <rect x="8.5" y="11" width="3" height="9" fill={treeTrunk} />
+          <polygon points="10,1 2,12 18,12" fill={evergreenColor} />
+          <polygon points="10,4 3,15 17,15" fill={evergreenColor} opacity="0.95" />
+          <polygon points="10,7 4,18 16,18" fill={evergreenColor} opacity="0.9" />
+        </g>
+      );
+    }
+
+    if (species === 'cypress') {
+      return (
+        <g className={treeAnim} style={animStyle}>
+          <rect x="8.8" y="12" width="2.4" height="8" fill={treeTrunk} />
+          <ellipse cx="10" cy="9" rx="5" ry="10" fill={evergreenColor} />
+          <ellipse cx="10" cy="4" rx="3.5" ry="5" fill={evergreenColor} opacity="0.95" />
+        </g>
+      );
+    }
+
+    return (
+      <g className={treeAnim} style={animStyle}>
+        <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
+        {showDeciduousLeaves ? (
+          <ellipse cx="10" cy="4" rx="10" ry="9" fill={treeLeaf} />
+        ) : bareBranches}
+      </g>
+    );
+  };
+
   return (
     <svg viewBox="0 0 360 160" className="w-full h-full overflow-hidden" preserveAspectRatio="xMidYMax slice">
       <defs>
@@ -7309,64 +7343,34 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
         <>
           {/* Baum Links - Rand (Laubbaum) */}
           <g transform="translate(40, 120)">
-            <g className={treeAnim}>
-                <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-                {showDeciduousLeaves ? (
-                  <ellipse cx="10" cy="4" rx="10" ry="9" fill={treeLeaf} />
-                ) : bareBranches}
-            </g>
+            {renderTreeSpecies('deciduous')}
           </g>
 
-          {/* Baumgruppe Rechts (Laubbaum) */}
+          {/* Baumgruppe Rechts (Nadelbaum) */}
           <g transform="translate(280, 135) scale(0.9)">
-            <g className={treeAnim} style={{animationDelay: '0.5s'}}>
-                <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-                {showDeciduousLeaves ? (
-                  <ellipse cx="10" cy="4" rx="10" ry="9" fill={treeLeaf} />
-                ) : bareBranches}
-            </g>
+            {renderTreeSpecies('pine', '0.5s')}
           </g>
           
-          {/* Baum Rechts - Rand (Laubbaum) */}
+          {/* Baum Rechts - Rand (Zypresse) */}
           <g transform="translate(320, 134) scale(0.8)">
-            <g className={treeAnim} style={{animationDelay: '0.7s'}}>
-                <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-                {showDeciduousLeaves ? (
-                  <ellipse cx="10" cy="4" rx="10" ry="9" fill={treeLeaf} />
-                ) : bareBranches}
-            </g>
+            {renderTreeSpecies('cypress', '0.7s')}
           </g>
 
           {/* Zusätzliche Bäume auf der Wiese */}
           
-          {/* Kleiner Baum zwischen Links und Haus (Laubbaum) */}
+          {/* Kleiner Baum zwischen Links und Haus (Nadelbaum) */}
           <g transform="translate(100, 130) scale(0.7)">
-            <g className={treeAnim} style={{animationDelay: '0.3s'}}>
-                <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-                {showDeciduousLeaves ? (
-                  <ellipse cx="10" cy="4" rx="10" ry="9" fill={treeLeaf} />
-                ) : bareBranches}
-            </g>
+            {renderTreeSpecies('pine', '0.3s')}
           </g>
 
           {/* Kleiner Baum rechts vom Haus (Laubbaum) */}
           <g transform="translate(230, 128) scale(0.75)">
-            <g className={treeAnim} style={{animationDelay: '0.4s'}}>
-                <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-                {showDeciduousLeaves ? (
-                  <ellipse cx="10" cy="4" rx="10" ry="9" fill={treeLeaf} />
-                ) : bareBranches}
-            </g>
+            {renderTreeSpecies('deciduous', '0.4s')}
           </g>
 
-          {/* Zusätzlicher kleiner Baum links (Laubbaum) */}
+          {/* Zusätzlicher kleiner Baum links (Zypresse) */}
           <g transform="translate(70, 135) scale(0.65)">
-            <g className={treeAnim} style={{animationDelay: '0.6s'}}>
-                <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-                {showDeciduousLeaves ? (
-                  <ellipse cx="10" cy="4" rx="10" ry="9" fill={treeLeaf} />
-                ) : bareBranches}
-            </g>
+            {renderTreeSpecies('cypress', '0.6s')}
           </g>
         </>
       )}
@@ -7374,23 +7378,13 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       {/* Lakeside: Just a few trees, not as many */}
       {terrainType === 'lakeside' && (
         <>
-          {/* Single tree on left (Laubbaum) */}
+          {/* Single tree on left (Nadelbaum) */}
           <g transform="translate(40, 125)">
-            <g className={treeAnim}>
-                <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-                {showDeciduousLeaves ? (
-                  <ellipse cx="10" cy="4" rx="10" ry="9" fill={treeLeaf} />
-                ) : bareBranches}
-            </g>
+            {renderTreeSpecies('pine')}
           </g>
           {/* Single tree on right (Laubbaum) */}
           <g transform="translate(90, 130) scale(0.85)">
-            <g className={treeAnim} style={{animationDelay: '0.4s'}}>
-                <rect x="8" y="10" width="4" height="10" fill={treeTrunk} />
-                {showDeciduousLeaves ? (
-                  <ellipse cx="10" cy="4" rx="10" ry="9" fill={treeLeaf} />
-                ) : bareBranches}
-            </g>
+            {renderTreeSpecies('deciduous', '0.4s')}
           </g>
         </>
       )}
