@@ -8519,7 +8519,7 @@ const renderWithColoredTemps = (text) => {
   });
 };
 
-const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, getWindUnitLabel, formatPrecip, getPrecipUnitLabel, getTempUnitSymbol }) => {
+const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, getWindUnitLabel, formatPrecip, getPrecipUnitLabel, getTempUnitSymbol, isRealNight = false }) => {
   const [expanded, setExpanded] = useState(false);
   const [activeQuickDay, setActiveQuickDay] = useState('today');
   const [quickViewSwipeOffset, setQuickViewSwipeOffset] = useState(0);
@@ -8536,6 +8536,16 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
   const formatPrecipSafe = formatPrecip || ((val) => (val ?? '--'));
   const showTripDetails = report.type === 'trip' && Array.isArray(tripDetails) && tripDetails.length > 0;
   const quickViewSwipeThreshold = 50;
+  const quickToggleActiveClass = isRealNight
+    ? 'bg-m3-dark-primary/30 text-m3-dark-on-surface border-m3-outline-variant/70 shadow-sm'
+    : 'bg-m3-primary-container text-m3-on-primary-container border-m3-primary shadow-sm';
+  const quickToggleInactiveClass = isRealNight
+    ? 'bg-m3-dark-surface-container-high text-m3-dark-on-surface-variant border-m3-outline-variant/70'
+    : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant';
+  const quickPanelClass = isRealNight
+    ? 'overflow-hidden rounded-xl border border-m3-outline-variant/60 bg-m3-dark-surface-container-high/40'
+    : 'overflow-hidden rounded-xl border border-m3-outline-variant/50 bg-m3-surface-container-high/50';
+  const quickDayTitleClass = isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant';
 
   useEffect(() => {
     if (activeQuickDay === 'tomorrow' && (!visualData || visualData.tomorrowMinTemp === null)) {
@@ -8587,7 +8597,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
 
   return (
     <>
-      <div className="mb-4 bg-m3-surface-container rounded-xl border border-m3-outline-variant shadow-m3-1 relative overflow-hidden transition-all duration-500">
+      <div className={`mb-4 rounded-xl border border-m3-outline-variant shadow-m3-1 relative overflow-hidden transition-all duration-500 ${isRealNight ? 'bg-m3-dark-surface-container text-m3-dark-on-surface' : 'bg-m3-surface-container text-m3-on-surface'}`}>
         
         {/* HEADER BEREICH */}
         <div className="p-4 relative z-10">
@@ -8774,8 +8784,8 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                               onClick={() => setActiveQuickDay(day.key)}
                               className={`rounded-lg px-3 py-2 text-base font-bold border transition-all duration-300 ${
                                 activeQuickDay === day.key
-                                  ? 'bg-m3-primary-container text-m3-on-primary-container border-m3-primary shadow-sm'
-                                  : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant'
+                                  ? quickToggleActiveClass
+                                  : quickToggleInactiveClass
                               }`}
                             >
                               {day.label}
@@ -8785,7 +8795,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                       )}
 
                       <div
-                        className="overflow-hidden rounded-xl border border-m3-outline-variant/50 bg-m3-surface-container-high/50"
+                        className={quickPanelClass}
                         onTouchStart={quickDays.length > 1 ? handleQuickViewTouchStart : undefined}
                         onTouchMove={quickDays.length > 1 ? handleQuickViewTouchMove : undefined}
                         onTouchEnd={quickDays.length > 1 ? handleQuickViewTouchEnd : undefined}
@@ -8799,7 +8809,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                         >
                           {quickDays.map((day) => (
                             <div key={day.key} className="w-full shrink-0 p-3">
-                              <div className="text-base font-extrabold text-m3-on-surface-variant mb-2">
+                              <div className={`text-base font-extrabold mb-2 ${quickDayTitleClass}`}>
                                 <span role="img" aria-label={lang === 'en' ? 'partly cloudy' : 'teilweise bewölkt'}>🌤️</span> {day.label}
                               </div>
                               {renderQuickDayChips(day)}
@@ -14202,11 +14212,11 @@ export default function WeatherApp() {
                 <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
             </div>
             <h2 className="text-2xl font-bold mb-4 text-slate-800">{t('dailyReport')}</h2>
-             <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
+             <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} />
             {processedShort.length > 0 && <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} isRealNight={isRealNight} />}
             <div className="mt-8">
                  <h2 className="text-2xl font-bold mb-4 text-slate-800">{t('trend')}</h2>
-                 <AIReportBox report={longtermReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
+                 <AIReportBox report={longtermReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} />
             </div>
         </div>
      );
@@ -15034,7 +15044,7 @@ export default function WeatherApp() {
           
           {activeTab === 'overview' && (
             <div className="space-y-4">
-               <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
+               <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} />
                
                {/* Historical context: temperature anomaly vs. last year's monthly average */}
                {climateNormals !== null && processedShort.length > 0 && (() => {
@@ -15157,7 +15167,7 @@ export default function WeatherApp() {
 
           {activeTab === 'longterm' && (
              <div className="space-y-4">
-               <AIReportBox report={longtermReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
+               <AIReportBox report={longtermReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} />
                <h3 className="text-sm font-bold uppercase tracking-wide opacity-90 ml-2">{t('longtermList')}</h3>
                <div className="overflow-y-auto max-h-[520px] pr-1"> 
                   <div className="flex flex-col gap-3">
@@ -15457,7 +15467,7 @@ export default function WeatherApp() {
                 {/* Result Area */}
                 {travelResult && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                      <AIReportBox report={tripReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
+                      <AIReportBox report={tripReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} />
                        
                        {!activeTripId && (
                          <button 
