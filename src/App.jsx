@@ -11679,26 +11679,32 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
     const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
     const cachedWeather = tripPreviewCache[trip.id];
     const isCacheStale = !cachedWeather || !cachedWeather.fetchedAt || (Date.now() - cachedWeather.fetchedAt > TRIP_PREVIEW_CACHE_TTL_MS);
-    const [weather, setWeather] = useState(isCacheStale ? null : cachedWeather);
-    const [loading, setLoading] = useState(isCacheStale);
+    const shouldRefreshWeather = isCacheStale || cachedWeather?.provisional === true;
+    const [weather, setWeather] = useState(cachedWeather || null);
+    const [loading, setLoading] = useState(shouldRefreshWeather && !cachedWeather);
 
     // Check if trip is too far in the future for forecast data
     const daysUntilTrip = Math.ceil((new Date(trip.startDate) - new Date()) / (1000 * 60 * 60 * 24));
     const isTooFarFuture = daysUntilTrip > TRIP_FORECAST_LIMIT_DAYS;
 
     useEffect(() => {
-        if (cachedWeather && !isCacheStale) {
+        if (cachedWeather) {
             setWeather(cachedWeather);
-            setLoading(false);
+            if (!shouldRefreshWeather) {
+                setLoading(false);
+            }
         }
-    }, [cachedWeather]);
+    }, [cachedWeather, shouldRefreshWeather]);
 
     useEffect(() => {
         if (isTooFarFuture) { setLoading(false); return; }
-        if (cachedWeather && !isCacheStale) {
+        if (cachedWeather && !shouldRefreshWeather) {
             setWeather(cachedWeather);
             setLoading(false);
             return;
+        }
+        if (!cachedWeather) {
+            setLoading(true);
         }
         const fetchPreview = async () => {
             try {
@@ -11722,7 +11728,7 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
             }
         };
         fetchPreview();
-    }, [trip, isTooFarFuture]);
+    }, [trip.id, trip.lat, trip.lon, trip.startDate, isTooFarFuture, cachedWeather, shouldRefreshWeather, setTripPreviewCache]);
 
     if (isTooFarFuture) {
         return (
@@ -11736,7 +11742,7 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
         );
     }
 
-    if (loading) return <div className="w-full h-10 rounded-xl bg-m3-surface-container animate-pulse"></div>;
+    if (loading && !weather) return <div className="w-full h-10 rounded-xl bg-m3-surface-container animate-pulse"></div>;
     if (!weather) return <div className="text-[10px] text-m3-on-surface-variant">--</div>;
 
     const conf = getWeatherConfig(weather.code, 1, lang);
@@ -13269,9 +13275,9 @@ export default function WeatherApp() {
       let previewData = null;
       if (travelResult.mode === 'multi' && travelResult.items?.length > 0) {
           const firstItem = travelResult.items[0];
-          previewData = { code: firstItem.code, max: firstItem.max, min: firstItem.min, fetchedAt: Date.now() };
+          previewData = { code: firstItem.code, max: firstItem.max, min: firstItem.min, fetchedAt: Date.now(), provisional: true };
       } else if (travelResult.summary?.code !== undefined) {
-          previewData = { code: travelResult.summary.code, max: travelResult.summary.maxTemp, min: travelResult.summary.minTemp, fetchedAt: Date.now() };
+          previewData = { code: travelResult.summary.code, max: travelResult.summary.maxTemp, min: travelResult.summary.minTemp, fetchedAt: Date.now(), provisional: true };
       }
       if (previewData) {
           setTripPreviewCache(prev => ({ ...prev, [newTripId]: previewData }));
