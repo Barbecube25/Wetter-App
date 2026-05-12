@@ -21,6 +21,8 @@ const NAV_BAR_HEIGHT = '90px';
 
 // Gap between fixed elements for consistent spacing (8px – symmetric and tight between animation tile, navigation and content)
 const FIXED_ELEMENTS_GAP = '8px'; 
+const DEFAULT_CONTENT_MAX_WIDTH_CLASS = 'max-w-4xl';
+const TABLET_CONTENT_MAX_WIDTH_CLASS = 'max-w-6xl';
 
 // Time and precipitation thresholds
 const EVENING_START_HOUR = 16;
@@ -12299,9 +12301,10 @@ export default function WeatherApp() {
     const checkOrientation = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      setIsLandscape(width > height && height < LANDSCAPE_HEIGHT_THRESHOLD);
+      const isLandscapeViewport = width > height && height < LANDSCAPE_HEIGHT_THRESHOLD;
+      setIsLandscape(isLandscapeViewport);
       setIsSmallScreen(width < SMALL_SCREEN_WIDTH_THRESHOLD);
-      setIsTabletScreen(width >= TABLET_MIN_WIDTH_THRESHOLD && width <= TABLET_MAX_WIDTH_THRESHOLD);
+      setIsTabletScreen(!isLandscapeViewport && width >= TABLET_MIN_WIDTH_THRESHOLD && width <= TABLET_MAX_WIDTH_THRESHOLD);
     };
     
     checkOrientation();
@@ -14168,7 +14171,7 @@ export default function WeatherApp() {
   // Helper function to get responsive layout dimensions based on device orientation and size
   // Note: Landscape mode takes precedence over small screen when both are true,
   // as landscape orientation is a more significant layout constraint
-  const getLayoutDimensions = (isLandscape, isSmallScreen, isTabletScreen) => {
+  const getLayoutDimensions = ({ isLandscape, isSmallScreen, isTabletScreen }) => {
     if (isLandscape) {
       return {
         animationCardHeight: '100px',
@@ -14203,13 +14206,13 @@ export default function WeatherApp() {
 
   // Dynamic layout constants for landscape mode and small screen support
   const headerHeight = '0px'; // Header removed, location moved to animation card
-  const layoutDimensions = getLayoutDimensions(isLandscape, isSmallScreen, isTabletScreen);
+  const layoutDimensions = getLayoutDimensions({ isLandscape, isSmallScreen, isTabletScreen });
   const animationCardHeight = layoutDimensions.animationCardHeight;
   const navBarHeight = layoutDimensions.navBarHeight;
   const fixedElementsGap = layoutDimensions.fixedElementsGap;
   const fixedTopOffset = layoutDimensions.fixedTopOffset;
   const usesTabletLayout = !isLandscape && isTabletScreen;
-  const contentContainerMaxWidthClass = usesTabletLayout ? 'max-w-6xl' : 'max-w-4xl';
+  const contentContainerMaxWidthClass = usesTabletLayout ? TABLET_CONTENT_MAX_WIDTH_CLASS : DEFAULT_CONTENT_MAX_WIDTH_CLASS;
   const horizontalPagePaddingClass = isSmallScreen ? 'px-2' : (usesTabletLayout ? 'px-6' : 'px-4');
   const weatherTileGridClass = usesTabletLayout ? 'grid-cols-3 lg:grid-cols-6' : 'grid-cols-2 sm:grid-cols-4';
   const weatherTileGapClass = isSmallScreen ? 'gap-2' : (usesTabletLayout ? 'gap-5' : 'gap-4');
