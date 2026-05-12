@@ -7940,6 +7940,10 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
 // --- NEU: PRECIPITATION TILE (Wann, Wie lang, Wie viel) ---
 const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang='de', formatPrecip, getPrecipUnitLabel, setActiveTab, setShowPrecipModal }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+  const fallbackNowcastData = useMemo(
+    () => normalizeOpenMeteoNowcast({ minutely_15: minutelyData }, 'open_meteo_forecast_minutely'),
+    [minutelyData]
+  );
 
   // Analyse der nächsten 24h
   const analysis = useMemo(() => {
@@ -7961,7 +7965,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
     
     const nowcastData = (radarNowcast?.time?.length && radarNowcast?.precipitation?.length)
       ? radarNowcast
-      : normalizeOpenMeteoNowcast({ minutely_15: minutelyData }, 'open_meteo_forecast_minutely');
+      : fallbackNowcastData;
     const nowcastIntervalMinutes = nowcastData?.intervalMinutes || MINUTELY_SLOT_DURATION_MINUTES;
     const nowcastRateFactor = 60 / nowcastIntervalMinutes;
     const nowPlusTwoHoursMs = now.getTime() + (2 * 60 * 60 * 1000);
@@ -8108,7 +8112,8 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
     let lastProcessedTime = null;
     const hourlyHasPrecipSoon = futureData.some((d) => d.time.getTime() <= nowPlusTwoHoursMs && isAboveThreshold(d.precip, d.snow, LIGHT_PRECIP_THRESHOLD));
 
-    if (result.nowcastSourceType && result.nowcastSourceType !== 'model' && nowcastHasPrecipSoon !== hourlyHasPrecipSoon) {
+    const usesIndependentNowcast = result.nowcastSourceType === 'radar' || result.nowcastSourceType === 'nowcast';
+    if (usesIndependentNowcast && nowcastHasPrecipSoon !== hourlyHasPrecipSoon) {
       result.modelConflict = nowcastHasPrecipSoon
         ? 'radar_wetter_than_model'
         : 'model_wetter_than_radar';
@@ -8261,7 +8266,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
     }
     
     return result;
-  }, [data, minutelyData, radarNowcast, currentData]);
+  }, [data, fallbackNowcastData, radarNowcast, currentData]);
 
   if (!analysis) return null;
 
@@ -8309,6 +8314,15 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
   const strongEndSuffixEn = strongEndLabel ? (strongEndIsEstimate ? ` to at least ${strongEndLabel}` : ` to ${strongEndLabel}`) : '';
   const strongEndSuffixDe = strongEndLabel ? (strongEndIsEstimate ? ` mindestens bis ${strongEndLabel} Uhr` : ` bis ${strongEndLabel} Uhr`) : '';
   const nowcastTypeLabel = nowcastSourceType === 'radar' ? 'Radar' : 'Nowcast';
+  const conflictMessage = modelConflict === 'radar_wetter_than_model'
+    ? (lang === 'en'
+        ? 'Radar/Nowcast already sees precipitation near you while the hourly models are still mostly dry.'
+        : 'Radar/Nowcast erkennt bereits Niederschlag in deiner Nähe, obwohl die Stundenmodelle noch weitgehend trocken sind.')
+    : modelConflict === 'model_wetter_than_radar'
+      ? (lang === 'en'
+          ? 'The hourly models expect precipitation soon, but Radar/Nowcast is still mostly dry right now.'
+          : 'Die Stundenmodelle erwarten bald Niederschlag, aber Radar/Nowcast ist aktuell noch weitgehend trocken.')
+      : null;
 
   if (type === 'none') {
       headline = t.noPrecipExp;
@@ -8473,13 +8487,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                 <div className="flex items-start gap-2 bg-m3-tertiary-container/50 rounded-m3-xl p-3 border border-m3-tertiary/30">
                     <AlertTriangle size={18} className="text-m3-tertiary mt-0.5" />
                     <span className="text-m3-label-large font-bold text-m3-on-surface">
-                        {modelConflict === 'radar_wetter_than_model'
-                          ? (lang === 'en'
-                              ? 'Radar/Nowcast already sees precipitation near you while the hourly models are still mostly dry.'
-                              : 'Radar/Nowcast erkennt bereits Niederschlag in deiner Nähe, obwohl die Stundenmodelle noch weitgehend trocken sind.')
-                          : (lang === 'en'
-                              ? 'The hourly models expect precipitation soon, but Radar/Nowcast is still mostly dry right now.'
-                              : 'Die Stundenmodelle erwarten bald Niederschlag, aber Radar/Nowcast ist aktuell noch weitgehend trocken.')}
+                        {conflictMessage}
                     </span>
                 </div>
             )}
