@@ -389,6 +389,8 @@ const TRANSLATIONS = {
     startingNow: "beginnt jetzt",
     startingSoon: "beginnt bald",
     inMinutes: "in",
+    startsIn: "Beginnt in",
+    endsIn: "Endet in",
     currentIntensity: "Aktuelle Stärke",
     peakRainAt: "Stärkster Regen um",
     nextHours: "Nächste Stunden",
@@ -696,6 +698,8 @@ const TRANSLATIONS = {
     activityReasonClose: "Close",
     startingSoon: "starting soon",
     inMinutes: "in",
+    startsIn: "Starts in",
+    endsIn: "Ends in",
     currentIntensity: "Current Intensity",
     peakRainAt: "Peak rain at",
     nextHours: "Next Hours",
@@ -8494,7 +8498,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                 <div className="flex items-center justify-between bg-m3-surface-container/50 rounded-xl p-3">
                     <div className="flex items-center gap-2">
                         <Clock3 size={18} className="text-m3-primary" />
-                        <span className="text-m3-label-large font-bold text-m3-on-surface">{lang === 'en' ? 'Starts in' : 'Beginnt in'}</span>
+                        <span className="text-m3-label-large font-bold text-m3-on-surface">{t.startsIn || TRANSLATIONS.de.startsIn}</span>
                     </div>
                     <span className="text-m3-body-large font-bold text-m3-on-surface">{minutesUntilStart} min</span>
                 </div>
@@ -8504,7 +8508,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                 <div className="flex items-center justify-between bg-m3-surface-container/50 rounded-xl p-3">
                     <div className="flex items-center gap-2">
                         <Clock3 size={18} className="text-m3-primary" />
-                        <span className="text-m3-label-large font-bold text-m3-on-surface">{lang === 'en' ? 'Ends in' : 'Endet in'}</span>
+                        <span className="text-m3-label-large font-bold text-m3-on-surface">{t.endsIn || TRANSLATIONS.de.endsIn}</span>
                     </div>
                     <span className="text-m3-body-large font-bold text-m3-on-surface">{minutesUntilEnd} min</span>
                 </div>
