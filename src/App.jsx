@@ -31,6 +31,13 @@ const UMBRELLA_PRECIP_THRESHOLD = 0.5;
 const MINUTELY_SLOT_DURATION_MINUTES = 15;
 const MINUTELY_NOWCAST_WINDOW_SLOTS = 8;
 const MINUTELY_TO_HOURLY_RATE_FACTOR = 60 / MINUTELY_SLOT_DURATION_MINUTES;
+const RADAR_SLOT_DURATION_MINUTES = 5;
+const RADAR_NOWCAST_DISTANCE_METERS = 6000;
+const RADAR_CENTER_RADIUS_CELLS = 1;
+const RADAR_CENTER_WEIGHT = 4;
+const RADAR_ADJACENT_WEIGHT = 2;
+const RADAR_DIAGONAL_WEIGHT = 1;
+const RADAR_LOCAL_PEAK_BLEND = 0.7;
 // WMO weather codes that indicate rain/drizzle/showers (used for activity index rain detection)
 const RAIN_WEATHER_CODES = [51, 53, 55, 61, 63, 65, 80, 81, 82];
 const isAboveThreshold = (precipValue, snowValue, threshold) => precipValue > threshold || snowValue > threshold;
@@ -120,6 +127,100 @@ const DWD_POLLEN_REGIONS = [
 // Check if coordinates are within Germany's approximate bounding box
 // (min lat 47.27°N, max lat 55.06°N, min lon 5.87°E, max lon 15.04°E)
 const isInGermany = (lat, lon) => lat >= 47.27 && lat <= 55.06 && lon >= 5.87 && lon <= 15.04;
+
+const roundToTwoDecimals = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
+
+const extractLocalRadarPrecipitation = (grid) => {
+  if (!Array.isArray(grid) || grid.length === 0 || !Array.isArray(grid[0]) || grid[0].length === 0) return 0;
+
+  const rowCenter = Math.floor(grid.length / 2);
+  const colCenter = Math.floor(grid[0].length / 2);
+  let weightedSum = 0;
+  let totalWeight = 0;
+  let localPeak = 0;
+
+  for (let row = Math.max(0, rowCenter - RADAR_CENTER_RADIUS_CELLS); row <= Math.min(grid.length - 1, rowCenter + RADAR_CENTER_RADIUS_CELLS); row++) {
+    for (let col = Math.max(0, colCenter - RADAR_CENTER_RADIUS_CELLS); col <= Math.min(grid[0].length - 1, colCenter + RADAR_CENTER_RADIUS_CELLS); col++) {
+      const rawValue = Number(grid[row]?.[col] ?? 0);
+      const mmPerFiveMinutes = rawValue > 0 ? rawValue / 100 : 0;
+      const distance = Math.abs(row - rowCenter) + Math.abs(col - colCenter);
+      const weight = distance === 0
+        ? RADAR_CENTER_WEIGHT
+        : distance === 1
+          ? RADAR_ADJACENT_WEIGHT
+          : RADAR_DIAGONAL_WEIGHT;
+      weightedSum += mmPerFiveMinutes * weight;
+      totalWeight += weight;
+      localPeak = Math.max(localPeak, mmPerFiveMinutes);
+    }
+  }
+
+  if (totalWeight === 0) return 0;
+  const localAverage = weightedSum / totalWeight;
+  return roundToTwoDecimals(Math.max(localAverage, localPeak * RADAR_LOCAL_PEAK_BLEND));
+};
+
+const normalizeBrightSkyRadarNowcast = (data) => {
+  if (!Array.isArray(data?.radar) || data.radar.length === 0) return null;
+
+  const time = [];
+  const precipitation = [];
+
+  data.radar.forEach((record) => {
+    if (!record?.timestamp || !Array.isArray(record?.precipitation_5)) return;
+    time.push(record.timestamp);
+    precipitation.push(extractLocalRadarPrecipitation(record.precipitation_5));
+  });
+
+  if (time.length === 0) return null;
+
+  return {
+    source: 'brightsky_radar',
+    label: 'Bright Sky Radar',
+    intervalMinutes: RADAR_SLOT_DURATION_MINUTES,
+    kind: 'radar',
+    time,
+    precipitation,
+  };
+};
+
+const normalizeOpenMeteoNowcast = (data, source = 'open_meteo_nowcast') => {
+  if (!Array.isArray(data?.minutely_15?.time) || !Array.isArray(data?.minutely_15?.precipitation)) return null;
+
+  return {
+    source,
+    label: 'Open-Meteo Nowcast',
+    intervalMinutes: MINUTELY_SLOT_DURATION_MINUTES,
+    kind: source === 'open_meteo_forecast_minutely' ? 'model' : 'nowcast',
+    time: data.minutely_15.time,
+    precipitation: data.minutely_15.precipitation.map((value) => roundToTwoDecimals(Number(value) || 0)),
+  };
+};
+
+const fetchRadarNowcast = async (lat, lon) => {
+  if (isInGermany(lat, lon)) {
+    try {
+      const res = await fetch(`https://api.brightsky.dev/radar?lat=${lat}&lon=${lon}&distance=${RADAR_NOWCAST_DISTANCE_METERS}&format=plain`);
+      if (res.ok) {
+        const data = await res.json();
+        const normalized = normalizeBrightSkyRadarNowcast(data);
+        if (normalized) return normalized;
+      }
+    } catch (err) {
+      console.warn('Bright Sky radar unavailable:', err);
+    }
+  }
+
+  try {
+    const res = await fetch(`https://api.open-meteo.com/v1/nowcast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&timezone=auto`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return normalizeOpenMeteoNowcast(data);
+  } catch (err) {
+    console.warn('Open-Meteo nowcast unavailable:', err);
+    return null;
+  }
+};
 
 // Convert DWD pollen value (ordinal 0–3 scale) to approximate grains/m³ matching app thresholds
 const dwdPollenToGrains = (val) => {
@@ -7837,8 +7938,12 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
 };
 
 // --- NEU: PRECIPITATION TILE (Wann, Wie lang, Wie viel) ---
-const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatPrecip, getPrecipUnitLabel, setActiveTab, setShowPrecipModal }) => {
+const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang='de', formatPrecip, getPrecipUnitLabel, setActiveTab, setShowPrecipModal }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+  const fallbackNowcastData = useMemo(
+    () => normalizeOpenMeteoNowcast({ minutely_15: minutelyData }, 'open_meteo_forecast_minutely'),
+    [minutelyData]
+  );
 
   // Analyse der nächsten 24h
   const analysis = useMemo(() => {
@@ -7858,8 +7963,37 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
     let currentPrecip = current.precip || 0;
     let currentSnow = current.snow || 0;
     
-    // Override with current API data if available (more accurate, radar-based)
-    if (currentData && currentData.precipitation !== undefined) {
+    const nowcastData = (radarNowcast?.time?.length && radarNowcast?.precipitation?.length)
+      ? radarNowcast
+      : fallbackNowcastData;
+    const nowcastIntervalMinutes = nowcastData?.intervalMinutes || MINUTELY_SLOT_DURATION_MINUTES;
+    const nowcastRateFactor = 60 / nowcastIntervalMinutes;
+    const nowPlusTwoHoursMs = now.getTime() + (2 * 60 * 60 * 1000);
+    let nowcastCurrentRate = null;
+    let nowcastHasPrecipSoon = false;
+
+    // Override with radar/nowcast data first if available
+    if (nowcastData?.time?.length && nowcastData?.precipitation?.length) {
+      for (let i = 0; i < nowcastData.time.length; i++) {
+        const slotTime = new Date(nowcastData.time[i]);
+        const slotMs = slotTime.getTime();
+        const slotEndMs = slotMs + (nowcastIntervalMinutes * 60 * 1000);
+        const slotPrecip = Number(nowcastData.precipitation[i]) || 0;
+        const slotRate = slotPrecip * nowcastRateFactor;
+
+        if (slotEndMs > now.getTime() && slotMs <= nowPlusTwoHoursMs && slotPrecip > LIGHT_PRECIP_THRESHOLD) {
+          nowcastHasPrecipSoon = true;
+        }
+
+        if (slotMs <= now.getTime() && slotEndMs > now.getTime()) {
+          nowcastCurrentRate = slotRate;
+        }
+      }
+    }
+
+    if (nowcastCurrentRate !== null) {
+      currentPrecip = nowcastCurrentRate;
+    } else if (currentData && currentData.precipitation !== undefined) {
       // Use total precipitation which includes all types (rain, showers, snow, etc.)
       // precipitation = total, rain = stratiform rain only (excludes showers!), snowfall = snow only
       // Using total precipitation ensures convective showers (codes 80-82) are correctly detected.
@@ -7883,19 +8017,22 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
        strongStart: null,
        strongEnd: null,
        strongEndIsEstimate: false,
-       maxIntensity: 0,
-       minutelyStart: null,
-       currentIntensity: 0,
-       peakTime: null,
-       hourlyForecast: [] // Array of {time, amount, rain, snow} for next hours
+        maxIntensity: 0,
+        minutelyStart: null,
+        currentIntensity: 0,
+        peakTime: null,
+        hourlyForecast: [], // Array of {time, amount, rain, snow} for next hours
+        nowcastSourceLabel: nowcastData?.label || null,
+        nowcastSourceType: nowcastData?.kind || null,
+        modelConflict: null
     };
 
     let minutelyNowcast = null;
 
-    // 1. Check Minutely Data for precise start time (Next 2 hours)
-    if (minutelyData && minutelyData.precipitation) {
-        const mTime = minutelyData.time;
-        const mPrecip = minutelyData.precipitation;
+    // 1. Check radar/nowcast data for precise start time (next 2 hours)
+    if (nowcastData?.time?.length && nowcastData?.precipitation?.length) {
+        const mTime = nowcastData.time;
+        const mPrecip = nowcastData.precipitation;
         let strongMinutelyStart = null;
         let minutelyPeak = 0;
         let minutelyPeakTime = null;
@@ -7917,10 +8054,10 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
         }
         
         if (startIndex !== -1) {
-            // Check next 2 hours (8 x 15-minute slots)
-            for(let i=startIndex; i < Math.min(startIndex + MINUTELY_NOWCAST_WINDOW_SLOTS, mTime.length); i++) {
+            const maxSlots = Math.max(1, Math.ceil((MINUTELY_NOWCAST_WINDOW_SLOTS * MINUTELY_SLOT_DURATION_MINUTES) / nowcastIntervalMinutes));
+            for(let i=startIndex; i < Math.min(startIndex + maxSlots, mTime.length); i++) {
                 const slotPrecip = mPrecip[i] || 0;
-                const slotRate = slotPrecip * MINUTELY_TO_HOURLY_RATE_FACTOR; // slotPrecip is mm per 15-minute slot -> convert to mm/h
+                const slotRate = slotPrecip * nowcastRateFactor;
                 if (!result.minutelyStart && slotPrecip > LIGHT_PRECIP_THRESHOLD) {
                      result.minutelyStart = new Date(mTime[i]);
                  }
@@ -7940,7 +8077,7 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
                     minutelyEventStart = new Date(mTime[i]);
                   }
                   const slotStartTime = new Date(mTime[i]).getTime();
-                  minutelyEventEnd = new Date(slotStartTime + MINUTELY_SLOT_DURATION_MINUTES * 60 * 1000);
+                  minutelyEventEnd = new Date(slotStartTime + nowcastIntervalMinutes * 60 * 1000);
                 }
             }
         }
@@ -7951,7 +8088,7 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
           total: minutelyTotal,
           peakRate: minutelyPeak,
           peakTime: minutelyPeakTime,
-          durationHours: minutelySlots > 0 ? (Math.round((minutelySlots * MINUTELY_SLOT_DURATION_MINUTES * 100) / 60) / 100) : 0
+          durationHours: minutelySlots > 0 ? (Math.round((minutelySlots * nowcastIntervalMinutes * 100) / 60) / 100) : 0
         };
     }
 
@@ -7973,6 +8110,14 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
     let peakIntensity = 0;
     let peakTime = null;
     let lastProcessedTime = null;
+    const hourlyHasPrecipSoon = futureData.some((d) => d.time.getTime() <= nowPlusTwoHoursMs && isAboveThreshold(d.precip, d.snow, LIGHT_PRECIP_THRESHOLD));
+
+    const usesIndependentNowcast = result.nowcastSourceType === 'radar' || result.nowcastSourceType === 'nowcast';
+    if (usesIndependentNowcast && nowcastHasPrecipSoon !== hourlyHasPrecipSoon) {
+      result.modelConflict = nowcastHasPrecipSoon
+        ? 'radar_wetter_than_model'
+        : 'model_wetter_than_radar';
+    }
     
     // Loop to find start and end (Hourly Data) - limit to 24 hours
     for (let i = 0; i < Math.min(futureData.length, 24); i++) {
@@ -8110,7 +8255,7 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
         result.type = 'rain_later';
         result.startTime = minutelyNowcast.start;
         result.endTime = minutelyNowcast.end || null;
-        result.duration = minutelyNowcast.durationHours || (MINUTELY_SLOT_DURATION_MINUTES / 60);
+        result.duration = minutelyNowcast.durationHours || (nowcastIntervalMinutes / 60);
         if (total24hPrecip <= 0 && total24hRain <= 0) {
           result.amount = minutelyNowcast.total || 0;
           result.rainAmount = minutelyNowcast.total || 0;
@@ -8121,11 +8266,11 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
     }
     
     return result;
-  }, [data, minutelyData, currentData]);
+  }, [data, fallbackNowcastData, radarNowcast, currentData]);
 
   if (!analysis) return null;
 
-  const { type, startTime, duration, amount, rainAmount, snowAmount, isSnow, isMixed, strongStart, strongEnd, strongEndIsEstimate, maxIntensity, minutelyStart, currentIntensity, peakTime, hourlyForecast } = analysis;
+  const { type, startTime, duration, amount, rainAmount, snowAmount, isSnow, isMixed, strongStart, strongEnd, strongEndIsEstimate, maxIntensity, minutelyStart, currentIntensity, peakTime, hourlyForecast, nowcastSourceLabel, nowcastSourceType, modelConflict } = analysis;
   const isRain = type.includes('rain');
   const isNow = type.includes('now');
   const isMixedPrecip = type.includes('mixed');
@@ -8168,6 +8313,16 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
   const strongEndLabel = strongEnd ? strongEnd.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'}) : '';
   const strongEndSuffixEn = strongEndLabel ? (strongEndIsEstimate ? ` to at least ${strongEndLabel}` : ` to ${strongEndLabel}`) : '';
   const strongEndSuffixDe = strongEndLabel ? (strongEndIsEstimate ? ` mindestens bis ${strongEndLabel} Uhr` : ` bis ${strongEndLabel} Uhr`) : '';
+  const nowcastTypeLabel = nowcastSourceType === 'radar' ? 'Radar' : 'Nowcast';
+  const conflictMessage = modelConflict === 'radar_wetter_than_model'
+    ? (lang === 'en'
+        ? 'Radar/Nowcast already sees precipitation near you while the hourly models are still mostly dry.'
+        : 'Radar/Nowcast erkennt bereits Niederschlag in deiner Nähe, obwohl die Stundenmodelle noch weitgehend trocken sind.')
+    : modelConflict === 'model_wetter_than_radar'
+      ? (lang === 'en'
+          ? 'The hourly models expect precipitation soon, but Radar/Nowcast is still mostly dry right now.'
+          : 'Die Stundenmodelle erwarten bald Niederschlag, aber Radar/Nowcast ist aktuell noch weitgehend trocken.')
+      : null;
 
   if (type === 'none') {
       headline = t.noPrecipExp;
@@ -8314,6 +8469,26 @@ const PrecipitationTile = ({ data, minutelyData, currentData, lang='de', formatP
                         <span className="text-m3-label-large font-bold text-m3-on-surface">{t.currentIntensity}</span>
                     </div>
                     <span className="text-m3-body-large font-bold text-m3-on-surface">{formatPrecip ? formatPrecip(currentIntensity) : currentIntensity.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}/h</span>
+                </div>
+            )}
+
+            {nowcastSourceLabel && nowcastSourceType !== 'model' && (
+                <div className="flex items-start gap-2 bg-m3-surface-container-high rounded-m3-xl p-3">
+                    <Crosshair size={18} className="text-m3-primary mt-0.5" />
+                    <span className="text-m3-label-large font-bold text-m3-on-surface">
+                        {lang === 'en'
+                          ? `${nowcastTypeLabel} drives the next 2 hours via ${nowcastSourceLabel}; afterwards the hourly models take over.`
+                          : `${nowcastTypeLabel} steuert die nächsten 2 Stunden über ${nowcastSourceLabel}; danach übernehmen die Stundenmodelle.`}
+                    </span>
+                </div>
+            )}
+
+            {modelConflict && (
+                <div className="flex items-start gap-2 bg-m3-tertiary-container/50 rounded-m3-xl p-3 border border-m3-tertiary/30">
+                    <AlertTriangle size={18} className="text-m3-tertiary mt-0.5" />
+                    <span className="text-m3-label-large font-bold text-m3-on-surface">
+                        {conflictMessage}
+                    </span>
                 </div>
             )}
             
@@ -12688,14 +12863,15 @@ export default function WeatherApp() {
       const climLastDay = new Date(lastYear, nowForClimate.getMonth() + 1, 0).getDate();
       const urlClimate = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${lastYear}-${climMonth}-01&end_date=${lastYear}-${climMonth}-${climLastDay}&daily=temperature_2m_mean&timezone=auto`;
 
-      const [resShort, resLong, resSunriseSunset, resDwd, resAirQuality, resClimate, resDwdPollen] = await Promise.all([
+      const [resShort, resLong, resSunriseSunset, resDwd, resAirQuality, resClimate, resDwdPollen, radarNowcast] = await Promise.all([
         fetch(urlShort), 
         fetch(urlLong), 
         fetch(urlSunriseSunset).catch(() => ({ ok: false })),
         fetch(urlDwd).catch(() => ({ ok: false })),
         fetch(urlAirQuality).catch(() => ({ ok: false })),
         fetch(urlClimate).catch(() => ({ ok: false })),
-        isInGermany(lat, lon) ? fetch(urlDwdPollen).catch(() => ({ ok: false })) : Promise.resolve({ ok: false })
+        isInGermany(lat, lon) ? fetch(urlDwdPollen).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
+        fetchRadarNowcast(lat, lon)
       ]);
       
       if (!resShort.ok) {
@@ -12709,12 +12885,17 @@ export default function WeatherApp() {
       
       const shortData = await resShort.json();
       const longData = await resLong.json();
+      const normalizedForecastNowcast = normalizeOpenMeteoNowcast(shortData, 'open_meteo_forecast_minutely');
+      const shortDataWithRadar = {
+        ...shortData,
+        radar_nowcast: radarNowcast || normalizedForecastNowcast
+      };
       
-      setShortTermData(shortData);
+      setShortTermData(shortDataWithRadar);
       setLongTermData(longData);
       
       // Save to cache
-      saveWeatherCache(shortData, longData, currentLoc);
+      saveWeatherCache(shortDataWithRadar, longData, currentLoc);
       setIsUsingCache(false);
       
       // Set sunrise/sunset from separate API call
@@ -14273,7 +14454,7 @@ export default function WeatherApp() {
                <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
            </div>
            <h2 className="text-2xl font-bold mb-6 text-slate-800 text-center">{t('precipRadar')}</h2>
-            <PrecipitationTile data={processedShort} currentData={shortTermData?.current} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} />
+            <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} radarNowcast={shortTermData?.radar_nowcast} currentData={shortTermData?.current} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} />
        </div>
     );
  }
@@ -15274,7 +15455,7 @@ export default function WeatherApp() {
 
           {activeTab === 'precipitation' && (
             <div className="space-y-4">
-              <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} currentData={shortTermData?.current} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} />
+              <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} radarNowcast={shortTermData?.radar_nowcast} currentData={shortTermData?.current} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} />
             </div>
           )}
 
