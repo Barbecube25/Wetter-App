@@ -14217,6 +14217,7 @@ export default function WeatherApp() {
   const weatherTileGridClass = isTabletLayoutActive ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-4';
   const weatherTileGapClass = isSmallScreen ? 'gap-2' : (isTabletLayoutActive ? 'gap-5' : 'gap-4');
   const detailsStackSpacingClass = isSmallScreen ? 'space-y-2' : (isTabletLayoutActive ? 'space-y-4' : 'space-y-2');
+  const contentCardPaddingClass = isSmallScreen ? 'p-4' : (isTabletLayoutActive ? 'p-8' : 'p-6');
 
   // Helper function to get animation card padding classes
   // Landscape mode takes precedence when both isLandscape and isSmallScreen are true
@@ -15400,35 +15401,37 @@ export default function WeatherApp() {
         </div>
 
         {/* Content Card with modern elevation */}
-        <div className={`${isRealNight ? 'bg-m3-dark-surface-container/90' : 'bg-m3-surface-container'} rounded-m3-3xl p-6 shadow-m3-3 border border-m3-outline-variant min-h-[450px]`}>
+        <div className={`${isRealNight ? 'bg-m3-dark-surface-container/90' : 'bg-m3-surface-container'} rounded-m3-3xl ${contentCardPaddingClass} shadow-m3-3 border border-m3-outline-variant min-h-[450px]`}>
           
           {activeTab === 'overview' && (
-            <div className="space-y-4">
-               <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} />
-               
-               {/* Historical context: temperature anomaly vs. last year's monthly average */}
-               {climateNormals !== null && processedShort.length > 0 && (() => {
-                 const todayTemp = processedShort[0]?.temp;
-                 if (todayTemp == null) return null;
-                 const diff = Math.round((todayTemp - climateNormals) * 10) / 10;
-                 if (Math.abs(diff) < TEMP_ANOMALY_THRESHOLD) return null;
-                 const isWarmer = diff > 0;
-                 return (
-                   <div className={`flex items-center gap-2 px-3 py-2 rounded-m3-xl text-xs font-medium ${isRealNight ? 'bg-m3-dark-surface-container-high text-m3-dark-on-surface-variant' : 'bg-m3-surface-container-high text-m3-on-surface-variant'}`}>
-                     <TrendingUp size={14} className={isWarmer ? 'text-orange-500' : 'text-blue-500'} />
-                     <span>
-                       {lang === 'en'
-                         ? `Today is ${Math.abs(diff)}° ${isWarmer ? t('warmerThanNorm') : t('colderThanNorm')} (${t('typicalForMonth')}: ${formatTemp(climateNormals)}°)`
-                         : `Heute ${Math.abs(diff)}° ${isWarmer ? t('warmerThanNorm') : t('colderThanNorm')} (${t('typicalForMonth')}: ${formatTemp(climateNormals)}°)`
-                       }
-                     </span>
-                   </div>
-                 );
-               })()}
+            <div className={isTabletLayoutActive ? 'grid grid-cols-12 gap-5 items-start' : 'space-y-4'}>
+              <div className={isTabletLayoutActive ? 'col-span-5 space-y-4' : 'space-y-4'}>
+                <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} />
+                
+                {/* Historical context: temperature anomaly vs. last year's monthly average */}
+                {climateNormals !== null && processedShort.length > 0 && (() => {
+                  const todayTemp = processedShort[0]?.temp;
+                  if (todayTemp == null) return null;
+                  const diff = Math.round((todayTemp - climateNormals) * 10) / 10;
+                  if (Math.abs(diff) < TEMP_ANOMALY_THRESHOLD) return null;
+                  const isWarmer = diff > 0;
+                  return (
+                    <div className={`flex items-center gap-2 px-3 py-2 rounded-m3-xl text-xs font-medium ${isRealNight ? 'bg-m3-dark-surface-container-high text-m3-dark-on-surface-variant' : 'bg-m3-surface-container-high text-m3-on-surface-variant'}`}>
+                      <TrendingUp size={14} className={isWarmer ? 'text-orange-500' : 'text-blue-500'} />
+                      <span>
+                        {lang === 'en'
+                          ? `Today is ${Math.abs(diff)}° ${isWarmer ? t('warmerThanNorm') : t('colderThanNorm')} (${t('typicalForMonth')}: ${formatTemp(climateNormals)}°)`
+                          : `Heute ${Math.abs(diff)}° ${isWarmer ? t('warmerThanNorm') : t('colderThanNorm')} (${t('typicalForMonth')}: ${formatTemp(climateNormals)}°)`
+                        }
+                      </span>
+                    </div>
+                  );
+                })()}
+              </div>
 
-               <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} isRealNight={isRealNight} />
-
-
+              <div className={isTabletLayoutActive ? 'col-span-7' : ''}>
+                <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} isRealNight={isRealNight} />
+              </div>
             </div>
           )}
 
@@ -15659,7 +15662,7 @@ export default function WeatherApp() {
                 {/* Trips grid: "+" tile first, then saved trip tiles – 2-column grid */}
                 <div>
                   <h3 className="text-sm font-bold uppercase opacity-70 mb-3 ml-2">{t('myTrips')}</h3>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className={`grid ${isTabletLayoutActive ? 'grid-cols-3' : 'grid-cols-2'} gap-3`}>
                       {/* "Plan Trip" tile – always first */}
                       <button
                         onClick={() => setShowNewTripModal(true)}
