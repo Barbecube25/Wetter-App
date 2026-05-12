@@ -260,6 +260,8 @@ const LIGHT_SLEET_PARTICLES = 30;
 // Responsive design thresholds
 const LANDSCAPE_HEIGHT_THRESHOLD = 600; // Landscape mode detection threshold - devices with height less than this are considered landscape
 const SMALL_SCREEN_WIDTH_THRESHOLD = 375; // Small screen detection threshold - devices with width less than this need tighter spacing
+const TABLET_MIN_WIDTH_THRESHOLD = 768; // Tablet/Foldable inner display starts around this width
+const TABLET_MAX_WIDTH_THRESHOLD = 1280; // Upper bound to keep desktop-like layouts unchanged
 
 // TEXT RESSOURCEN
 const TRANSLATIONS = {
@@ -12273,6 +12275,7 @@ export default function WeatherApp() {
   // Small screen detection - tracks devices with viewport width strictly less than 375px (e.g., iPhone SE: 320px, small Android phones: 320-360px)
   // Used to apply compact layout styles with reduced padding, smaller text, and tighter spacing
   const [isSmallScreen, setIsSmallScreen] = useState(false);
+  const [isTabletScreen, setIsTabletScreen] = useState(false);
   
   // Hide controls in landscape mode to see full animation
   const [hideControlsInLandscape, setHideControlsInLandscape] = useState(false);
@@ -12294,8 +12297,11 @@ export default function WeatherApp() {
   // Detect landscape orientation and small screens
   useEffect(() => {
     const checkOrientation = () => {
-      setIsLandscape(window.innerWidth > window.innerHeight && window.innerHeight < LANDSCAPE_HEIGHT_THRESHOLD);
-      setIsSmallScreen(window.innerWidth < SMALL_SCREEN_WIDTH_THRESHOLD);
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      setIsLandscape(width > height && height < LANDSCAPE_HEIGHT_THRESHOLD);
+      setIsSmallScreen(width < SMALL_SCREEN_WIDTH_THRESHOLD);
+      setIsTabletScreen(width >= TABLET_MIN_WIDTH_THRESHOLD && width <= TABLET_MAX_WIDTH_THRESHOLD);
     };
     
     checkOrientation();
@@ -14162,7 +14168,7 @@ export default function WeatherApp() {
   // Helper function to get responsive layout dimensions based on device orientation and size
   // Note: Landscape mode takes precedence over small screen when both are true,
   // as landscape orientation is a more significant layout constraint
-  const getLayoutDimensions = (isLandscape, isSmallScreen) => {
+  const getLayoutDimensions = (isLandscape, isSmallScreen, isTabletScreen) => {
     if (isLandscape) {
       return {
         animationCardHeight: '100px',
@@ -14179,6 +14185,14 @@ export default function WeatherApp() {
         fixedTopOffset: 'calc(env(safe-area-inset-top, 0px) + 12px)'
       };
     }
+    if (isTabletScreen) {
+      return {
+        animationCardHeight: '240px',
+        navBarHeight: '96px',
+        fixedElementsGap: '10px',
+        fixedTopOffset: 'calc(env(safe-area-inset-top, 0px) + 16px)'
+      };
+    }
     return {
       animationCardHeight: ANIMATION_CARD_HEIGHT,
       navBarHeight: NAV_BAR_HEIGHT,
@@ -14189,17 +14203,24 @@ export default function WeatherApp() {
 
   // Dynamic layout constants for landscape mode and small screen support
   const headerHeight = '0px'; // Header removed, location moved to animation card
-  const layoutDimensions = getLayoutDimensions(isLandscape, isSmallScreen);
+  const layoutDimensions = getLayoutDimensions(isLandscape, isSmallScreen, isTabletScreen);
   const animationCardHeight = layoutDimensions.animationCardHeight;
   const navBarHeight = layoutDimensions.navBarHeight;
   const fixedElementsGap = layoutDimensions.fixedElementsGap;
   const fixedTopOffset = layoutDimensions.fixedTopOffset;
+  const usesTabletLayout = !isLandscape && isTabletScreen;
+  const contentContainerMaxWidthClass = usesTabletLayout ? 'max-w-6xl' : 'max-w-4xl';
+  const horizontalPagePaddingClass = isSmallScreen ? 'px-2' : (usesTabletLayout ? 'px-6' : 'px-4');
+  const weatherTileGridClass = usesTabletLayout ? 'grid-cols-3 lg:grid-cols-6' : 'grid-cols-2 sm:grid-cols-4';
+  const weatherTileGapClass = isSmallScreen ? 'gap-2' : (usesTabletLayout ? 'gap-5' : 'gap-4');
+  const detailsStackSpacingClass = isSmallScreen ? 'space-y-2' : (usesTabletLayout ? 'space-y-4' : 'space-y-2');
 
   // Helper function to get animation card padding classes
   // Landscape mode takes precedence when both isLandscape and isSmallScreen are true
   const getAnimationCardPadding = () => {
     if (isLandscape) return 'pt-4 px-4 pb-4';
     if (isSmallScreen) return 'pt-3 px-3 pb-3';
+    if (isTabletScreen) return 'pt-5 px-5 pb-5';
     return 'pt-4 px-4 pb-4';
   };
 
@@ -14209,6 +14230,7 @@ export default function WeatherApp() {
   const getAnimationCardHeight = () => {
     if (isLandscape) return 'h-[100px]';
     if (isSmallScreen) return 'h-[180px]';
+    if (isTabletScreen) return 'h-[240px]';
     return 'h-[210px]';
   };
 
@@ -14842,10 +14864,10 @@ export default function WeatherApp() {
         </button>
       )}
 
-      <main className={`max-w-4xl mx-auto ${isSmallScreen ? 'px-2' : 'px-4'} z-10 relative space-y-2`} style={{ paddingTop: `calc(${animationCardHeight} + ${navBarHeight} + 2 * ${fixedElementsGap} + ${fixedTopOffset})`, paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
+      <main className={`${contentContainerMaxWidthClass} mx-auto ${horizontalPagePaddingClass} z-10 relative ${detailsStackSpacingClass}`} style={{ paddingTop: `calc(${animationCardHeight} + ${navBarHeight} + 2 * ${fixedElementsGap} + ${fixedTopOffset})`, paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
         {/* Fixed Animation Card Container - Matches main content width, extends to top edge */}
-        <div className={`fixed left-0 right-0 z-20 ${isSmallScreen ? 'px-2' : 'px-4'}`} style={{ top: fixedTopOffset }}>
-          <div className="max-w-4xl mx-auto">
+        <div className={`fixed left-0 right-0 z-20 ${horizontalPagePaddingClass}`} style={{ top: fixedTopOffset }}>
+          <div className={`${contentContainerMaxWidthClass} mx-auto`}>
             <div className={`${isRealNight ? 'bg-m3-dark-surface-container/95' : 'bg-m3-surface-container/95'} rounded-m3-3xl ${getAnimationCardPadding()} shadow-m3-4 relative overflow-hidden border border-m3-outline-variant backdrop-blur-md ${getAnimationCardHeight()}`}
               onTouchStart={(e) => {
                 if (pendingLocChange.current !== null) return;
@@ -15043,8 +15065,8 @@ export default function WeatherApp() {
 
         {/* Enhanced Tab Navigation - Fixed positioned below fixed animation card with gap, hidden in landscape when controls are hidden */}
         {!(isLandscape && hideControlsInLandscape) && (
-        <div className={`fixed left-0 right-0 z-30 ${isSmallScreen ? 'px-2' : 'px-4'}`} style={{ top: `calc(${animationCardHeight} + ${fixedElementsGap} + ${fixedTopOffset})` }}>
-          <div className="max-w-4xl mx-auto">
+        <div className={`fixed left-0 right-0 z-30 ${horizontalPagePaddingClass}`} style={{ top: `calc(${animationCardHeight} + ${fixedElementsGap} + ${fixedTopOffset})` }}>
+          <div className={`${contentContainerMaxWidthClass} mx-auto`}>
             <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl ${isLandscape ? 'p-1' : (isSmallScreen ? 'p-1.5' : 'p-2')} shadow-m3-2 border border-m3-outline-variant`}>
           <div className={`grid grid-cols-6 ${isSmallScreen ? 'gap-0.5' : 'gap-1'}`}>
             {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'precipitation', label:t('precip'), icon: Droplets}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
@@ -15108,7 +15130,7 @@ export default function WeatherApp() {
           }`}
         >
           {/* Weather Details Grid - First row (4 tiles) */}
-          <div className={`grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'gap-2' : 'gap-4'}`}>
+          <div className={`grid ${weatherTileGridClass} ${weatherTileGapClass}`}>
           <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('uv')}>
             <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
               <Sun size={14} /> {t('uv')}
@@ -15146,7 +15168,7 @@ export default function WeatherApp() {
         </div>
         
         {/* Additional Weather Details Grid - Second row (4 tiles) */}
-        <div className={`grid grid-cols-2 sm:grid-cols-4 ${isSmallScreen ? 'gap-2' : 'gap-4'}`}>
+        <div className={`grid ${weatherTileGridClass} ${weatherTileGapClass}`}>
           {current.pressure !== null && current.pressure !== undefined && (
             <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('pressure')}>
               <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
