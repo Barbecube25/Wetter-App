@@ -8308,9 +8308,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
   const strongEndLabel = strongEnd ? strongEnd.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'}) : '';
   const strongEndSuffixEn = strongEndLabel ? (strongEndIsEstimate ? ` to at least ${strongEndLabel}` : ` to ${strongEndLabel}`) : '';
   const strongEndSuffixDe = strongEndLabel ? (strongEndIsEstimate ? ` mindestens bis ${strongEndLabel} Uhr` : ` bis ${strongEndLabel} Uhr`) : '';
-  const nowcastTypeLabel = nowcastSourceType === 'radar'
-    ? (lang === 'en' ? 'Radar' : 'Radar')
-    : (lang === 'en' ? 'Nowcast' : 'Nowcast');
+  const nowcastTypeLabel = nowcastSourceType === 'radar' ? 'Radar' : 'Nowcast';
 
   if (type === 'none') {
       headline = t.noPrecipExp;
@@ -8477,10 +8475,10 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                     <span className="text-m3-label-large font-bold text-m3-on-surface">
                         {modelConflict === 'radar_wetter_than_model'
                           ? (lang === 'en'
-                              ? 'Radar/nowcast already sees precipitation near you while the hourly models are still mostly dry.'
+                              ? 'Radar/Nowcast already sees precipitation near you while the hourly models are still mostly dry.'
                               : 'Radar/Nowcast erkennt bereits Niederschlag in deiner Nähe, obwohl die Stundenmodelle noch weitgehend trocken sind.')
                           : (lang === 'en'
-                              ? 'The hourly models expect precipitation soon, but radar/nowcast is still mostly dry right now.'
+                              ? 'The hourly models expect precipitation soon, but Radar/Nowcast is still mostly dry right now.'
                               : 'Die Stundenmodelle erwarten bald Niederschlag, aber Radar/Nowcast ist aktuell noch weitgehend trocken.')}
                     </span>
                 </div>
