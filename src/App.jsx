@@ -264,6 +264,7 @@ const LANDSCAPE_HEIGHT_THRESHOLD = 600; // Landscape mode detection threshold - 
 const SMALL_SCREEN_WIDTH_THRESHOLD = 375; // Small screen detection threshold - devices with width less than this need tighter spacing
 const TABLET_MIN_WIDTH_THRESHOLD = 768; // Tablet/Foldable inner display starts around this width
 const TABLET_MAX_WIDTH_THRESHOLD = 1280; // Upper bound to keep desktop-like layouts unchanged
+const FOLDABLE_MIN_WIDTH_THRESHOLD = 540; // Foldable inner displays can be narrower than classic tablets
 
 // TEXT RESSOURCEN
 const TRANSLATIONS = {
@@ -8965,7 +8966,18 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                       pollenTopLabel: visualData.pollenTopLabel,
                     },
                   ];
-                  if (visualData.tomorrowMinTemp !== null) {
+                  const hasTomorrowQuickData = [
+                    visualData?.tomorrowMinTemp,
+                    visualData?.tomorrowMaxTemp,
+                    visualData?.tomorrowRainSum,
+                    visualData?.tomorrowRainProb,
+                    visualData?.tomorrowMaxWind,
+                    visualData?.tomorrowMaxUV,
+                    visualData?.thunderstormRiskTomorrow,
+                    visualData?.thunderstormWarnLevelTomorrow,
+                    visualData?.pollenLevelTomorrow,
+                  ].some((value) => value !== null && value !== undefined);
+                  if (hasTomorrowQuickData) {
                     quickDays.push({
                       key: 'tomorrow',
                       label: t.tomorrow,
@@ -12318,6 +12330,8 @@ export default function WeatherApp() {
   // Used to apply compact layout styles with reduced padding, smaller text, and tighter spacing
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const [isTabletScreen, setIsTabletScreen] = useState(false);
+  const [isFoldableScreen, setIsFoldableScreen] = useState(false);
+  const [isFoldableCompactScreen, setIsFoldableCompactScreen] = useState(false);
   
   // Hide controls in landscape mode to see full animation
   const [hideControlsInLandscape, setHideControlsInLandscape] = useState(false);
@@ -12342,9 +12356,20 @@ export default function WeatherApp() {
       const width = window.innerWidth;
       const height = window.innerHeight;
       const isLandscapeViewport = width > height && height < LANDSCAPE_HEIGHT_THRESHOLD;
+      const isFoldableViewport = [
+        '(spanning: single-fold-vertical)',
+        '(spanning: single-fold-horizontal)',
+        '(horizontal-viewport-segments: 2)',
+        '(vertical-viewport-segments: 2)',
+      ].some((query) => window.matchMedia(query).matches);
       setIsLandscape(isLandscapeViewport);
       setIsSmallScreen(width < SMALL_SCREEN_WIDTH_THRESHOLD);
-      setIsTabletScreen(width >= TABLET_MIN_WIDTH_THRESHOLD && width <= TABLET_MAX_WIDTH_THRESHOLD);
+      setIsFoldableScreen(isFoldableViewport);
+      setIsFoldableCompactScreen(isFoldableViewport && width < TABLET_MIN_WIDTH_THRESHOLD);
+      setIsTabletScreen(
+        (width >= TABLET_MIN_WIDTH_THRESHOLD && width <= TABLET_MAX_WIDTH_THRESHOLD)
+        || (isFoldableViewport && width >= FOLDABLE_MIN_WIDTH_THRESHOLD)
+      );
     };
     
     checkOrientation();
@@ -14251,7 +14276,7 @@ export default function WeatherApp() {
   const navBarHeight = layoutDimensions.navBarHeight;
   const fixedElementsGap = layoutDimensions.fixedElementsGap;
   const fixedTopOffset = layoutDimensions.fixedTopOffset;
-  const isTabletLayoutActive = !isLandscape && isTabletScreen;
+  const isTabletLayoutActive = !isLandscape && (isTabletScreen || isFoldableScreen);
   const contentContainerMaxWidthClass = isTabletLayoutActive ? TABLET_CONTENT_MAX_WIDTH_CLASS : DEFAULT_CONTENT_MAX_WIDTH_CLASS;
   const horizontalPagePaddingClass = isSmallScreen ? 'px-2' : (isTabletLayoutActive ? 'px-6' : 'px-4');
   const weatherTileGridClass = isTabletLayoutActive ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-4';
@@ -15112,7 +15137,7 @@ export default function WeatherApp() {
         <div className={`fixed left-0 right-0 z-30 ${horizontalPagePaddingClass}`} style={{ top: `calc(${animationCardHeight} + ${fixedElementsGap} + ${fixedTopOffset})` }}>
           <div className={`${contentContainerMaxWidthClass} mx-auto`}>
             <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl ${isLandscape ? 'p-1' : (isSmallScreen ? 'p-1.5' : 'p-2')} shadow-m3-2 border border-m3-outline-variant`}>
-          <div className={`grid grid-cols-6 ${isSmallScreen ? 'gap-0.5' : 'gap-1'}`}>
+          <div className={`grid ${isFoldableCompactScreen ? 'grid-cols-3' : 'grid-cols-6'} ${isSmallScreen ? 'gap-0.5' : 'gap-1'}`}>
             {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'precipitation', label:t('precip'), icon: Droplets}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
               <button 
                 key={tab.id} 
