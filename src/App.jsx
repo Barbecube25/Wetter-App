@@ -34,6 +34,10 @@ const MINUTELY_TO_HOURLY_RATE_FACTOR = 60 / MINUTELY_SLOT_DURATION_MINUTES;
 const RADAR_SLOT_DURATION_MINUTES = 5;
 const RADAR_NOWCAST_DISTANCE_METERS = 6000;
 const RADAR_CENTER_RADIUS_CELLS = 1;
+const RADAR_CENTER_WEIGHT = 4;
+const RADAR_ADJACENT_WEIGHT = 2;
+const RADAR_DIAGONAL_WEIGHT = 1;
+const RADAR_LOCAL_PEAK_BLEND = 0.7;
 // WMO weather codes that indicate rain/drizzle/showers (used for activity index rain detection)
 const RAIN_WEATHER_CODES = [51, 53, 55, 61, 63, 65, 80, 81, 82];
 const isAboveThreshold = (precipValue, snowValue, threshold) => precipValue > threshold || snowValue > threshold;
@@ -124,7 +128,7 @@ const DWD_POLLEN_REGIONS = [
 // (min lat 47.27°N, max lat 55.06°N, min lon 5.87°E, max lon 15.04°E)
 const isInGermany = (lat, lon) => lat >= 47.27 && lat <= 55.06 && lon >= 5.87 && lon <= 15.04;
 
-const roundNowcastValue = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
+const roundToTwoDecimals = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
 
 const extractLocalRadarPrecipitation = (grid) => {
   if (!Array.isArray(grid) || grid.length === 0 || !Array.isArray(grid[0]) || grid[0].length === 0) return 0;
@@ -140,7 +144,11 @@ const extractLocalRadarPrecipitation = (grid) => {
       const rawValue = Number(grid[row]?.[col] ?? 0);
       const mmPerFiveMinutes = rawValue > 0 ? rawValue / 100 : 0;
       const distance = Math.abs(row - rowCenter) + Math.abs(col - colCenter);
-      const weight = distance === 0 ? 4 : distance === 1 ? 2 : 1;
+      const weight = distance === 0
+        ? RADAR_CENTER_WEIGHT
+        : distance === 1
+          ? RADAR_ADJACENT_WEIGHT
+          : RADAR_DIAGONAL_WEIGHT;
       weightedSum += mmPerFiveMinutes * weight;
       totalWeight += weight;
       localPeak = Math.max(localPeak, mmPerFiveMinutes);
@@ -149,7 +157,7 @@ const extractLocalRadarPrecipitation = (grid) => {
 
   if (totalWeight === 0) return 0;
   const localAverage = weightedSum / totalWeight;
-  return roundNowcastValue(Math.max(localAverage, localPeak * 0.7));
+  return roundToTwoDecimals(Math.max(localAverage, localPeak * RADAR_LOCAL_PEAK_BLEND));
 };
 
 const normalizeBrightSkyRadarNowcast = (data) => {
@@ -185,7 +193,7 @@ const normalizeOpenMeteoNowcast = (data, source = 'open_meteo_nowcast') => {
     intervalMinutes: MINUTELY_SLOT_DURATION_MINUTES,
     kind: source === 'open_meteo_forecast_minutely' ? 'model' : 'nowcast',
     time: data.minutely_15.time,
-    precipitation: data.minutely_15.precipitation.map((value) => roundNowcastValue(Number(value) || 0)),
+    precipitation: data.minutely_15.precipitation.map((value) => roundToTwoDecimals(Number(value) || 0)),
   };
 };
 
@@ -8300,6 +8308,9 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
   const strongEndLabel = strongEnd ? strongEnd.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'}) : '';
   const strongEndSuffixEn = strongEndLabel ? (strongEndIsEstimate ? ` to at least ${strongEndLabel}` : ` to ${strongEndLabel}`) : '';
   const strongEndSuffixDe = strongEndLabel ? (strongEndIsEstimate ? ` mindestens bis ${strongEndLabel} Uhr` : ` bis ${strongEndLabel} Uhr`) : '';
+  const nowcastTypeLabel = nowcastSourceType === 'radar'
+    ? (lang === 'en' ? 'Radar' : 'Radar')
+    : (lang === 'en' ? 'Nowcast' : 'Nowcast');
 
   if (type === 'none') {
       headline = t.noPrecipExp;
@@ -8454,8 +8465,8 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                     <Crosshair size={18} className="text-m3-primary mt-0.5" />
                     <span className="text-m3-label-large font-bold text-m3-on-surface">
                         {lang === 'en'
-                          ? `${nowcastSourceType === 'radar' ? 'Radar' : 'Nowcast'} drives the next 2 hours via ${nowcastSourceLabel}; afterwards the hourly models take over.`
-                          : `${nowcastSourceType === 'radar' ? 'Radar' : 'Nowcast'} steuert die nächsten 2 Stunden über ${nowcastSourceLabel}; danach übernehmen die Stundenmodelle.`}
+                          ? `${nowcastTypeLabel} drives the next 2 hours via ${nowcastSourceLabel}; afterwards the hourly models take over.`
+                          : `${nowcastTypeLabel} steuert die nächsten 2 Stunden über ${nowcastSourceLabel}; danach übernehmen die Stundenmodelle.`}
                     </span>
                 </div>
             )}
