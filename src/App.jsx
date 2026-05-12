@@ -12304,7 +12304,7 @@ export default function WeatherApp() {
       const isLandscapeViewport = width > height && height < LANDSCAPE_HEIGHT_THRESHOLD;
       setIsLandscape(isLandscapeViewport);
       setIsSmallScreen(width < SMALL_SCREEN_WIDTH_THRESHOLD);
-      setIsTabletScreen(!isLandscapeViewport && width >= TABLET_MIN_WIDTH_THRESHOLD && width <= TABLET_MAX_WIDTH_THRESHOLD);
+      setIsTabletScreen(width >= TABLET_MIN_WIDTH_THRESHOLD && width <= TABLET_MAX_WIDTH_THRESHOLD);
     };
     
     checkOrientation();
@@ -14214,7 +14214,7 @@ export default function WeatherApp() {
   const usesTabletLayout = !isLandscape && isTabletScreen;
   const contentContainerMaxWidthClass = usesTabletLayout ? TABLET_CONTENT_MAX_WIDTH_CLASS : DEFAULT_CONTENT_MAX_WIDTH_CLASS;
   const horizontalPagePaddingClass = isSmallScreen ? 'px-2' : (usesTabletLayout ? 'px-6' : 'px-4');
-  const weatherTileGridClass = usesTabletLayout ? 'grid-cols-3 lg:grid-cols-6' : 'grid-cols-2 sm:grid-cols-4';
+  const weatherTileGridClass = usesTabletLayout ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4';
   const weatherTileGapClass = isSmallScreen ? 'gap-2' : (usesTabletLayout ? 'gap-5' : 'gap-4');
   const detailsStackSpacingClass = isSmallScreen ? 'space-y-2' : (usesTabletLayout ? 'space-y-4' : 'space-y-2');
 
