@@ -14211,12 +14211,12 @@ export default function WeatherApp() {
   const navBarHeight = layoutDimensions.navBarHeight;
   const fixedElementsGap = layoutDimensions.fixedElementsGap;
   const fixedTopOffset = layoutDimensions.fixedTopOffset;
-  const usesTabletLayout = !isLandscape && isTabletScreen;
-  const contentContainerMaxWidthClass = usesTabletLayout ? TABLET_CONTENT_MAX_WIDTH_CLASS : DEFAULT_CONTENT_MAX_WIDTH_CLASS;
-  const horizontalPagePaddingClass = isSmallScreen ? 'px-2' : (usesTabletLayout ? 'px-6' : 'px-4');
-  const weatherTileGridClass = usesTabletLayout ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4';
-  const weatherTileGapClass = isSmallScreen ? 'gap-2' : (usesTabletLayout ? 'gap-5' : 'gap-4');
-  const detailsStackSpacingClass = isSmallScreen ? 'space-y-2' : (usesTabletLayout ? 'space-y-4' : 'space-y-2');
+  const isTabletLayoutActive = !isLandscape && isTabletScreen;
+  const contentContainerMaxWidthClass = isTabletLayoutActive ? TABLET_CONTENT_MAX_WIDTH_CLASS : DEFAULT_CONTENT_MAX_WIDTH_CLASS;
+  const horizontalPagePaddingClass = isSmallScreen ? 'px-2' : (isTabletLayoutActive ? 'px-6' : 'px-4');
+  const weatherTileGridClass = isTabletLayoutActive ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-4';
+  const weatherTileGapClass = isSmallScreen ? 'gap-2' : (isTabletLayoutActive ? 'gap-5' : 'gap-4');
+  const detailsStackSpacingClass = isSmallScreen ? 'space-y-2' : (isTabletLayoutActive ? 'space-y-4' : 'space-y-2');
 
   // Helper function to get animation card padding classes
   // Landscape mode takes precedence when both isLandscape and isSmallScreen are true
