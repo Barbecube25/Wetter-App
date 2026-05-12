@@ -8275,7 +8275,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
         result.isSnow = false;
     }
 
-    if (isRainingNow && !result.endTime && minutelyNowcast?.end) {
+    if (result.type.includes('now') && !result.endTime && minutelyNowcast?.end) {
       result.endTime = minutelyNowcast.end;
     }
 
@@ -8335,6 +8335,8 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
   const strongEndLabel = strongEnd ? strongEnd.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'}) : '';
   const strongEndSuffixEn = strongEndLabel ? (strongEndIsEstimate ? ` to at least ${strongEndLabel}` : ` to ${strongEndLabel}`) : '';
   const strongEndSuffixDe = strongEndLabel ? (strongEndIsEstimate ? ` mindestens bis ${strongEndLabel} Uhr` : ` bis ${strongEndLabel} Uhr`) : '';
+  const startsInText = t.startsIn || (lang === 'en' ? TRANSLATIONS.en.startsIn : TRANSLATIONS.de.startsIn);
+  const endsInText = t.endsIn || (lang === 'en' ? TRANSLATIONS.en.endsIn : TRANSLATIONS.de.endsIn);
   const nowcastTypeLabel = nowcastSourceType === 'radar' ? 'Radar' : 'Nowcast';
   const conflictMessage = modelConflict === 'radar_wetter_than_model'
     ? (lang === 'en'
@@ -8498,7 +8500,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                 <div className="flex items-center justify-between bg-m3-surface-container/50 rounded-xl p-3">
                     <div className="flex items-center gap-2">
                         <Clock3 size={18} className="text-m3-primary" />
-                        <span className="text-m3-label-large font-bold text-m3-on-surface">{t.startsIn || TRANSLATIONS.de.startsIn}</span>
+                        <span className="text-m3-label-large font-bold text-m3-on-surface">{startsInText}</span>
                     </div>
                     <span className="text-m3-body-large font-bold text-m3-on-surface">{minutesUntilStart} min</span>
                 </div>
@@ -8508,7 +8510,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                 <div className="flex items-center justify-between bg-m3-surface-container/50 rounded-xl p-3">
                     <div className="flex items-center gap-2">
                         <Clock3 size={18} className="text-m3-primary" />
-                        <span className="text-m3-label-large font-bold text-m3-on-surface">{t.endsIn || TRANSLATIONS.de.endsIn}</span>
+                        <span className="text-m3-label-large font-bold text-m3-on-surface">{endsInText}</span>
                     </div>
                     <span className="text-m3-body-large font-bold text-m3-on-surface">{minutesUntilEnd} min</span>
                 </div>
