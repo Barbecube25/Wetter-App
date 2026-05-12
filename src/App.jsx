@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, ArrowUp, ArrowDown, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Eye, Activity, Leaf } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Clock3, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, ArrowUp, ArrowDown, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Eye, Activity, Leaf } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
 import { StatusBar } from '@capacitor/status-bar';
 import packageJson from '../package.json';
@@ -389,6 +389,8 @@ const TRANSLATIONS = {
     startingNow: "beginnt jetzt",
     startingSoon: "beginnt bald",
     inMinutes: "in",
+    startsIn: "Beginnt in",
+    endsIn: "Endet in",
     currentIntensity: "Aktuelle Stärke",
     peakRainAt: "Stärkster Regen um",
     nextHours: "Nächste Stunden",
@@ -696,6 +698,8 @@ const TRANSLATIONS = {
     activityReasonClose: "Close",
     startingSoon: "starting soon",
     inMinutes: "in",
+    startsIn: "Starts in",
+    endsIn: "Ends in",
     currentIntensity: "Current Intensity",
     peakRainAt: "Peak rain at",
     nextHours: "Next Hours",
@@ -8025,10 +8029,12 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
         minutelyStart: null,
         currentIntensity: 0,
         peakTime: null,
-        hourlyForecast: [], // Array of {time, amount, rain, snow} for next hours
-        nowcastSourceLabel: nowcastData?.label || null,
-        nowcastSourceType: nowcastData?.kind || null,
-        modelConflict: null
+         hourlyForecast: [], // Array of {time, amount, rain, snow} for next hours
+         nowcastSourceLabel: nowcastData?.label || null,
+         nowcastSourceType: nowcastData?.kind || null,
+         modelConflict: null,
+         minutesUntilStart: null,
+         minutesUntilEnd: null
     };
 
     let minutelyNowcast = null;
@@ -8268,13 +8274,25 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
         result.peakTime = minutelyNowcast.peakTime || minutelyNowcast.start;
         result.isSnow = false;
     }
+
+    if (result.type.includes('now') && !result.endTime && minutelyNowcast?.end) {
+      result.endTime = minutelyNowcast.end;
+    }
+
+    const toMinutes = (targetTime) => {
+      if (!targetTime) return null;
+      const diff = Math.round((targetTime.getTime() - now.getTime()) / 60000);
+      return Math.max(0, diff);
+    };
+    result.minutesUntilStart = toMinutes(result.startTime);
+    result.minutesUntilEnd = toMinutes(result.endTime);
     
     return result;
   }, [data, fallbackNowcastData, radarNowcast, currentData]);
 
   if (!analysis) return null;
 
-  const { type, startTime, duration, amount, rainAmount, snowAmount, isSnow, isMixed, strongStart, strongEnd, strongEndIsEstimate, maxIntensity, minutelyStart, currentIntensity, peakTime, hourlyForecast, nowcastSourceLabel, nowcastSourceType, modelConflict } = analysis;
+  const { type, startTime, endTime, duration, amount, rainAmount, snowAmount, isSnow, isMixed, strongStart, strongEnd, strongEndIsEstimate, maxIntensity, minutelyStart, currentIntensity, peakTime, hourlyForecast, nowcastSourceLabel, nowcastSourceType, modelConflict, minutesUntilStart, minutesUntilEnd } = analysis;
   const isRain = type.includes('rain');
   const isNow = type.includes('now');
   const isMixedPrecip = type.includes('mixed');
@@ -8317,6 +8335,8 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
   const strongEndLabel = strongEnd ? strongEnd.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'}) : '';
   const strongEndSuffixEn = strongEndLabel ? (strongEndIsEstimate ? ` to at least ${strongEndLabel}` : ` to ${strongEndLabel}`) : '';
   const strongEndSuffixDe = strongEndLabel ? (strongEndIsEstimate ? ` mindestens bis ${strongEndLabel} Uhr` : ` bis ${strongEndLabel} Uhr`) : '';
+  const startsInText = t.startsIn || (lang === 'en' ? TRANSLATIONS.en.startsIn : TRANSLATIONS.de.startsIn);
+  const endsInText = t.endsIn || (lang === 'en' ? TRANSLATIONS.en.endsIn : TRANSLATIONS.de.endsIn);
   const nowcastTypeLabel = nowcastSourceType === 'radar' ? 'Radar' : 'Nowcast';
   const conflictMessage = modelConflict === 'radar_wetter_than_model'
     ? (lang === 'en'
@@ -8473,6 +8493,26 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                         <span className="text-m3-label-large font-bold text-m3-on-surface">{t.currentIntensity}</span>
                     </div>
                     <span className="text-m3-body-large font-bold text-m3-on-surface">{formatPrecip ? formatPrecip(currentIntensity) : currentIntensity.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}/h</span>
+                </div>
+            )}
+
+            {!isNow && minutesUntilStart !== null && minutesUntilStart > 0 && (
+                <div className="flex items-center justify-between bg-m3-surface-container/50 rounded-xl p-3">
+                    <div className="flex items-center gap-2">
+                        <Clock3 size={18} className="text-m3-primary" />
+                        <span className="text-m3-label-large font-bold text-m3-on-surface">{startsInText}</span>
+                    </div>
+                    <span className="text-m3-body-large font-bold text-m3-on-surface">{minutesUntilStart} min</span>
+                </div>
+            )}
+
+            {isNow && endTime && minutesUntilEnd !== null && minutesUntilEnd > 0 && (
+                <div className="flex items-center justify-between bg-m3-surface-container/50 rounded-xl p-3">
+                    <div className="flex items-center gap-2">
+                        <Clock3 size={18} className="text-m3-primary" />
+                        <span className="text-m3-label-large font-bold text-m3-on-surface">{endsInText}</span>
+                    </div>
+                    <span className="text-m3-body-large font-bold text-m3-on-surface">{minutesUntilEnd} min</span>
                 </div>
             )}
 
