@@ -7969,7 +7969,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
         const slotPrecip = Number(nowcastData.precipitation[i]) || 0;
         const slotRate = slotPrecip * nowcastRateFactor;
 
-        if (slotMs >= now.getTime() && slotMs <= nowPlusTwoHoursMs && slotPrecip > LIGHT_PRECIP_THRESHOLD) {
+        if (slotEndMs > now.getTime() && slotMs <= nowPlusTwoHoursMs && slotPrecip > LIGHT_PRECIP_THRESHOLD) {
           nowcastHasPrecipSoon = true;
         }
 
@@ -8449,7 +8449,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                 </div>
             )}
 
-            {nowcastSourceLabel && (
+            {nowcastSourceLabel && nowcastSourceType !== 'model' && (
                 <div className="flex items-start gap-2 bg-m3-surface-container-high rounded-m3-xl p-3">
                     <Crosshair size={18} className="text-m3-primary mt-0.5" />
                     <span className="text-m3-label-large font-bold text-m3-on-surface">
