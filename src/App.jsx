@@ -8404,12 +8404,12 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
           precipType = isSnow ? t.snow : t.rain;
       }
       if (diffMins <= 0) {
-            headline = `${precipType} ${t.startingNow}`;
-            timeDisplay = t.now;
+          headline = `${precipType} ${t.startingNow}`;
+          timeDisplay = t.now;
       } else {
-            const durationSuffix = eventDurationText ? (lang === 'en' ? ` for ${eventDurationText}` : ` für ${eventDurationText}`) : '';
-            headline = `${precipType} ${t.inMinutes} ${formatMinutesDuration(diffMins, lang)}${durationSuffix}`;
-            timeDisplay = minutelyStart.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'});
+          const durationSuffix = eventDurationText ? (lang === 'en' ? ` for ${eventDurationText}` : ` für ${eventDurationText}`) : '';
+          headline = `${precipType} ${t.inMinutes} ${formatMinutesDuration(diffMins, lang)}${durationSuffix}`;
+          timeDisplay = minutelyStart.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'});
       }
   } else if (isSoon) {
       let precipType;
