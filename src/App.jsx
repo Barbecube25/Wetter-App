@@ -12382,6 +12382,12 @@ export default function WeatherApp() {
     };
   }, []);
 
+  // Auto-expand weather detail tiles on tablet/foldable screens; collapse again on smaller screens
+  useEffect(() => {
+    const shouldExpand = !isLandscape && (isTabletScreen || isFoldableScreen);
+    setTilesExpanded(shouldExpand);
+  }, [isLandscape, isTabletScreen, isFoldableScreen]);
+
   // --- HELPER: Berechne die ECHTE Ortszeit basierend auf dem API-Offset ---
   // Das verhindert, dass es "hell" ist, obwohl am Ort schon die Sonne untergegangen ist,
   // nur weil der User in einer anderen Zeitzone sitzt.
@@ -14279,7 +14285,7 @@ export default function WeatherApp() {
   const isExpandedLayoutActive = !isLandscape && (isTabletScreen || isFoldableScreen);
   const contentContainerMaxWidthClass = isExpandedLayoutActive ? TABLET_CONTENT_MAX_WIDTH_CLASS : DEFAULT_CONTENT_MAX_WIDTH_CLASS;
   const horizontalPagePaddingClass = isSmallScreen ? 'px-2' : (isExpandedLayoutActive ? 'px-6' : 'px-4');
-  const weatherTileGridClass = isExpandedLayoutActive ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-4';
+  const weatherTileGridClass = isExpandedLayoutActive ? 'grid-cols-4' : 'grid-cols-2 md:grid-cols-4';
   const weatherTileGapClass = isSmallScreen ? 'gap-2' : (isExpandedLayoutActive ? 'gap-5' : 'gap-4');
   const detailsStackSpacingClass = isSmallScreen ? 'space-y-2' : (isExpandedLayoutActive ? 'space-y-4' : 'space-y-2');
   const contentCardPaddingClass = isSmallScreen ? 'p-4' : (isExpandedLayoutActive ? 'p-8' : 'p-6');
@@ -15158,6 +15164,8 @@ export default function WeatherApp() {
         </div>
         )}
 
+        {/* Activity check tile + details toggle: side-by-side on expanded layout */}
+        <div className={isExpandedLayoutActive ? 'grid grid-cols-2 gap-4' : 'space-y-4'}>
         {/* Activity check tile between navigation and details toggle */}
         <button
           onClick={() => setShowActivityCheckModal(true)}
@@ -15190,6 +15198,7 @@ export default function WeatherApp() {
           </span>
           {tilesExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </button>
+        </div>
 
         {/* Collapsible Weather Details Container */}
         <div 
@@ -15535,7 +15544,7 @@ export default function WeatherApp() {
                     <button onClick={() => setChartView('daily')} className={`px-3 py-1 rounded-md text-xs font-bold transition ${chartView==='daily' ? 'bg-white text-black shadow-sm' : 'opacity-60'}`}>6 Tage</button>
                  </div>
                </div>
-               <div className="w-full h-[300px]">
+               <div className={`w-full ${isExpandedLayoutActive ? 'h-[420px]' : 'h-[300px]'}`}>
                   <ResponsiveContainer width="100%" height="100%">
                       {chartView === 'hourly' ? (
                         <LineChart data={processedShort} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -15594,65 +15603,69 @@ export default function WeatherApp() {
           )}
 
           {activeTab === 'longterm' && (
-             <div className="space-y-4">
-               <AIReportBox report={longtermReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} />
-               <h3 className="text-sm font-bold uppercase tracking-wide opacity-90 ml-2">{t('longtermList')}</h3>
-               <div className="overflow-y-auto max-h-[520px] pr-1"> 
-                  <div className="flex flex-col gap-3">
-                    {processedLong.map((day, i) => {
-                      const DayIcon = getWeatherConfig(day.code, 1, lang).icon;
-                      const confColor = getConfidenceColor(day.reliability);
-                      const isDaySnow = SNOW_WEATHER_CODES.includes(day.code);
-                      let probColor = "text-slate-400 opacity-50"; 
-                      if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
+             <div className={isExpandedLayoutActive ? 'grid grid-cols-2 gap-5 items-start' : 'space-y-4'}>
+               <div className="space-y-4">
+                 <AIReportBox report={longtermReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} />
+               </div>
+               <div className="space-y-3">
+                 <h3 className="text-sm font-bold uppercase tracking-wide opacity-90 ml-2">{t('longtermList')}</h3>
+                 <div className={`overflow-y-auto ${isExpandedLayoutActive ? 'max-h-[600px]' : 'max-h-[520px]'} pr-1`}> 
+                   <div className="flex flex-col gap-3">
+                     {processedLong.map((day, i) => {
+                       const DayIcon = getWeatherConfig(day.code, 1, lang).icon;
+                       const confColor = getConfidenceColor(day.reliability);
+                       const isDaySnow = SNOW_WEATHER_CODES.includes(day.code);
+                       let probColor = "text-slate-400 opacity-50"; 
+                       if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
 
-                      return (
-                        <div key={i} className={`grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 ${isRealNight ? 'bg-m3-dark-surface-container/80' : 'bg-m3-surface-container/80'} backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl px-3 py-2 w-full shadow-m3-1 hover:shadow-m3-2 transition-all relative group`}>
-                          {/* Day & Date */}
-                          <div className="flex flex-col min-w-0">
-                            <div className="text-sm font-bold text-m3-on-surface truncate">{day.dayName}</div>
-                            <div className="text-xs font-medium text-m3-on-surface-variant truncate">{day.dateShort}</div>
+                       return (
+                         <div key={i} className={`grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 ${isRealNight ? 'bg-m3-dark-surface-container/80' : 'bg-m3-surface-container/80'} backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl px-3 py-2 w-full shadow-m3-1 hover:shadow-m3-2 transition-all relative group`}>
+                           {/* Day & Date */}
+                           <div className="flex flex-col min-w-0">
+                             <div className="text-sm font-bold text-m3-on-surface truncate">{day.dayName}</div>
+                             <div className="text-xs font-medium text-m3-on-surface-variant truncate">{day.dateShort}</div>
+                           </div>
+                           
+                           {/* Icon */}
+                           <DayIcon size={24} className="text-m3-on-surface" />
+                           
+                           {/* Temp Range */}
+                           <div className="flex items-center gap-1">
+                             <span className="text-sm font-bold text-blue-400">{formatTemp(day.min)}{getTempUnitSymbol()}</span>
+                             <div className="h-1 w-4 bg-white/10 rounded-full overflow-hidden">
+                                <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
+                             </div>
+                             <span className="text-sm font-bold text-red-400">{formatTemp(day.max)}{getTempUnitSymbol()}</span>
                           </div>
-                          
-                          {/* Icon */}
-                          <DayIcon size={24} className="text-m3-on-surface" />
-                          
-                          {/* Temp Range */}
-                          <div className="flex items-center gap-1">
-                            <span className="text-sm font-bold text-blue-400">{formatTemp(day.min)}{getTempUnitSymbol()}</span>
-                            <div className="h-1 w-4 bg-white/10 rounded-full overflow-hidden">
-                               <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
+                           
+                            <div className="min-h-[16px] flex items-center justify-end min-w-[72px]">
+                               {parseFloat(day.rain) > 0.1 && parseFloat(day.snow) > 0.1 ? (
+                                 // Mixed precipitation - show both
+                                 <>
+                                   <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><CloudRain size={10}/> {formatPrecip(day.rain)}{getPrecipUnitLabel()}</span>
+                                   <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {formatPrecip(day.snow)}{getPrecipUnitLabel()}</span>
+                                 </>
+                               ) : isDaySnow ? (
+                                 parseFloat(day.snow) > 0 || parseFloat(day.rain) > 0.1 ? (
+                                   <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {formatPrecip(parseFloat(day.snow) > 0 ? parseFloat(day.snow) : (parseFloat(day.rain) / 10))}{getPrecipUnitLabel()}</span>
+                                 ) : ( <span className="opacity-20 text-xs">-</span> )
+                               ) : parseFloat(day.rain) > 0.1 ? (
+                                 <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {formatPrecip(day.rain)}{getPrecipUnitLabel()}</span>
+                               ) : ( <span className="opacity-20 text-xs">-</span> )}
                             </div>
-                            <span className="text-sm font-bold text-red-400">{formatTemp(day.max)}{getTempUnitSymbol()}</span>
-                         </div>
-                          
-                           <div className="min-h-[16px] flex items-center justify-end min-w-[72px]">
-                              {parseFloat(day.rain) > 0.1 && parseFloat(day.snow) > 0.1 ? (
-                                // Mixed precipitation - show both
-                                <>
-                                  <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><CloudRain size={10}/> {formatPrecip(day.rain)}{getPrecipUnitLabel()}</span>
-                                  <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {formatPrecip(day.snow)}{getPrecipUnitLabel()}</span>
-                                </>
-                              ) : isDaySnow ? (
-                                parseFloat(day.snow) > 0 || parseFloat(day.rain) > 0.1 ? (
-                                  <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {formatPrecip(parseFloat(day.snow) > 0 ? parseFloat(day.snow) : (parseFloat(day.rain) / 10))}{getPrecipUnitLabel()}</span>
-                                ) : ( <span className="opacity-20 text-xs">-</span> )
-                              ) : parseFloat(day.rain) > 0.1 ? (
-                                <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {formatPrecip(day.rain)}{getPrecipUnitLabel()}</span>
-                              ) : ( <span className="opacity-20 text-xs">-</span> )}
-                           </div>
-                           {/* Wind */}
-                           <div className="flex items-center justify-end min-w-[76px]">
-                               <div className="flex items-center justify-end gap-1">
-                                  <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
-                                  <span className={`text-xs font-bold ${getWindColorClass(day.wind, isRealNight)}`}>{formatWind(day.wind)} {getWindUnitLabel()}</span>
-                               </div>
-                           </div>
-                            
-                         </div>
-                      );
-                    })}
-                  </div>
+                            {/* Wind */}
+                            <div className="flex items-center justify-end min-w-[76px]">
+                                <div className="flex items-center justify-end gap-1">
+                                   <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
+                                   <span className={`text-xs font-bold ${getWindColorClass(day.wind, isRealNight)}`}>{formatWind(day.wind)} {getWindUnitLabel()}</span>
+                                </div>
+                            </div>
+                             
+                          </div>
+                       );
+                     })}
+                   </div>
+                 </div>
                </div>
              </div>
           )}
@@ -15664,7 +15677,7 @@ export default function WeatherApp() {
           )}
 
           {activeTab === 'radar' && (
-            <div className="h-full flex flex-col min-h-[450px]">
+            <div className={`h-full flex flex-col ${isExpandedLayoutActive ? 'min-h-[600px]' : 'min-h-[450px]'}`}>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-bold uppercase opacity-70">{t('precipRadar')}</h3>
                   {/* GPS Availability Indicator for Radar */}
