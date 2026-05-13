@@ -8293,7 +8293,19 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
         result.isSnow = false;
     }
 
-    if (result.type.includes('now') && !result.endTime && minutelyNowcast?.end) {
+    const hasIndependentNowcast = result.nowcastSourceType === 'radar' || result.nowcastSourceType === 'nowcast';
+    const isNearTermEvent = !result.startTime || result.startTime.getTime() <= nowPlusTwoHoursMs;
+
+    // Prioritize radar/nowcast timing for near-term precipitation windows
+    if (hasIndependentNowcast && isNearTermEvent && minutelyNowcast?.end) {
+      if (minutelyNowcast.start) {
+        result.startTime = minutelyNowcast.start;
+        result.minutelyStart = minutelyNowcast.start;
+      }
+      result.endTime = minutelyNowcast.end;
+    }
+
+    if (!hasIndependentNowcast && result.type.includes('now') && !result.endTime && minutelyNowcast?.end) {
       result.endTime = minutelyNowcast.end;
     }
 
