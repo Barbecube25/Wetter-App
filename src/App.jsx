@@ -8338,6 +8338,22 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
   const strongEndSuffixDe = strongEndLabel ? (strongEndIsEstimate ? ` mindestens bis ${strongEndLabel} Uhr` : ` bis ${strongEndLabel} Uhr`) : '';
   const startsInText = t.startsIn || (lang === 'en' ? TRANSLATIONS.en.startsIn : TRANSLATIONS.de.startsIn);
   const endsInText = t.endsIn || (lang === 'en' ? TRANSLATIONS.en.endsIn : TRANSLATIONS.de.endsIn);
+  const formatMinutesDuration = (totalMinutes) => {
+    const minutes = Math.max(0, Math.round(totalMinutes || 0));
+    if (minutes < 60) return `${minutes} min`;
+
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    const isEnglish = lang === 'en';
+    const hourLabel = isEnglish ? (hours === 1 ? 'hour' : 'hours') : (hours === 1 ? 'Stunde' : 'Stunden');
+    const minuteLabel = isEnglish ? (remainingMinutes === 1 ? 'minute' : 'minutes') : (remainingMinutes === 1 ? 'Minute' : 'Minuten');
+
+    if (remainingMinutes === 0) {
+      return `${hours} ${hourLabel}`;
+    }
+
+    return `${hours} ${hourLabel} ${remainingMinutes} ${minuteLabel}`;
+  };
   const nowcastTypeLabel = nowcastSourceType === 'radar' ? 'Radar' : 'Nowcast';
   const conflictMessage = modelConflict === 'radar_wetter_than_model'
     ? (lang === 'en'
@@ -8371,7 +8387,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
            headline = `${precipType} ${t.startingNow}`;
            timeDisplay = t.now;
       } else {
-           headline = `${precipType} ${t.inMinutes} ${diffMins} min`;
+           headline = `${precipType} ${t.inMinutes} ${formatMinutesDuration(diffMins)}`;
            timeDisplay = minutelyStart.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'});
       }
   } else if (isSoon) {
@@ -8503,7 +8519,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                         <Clock3 size={18} className="text-m3-primary" />
                         <span className="text-m3-label-large font-bold text-m3-on-surface">{startsInText}</span>
                     </div>
-                    <span className="text-m3-body-large font-bold text-m3-on-surface">{minutesUntilStart} min</span>
+                    <span className="text-m3-body-large font-bold text-m3-on-surface">{formatMinutesDuration(minutesUntilStart)}</span>
                 </div>
             )}
 
@@ -8513,7 +8529,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                         <Clock3 size={18} className="text-m3-primary" />
                         <span className="text-m3-label-large font-bold text-m3-on-surface">{endsInText}</span>
                     </div>
-                    <span className="text-m3-body-large font-bold text-m3-on-surface">{minutesUntilEnd} min</span>
+                    <span className="text-m3-body-large font-bold text-m3-on-surface">{formatMinutesDuration(minutesUntilEnd)}</span>
                 </div>
             )}
 
