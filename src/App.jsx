@@ -14304,6 +14304,7 @@ export default function WeatherApp() {
   const horizontalPagePaddingClass = isSmallScreen ? 'px-2' : (isExpandedLayoutActive ? 'px-6' : 'px-4');
   const weatherTileGridClass = isExpandedLayoutActive ? 'grid-cols-4' : 'grid-cols-2 md:grid-cols-4';
   const weatherTileGapClass = isSmallScreen ? 'gap-2' : (isExpandedLayoutActive ? 'gap-5' : 'gap-4');
+  const isFoldableCompactDetailsLayout = isFoldableCompactScreen && isExpandedLayoutActive;
   const detailsStackSpacingClass = isSmallScreen ? 'space-y-2' : (isExpandedLayoutActive ? 'space-y-4' : 'space-y-2');
   const contentCardPaddingClass = isSmallScreen ? 'p-4' : (isExpandedLayoutActive ? 'p-8' : 'p-6');
 
@@ -15331,26 +15332,26 @@ export default function WeatherApp() {
 
           {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) ? (
             <div 
-              className="bg-m3-tertiary-container rounded-m3-xl p-2 border border-m3-tertiary shadow-m3-1 relative overflow-hidden min-h-[90px] flex flex-col justify-center"
+              className={`bg-m3-tertiary-container rounded-m3-xl border border-m3-tertiary shadow-m3-1 relative overflow-hidden flex flex-col justify-center ${isFoldableCompactDetailsLayout ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2'}`}
             >
-              <div className="flex items-center justify-center gap-2 text-m3-on-tertiary-container text-m3-label-small mb-1">
+              <div className={`flex items-center justify-center gap-2 text-m3-on-tertiary-container mb-1 ${isFoldableCompactDetailsLayout ? 'text-[11px] leading-tight' : 'text-m3-label-small'}`}>
                 {next24HoursPrecip.snow > 0.1 ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
               </div>
               <div className="text-m3-title-large font-bold text-m3-on-tertiary-container text-center mb-2">
                 {formatPrecip(next24HoursPrecip.total)} {getPrecipUnitLabel()}
               </div>
               {/* Action buttons */}
-              <div className="flex gap-2">
+              <div className={`flex ${isFoldableCompactDetailsLayout ? 'flex-col gap-1.5' : 'gap-2'}`}>
                 <button 
                   onClick={() => setShowPrecipModal(true)}
-                  className="flex-1 bg-m3-on-tertiary-container/10 hover:bg-m3-on-tertiary-container/20 active:scale-95 transition-all rounded-lg px-2 py-1 flex items-center justify-center gap-1"
+                  className={`flex-1 bg-m3-on-tertiary-container/10 hover:bg-m3-on-tertiary-container/20 active:scale-95 transition-all rounded-lg px-2 flex items-center justify-center gap-1 ${isFoldableCompactDetailsLayout ? 'py-1.5' : 'py-1'}`}
                 >
                   <Info size={14} className="text-m3-on-tertiary-container" />
                   <span className="text-xs font-medium text-m3-on-tertiary-container">Details</span>
                 </button>
                 <button 
                   onClick={() => setActiveTab('radar')}
-                  className="flex-1 bg-m3-on-tertiary-container/10 hover:bg-m3-on-tertiary-container/20 active:scale-95 transition-all rounded-lg px-2 py-1 flex items-center justify-center gap-1"
+                  className={`flex-1 bg-m3-on-tertiary-container/10 hover:bg-m3-on-tertiary-container/20 active:scale-95 transition-all rounded-lg px-2 flex items-center justify-center gap-1 ${isFoldableCompactDetailsLayout ? 'py-1.5' : 'py-1'}`}
                 >
                   <MapIcon size={14} className="text-m3-on-tertiary-container" />
                   <span className="text-xs font-medium text-m3-on-tertiary-container">Radar</span>
@@ -15358,8 +15359,8 @@ export default function WeatherApp() {
               </div>
             </div>
           ) : (
-            <div className={`${tileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center`}>
-              <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+            <div className={`${tileBg} rounded-m3-xl border shadow-m3-1 flex flex-col justify-center items-center text-center ${isFoldableCompactDetailsLayout ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2'}`}>
+              <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mb-1 ${isFoldableCompactDetailsLayout ? 'text-[11px] leading-tight' : 'text-m3-label-small'}`}>
                 <CloudRain size={14}/> {t('precip24h')}
               </div>
               <div className="flex items-center justify-center gap-1 mt-1">
