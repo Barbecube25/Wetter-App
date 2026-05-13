@@ -8544,7 +8544,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                 </div>
             )}
 
-            {!isNow && startTime && endTime && endTime > startTime && (
+            {!isNow && startTime && endTime && endTime > startTime && eventDurationText && (
                 <div className="flex items-center justify-between bg-m3-surface-container/50 rounded-xl p-3">
                     <div className="flex items-center gap-2">
                         <Timer size={18} className="text-m3-primary" />
