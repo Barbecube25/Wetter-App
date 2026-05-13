@@ -8367,6 +8367,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
   const strongEndSuffixDe = strongEndLabel ? (strongEndIsEstimate ? ` mindestens bis ${strongEndLabel} Uhr` : ` bis ${strongEndLabel} Uhr`) : '';
   const startsInText = t.startsIn || (lang === 'en' ? TRANSLATIONS.en.startsIn : TRANSLATIONS.de.startsIn);
   const endsInText = t.endsIn || (lang === 'en' ? TRANSLATIONS.en.endsIn : TRANSLATIONS.de.endsIn);
+  const durationText = lang === 'en' ? 'Duration' : 'Dauer';
   const nowcastTypeLabel = nowcastSourceType === 'radar' ? 'Radar' : 'Nowcast';
   const conflictMessage = modelConflict === 'radar_wetter_than_model'
     ? (lang === 'en'
@@ -8390,6 +8391,12 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
   } else if (minutelyStart) {
       // Precise start time
       const diffMins = Math.round((minutelyStart - now) / 60000);
+      const eventDurationMinutes = startTime && endTime
+        ? Math.max(0, Math.round((endTime.getTime() - startTime.getTime()) / 60000))
+        : null;
+      const eventDurationText = eventDurationMinutes && eventDurationMinutes > 0
+        ? formatMinutesDuration(eventDurationMinutes, lang)
+        : null;
       let precipType;
       if (isMixedPrecip) {
           precipType = lang === 'en' ? 'Mixed Precip.' : 'Mischniederschlag';
@@ -8397,11 +8404,12 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
           precipType = isSnow ? t.snow : t.rain;
       }
       if (diffMins <= 0) {
-           headline = `${precipType} ${t.startingNow}`;
-           timeDisplay = t.now;
+            headline = `${precipType} ${t.startingNow}`;
+            timeDisplay = t.now;
       } else {
-           headline = `${precipType} ${t.inMinutes} ${formatMinutesDuration(diffMins, lang)}`;
-           timeDisplay = minutelyStart.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'});
+            const durationSuffix = eventDurationText ? (lang === 'en' ? ` for ${eventDurationText}` : ` für ${eventDurationText}`) : '';
+            headline = `${precipType} ${t.inMinutes} ${formatMinutesDuration(diffMins, lang)}${durationSuffix}`;
+            timeDisplay = minutelyStart.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'});
       }
   } else if (isSoon) {
       let precipType;
@@ -8533,6 +8541,16 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                         <span className="text-m3-label-large font-bold text-m3-on-surface">{startsInText}</span>
                     </div>
                     <span className="text-m3-body-large font-bold text-m3-on-surface">{formatMinutesDuration(minutesUntilStart, lang)}</span>
+                </div>
+            )}
+
+            {!isNow && startTime && endTime && endTime > startTime && (
+                <div className="flex items-center justify-between bg-m3-surface-container/50 rounded-xl p-3">
+                    <div className="flex items-center gap-2">
+                        <Timer size={18} className="text-m3-primary" />
+                        <span className="text-m3-label-large font-bold text-m3-on-surface">{durationText}</span>
+                    </div>
+                    <span className="text-m3-body-large font-bold text-m3-on-surface">{formatMinutesDuration((endTime.getTime() - startTime.getTime()) / 60000, lang)}</span>
                 </div>
             )}
 
