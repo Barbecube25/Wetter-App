@@ -8368,10 +8368,10 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
   const startsInText = t.startsIn || (lang === 'en' ? TRANSLATIONS.en.startsIn : TRANSLATIONS.de.startsIn);
   const endsInText = t.endsIn || (lang === 'en' ? TRANSLATIONS.en.endsIn : TRANSLATIONS.de.endsIn);
   const durationText = lang === 'en' ? 'Duration' : 'Dauer';
-  const eventDurationMinutes = startTime && endTime
-    ? Math.max(0, Math.round((endTime.getTime() - startTime.getTime()) / 60000))
+  const eventDurationMinutes = startTime && endTime && endTime > startTime
+    ? Math.round((endTime.getTime() - startTime.getTime()) / 60000)
     : null;
-  const eventDurationText = eventDurationMinutes && eventDurationMinutes > 0
+  const eventDurationText = eventDurationMinutes
     ? formatMinutesDuration(eventDurationMinutes, lang)
     : null;
   const nowcastTypeLabel = nowcastSourceType === 'radar' ? 'Radar' : 'Nowcast';
