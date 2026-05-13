@@ -8368,6 +8368,12 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
   const startsInText = t.startsIn || (lang === 'en' ? TRANSLATIONS.en.startsIn : TRANSLATIONS.de.startsIn);
   const endsInText = t.endsIn || (lang === 'en' ? TRANSLATIONS.en.endsIn : TRANSLATIONS.de.endsIn);
   const durationText = lang === 'en' ? 'Duration' : 'Dauer';
+  const eventDurationMinutes = startTime && endTime
+    ? Math.max(0, Math.round((endTime.getTime() - startTime.getTime()) / 60000))
+    : null;
+  const eventDurationText = eventDurationMinutes && eventDurationMinutes > 0
+    ? formatMinutesDuration(eventDurationMinutes, lang)
+    : null;
   const nowcastTypeLabel = nowcastSourceType === 'radar' ? 'Radar' : 'Nowcast';
   const conflictMessage = modelConflict === 'radar_wetter_than_model'
     ? (lang === 'en'
@@ -8391,12 +8397,6 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
   } else if (minutelyStart) {
       // Precise start time
       const diffMins = Math.round((minutelyStart - now) / 60000);
-      const eventDurationMinutes = startTime && endTime
-        ? Math.max(0, Math.round((endTime.getTime() - startTime.getTime()) / 60000))
-        : null;
-      const eventDurationText = eventDurationMinutes && eventDurationMinutes > 0
-        ? formatMinutesDuration(eventDurationMinutes, lang)
-        : null;
       let precipType;
       if (isMixedPrecip) {
           precipType = lang === 'en' ? 'Mixed Precip.' : 'Mischniederschlag';
@@ -8550,7 +8550,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                         <Timer size={18} className="text-m3-primary" />
                         <span className="text-m3-label-large font-bold text-m3-on-surface">{durationText}</span>
                     </div>
-                    <span className="text-m3-body-large font-bold text-m3-on-surface">{formatMinutesDuration((endTime.getTime() - startTime.getTime()) / 60000, lang)}</span>
+                    <span className="text-m3-body-large font-bold text-m3-on-surface">{eventDurationText}</span>
                 </div>
             )}
 
