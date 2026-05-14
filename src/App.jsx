@@ -82,7 +82,7 @@ const ACTIVITY_DEFINITIONS = [
 ];
 // Default activity filter: all activities enabled
 const DEFAULT_ACTIVITY_FILTER = ACTIVITY_DEFINITIONS.map(a => a.key);
-const CUSTOM_ACTIVITY_DEFAULT_PARAMS = { minTemp: 10, maxTemp: 25, maxWind: 25, rainOk: false };
+const CUSTOM_ACTIVITY_DEFAULT_PARAMS = { minTemp: 10, maxTemp: 25, maxWind: 25, rainOk: false, cloudOk: true };
 const CUSTOM_ACTIVITY_DEFAULT_EMOJI = '✨';
 const CUSTOM_ACTIVITY_KEY_MAX_LENGTH = 40;
 const CUSTOM_ACTIVITY_EMOJI_INPUT_MAX_LENGTH = 8;
@@ -93,14 +93,14 @@ const CUSTOM_ACTIVITY_WARNING_MAX_TEMP = 33;
 
 // Default thresholds for activity index scoring (ideal temperature range, max wind, rain tolerance)
 const DEFAULT_ACTIVITY_PARAMS = {
-  cycling:   { minTemp: 10, maxTemp: 25, maxWind: 20, rainOk: false },
-  running:   { minTemp:  8, maxTemp: 18, maxWind: 20, rainOk: false },
-  hiking:    { minTemp:  8, maxTemp: 25, maxWind: 30, rainOk: false },
-  walking:   { minTemp: 10, maxTemp: 25, maxWind: 25, rainOk: false },
-  swimming:  { minTemp: 24, maxTemp: 32, maxWind: 30, rainOk: false },
-  skiing:    { minTemp: -15, maxTemp: 0, maxWind: 40, rainOk: false },
-  gardening: { minTemp: 12, maxTemp: 25, maxWind: 25, rainOk: false },
-  picnic:    { minTemp: 18, maxTemp: 28, maxWind: 20, rainOk: false },
+  cycling:   { minTemp: 10, maxTemp: 25, maxWind: 20, rainOk: false, cloudOk: true },
+  running:   { minTemp:  8, maxTemp: 18, maxWind: 20, rainOk: false, cloudOk: true },
+  hiking:    { minTemp:  8, maxTemp: 25, maxWind: 30, rainOk: false, cloudOk: true },
+  walking:   { minTemp: 10, maxTemp: 25, maxWind: 25, rainOk: false, cloudOk: true },
+  swimming:  { minTemp: 24, maxTemp: 32, maxWind: 30, rainOk: false, cloudOk: true },
+  skiing:    { minTemp: -15, maxTemp: 0, maxWind: 40, rainOk: false, cloudOk: true },
+  gardening: { minTemp: 12, maxTemp: 25, maxWind: 25, rainOk: false, cloudOk: true },
+  picnic:    { minTemp: 18, maxTemp: 28, maxWind: 20, rainOk: false, cloudOk: true },
 };
 
 // Converts a custom activity name into a stable, storage-safe key:
@@ -620,6 +620,7 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Max. Temperatur",
     activityParamsMaxWind: "Max. Wind",
     activityParamsRainOk: "Leichter Regen OK",
+    activityParamsCloudOk: "Bewölkung OK",
     activityParamsReset: "Zurücksetzen",
     thunderstormRisk: "Gewitterrisiko",
     thunderstormRiskDetails: "Gewitterrisiko Details",
@@ -930,6 +931,7 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Max. Temperature",
     activityParamsMaxWind: "Max. Wind",
     activityParamsRainOk: "Light rain OK",
+    activityParamsCloudOk: "Clouds OK",
     activityParamsReset: "Reset to defaults",
     thunderstormRisk: "Thunderstorm Risk",
     thunderstormRiskDetails: "Thunderstorm Risk Details",
@@ -1238,6 +1240,7 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Temp. max.",
     activityParamsMaxWind: "Vent max.",
     activityParamsRainOk: "Pluie légère OK",
+    activityParamsCloudOk: "Nuages OK",
     activityParamsReset: "Réinitialiser",
     thunderstormRisk: "Risque d'orage",
     thunderstormRiskDetails: "Détails du risque d'orage",
@@ -1546,6 +1549,7 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Temp. máx.",
     activityParamsMaxWind: "Viento máx.",
     activityParamsRainOk: "Lluvia ligera OK",
+    activityParamsCloudOk: "Nubes OK",
     activityParamsReset: "Restablecer",
     thunderstormRisk: "Riesgo de tormenta",
     thunderstormRiskDetails: "Detalles del riesgo de tormenta",
@@ -1854,6 +1858,7 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Temp. max.",
     activityParamsMaxWind: "Vento max.",
     activityParamsRainOk: "Pioggia leggera OK",
+    activityParamsCloudOk: "Nuvolosità OK",
     activityParamsReset: "Ripristina predefiniti",
     thunderstormRisk: "Rischio temporale",
     thunderstormRiskDetails: "Dettagli rischio temporale",
@@ -2162,6 +2167,7 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Maks. sıcaklık",
     activityParamsMaxWind: "Maks. rüzgar",
     activityParamsRainOk: "Hafif yağmur tamam",
+    activityParamsCloudOk: "Bulutlu tamam",
     activityParamsReset: "Varsayılana sıfırla",
     thunderstormRisk: "Fırtına Riski",
     thunderstormRiskDetails: "Fırtına Riski Detayları",
@@ -2470,6 +2476,7 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Maks. temperatura",
     activityParamsMaxWind: "Maks. wiatr",
     activityParamsRainOk: "Lekki deszcz OK",
+    activityParamsCloudOk: "Zachmurzenie OK",
     activityParamsReset: "Przywróć domyślne",
     thunderstormRisk: "Ryzyko burzy",
     thunderstormRiskDetails: "Szczegóły ryzyka burzy",
@@ -2778,6 +2785,7 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Max. temperatuur",
     activityParamsMaxWind: "Max. wind",
     activityParamsRainOk: "Lichte regen OK",
+    activityParamsCloudOk: "Bewolking OK",
     activityParamsReset: "Standaard herstellen",
     thunderstormRisk: "Onweerrisico",
     thunderstormRiskDetails: "Onweerrisico details",
@@ -3086,6 +3094,7 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Maks. temperatura",
     activityParamsMaxWind: "Maks. vjetar",
     activityParamsRainOk: "Lagana kiša OK",
+    activityParamsCloudOk: "Oblačnost OK",
     activityParamsReset: "Vrati na zadano",
     thunderstormRisk: "Rizik od grmljavine",
     thunderstormRiskDetails: "Detalji rizika od grmljavine",
@@ -3394,6 +3403,7 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Μέγ. θερμοκρασία",
     activityParamsMaxWind: "Μέγ. άνεμος",
     activityParamsRainOk: "Ελαφριά βροχή OK",
+    activityParamsCloudOk: "Συννεφιά OK",
     activityParamsReset: "Επαναφορά προεπιλογών",
     thunderstormRisk: "Κίνδυνος καταιγίδας",
     thunderstormRiskDetails: "Λεπτομέρειες κινδύνου καταιγίδας",
@@ -3702,6 +3712,7 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Maks. temperatur",
     activityParamsMaxWind: "Maks. vind",
     activityParamsRainOk: "Let regn OK",
+    activityParamsCloudOk: "Skyet OK",
     activityParamsReset: "Nulstil til standard",
     thunderstormRisk: "Tordenvejrsrisiko",
     thunderstormRiskDetails: "Tordenvejrsrisiko detaljer",
@@ -4010,6 +4021,7 @@ const TRANSLATIONS = {
     activityParamsMaxTemp: "Макс. температура",
     activityParamsMaxWind: "Макс. ветер",
     activityParamsRainOk: "Лёгкий дождь OK",
+    activityParamsCloudOk: "Облачность OK",
     activityParamsReset: "Сбросить настройки",
     thunderstormRisk: "Риск грозы",
     thunderstormRiskDetails: "Детали риска грозы",
@@ -4517,7 +4529,7 @@ const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvInd
 /**
  * Returns a suitability rating (score 1-10, color, label key) for a specific activity
  * given current weather conditions. Accepts optional custom params (minTemp, maxTemp,
- * maxWind, rainOk) that override the activity's default thresholds.
+ * maxWind, rainOk, cloudOk) that override the activity's default thresholds.
  */
 const getActivityRating = (key, temp, wind, precip, uvIndex, code, customParams = {}) => {
   const hasRain = precip >= UMBRELLA_PRECIP_THRESHOLD || RAIN_WEATHER_CODES.includes(code);
@@ -4525,6 +4537,7 @@ const getActivityRating = (key, temp, wind, precip, uvIndex, code, customParams 
   const isStorm = wind > 50;
   const isSnow = [71, 73, 75, 77, 85, 86].includes(code);
   const isHeavyRain = precip >= 5 || [65, 82].includes(code);
+  const isCloud = [2, 3].includes(code);
 
   // Merge defaults with user-defined params for this activity
   const defaults = getActivityDefaultsForKey(key);
@@ -4538,7 +4551,7 @@ const getActivityRating = (key, temp, wind, precip, uvIndex, code, customParams 
   };
 
   // Helper: check if conditions meet user's ideal threshold
-  const isIdeal = temp >= p.minTemp && temp <= p.maxTemp && wind < p.maxWind && (!hasRain || p.rainOk);
+  const isIdeal = temp >= p.minTemp && temp <= p.maxTemp && wind < p.maxWind && (!hasRain || p.rainOk) && (!isCloud || p.cloudOk);
 
   // The safety thresholds below use Math.min/max to extend below/above the user's chosen ideal range
   // by activity-specific safety margins (e.g. 5–20°C beyond ideal) before penalising the score.
@@ -6265,6 +6278,15 @@ const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, 
                                 >
                                     <span>💧 {t.activityParamsRainOk || 'Light rain OK'}</span>
                                     {p.rainOk && <Check size={14} />}
+                                </button>
+
+                                {/* Cloud OK toggle */}
+                                <button
+                                    onClick={() => updateParam(key, 'cloudOk', !p.cloudOk)}
+                                    className={`mt-2 w-full flex items-center justify-between py-2 px-3 rounded-m3-sm text-sm font-bold transition ${p.cloudOk ? 'bg-m3-primary-container text-m3-on-primary-container' : 'bg-m3-surface-container-high text-m3-on-surface-variant'}`}
+                                >
+                                    <span>☁️ {t.activityParamsCloudOk || 'Clouds OK'}</span>
+                                    {p.cloudOk && <Check size={14} />}
                                 </button>
                             </div>
                         );
