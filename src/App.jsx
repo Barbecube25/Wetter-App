@@ -6109,7 +6109,7 @@ const ActivityEditorModal = ({ isOpen, onClose, onSave, activity = null, lang = 
                 <div className="px-6 py-4 space-y-4">
                     <div>
                         <label className="block text-sm font-bold text-m3-on-surface mb-2">
-                            {isGerman ? 'Name' : 'Name'}
+                            Name
                         </label>
                         <input
                             type="text"
