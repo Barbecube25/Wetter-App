@@ -5456,13 +5456,29 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
             todayText += lang === 'en' 
                 ? ` Windy with gusts up to ${Math.round(maxWind)} km/h.` 
                 : ` Dazu noch windig mit Böen bis ${Math.round(maxWind)} km/h.`; 
+        } else if (maxWindAvg >= 35) {
+            todayText += lang === 'en'
+                ? ` Considerable wind today (avg. ${Math.round(maxWindAvg)} km/h).`
+                : ` Heute erheblicher Wind (Mittel ${Math.round(maxWindAvg)} km/h).`;
+        } else if (maxWindAvg >= 20) {
+            todayText += lang === 'en'
+                ? ` Breezy today (avg. ${Math.round(maxWindAvg)} km/h).`
+                : ` Heute spürbar windig (Mittel ${Math.round(maxWindAvg)} km/h).`;
         }
         
-        // UV warning
+        // UV info (graduated levels)
         if (maxUV >= 8) {
             todayText += lang === 'en'
-                ? ` ⚠️ High UV index (${maxUV}) - use sun protection!`
-                : ` ⚠️ Hoher UV-Index (${maxUV}) - Sonnenschutz benutzen!`;
+                ? ` ⚠️ Very high UV index (${maxUV}) – strict sun protection essential!`
+                : ` ⚠️ Sehr hoher UV-Index (${maxUV}) – unbedingt Sonnenschutz verwenden!`;
+        } else if (maxUV >= 6) {
+            todayText += lang === 'en'
+                ? ` UV index ${maxUV} (high) – sunscreen recommended.`
+                : ` UV-Index ${maxUV} (hoch) – Sonnenschutz empfohlen.`;
+        } else if (maxUV >= 3) {
+            todayText += lang === 'en'
+                ? ` UV index ${maxUV} – light sun protection advisable.`
+                : ` UV-Index ${maxUV} – leichter Sonnenschutz sinnvoll.`;
         }
         
         // Extreme heat warning
@@ -5479,11 +5495,29 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
                 : ` ❄️ Eisig kalt – warm einpacken!`;
         }
         
-        // Thunderstorm warning
+        // Thunderstorm warning (code-based first, then CAPE-based risk)
         if (hasThunderstorm) {
             todayText += lang === 'en'
                 ? ` ⚡ Thunderstorms approaching - seek shelter!`
                 : ` ⚡ Gewitter im Anmarsch – Schutz suchen!`;
+        } else if (tsWarnToday >= 3) {
+            todayText += lang === 'en'
+                ? ` ⚡ Elevated thunderstorm risk (level ${tsWarnToday}) – keep an eye on the sky!`
+                : ` ⚡ Erhöhtes Gewitterrisiko (Stufe ${tsWarnToday}) – Himmel im Blick behalten!`;
+        }
+        
+        // Humidity info when notably extreme
+        const humidityNow = current.humidity;
+        if (humidityNow != null) {
+            if (humidityNow >= 88) {
+                todayText += lang === 'en'
+                    ? ` Muggy conditions – humidity ${humidityNow}%.`
+                    : ` Schwüle Luft – Luftfeuchte ${humidityNow}%.`;
+            } else if (humidityNow <= 25) {
+                todayText += lang === 'en'
+                    ? ` Very dry air today (humidity ${humidityNow}%).`
+                    : ` Sehr trockene Luft (Feuchte nur ${humidityNow}%).`;
+            }
         }
         
         // Pollen info for today
@@ -5507,8 +5541,16 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         const tRain = tomorrowDayData.reduce((acc, c) => acc + parseFloat(c.precip), 0);
         const tSnow = tomorrowDayData.reduce((acc, c) => acc + parseFloat(c.snow || 0), 0);
         const tGust = Math.max(...tomorrowDayData.map(d => d.gust));
+        const tMaxWindAvg = Math.max(...tomorrowDayData.map(d => d.windAvg ?? d.wind ?? 0));
         const tMaxUV = Math.max(...tomorrowDayData.map(d => d.uvIndex || 0));
         const tHasThunderstorm = tomorrowDayData.some(d => [17, 95, 96, 99].includes(d.code));
+        let tTsRisk = 0, tTsGust = 0;
+        tomorrowDayData.forEach(h => {
+            const r = calcThunderstormRiskLevel(h.cape ?? 0, h.liftedIndex, h.precipProb ?? 0, h.code ?? 0, h.gust ?? 0);
+            if (r > tTsRisk) tTsRisk = r;
+            if ((h.gust ?? 0) > tTsGust) tTsGust = h.gust ?? 0;
+        });
+        const tTsWarnLevel = getThunderstormWarningLevel(tTsRisk, tTsGust);
         
         // Calculate snow probability for tomorrow
         const hoursWithSnowTomorrow = tomorrowDayData.filter(d => parseFloat(d.snow || 0) > 0.1);
@@ -5696,14 +5738,30 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         if (tGust > 50) { 
             tomorrowText += lang === 'en' ? ` Windy with gusts up to ${tGust} km/h.` : ` Dazu noch windig mit Böen bis ${tGust} km/h.`; 
             if (!warning) warning = lang === 'en' ? "WINDY (Tomorrow)" : "WINDIG (Morgen)"; 
+        } else if (tMaxWindAvg >= 35) {
+            tomorrowText += lang === 'en'
+                ? ` Considerable wind expected (avg. ${Math.round(tMaxWindAvg)} km/h).`
+                : ` Erheblicher Wind erwartet (Mittel ${Math.round(tMaxWindAvg)} km/h).`;
+        } else if (tMaxWindAvg >= 20) {
+            tomorrowText += lang === 'en'
+                ? ` Breezy tomorrow (avg. ${Math.round(tMaxWindAvg)} km/h).`
+                : ` Morgen spürbar windig (Mittel ${Math.round(tMaxWindAvg)} km/h).`;
         }
         
-        // UV warning for tomorrow
+        // UV info for tomorrow (graduated levels)
         if (tMaxUV >= 8) {
             tomorrowText += lang === 'en'
-                ? ` ⚠️ High UV index (${tMaxUV}) - use sun protection!`
-                : ` ⚠️ Hoher UV-Index (${tMaxUV}) - Sonnenschutz benutzen!`;
+                ? ` ⚠️ Very high UV index (${tMaxUV}) – strict sun protection essential!`
+                : ` ⚠️ Sehr hoher UV-Index (${tMaxUV}) – unbedingt Sonnenschutz verwenden!`;
             if (!warning) warning = lang === 'en' ? "HIGH UV (Tomorrow)" : "HOHER UV (Morgen)";
+        } else if (tMaxUV >= 6) {
+            tomorrowText += lang === 'en'
+                ? ` UV index ${tMaxUV} (high) – sunscreen recommended.`
+                : ` UV-Index ${tMaxUV} (hoch) – Sonnenschutz empfohlen.`;
+        } else if (tMaxUV >= 3) {
+            tomorrowText += lang === 'en'
+                ? ` UV index ${tMaxUV} – light sun protection advisable.`
+                : ` UV-Index ${tMaxUV} – leichter Sonnenschutz sinnvoll.`;
         }
         
         // Extreme heat warning for tomorrow
@@ -5722,12 +5780,16 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
             if (!warning) warning = lang === 'en' ? "SEVERE COLD (Tomorrow)" : "GROSSE KÄLTE (Morgen)";
         }
         
-        // Thunderstorm warning for tomorrow
+        // Thunderstorm warning for tomorrow (code-based first, then CAPE-based risk)
         if (tHasThunderstorm) {
             tomorrowText += lang === 'en'
                 ? ` ⚡ Thunderstorms expected - be prepared!`
                 : ` ⚡ Gewitter erwartet – vorbereitet sein!`;
             if (!warning) warning = lang === 'en' ? "THUNDERSTORMS (Tomorrow)" : "GEWITTER (Morgen)";
+        } else if (tTsWarnLevel >= 3) {
+            tomorrowText += lang === 'en'
+                ? ` ⚡ Elevated thunderstorm risk tomorrow (level ${tTsWarnLevel}) – stay informed!`
+                : ` ⚡ Morgen erhöhtes Gewitterrisiko (Stufe ${tTsWarnLevel}) – Wetterwarnung beachten!`;
         }
         
         // Pollen info for tomorrow
@@ -9132,7 +9194,7 @@ const renderWithColoredTemps = (text) => {
   });
 };
 
-const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, getWindUnitLabel, formatPrecip, getPrecipUnitLabel, getTempUnitSymbol, isRealNight = false, onOpenQuickViewDetail }) => {
+const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, getWindUnitLabel, formatPrecip, getPrecipUnitLabel, getTempUnitSymbol, isRealNight = false, onOpenQuickViewDetail, isFoldableScreen = false }) => {
   const [expanded, setExpanded] = useState(false);
   const [activeQuickDay, setActiveQuickDay] = useState('today');
   const [quickViewSwipeOffset, setQuickViewSwipeOffset] = useState(0);
@@ -9270,13 +9332,13 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                   return (
                     <div key={idx}>
                       {idx === 0 ? (
-                        <div className="bg-m3-primary/10 dark:bg-m3-dark-primary/20 rounded-lg px-3 py-2 mb-3 text-m3-body-medium font-bold text-m3-on-surface">
+                        <div className={`bg-m3-primary/10 dark:bg-m3-dark-primary/20 rounded-lg px-3 py-2 mb-3 font-bold text-m3-on-surface ${isFoldableScreen ? 'text-m3-body-large' : 'text-m3-body-medium'}`}>
                           {renderWithColoredTemps(section)}
                         </div>
                       ) : (
                         <>
                           {idx > 1 && <hr className="border-m3-outline-variant/40 my-3" />}
-                          <p className="text-m3-body-large text-m3-on-surface leading-relaxed font-semibold whitespace-pre-line">
+                          <p className={`${isFoldableScreen ? 'text-lg' : 'text-m3-body-large'} text-m3-on-surface leading-relaxed font-semibold whitespace-pre-line`}>
                             {renderWithColoredTemps(section)}
                           </p>
                         </>
@@ -9537,7 +9599,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                 })()}
               </div>
             ) : (
-              <p className="text-m3-body-large text-m3-on-surface leading-relaxed font-semibold relative z-10 whitespace-pre-line">{renderWithColoredTemps(summary)}</p>
+              <p className={`${isFoldableScreen ? 'text-lg' : 'text-m3-body-large'} text-m3-on-surface leading-relaxed font-semibold relative z-10 whitespace-pre-line`}>{renderWithColoredTemps(summary)}</p>
             )}
             
             {/* Toggle Button */}
@@ -9562,7 +9624,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                     {summary.split('\n\n').slice(1).map((section, idx) => (
                       <div key={idx}>
                         {idx > 0 && <hr className="border-m3-outline-variant/40 my-2" />}
-                        <p className="text-m3-body-medium text-m3-on-surface leading-relaxed whitespace-pre-line">
+                        <p className={`${isFoldableScreen ? 'text-m3-body-large' : 'text-m3-body-medium'} text-m3-on-surface leading-relaxed whitespace-pre-line`}>
                           {renderWithColoredTemps(section)}
                         </p>
                       </div>
@@ -12532,7 +12594,7 @@ const TripDetailedView = ({ trip, tripDetails, lang, formatTemp, getTempUnitSymb
 };
 
 // --- TRIP WEATHER POPUP MODAL ---
-const TripWeatherPopupModal = ({ trip, tripDetails, savedTripReports, travelLoading, activeTripId, onClose, lang, formatTemp, getTempUnitSymbol, formatPrecip, getPrecipUnitLabel, formatWind, getWindUnitLabel, isSmallScreen }) => {
+const TripWeatherPopupModal = ({ trip, tripDetails, savedTripReports, travelLoading, activeTripId, onClose, lang, formatTemp, getTempUnitSymbol, formatPrecip, getPrecipUnitLabel, formatWind, getWindUnitLabel, isSmallScreen, isFoldableScreen = false }) => {
     const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
     if (!trip) return null;
     const report = savedTripReports?.[trip.id];
@@ -12564,7 +12626,7 @@ const TripWeatherPopupModal = ({ trip, tripDetails, savedTripReports, travelLoad
                         <div className="p-4 text-center mb-3"><RefreshCw className="animate-spin inline" size={20}/></div>
                     ) : report ? (
                         <div className="mb-4">
-                            <AIReportBox report={report} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} />
+                            <AIReportBox report={report} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isFoldableScreen={isFoldableScreen} />
                         </div>
                     ) : null}
                 </div>
@@ -14996,11 +15058,11 @@ export default function WeatherApp() {
                 <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
             </div>
             <h2 className="text-2xl font-bold mb-4 text-slate-800">{t('dailyReport')}</h2>
-             <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} />
+             <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} isFoldableScreen={isFoldableScreen} />
             {processedShort.length > 0 && <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} isRealNight={isRealNight} />}
             <div className="mt-8">
                  <h2 className="text-2xl font-bold mb-4 text-slate-800">{t('trend')}</h2>
-                 <AIReportBox report={longtermReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} />
+                 <AIReportBox report={longtermReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} isFoldableScreen={isFoldableScreen} />
             </div>
         </div>
      );
@@ -15268,6 +15330,7 @@ export default function WeatherApp() {
           formatWind={formatWind}
           getWindUnitLabel={getWindUnitLabel}
           isSmallScreen={isSmallScreen}
+          isFoldableScreen={isFoldableScreen}
         />
       )}
       {/* iOS Install Tip */}
@@ -15834,7 +15897,7 @@ export default function WeatherApp() {
           {activeTab === 'overview' && (
             <div className={isExpandedLayoutActive ? 'grid grid-cols-12 gap-5 items-start' : 'space-y-4'}>
               <div className={isExpandedLayoutActive ? 'col-span-5 space-y-4' : 'space-y-4'}>
-                <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} />
+                <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} isFoldableScreen={isFoldableScreen} />
                 
                 {/* Historical context: temperature anomaly vs. last year's monthly average */}
                 {climateNormals !== null && processedShort.length > 0 && (() => {
@@ -15959,7 +16022,7 @@ export default function WeatherApp() {
           {activeTab === 'longterm' && (
              <div className={isExpandedLayoutActive ? 'grid grid-cols-2 gap-5 items-start' : 'space-y-4'}>
                <div className="space-y-4">
-                 <AIReportBox report={longtermReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} />
+                 <AIReportBox report={longtermReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} isFoldableScreen={isFoldableScreen} />
                </div>
                <div className="space-y-3">
                  <h3 className="text-sm font-bold uppercase tracking-wide opacity-90 ml-2">{t('longtermList')}</h3>
@@ -16262,7 +16325,7 @@ export default function WeatherApp() {
                 {/* Result Area */}
                 {travelResult && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                      <AIReportBox report={tripReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} />
+                      <AIReportBox report={tripReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} isFoldableScreen={isFoldableScreen} />
                        
                        {!activeTripId && (
                          <button 
