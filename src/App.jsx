@@ -57,6 +57,8 @@ const ASTRONOMY_MOON_BRIGHT_THRESHOLD = 80;
 const ASTRONOMY_MOON_DARK_BONUS = 12;
 const ASTRONOMY_MOON_BRIGHT_PENALTY = -20;
 const ASTRONOMY_MOON_MEDIUM_PENALTY = -5;
+const ASTRONOMY_REPORT_MIN_CHANCE_SCORE = 40; // Minimum chance score to show aurora/NLC hints in AI reports
+const ASTRONOMY_AURORA_LAT_MIN = 50; // Minimum latitude to show aurora hints in longterm report
 const MINUTELY_SLOT_DURATION_MINUTES = 15;
 
 // Curated list of notable comets with their photographically visible windows
@@ -5864,13 +5866,13 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         });
       }
       // Aurora when chance is moderate or better
-      if (dailyAstronomyData.auroraChanceScore >= 40) {
+      if (dailyAstronomyData.auroraChanceScore >= ASTRONOMY_REPORT_MIN_CHANCE_SCORE) {
         astroLines.push(lang === 'en'
           ? `🌌 Aurora possible tonight (chance: ${dailyAstronomyData.auroraChance}, Kp ≥ ${dailyAstronomyData.auroraKpMin} needed).`
           : `🌌 Polarlichter heute Nacht möglich (Chance: ${dailyAstronomyData.auroraChance}, Kp ≥ ${dailyAstronomyData.auroraKpMin} nötig).`);
       }
       // NLC when in season and chance is moderate or better
-      if (dailyAstronomyData.nlcSeason && dailyAstronomyData.nlcChanceScore >= 40) {
+      if (dailyAstronomyData.nlcSeason && dailyAstronomyData.nlcChanceScore >= ASTRONOMY_REPORT_MIN_CHANCE_SCORE) {
         astroLines.push(lang === 'en'
           ? `🌙 Noctilucent clouds (NLC) possible tonight (chance: ${dailyAstronomyData.nlcChance}).`
           : `🌙 Leuchtende Nachtwolken (NLC) heute Nacht möglich (Chance: ${dailyAstronomyData.nlcChance}).`);
@@ -6165,8 +6167,8 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
           }
         });
       }
-      // Aurora hint for northern latitudes (lat >= 50)
-      if (longtermAstronomyData.lat >= 50) {
+      // Aurora hint for northern latitudes
+      if (longtermAstronomyData.lat >= ASTRONOMY_AURORA_LAT_MIN) {
         astroLines.push(lang === 'en'
           ? `🌌 Aurora: watch for solar activity alerts (Kp ≥ ${longtermAstronomyData.auroraKpMin} needed at your location).`
           : `🌌 Polarlichter: Sonnenaktivität im Blick behalten (Kp ≥ ${longtermAstronomyData.auroraKpMin} nötig für deinen Standort).`);
