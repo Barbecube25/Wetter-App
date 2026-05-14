@@ -84,6 +84,12 @@ const ACTIVITY_DEFINITIONS = [
 const DEFAULT_ACTIVITY_FILTER = ACTIVITY_DEFINITIONS.map(a => a.key);
 const CUSTOM_ACTIVITY_DEFAULT_PARAMS = { minTemp: 10, maxTemp: 25, maxWind: 25, rainOk: false };
 const CUSTOM_ACTIVITY_DEFAULT_EMOJI = '✨';
+const CUSTOM_ACTIVITY_KEY_MAX_LENGTH = 40;
+const CUSTOM_ACTIVITY_EMOJI_INPUT_MAX_LENGTH = 8;
+const CUSTOM_ACTIVITY_EXTREME_MIN_TEMP = -10;
+const CUSTOM_ACTIVITY_EXTREME_MAX_TEMP = 38;
+const CUSTOM_ACTIVITY_HIGH_WIND = 40;
+const CUSTOM_ACTIVITY_WARNING_MAX_TEMP = 33;
 
 // Default thresholds for activity index scoring (ideal temperature range, max wind, rain tolerance)
 const DEFAULT_ACTIVITY_PARAMS = {
@@ -97,6 +103,8 @@ const DEFAULT_ACTIVITY_PARAMS = {
   picnic:    { minTemp: 18, maxTemp: 28, maxWind: 20, rainOk: false },
 };
 
+// Converts a custom activity name into a stable, storage-safe key:
+// lowercase, accents removed, non-alphanumeric groups replaced with hyphens.
 const sanitizeActivityKey = (value) => {
   const base = String(value || '')
     .toLowerCase()
@@ -104,7 +112,7 @@ const sanitizeActivityKey = (value) => {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return base.slice(0, 40);
+  return base.slice(0, CUSTOM_ACTIVITY_KEY_MAX_LENGTH);
 };
 
 const normalizeCustomActivities = (customActivities = []) => {
@@ -4599,8 +4607,10 @@ const getActivityRating = (key, temp, wind, precip, uvIndex, code, customParams 
     }
     default: {
       if (isThunderstorm || isStorm) return rate(1);
-      if ((!p.rainOk && hasRain) || isHeavyRain || temp < Math.min(-10, p.minTemp - 10) || temp > Math.max(38, p.maxTemp + 10)) return rate(2);
-      if (wind > Math.max(40, p.maxWind + 15) || temp < Math.min(0, p.minTemp - 5) || temp > Math.max(33, p.maxTemp + 5)) return rate(4);
+      // Generic scoring for user-defined activities: dangerous weather gets a hard penalty,
+      // then strong deviations beyond the preferred range gradually reduce the score.
+      if ((!p.rainOk && hasRain) || isHeavyRain || temp < Math.min(CUSTOM_ACTIVITY_EXTREME_MIN_TEMP, p.minTemp - 10) || temp > Math.max(CUSTOM_ACTIVITY_EXTREME_MAX_TEMP, p.maxTemp + 10)) return rate(2);
+      if (wind > Math.max(CUSTOM_ACTIVITY_HIGH_WIND, p.maxWind + 15) || temp < Math.min(0, p.minTemp - 5) || temp > Math.max(CUSTOM_ACTIVITY_WARNING_MAX_TEMP, p.maxTemp + 5)) return rate(4);
       if (isIdeal) return rate(9);
       return rate(6);
     }
@@ -6118,7 +6128,7 @@ const ActivityEditorModal = ({ isOpen, onClose, onSave, activity = null, lang = 
                             value={emoji}
                             onChange={(e) => setEmoji(e.target.value)}
                             placeholder={CUSTOM_ACTIVITY_DEFAULT_EMOJI}
-                            maxLength={4}
+                            maxLength={CUSTOM_ACTIVITY_EMOJI_INPUT_MAX_LENGTH}
                             className="w-full px-3 py-3 rounded-m3-md border border-m3-outline-variant bg-m3-surface-container text-m3-on-surface focus:outline-none focus:ring-2 focus:ring-m3-primary"
                         />
                     </div>
@@ -6343,7 +6353,10 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
 
         const normalizedNextCustomActivities = normalizeCustomActivities(nextCustomActivities);
         if (!draft.key) {
-            const created = normalizedNextCustomActivities.find((activity) => activity.name === draft.name.trim() && activity.emoji === (draft.emoji?.trim() || CUSTOM_ACTIVITY_DEFAULT_EMOJI));
+            const nextEmoji = draft.emoji?.trim() || CUSTOM_ACTIVITY_DEFAULT_EMOJI;
+            const created = normalizedNextCustomActivities.find((activity) =>
+                activity.name === draft.name.trim() && activity.emoji === nextEmoji
+            );
             savedKey = created?.key;
         }
 
