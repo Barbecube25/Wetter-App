@@ -13693,7 +13693,7 @@ export default function WeatherApp() {
     }
   };
 
-  const TAB_ORDER = ['overview', 'longterm', 'precipitation', 'radar', 'chart', 'travel'];
+  const TAB_ORDER = ['overview', 'longterm', 'precipitation', 'radar', 'chart', 'travel', 'astronomy'];
 
   const handleTouchEnd = (e) => {
     // Do not activate gestures when a modal/overlay is open
@@ -14640,6 +14640,146 @@ export default function WeatherApp() {
       total: totalRain + totalSnow
     };
   }, [processedShort]);
+
+  const astronomyForecast = useMemo(() => {
+    const locale = lang === 'en' ? 'en-US' : 'de-DE';
+    const nowDate = new Date();
+    const observingSlots = processedShort
+      .filter((slot) => {
+        const hour = slot.time.getHours();
+        return hour >= 21 || hour <= 4;
+      })
+      .slice(0, 12);
+    const slots = observingSlots.length > 0 ? observingSlots : processedShort.slice(0, 12);
+    const clamp = (value, min = 0, max = 100) => Math.max(min, Math.min(max, value));
+    const getSlotScore = (slot) => {
+      if (!slot) return 30;
+      const cloud = Number(slot.cloudCover ?? 70);
+      const precip = Number(slot.precip ?? 0);
+      const snow = Number(slot.snow ?? 0);
+      const wind = Number(slot.wind ?? 0);
+      const visibility = Number(slot.visibility ?? 10000);
+      const fogPenalty = [45, 48].includes(slot.code) ? 20 : 0;
+      const precipPenalty = (precip > LIGHT_PRECIP_THRESHOLD || snow > LIGHT_PRECIP_THRESHOLD) ? 35 : 0;
+      const windPenalty = wind > 15 ? (wind - 15) * 1.1 : 0;
+      const cloudPenalty = cloud * 0.62;
+      const visibilityBonus = visibility >= 12000 ? 8 : visibility < 6000 ? -10 : 0;
+      return clamp(Math.round(100 - cloudPenalty - precipPenalty - windPenalty - fogPenalty + visibilityBonus));
+    };
+    const scoreList = slots.map((slot) => getSlotScore(slot));
+    const weatherScore = scoreList.length > 0
+      ? Math.round(scoreList.reduce((sum, value) => sum + value, 0) / scoreList.length)
+      : 35;
+    const getChanceText = (score) => {
+      if (score >= 80) return lang === 'en' ? 'very good' : 'sehr gut';
+      if (score >= 60) return lang === 'en' ? 'good' : 'gut';
+      if (score >= 40) return lang === 'en' ? 'moderate' : 'mittel';
+      return lang === 'en' ? 'low' : 'gering';
+    };
+
+    const bestSlot = slots.reduce((best, slot) => {
+      if (!best) return slot;
+      return getSlotScore(slot) > getSlotScore(best) ? slot : best;
+    }, null);
+    const formatDate = (date) => new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit' }).format(date);
+    const formatTime = (date) => date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+    const bestWindow = bestSlot
+      ? `${formatDate(bestSlot.time)} · ${formatTime(bestSlot.time)}`
+      : (lang === 'en' ? 'No suitable window yet' : 'Noch kein passendes Fenster');
+
+    const nightTemps = slots.map((slot) => {
+      if (slot.appTemp !== null && slot.appTemp !== undefined) return Number(slot.appTemp);
+      return Number(slot.temp ?? current.temp ?? 10);
+    });
+    const coldestNightTemp = nightTemps.length > 0 ? Math.round(Math.min(...nightTemps)) : Math.round(current.temp ?? 10);
+    const avgNightWind = slots.length > 0
+      ? Math.round(slots.reduce((sum, slot) => sum + Number(slot.wind ?? 0), 0) / slots.length)
+      : Math.round(current.wind ?? 0);
+    const hasWetRisk = slots.some((slot) => Number(slot.precip ?? 0) > LIGHT_PRECIP_THRESHOLD || Number(slot.snow ?? 0) > LIGHT_PRECIP_THRESHOLD);
+    const moonIllumination = getMoonIllumination(getMoonPhaseExact(nowDate));
+
+    const clothing = [];
+    if (coldestNightTemp <= 0) {
+      clothing.push(lang === 'en' ? 'winter jacket, warm layers, hat and gloves' : 'Winterjacke, warme Schichten, Mütze und Handschuhe');
+    } else if (coldestNightTemp <= 8) {
+      clothing.push(lang === 'en' ? 'warm jacket and layered clothing' : 'warme Jacke und Schichtkleidung');
+    } else if (coldestNightTemp <= 15) {
+      clothing.push(lang === 'en' ? 'light jacket or fleece' : 'leichte Jacke oder Fleece');
+    } else {
+      clothing.push(lang === 'en' ? 'long sleeves for late hours' : 'lange Kleidung für die späten Stunden');
+    }
+    if (avgNightWind >= 20) {
+      clothing.push(lang === 'en' ? 'windproof outer layer' : 'winddichte Außenschicht');
+    }
+    if (hasWetRisk) {
+      clothing.push(lang === 'en' ? 'waterproof layer and dry shoes' : 'wasserdichte Schicht und trockene Schuhe');
+    }
+
+    const nextOccurrence = (month, day) => {
+      const currentYear = nowDate.getFullYear();
+      const candidate = new Date(currentYear, month - 1, day, 0, 0, 0, 0);
+      if (candidate < nowDate) {
+        candidate.setFullYear(currentYear + 1);
+      }
+      return candidate;
+    };
+    const daysUntil = (targetDate) => Math.ceil((targetDate.getTime() - nowDate.getTime()) / MS_PER_DAY);
+
+    const meteorItems = [
+      { nameDe: 'Eta-Aquariiden', nameEn: 'Eta Aquariids', peakMonth: 5, peakDay: 6, bestTime: '03:00–05:00', zhr: '~50/h' },
+      { nameDe: 'Perseiden', nameEn: 'Perseids', peakMonth: 8, peakDay: 12, bestTime: '22:00–04:00', zhr: '~100/h' },
+      { nameDe: 'Orioniden', nameEn: 'Orionids', peakMonth: 10, peakDay: 21, bestTime: '23:00–04:30', zhr: '~20/h' },
+      { nameDe: 'Leoniden', nameEn: 'Leonids', peakMonth: 11, peakDay: 17, bestTime: '00:00–05:00', zhr: '~15/h' },
+      { nameDe: 'Geminiden', nameEn: 'Geminids', peakMonth: 12, peakDay: 14, bestTime: '21:00–04:00', zhr: '~120/h' },
+    ].map((item) => {
+      const peakDate = nextOccurrence(item.peakMonth, item.peakDay);
+      const d = daysUntil(peakDate);
+      return {
+        ...item,
+        peakDate,
+        countdown: d <= 0
+          ? (lang === 'en' ? 'peak now' : 'Peak jetzt')
+          : d === 1
+            ? (lang === 'en' ? 'tomorrow' : 'morgen')
+            : `${d} ${lang === 'en' ? 'days' : 'Tage'}`,
+        chance: getChanceText(clamp(weatherScore + (d <= 5 ? 6 : 0))),
+      };
+    }).sort((a, b) => a.peakDate - b.peakDate).slice(0, 3);
+
+    const lat = Number(currentLoc?.lat ?? homeLoc?.lat ?? 0);
+    const avgCloud = slots.length > 0
+      ? Math.round(slots.reduce((sum, slot) => sum + Number(slot.cloudCover ?? 70), 0) / slots.length)
+      : Math.round(current.cloudCover ?? 70);
+    const auroraBase = lat >= 54 ? 48 : lat >= 51 ? 28 : 12;
+    const auroraChanceScore = clamp(auroraBase + (weatherScore - 45));
+    const auroraChance = getChanceText(auroraChanceScore);
+
+    const month = nowDate.getMonth() + 1;
+    const nlcSeason = month >= 5 && month <= 8;
+    const nlcLatBoost = lat >= 54 ? 18 : lat >= 50 ? 8 : -12;
+    const nlcChanceScore = nlcSeason ? clamp(45 + nlcLatBoost + (weatherScore - 50)) : 10;
+    const nlcChance = getChanceText(nlcChanceScore);
+
+    const cometWindowScore = clamp(weatherScore + (moonIllumination <= 35 ? 12 : moonIllumination >= 80 ? -20 : -5));
+    const cometChance = getChanceText(cometWindowScore);
+
+    return {
+      weatherScore,
+      weatherChanceText: getChanceText(weatherScore),
+      bestWindow,
+      coldestNightTemp,
+      avgNightWind,
+      clothing,
+      moonIllumination,
+      meteorItems,
+      cometChance,
+      auroraChance,
+      nlcChance,
+      avgCloud,
+      hasWetRisk,
+      nlcSeason,
+    };
+  }, [processedShort, lang, current, currentLoc, homeLoc]);
   
   // Snow should be treated like rain - only show if weather code explicitly indicates snow, not based on temperature
   const isSnowing = current.code && SNOW_WEATHER_CODES.includes(current.code);
@@ -15560,8 +15700,8 @@ export default function WeatherApp() {
         <div className={`fixed left-0 right-0 z-30 ${horizontalPagePaddingClass}`} style={{ top: `calc(${animationCardHeight} + ${fixedElementsGap} + ${fixedTopOffset})` }}>
           <div className={`${contentContainerMaxWidthClass} mx-auto`}>
             <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl ${isLandscape ? 'p-1' : (isSmallScreen ? 'p-1.5' : 'p-2')} shadow-m3-2 border border-m3-outline-variant`}>
-          <div className={`grid ${isFoldableCompactScreen ? 'grid-cols-3' : 'grid-cols-6'} ${isSmallScreen ? 'gap-0.5' : 'gap-1'}`}>
-            {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'precipitation', label:t('precip'), icon: Droplets}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}].map(tab => (
+          <div className={`grid ${isFoldableCompactScreen ? 'grid-cols-3' : 'grid-cols-7'} ${isSmallScreen ? 'gap-0.5' : 'gap-1'}`}>
+            {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'precipitation', label:t('precip'), icon: Droplets}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}, {id:'astronomy', label: lang === 'en' ? 'Astronomy' : 'Astronomie', icon: Star}].map(tab => (
               <button 
                 key={tab.id} 
                 onClick={() => setActiveTab(tab.id)} 
@@ -16403,7 +16543,110 @@ export default function WeatherApp() {
             </div>
           )}
 
-          {activeTab !== 'radar' && activeTab !== 'travel' && (
+          {activeTab === 'astronomy' && (
+            <div className="space-y-4">
+              <div className={`${tileBg} rounded-m3-2xl p-4 border shadow-m3-1`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-m3-title-medium font-bold flex items-center gap-2">
+                      <Star size={18} className="text-m3-primary" />
+                      {lang === 'en' ? 'Astronomy Tonight' : 'Astronomie heute Nacht'}
+                    </div>
+                    <div className={`text-sm mt-1 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
+                      {lang === 'en' ? 'Best weather window' : 'Bestes Wetterfenster'}: <span className="font-semibold">{astronomyForecast.bestWindow}</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs uppercase tracking-wide opacity-70">{lang === 'en' ? 'Visibility' : 'Sichtchance'}</div>
+                    <div className="text-m3-title-large font-bold text-m3-primary">{astronomyForecast.weatherScore}%</div>
+                    <div className="text-xs font-medium">{astronomyForecast.weatherChanceText}</div>
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                  <div className="bg-m3-primary/10 rounded-lg px-3 py-2">
+                    {lang === 'en' ? 'Cloud cover (avg)' : 'Bewölkung (Ø)'}: <span className="font-semibold">{astronomyForecast.avgCloud}%</span>
+                  </div>
+                  <div className="bg-m3-primary/10 rounded-lg px-3 py-2">
+                    {lang === 'en' ? 'Coldest hour' : 'Kälteste Stunde'}: <span className="font-semibold">{formatTemp(astronomyForecast.coldestNightTemp)}{getTempUnitSymbol()}</span>
+                  </div>
+                  <div className="bg-m3-primary/10 rounded-lg px-3 py-2">
+                    {lang === 'en' ? 'Wind (avg)' : 'Wind (Ø)'}: <span className="font-semibold">{formatWind(astronomyForecast.avgNightWind)} {getWindUnitLabel()}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`${tileBg} rounded-m3-2xl p-4 border shadow-m3-1`}>
+                <div className="text-m3-title-small font-bold mb-2">{lang === 'en' ? 'Meteor showers (current & upcoming)' : 'Meteorströme (aktuell & kommend)'}</div>
+                <div className="space-y-2">
+                  {astronomyForecast.meteorItems.map((meteor) => (
+                    <div key={`${meteor.nameEn}-${meteor.peakDate.toISOString()}`} className="rounded-xl border border-m3-outline-variant/40 px-3 py-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="font-semibold">{lang === 'en' ? meteor.nameEn : meteor.nameDe}</div>
+                        <div className="text-xs opacity-70">{meteor.peakDate.toLocaleDateString(lang === 'en' ? 'en-US' : 'de-DE', { day: '2-digit', month: '2-digit' })}</div>
+                      </div>
+                      <div className="text-xs opacity-80 mt-1">
+                        {lang === 'en' ? 'Peak' : 'Peak'}: {meteor.countdown} · {lang === 'en' ? 'Best time' : 'Beste Zeit'}: {meteor.bestTime} · {meteor.zhr}
+                      </div>
+                      <div className="text-xs mt-1">
+                        {lang === 'en' ? 'Weather-based visibility' : 'Wetterbasierte Sicht'}: <span className="font-semibold">{meteor.chance}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className={`${tileBg} rounded-m3-2xl p-4 border shadow-m3-1`}>
+                <div className="text-m3-title-small font-bold mb-2">{lang === 'en' ? 'Comets, aurora and noctilucent clouds' : 'Kometen, Polarlichter und leuchtende Nachtwolken'}</div>
+                <div className="space-y-2 text-sm">
+                  <div className="rounded-xl border border-m3-outline-variant/40 px-3 py-2">
+                    <div className="font-semibold">{lang === 'en' ? 'Potential comet visibility' : 'Potenzielle Kometensicht'}</div>
+                    <div className="text-xs opacity-80 mt-1">
+                      {lang === 'en' ? 'Moon illumination' : 'Mondbeleuchtung'}: {astronomyForecast.moonIllumination}% · {lang === 'en' ? 'Best after astronomical twilight, with moonless windows' : 'Am besten nach astronomischer Dämmerung, mit mondarmen Fenstern'}
+                    </div>
+                    <div className="text-xs mt-1">
+                      {lang === 'en' ? 'Weather-based chance' : 'Wetterbasierte Chance'}: <span className="font-semibold">{astronomyForecast.cometChance}</span>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-m3-outline-variant/40 px-3 py-2">
+                    <div className="font-semibold">{lang === 'en' ? 'Aurora forecast (local heuristic)' : 'Polarlicht-Prognose (lokale Heuristik)'}</div>
+                    <div className="text-xs opacity-80 mt-1">
+                      {lang === 'en' ? 'Suggested time' : 'Empfohlene Zeit'}: 22:30–02:30 · {lang === 'en' ? 'higher chance in northern regions' : 'höhere Chance in nördlichen Regionen'}
+                    </div>
+                    <div className="text-xs mt-1">
+                      {lang === 'en' ? 'Weather-based chance' : 'Wetterbasierte Chance'}: <span className="font-semibold">{astronomyForecast.auroraChance}</span>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-m3-outline-variant/40 px-3 py-2">
+                    <div className="font-semibold">{lang === 'en' ? 'Noctilucent clouds (NLC)' : 'Leuchtende Nachtwolken (NLC)'}</div>
+                    <div className="text-xs opacity-80 mt-1">
+                      {astronomyForecast.nlcSeason
+                        ? (lang === 'en' ? 'Season active (May–August), best around 22:00–00:30 and 02:30–04:30' : 'Saison aktiv (Mai–August), am besten gegen 22:00–00:30 und 02:30–04:30')
+                        : (lang === 'en' ? 'Outside season (mainly May–August)' : 'Außerhalb der Saison (hauptsächlich Mai–August)')}
+                    </div>
+                    <div className="text-xs mt-1">
+                      {lang === 'en' ? 'Weather-based chance' : 'Wetterbasierte Chance'}: <span className="font-semibold">{astronomyForecast.nlcChance}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`${tileBg} rounded-m3-2xl p-4 border shadow-m3-1`}>
+                <div className="text-m3-title-small font-bold mb-2">{lang === 'en' ? 'Clothing for observing' : 'Kleidung für Beobachtung'}</div>
+                <ul className="list-disc pl-5 space-y-1 text-sm">
+                  {astronomyForecast.clothing.map((item, idx) => (
+                    <li key={`${item}-${idx}`}>{item}</li>
+                  ))}
+                </ul>
+                <div className="text-xs opacity-70 mt-2">
+                  {astronomyForecast.hasWetRisk
+                    ? (lang === 'en' ? 'Rain/snow possible in parts of the night.' : 'In Teilen der Nacht sind Regen/Schnee möglich.')
+                    : (lang === 'en' ? 'Dry night expected based on current forecast.' : 'Nach aktueller Prognose eher trockene Nacht.')}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab !== 'radar' && activeTab !== 'travel' && activeTab !== 'astronomy' && (
             <div className="mt-8 text-xs text-center opacity-60 px-6 font-medium space-y-2">
                <p className="flex items-center justify-center gap-2 mb-2"><Database size={14} /> {t('source')}</p>
                <div className="flex flex-wrap justify-center gap-4">
