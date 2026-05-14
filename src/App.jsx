@@ -30,6 +30,33 @@ const NIGHT_START_HOUR = 20;
 const LIGHT_PRECIP_THRESHOLD = 0.1;
 const STRONG_PRECIP_THRESHOLD = 0.5;
 const UMBRELLA_PRECIP_THRESHOLD = 0.5;
+const ASTRONOMY_OBSERVATION_START_HOUR = 22;
+const ASTRONOMY_OBSERVATION_END_HOUR = 4;
+const ASTRONOMY_FOG_WEATHER_CODES = [45, 48];
+const ASTRONOMY_WIND_PENALTY_THRESHOLD = 15;
+const ASTRONOMY_WIND_PENALTY_FACTOR = 1.1;
+const ASTRONOMY_CLOUD_PENALTY_FACTOR = 0.62;
+const ASTRONOMY_EXCELLENT_VIS_THRESHOLD = 12000;
+const ASTRONOMY_POOR_VIS_THRESHOLD = 6000;
+const ASTRONOMY_EXCELLENT_VIS_BONUS = 8;
+const ASTRONOMY_POOR_VIS_PENALTY = -10;
+const ASTRONOMY_METEOR_PROXIMITY_DAYS = 5;
+const ASTRONOMY_METEOR_PROXIMITY_BONUS = 6;
+const ASTRONOMY_HIGH_LAT_THRESHOLD = 54;
+const ASTRONOMY_MID_LAT_THRESHOLD = 51;
+const ASTRONOMY_HIGH_LAT_AURORA_BASE = 48;
+const ASTRONOMY_MID_LAT_AURORA_BASE = 28;
+const ASTRONOMY_LOW_LAT_AURORA_BASE = 12;
+const ASTRONOMY_NLC_HIGH_LAT_THRESHOLD = 54;
+const ASTRONOMY_NLC_MID_LAT_THRESHOLD = 50;
+const ASTRONOMY_NLC_HIGH_LAT_BOOST = 18;
+const ASTRONOMY_NLC_MID_LAT_BOOST = 8;
+const ASTRONOMY_NLC_LOW_LAT_PENALTY = -12;
+const ASTRONOMY_MOON_DARK_THRESHOLD = 35;
+const ASTRONOMY_MOON_BRIGHT_THRESHOLD = 80;
+const ASTRONOMY_MOON_DARK_BONUS = 12;
+const ASTRONOMY_MOON_BRIGHT_PENALTY = -20;
+const ASTRONOMY_MOON_MEDIUM_PENALTY = -5;
 const MINUTELY_SLOT_DURATION_MINUTES = 15;
 const MINUTELY_NOWCAST_WINDOW_SLOTS = 8;
 const MINUTELY_TO_HOURLY_RATE_FACTOR = 60 / MINUTELY_SLOT_DURATION_MINUTES;
@@ -14643,11 +14670,12 @@ export default function WeatherApp() {
 
   const astronomyForecast = useMemo(() => {
     const locale = lang === 'en' ? 'en-US' : 'de-DE';
+    const dayMonthFormatter = new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit' });
     const nowDate = new Date();
     const observingSlots = processedShort
       .filter((slot) => {
         const hour = slot.time.getHours();
-        return hour >= 21 || hour <= 4;
+        return hour >= ASTRONOMY_OBSERVATION_START_HOUR || hour <= ASTRONOMY_OBSERVATION_END_HOUR;
       })
       .slice(0, 12);
     const slots = observingSlots.length > 0 ? observingSlots : processedShort.slice(0, 12);
@@ -14659,11 +14687,11 @@ export default function WeatherApp() {
       const snow = Number(slot.snow ?? 0);
       const wind = Number(slot.wind ?? 0);
       const visibility = Number(slot.visibility ?? 10000);
-      const fogPenalty = [45, 48].includes(slot.code) ? 20 : 0;
+      const fogPenalty = ASTRONOMY_FOG_WEATHER_CODES.includes(slot.code) ? 20 : 0;
       const precipPenalty = (precip > LIGHT_PRECIP_THRESHOLD || snow > LIGHT_PRECIP_THRESHOLD) ? 35 : 0;
-      const windPenalty = wind > 15 ? (wind - 15) * 1.1 : 0;
-      const cloudPenalty = cloud * 0.62;
-      const visibilityBonus = visibility >= 12000 ? 8 : visibility < 6000 ? -10 : 0;
+      const windPenalty = wind > ASTRONOMY_WIND_PENALTY_THRESHOLD ? (wind - ASTRONOMY_WIND_PENALTY_THRESHOLD) * ASTRONOMY_WIND_PENALTY_FACTOR : 0;
+      const cloudPenalty = cloud * ASTRONOMY_CLOUD_PENALTY_FACTOR;
+      const visibilityBonus = visibility >= ASTRONOMY_EXCELLENT_VIS_THRESHOLD ? ASTRONOMY_EXCELLENT_VIS_BONUS : visibility < ASTRONOMY_POOR_VIS_THRESHOLD ? ASTRONOMY_POOR_VIS_PENALTY : 0;
       return clamp(Math.round(100 - cloudPenalty - precipPenalty - windPenalty - fogPenalty + visibilityBonus));
     };
     const scoreList = slots.map((slot) => getSlotScore(slot));
@@ -14681,7 +14709,7 @@ export default function WeatherApp() {
       if (!best) return slot;
       return getSlotScore(slot) > getSlotScore(best) ? slot : best;
     }, null);
-    const formatDate = (date) => new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit' }).format(date);
+    const formatDate = (date) => dayMonthFormatter.format(date);
     const formatTime = (date) => date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
     const bestWindow = bestSlot
       ? `${formatDate(bestSlot.time)} · ${formatTime(bestSlot.time)}`
@@ -14726,7 +14754,7 @@ export default function WeatherApp() {
     const daysUntil = (targetDate) => Math.ceil((targetDate.getTime() - nowDate.getTime()) / MS_PER_DAY);
 
     const meteorItems = [
-      { nameDe: 'Eta-Aquariiden', nameEn: 'Eta Aquariids', peakMonth: 5, peakDay: 6, bestTime: '03:00–05:00', zhr: '~50/h' },
+      { nameDe: 'Eta-Aquariden', nameEn: 'Eta Aquariids', peakMonth: 5, peakDay: 6, bestTime: '03:00–05:00', zhr: '~50/h' },
       { nameDe: 'Perseiden', nameEn: 'Perseids', peakMonth: 8, peakDay: 12, bestTime: '22:00–04:00', zhr: '~100/h' },
       { nameDe: 'Orioniden', nameEn: 'Orionids', peakMonth: 10, peakDay: 21, bestTime: '23:00–04:30', zhr: '~20/h' },
       { nameDe: 'Leoniden', nameEn: 'Leonids', peakMonth: 11, peakDay: 17, bestTime: '00:00–05:00', zhr: '~15/h' },
@@ -14738,11 +14766,11 @@ export default function WeatherApp() {
         ...item,
         peakDate,
         countdown: d <= 0
-          ? (lang === 'en' ? 'peak now' : 'Peak jetzt')
+          ? (lang === 'en' ? 'peak now' : 'peak jetzt')
           : d === 1
             ? (lang === 'en' ? 'tomorrow' : 'morgen')
             : `${d} ${lang === 'en' ? 'days' : 'Tage'}`,
-        chance: getChanceText(clamp(weatherScore + (d <= 5 ? 6 : 0))),
+        chance: getChanceText(clamp(weatherScore + (d <= ASTRONOMY_METEOR_PROXIMITY_DAYS ? ASTRONOMY_METEOR_PROXIMITY_BONUS : 0))),
       };
     }).sort((a, b) => a.peakDate - b.peakDate).slice(0, 3);
 
@@ -14750,17 +14778,17 @@ export default function WeatherApp() {
     const avgCloud = slots.length > 0
       ? Math.round(slots.reduce((sum, slot) => sum + Number(slot.cloudCover ?? 70), 0) / slots.length)
       : Math.round(current.cloudCover ?? 70);
-    const auroraBase = lat >= 54 ? 48 : lat >= 51 ? 28 : 12;
+    const auroraBase = lat >= ASTRONOMY_HIGH_LAT_THRESHOLD ? ASTRONOMY_HIGH_LAT_AURORA_BASE : lat >= ASTRONOMY_MID_LAT_THRESHOLD ? ASTRONOMY_MID_LAT_AURORA_BASE : ASTRONOMY_LOW_LAT_AURORA_BASE;
     const auroraChanceScore = clamp(auroraBase + (weatherScore - 45));
     const auroraChance = getChanceText(auroraChanceScore);
 
     const month = nowDate.getMonth() + 1;
     const nlcSeason = month >= 5 && month <= 8;
-    const nlcLatBoost = lat >= 54 ? 18 : lat >= 50 ? 8 : -12;
+    const nlcLatBoost = lat >= ASTRONOMY_NLC_HIGH_LAT_THRESHOLD ? ASTRONOMY_NLC_HIGH_LAT_BOOST : lat >= ASTRONOMY_NLC_MID_LAT_THRESHOLD ? ASTRONOMY_NLC_MID_LAT_BOOST : ASTRONOMY_NLC_LOW_LAT_PENALTY;
     const nlcChanceScore = nlcSeason ? clamp(45 + nlcLatBoost + (weatherScore - 50)) : 10;
     const nlcChance = getChanceText(nlcChanceScore);
 
-    const cometWindowScore = clamp(weatherScore + (moonIllumination <= 35 ? 12 : moonIllumination >= 80 ? -20 : -5));
+    const cometWindowScore = clamp(weatherScore + (moonIllumination <= ASTRONOMY_MOON_DARK_THRESHOLD ? ASTRONOMY_MOON_DARK_BONUS : moonIllumination >= ASTRONOMY_MOON_BRIGHT_THRESHOLD ? ASTRONOMY_MOON_BRIGHT_PENALTY : ASTRONOMY_MOON_MEDIUM_PENALTY));
     const cometChance = getChanceText(cometWindowScore);
 
     return {
@@ -15700,7 +15728,7 @@ export default function WeatherApp() {
         <div className={`fixed left-0 right-0 z-30 ${horizontalPagePaddingClass}`} style={{ top: `calc(${animationCardHeight} + ${fixedElementsGap} + ${fixedTopOffset})` }}>
           <div className={`${contentContainerMaxWidthClass} mx-auto`}>
             <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl ${isLandscape ? 'p-1' : (isSmallScreen ? 'p-1.5' : 'p-2')} shadow-m3-2 border border-m3-outline-variant`}>
-          <div className={`grid ${isFoldableCompactScreen ? 'grid-cols-3' : 'grid-cols-7'} ${isSmallScreen ? 'gap-0.5' : 'gap-1'}`}>
+          <div className={`grid ${isFoldableCompactScreen ? 'grid-cols-4' : 'grid-cols-7'} ${isSmallScreen ? 'gap-0.5' : 'gap-1'}`}>
             {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'precipitation', label:t('precip'), icon: Droplets}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}, {id:'astronomy', label: lang === 'en' ? 'Astronomy' : 'Astronomie', icon: Star}].map(tab => (
               <button 
                 key={tab.id} 
@@ -16579,13 +16607,13 @@ export default function WeatherApp() {
                 <div className="text-m3-title-small font-bold mb-2">{lang === 'en' ? 'Meteor showers (current & upcoming)' : 'Meteorströme (aktuell & kommend)'}</div>
                 <div className="space-y-2">
                   {astronomyForecast.meteorItems.map((meteor) => (
-                    <div key={`${meteor.nameEn}-${meteor.peakDate.toISOString()}`} className="rounded-xl border border-m3-outline-variant/40 px-3 py-2">
+                    <div key={meteor.nameEn} className="rounded-xl border border-m3-outline-variant/40 px-3 py-2">
                       <div className="flex items-center justify-between gap-2">
                         <div className="font-semibold">{lang === 'en' ? meteor.nameEn : meteor.nameDe}</div>
                         <div className="text-xs opacity-70">{meteor.peakDate.toLocaleDateString(lang === 'en' ? 'en-US' : 'de-DE', { day: '2-digit', month: '2-digit' })}</div>
                       </div>
                       <div className="text-xs opacity-80 mt-1">
-                        {lang === 'en' ? 'Peak' : 'Peak'}: {meteor.countdown} · {lang === 'en' ? 'Best time' : 'Beste Zeit'}: {meteor.bestTime} · {meteor.zhr}
+                        {lang === 'en' ? 'Peak' : 'Höhepunkt'}: {meteor.countdown} · {lang === 'en' ? 'Best time' : 'Beste Zeit'}: {meteor.bestTime} · {meteor.zhr}
                       </div>
                       <div className="text-xs mt-1">
                         {lang === 'en' ? 'Weather-based visibility' : 'Wetterbasierte Sicht'}: <span className="font-semibold">{meteor.chance}</span>
