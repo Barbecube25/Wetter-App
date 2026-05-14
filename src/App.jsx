@@ -57,6 +57,8 @@ const ASTRONOMY_MOON_BRIGHT_THRESHOLD = 80;
 const ASTRONOMY_MOON_DARK_BONUS = 12;
 const ASTRONOMY_MOON_BRIGHT_PENALTY = -20;
 const ASTRONOMY_MOON_MEDIUM_PENALTY = -5;
+const ASTRONOMY_REPORT_MIN_CHANCE_SCORE = 40; // Minimum chance score to show aurora/NLC hints in AI reports
+const ASTRONOMY_AURORA_LAT_MIN = 50; // Minimum latitude to show aurora hints in longterm report
 const MINUTELY_SLOT_DURATION_MINUTES = 15;
 
 // Curated list of notable comets with their photographically visible windows
@@ -5527,41 +5529,6 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
             }
         }
         
-        // Add rain/snow timing details if present (filter out trace amounts < 0.5mm)
-        const significantRainPeriods = rainPeriods.filter(p => p.amount >= 0.5);
-        if (significantRainPeriods.length > 0) {
-            todayText += "\n";
-            significantRainPeriods.forEach((period, idx) => {
-                const startTime = period.start.toLocaleTimeString(locale, {hour:'2-digit', minute:'2-digit'});
-                const endTime = period.end.toLocaleTimeString(locale, {hour:'2-digit', minute:'2-digit'});
-                let precipType;
-                if (period.isMixed) {
-                    precipType = lang === 'en' ? 'Mixed precipitation' : 'Mischniederschlag';
-                } else {
-                    precipType = period.isSnow ? (lang === 'en' ? 'Snow' : 'Schnee') : (lang === 'en' ? 'Rain' : 'Regen');
-                }
-                
-                let precipDetails = `${period.amount.toFixed(1)}mm`;
-                if (period.isMixed && (period.rain > 0.1 || period.snow > 0.1)) {
-                    precipDetails = lang === 'en' 
-                        ? `${period.rain.toFixed(1)}mm rain, ${period.snow.toFixed(1)}mm snow`
-                        : `${period.rain.toFixed(1)}mm Regen, ${period.snow.toFixed(1)}mm Schnee`;
-                } else if (period.isSnow && period.snow > 0.1) {
-                    precipDetails = `${period.snow.toFixed(1)}mm`;
-                }
-                
-                if (startTime === endTime) {
-                    todayText += lang === 'en'
-                        ? `${precipType} around ${startTime} (${precipDetails}). `
-                        : `${precipType} gegen ${startTime} Uhr (${precipDetails}). `;
-                } else {
-                    todayText += lang === 'en'
-                        ? `${precipType} from ${startTime} to ${endTime} (${precipDetails}). `
-                        : `${precipType} von ${startTime} bis ${endTime} Uhr (${precipDetails}). `;
-                }
-            });
-        }
-        
         // Wind text
         if (maxWind > 50) { 
             todayText += lang === 'en' 
@@ -5811,41 +5778,6 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
                 ?? (lang === 'en' ? "It will be a nice, sunny day." : "Ein schöner, sonniger Tag!");
         }
         
-        // Add precipitation timing details if present (filter out trace amounts < 0.5mm)
-        const significantPrecipPeriods = precipPeriodsTomorrow.filter(p => p.amount >= 0.5);
-        if (significantPrecipPeriods.length > 0) {
-            tomorrowText += "\n";
-            significantPrecipPeriods.forEach((period, idx) => {
-                const startTime = period.start.toLocaleTimeString(locale, {hour:'2-digit', minute:'2-digit'});
-                const endTime = period.end.toLocaleTimeString(locale, {hour:'2-digit', minute:'2-digit'});
-                let precipType;
-                if (period.isMixed) {
-                    precipType = lang === 'en' ? 'Mixed precipitation' : 'Mischniederschlag';
-                } else {
-                    precipType = period.isSnow ? (lang === 'en' ? 'Snow' : 'Schnee') : (lang === 'en' ? 'Rain' : 'Regen');
-                }
-                
-                let precipDetails = `${period.amount.toFixed(1)}mm`;
-                if (period.isMixed && (period.rain > 0.1 || period.snow > 0.1)) {
-                    precipDetails = lang === 'en' 
-                        ? `${period.rain.toFixed(1)}mm rain, ${period.snow.toFixed(1)}mm snow`
-                        : `${period.rain.toFixed(1)}mm Regen, ${period.snow.toFixed(1)}mm Schnee`;
-                } else if (period.isSnow && period.snow > 0.1) {
-                    precipDetails = `${period.snow.toFixed(1)}mm`;
-                }
-                
-                if (startTime === endTime) {
-                    tomorrowText += lang === 'en'
-                        ? `${precipType} around ${startTime} (${precipDetails}). `
-                        : `${precipType} gegen ${startTime} Uhr (${precipDetails}). `;
-                } else {
-                    tomorrowText += lang === 'en'
-                        ? `${precipType} from ${startTime} to ${endTime} (${precipDetails}). `
-                        : `${precipType} von ${startTime} bis ${endTime} Uhr (${precipDetails}). `;
-                }
-            });
-        }
-        
         if (tGust > 50) { 
             tomorrowText += lang === 'en' ? ` Windy with gusts up to ${tGust} km/h.` : ` Dazu noch windig mit Böen bis ${tGust} km/h.`; 
             if (!warning) warning = lang === 'en' ? "WINDY (Tomorrow)" : "WINDIG (Morgen)"; 
@@ -5911,6 +5843,45 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     }
     summary = parts.join("\n\n");
     if (tldrLine) summary = tldrLine + "\n\n" + summary;
+
+    // Astronomy hints for daily report (when acute)
+    const dailyAstronomyData = extraData && !Array.isArray(extraData) ? extraData.astronomy : null;
+    if (dailyAstronomyData) {
+      const astroLines = [];
+      // Comets currently in visible window
+      if (dailyAstronomyData.currentComets && dailyAstronomyData.currentComets.length > 0) {
+        dailyAstronomyData.currentComets.forEach(comet => {
+          const name = lang === 'en' ? comet.nameEn : comet.nameDe;
+          const direction = lang === 'en' ? comet.directionEn : comet.directionDe;
+          const bestTime = lang === 'en' ? comet.bestTimeEn : comet.bestTimeDe;
+          if (comet.photoOnly) {
+            astroLines.push(lang === 'en'
+              ? `☄️ Comet ${name} currently visible (photography only, ${bestTime}).`
+              : `☄️ Komet ${name} aktuell sichtbar (nur fotografisch, ${bestTime}).`);
+          } else {
+            astroLines.push(lang === 'en'
+              ? `☄️ Comet ${name} currently visible – ${direction} (${bestTime}).`
+              : `☄️ Komet ${name} aktuell sichtbar – ${direction} (${bestTime}).`);
+          }
+        });
+      }
+      // Aurora when chance is moderate or better
+      if (dailyAstronomyData.auroraChanceScore >= ASTRONOMY_REPORT_MIN_CHANCE_SCORE) {
+        astroLines.push(lang === 'en'
+          ? `🌌 Aurora possible tonight (chance: ${dailyAstronomyData.auroraChance}, Kp ≥ ${dailyAstronomyData.auroraKpMin} needed).`
+          : `🌌 Polarlichter heute Nacht möglich (Chance: ${dailyAstronomyData.auroraChance}, Kp ≥ ${dailyAstronomyData.auroraKpMin} nötig).`);
+      }
+      // NLC when in season and chance is moderate or better
+      if (dailyAstronomyData.nlcSeason && dailyAstronomyData.nlcChanceScore >= ASTRONOMY_REPORT_MIN_CHANCE_SCORE) {
+        astroLines.push(lang === 'en'
+          ? `🌙 Noctilucent clouds (NLC) possible tonight (chance: ${dailyAstronomyData.nlcChance}).`
+          : `🌙 Leuchtende Nachtwolken (NLC) heute Nacht möglich (Chance: ${dailyAstronomyData.nlcChance}).`);
+      }
+      if (astroLines.length > 0) {
+        summary += '\n\n🔭 ' + (lang === 'en' ? 'Astronomy tonight:' : 'Astronomie heute Nacht:') + '\n' + astroLines.join('\n');
+      }
+    }
+
     confidence = 90; 
     const maxGustNow = Math.max(...(todayData.map(d=>d.gust)||[]), 0);
     const maxUVNow = Math.max(...(todayData.map(d=>d.uvIndex||0)), 0);
@@ -6174,6 +6145,44 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     
     summary = parts.join("\n\n");
     confidence = Math.round(overallConfidence);
+
+    // Astronomy hints for longterm report (when acute)
+    const longtermAstronomyData = extraData && !Array.isArray(extraData) ? extraData.astronomy : null;
+    if (longtermAstronomyData) {
+      const astroLines = [];
+      // Comets currently in visible window
+      if (longtermAstronomyData.currentComets && longtermAstronomyData.currentComets.length > 0) {
+        longtermAstronomyData.currentComets.forEach(comet => {
+          const name = lang === 'en' ? comet.nameEn : comet.nameDe;
+          const direction = lang === 'en' ? comet.directionEn : comet.directionDe;
+          const bestTime = lang === 'en' ? comet.bestTimeEn : comet.bestTimeDe;
+          if (comet.photoOnly) {
+            astroLines.push(lang === 'en'
+              ? `☄️ Comet ${name} in visible window (photography only, best: ${bestTime}).`
+              : `☄️ Komet ${name} im Beobachtungsfenster (nur fotografisch, beste Zeit: ${bestTime}).`);
+          } else {
+            astroLines.push(lang === 'en'
+              ? `☄️ Comet ${name} in visible window – ${direction} (best: ${bestTime}).`
+              : `☄️ Komet ${name} im Beobachtungsfenster – ${direction} (beste Zeit: ${bestTime}).`);
+          }
+        });
+      }
+      // Aurora hint for northern latitudes
+      if (longtermAstronomyData.lat >= ASTRONOMY_AURORA_LAT_MIN) {
+        astroLines.push(lang === 'en'
+          ? `🌌 Aurora: watch for solar activity alerts (Kp ≥ ${longtermAstronomyData.auroraKpMin} needed at your location).`
+          : `🌌 Polarlichter: Sonnenaktivität im Blick behalten (Kp ≥ ${longtermAstronomyData.auroraKpMin} nötig für deinen Standort).`);
+      }
+      // NLC during season (May–August)
+      if (longtermAstronomyData.nlcSeason) {
+        astroLines.push(lang === 'en'
+          ? `🌙 NLC season active (May–August) – noctilucent clouds may appear on clear nights.`
+          : `🌙 NLC-Saison aktiv (Mai–August) – Leuchtende Nachtwolken an klaren Nächten möglich.`);
+      }
+      if (astroLines.length > 0) {
+        summary += '\n\n🔭 ' + (lang === 'en' ? 'Astronomy (next 2 weeks):' : 'Astronomie (nächste 2 Wochen):') + '\n' + astroLines.join('\n');
+      }
+    }
     
     // STRUCTURED DETAILS for List View
     structuredDetails = [];
@@ -15003,9 +15012,9 @@ export default function WeatherApp() {
   const effectiveTerrain = demoTerrain || (currentLocIdx === 0 ? settings.homeTerrain : null);
 
   // Create a 3-day forecast: rest of today, tomorrow, and day after tomorrow
-    const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter, dwdPollenForecast }), [processedShort, lang, airQualityData, settings.pollenFilter, dwdPollenForecast]);
+    const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter, dwdPollenForecast, astronomy: astronomyForecast }), [processedShort, lang, airQualityData, settings.pollenFilter, dwdPollenForecast, astronomyForecast]);
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
-  const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter }), [processedLong, lang, airQualityData, settings.pollenFilter]);
+  const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter, astronomy: astronomyForecast }), [processedLong, lang, airQualityData, settings.pollenFilter, astronomyForecast]);
 
   // Only block rendering on initial load (no data yet); during location switches, keep existing data visible.
   const isInitialLoading = loading && !shortTermData;
