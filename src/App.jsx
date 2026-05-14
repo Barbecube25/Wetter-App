@@ -114,7 +114,7 @@ const KNOWN_COMETS = [
     nameDe: 'C/2024 G3 (ATLAS)',
     nameEn: 'C/2024 G3 (ATLAS)',
     visibleFrom: new Date(2024, 11, 15),
-    visibleUntil: new Date(2025, 2, 31),
+    visibleUntil: new Date(2025, 3, 30),
     constellationDe: 'Steinbock / Schütze (tief am Horizont)',
     constellationEn: 'Capricorn / Sagittarius (low on horizon)',
     directionDe: 'Früh abends sehr tief im Südwesten nach Sonnenuntergang',
@@ -16749,9 +16749,6 @@ export default function WeatherApp() {
                           🕐 {lang === 'en' ? 'Best time' : 'Beste Zeit'}: {lang === 'en' ? comet.bestTimeEn : comet.bestTimeDe}
                           {comet.photoOnly && <span className="ml-1 opacity-60">{lang === 'en' ? '(photo/telescope)' : '(Foto/Teleskop)'}</span>}
                         </div>
-                        <div className="text-xs mt-1">
-                          {lang === 'en' ? 'Moon illumination' : 'Mondbeleuchtung'}: {astronomyForecast.moonIllumination}% · {lang === 'en' ? 'Weather window' : 'Wetterfenster'}: <span className="font-semibold">{astronomyForecast.cometWindowScore}%</span>
-                        </div>
                       </div>
                     ))
                   ) : (
@@ -16761,11 +16758,11 @@ export default function WeatherApp() {
                           ? 'No known bright comets currently in the database. Check kometen.info or aerith.net/comet/status for the latest discoveries.'
                           : 'Aktuell keine bekannten hellen Kometen in der Datenbank. Aktuelle Sichtungen auf kometen.info oder aerith.net/comet/status prüfen.'}
                       </div>
-                      <div className="text-xs mt-1">
-                        {lang === 'en' ? 'Moon illumination' : 'Mondbeleuchtung'}: {astronomyForecast.moonIllumination}% · {lang === 'en' ? 'Weather window' : 'Wetterfenster'}: <span className="font-semibold">{astronomyForecast.cometWindowScore}%</span>
-                      </div>
                     </div>
                   )}
+                  <div className="text-xs opacity-70 px-1">
+                    🌙 {lang === 'en' ? 'Moon illumination' : 'Mondbeleuchtung'}: {astronomyForecast.moonIllumination}% · {lang === 'en' ? 'Weather window' : 'Wetterfenster'}: <span className="font-semibold">{astronomyForecast.cometWindowScore}%</span>
+                  </div>
                 </div>
               </div>
 
