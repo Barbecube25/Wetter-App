@@ -58,6 +58,90 @@ const ASTRONOMY_MOON_DARK_BONUS = 12;
 const ASTRONOMY_MOON_BRIGHT_PENALTY = -20;
 const ASTRONOMY_MOON_MEDIUM_PENALTY = -5;
 const MINUTELY_SLOT_DURATION_MINUTES = 15;
+
+// Curated list of notable comets with their photographically visible windows
+const KNOWN_COMETS = [
+  {
+    id: '12p',
+    nameDe: '12P/Pons-Brooks',
+    nameEn: '12P/Pons-Brooks',
+    visibleFrom: new Date(2024, 0, 1),
+    visibleUntil: new Date(2024, 6, 15),
+    constellationDe: 'Andromeda / Widder',
+    constellationEn: 'Andromeda / Aries',
+    directionDe: 'Abends im Westen nach Sonnenuntergang',
+    directionEn: 'Evening in the West after sunset',
+    bestTimeDe: '20:00–22:30',
+    bestTimeEn: '20:00–22:30',
+    descriptionDe: 'Klassischer Halley-Typ Komet, Periode ~71 Jahre, bis ~4 mag',
+    descriptionEn: 'Classic Halley-type comet, period ~71 yrs, up to ~4 mag',
+    photoOnly: false,
+  },
+  {
+    id: '13p',
+    nameDe: '13P/Olbers',
+    nameEn: '13P/Olbers',
+    visibleFrom: new Date(2024, 3, 1),
+    visibleUntil: new Date(2024, 8, 15),
+    constellationDe: 'Zwillinge / Krebs',
+    constellationEn: 'Gemini / Cancer',
+    directionDe: 'Abends im Westen / Nordwesten',
+    directionEn: 'Evening West / North-West',
+    bestTimeDe: '21:00–23:30',
+    bestTimeEn: '21:00–23:30',
+    descriptionDe: 'Periodischer Komet (~70 J.), fotografisch sichtbar (~7 mag)',
+    descriptionEn: 'Periodic comet (~70 yrs), photographically visible (~7 mag)',
+    photoOnly: true,
+  },
+  {
+    id: 'c2023a3',
+    nameDe: 'C/2023 A3 (Tsuchinshan–ATLAS)',
+    nameEn: 'C/2023 A3 (Tsuchinshan–ATLAS)',
+    visibleFrom: new Date(2024, 7, 1),
+    visibleUntil: new Date(2024, 11, 31),
+    constellationDe: 'Virgo / Ophiuchus / Serpens',
+    constellationEn: 'Virgo / Ophiuchus / Serpens',
+    directionDe: 'Oktober–November abends im Westen nach Sonnenuntergang',
+    directionEn: 'October–November evenings in the West after sunset',
+    bestTimeDe: '19:30–22:00',
+    bestTimeEn: '19:30–22:00',
+    descriptionDe: 'Spektakulärer Komet, im Oktober 2024 mit bloßem Auge sichtbar',
+    descriptionEn: 'Spectacular comet, naked-eye visible in October 2024',
+    photoOnly: false,
+  },
+  {
+    id: 'c2024g3',
+    nameDe: 'C/2024 G3 (ATLAS)',
+    nameEn: 'C/2024 G3 (ATLAS)',
+    visibleFrom: new Date(2024, 11, 15),
+    visibleUntil: new Date(2025, 3, 30),
+    constellationDe: 'Steinbock / Schütze (tief am Horizont)',
+    constellationEn: 'Capricorn / Sagittarius (low on horizon)',
+    directionDe: 'Früh abends sehr tief im Südwesten nach Sonnenuntergang',
+    directionEn: 'Very low in the South-West shortly after sunset',
+    bestTimeDe: '18:30–20:00',
+    bestTimeEn: '18:30–20:00',
+    descriptionDe: 'Heller Komet, Anfang Januar 2025 auf Südhalbkugel spektakulär',
+    descriptionEn: 'Bright comet, spectacular in early January 2025 from southern hemisphere',
+    photoOnly: false,
+  },
+  {
+    id: '29p',
+    nameDe: '29P/Schwassmann-Wachmann',
+    nameEn: '29P/Schwassmann-Wachmann',
+    visibleFrom: new Date(2020, 0, 1),
+    visibleUntil: new Date(2030, 11, 31),
+    constellationDe: 'Krebs / Löwe (variiert jährlich)',
+    constellationEn: 'Cancer / Leo (varies annually)',
+    directionDe: 'Süd bis Ost um Mitternacht',
+    directionEn: 'South to East around midnight',
+    bestTimeDe: '22:00–03:00',
+    bestTimeEn: '22:00–03:00',
+    descriptionDe: 'Dauerhaft fotografisch sichtbar (~10–11 mag), bei Ausbrüchen heller – Teleskop nötig',
+    descriptionEn: 'Permanently photographically visible (~10–11 mag), brighter during outbursts – telescope needed',
+    photoOnly: true,
+  },
+];
 const MINUTELY_NOWCAST_WINDOW_SLOTS = 8;
 const MINUTELY_TO_HOURLY_RATE_FACTOR = 60 / MINUTELY_SLOT_DURATION_MINUTES;
 const RADAR_SLOT_DURATION_MINUTES = 5;
@@ -14781,15 +14865,31 @@ export default function WeatherApp() {
     const auroraBase = lat >= ASTRONOMY_HIGH_LAT_THRESHOLD ? ASTRONOMY_HIGH_LAT_AURORA_BASE : lat >= ASTRONOMY_MID_LAT_THRESHOLD ? ASTRONOMY_MID_LAT_AURORA_BASE : ASTRONOMY_LOW_LAT_AURORA_BASE;
     const auroraChanceScore = clamp(auroraBase + (weatherScore - 45));
     const auroraChance = getChanceText(auroraChanceScore);
+    // Minimum Kp-index required to see aurora at this latitude
+    const auroraKpMin = lat >= 65 ? 1 : lat >= 60 ? 3 : lat >= 55 ? 4 : lat >= 50 ? 5 : lat >= 45 ? 6 : 7;
+    const auroraLatText = lat >= 65
+      ? (lang === 'en' ? 'subarctic – frequent aurora' : 'Subarktisch – häufige Polarlichter')
+      : lat >= 54
+        ? (lang === 'en' ? 'northern – visible during strong solar activity' : 'Nördlich – bei starker Sonnenaktivität sichtbar')
+        : lat >= 50
+          ? (lang === 'en' ? 'central – requires significant solar storm (Kp ≥ ' + auroraKpMin + ')' : 'Mitte – starker Sonnensturm nötig (Kp ≥ ' + auroraKpMin + ')')
+          : (lang === 'en' ? 'southern – very rarely, only extreme events (Kp ≥ ' + auroraKpMin + ')' : 'Süd – sehr selten, nur Extremereignisse (Kp ≥ ' + auroraKpMin + ')');
 
     const month = nowDate.getMonth() + 1;
     const nlcSeason = month >= 5 && month <= 8;
     const nlcLatBoost = lat >= ASTRONOMY_NLC_HIGH_LAT_THRESHOLD ? ASTRONOMY_NLC_HIGH_LAT_BOOST : lat >= ASTRONOMY_NLC_MID_LAT_THRESHOLD ? ASTRONOMY_NLC_MID_LAT_BOOST : ASTRONOMY_NLC_LOW_LAT_PENALTY;
     const nlcChanceScore = nlcSeason ? clamp(45 + nlcLatBoost + (weatherScore - 50)) : 10;
     const nlcChance = getChanceText(nlcChanceScore);
+    const nlcLatZone = lat >= 54
+      ? (lang === 'en' ? 'optimal zone (≥54°N) – excellent conditions in season' : 'Optimale Zone (≥54°N) – beste Bedingungen in der Saison')
+      : lat >= 50
+        ? (lang === 'en' ? 'good zone (50–54°N) – visible in season with clear skies' : 'Gute Zone (50–54°N) – bei klarem Himmel in der Saison sichtbar')
+        : (lang === 'en' ? 'rarely visible at this latitude – only during exceptional NLC activity' : 'Selten sichtbar auf diesem Breitengrad – nur bei besonders starker NLC-Aktivität');
 
     const cometWindowScore = clamp(weatherScore + (moonIllumination <= ASTRONOMY_MOON_DARK_THRESHOLD ? ASTRONOMY_MOON_DARK_BONUS : moonIllumination >= ASTRONOMY_MOON_BRIGHT_THRESHOLD ? ASTRONOMY_MOON_BRIGHT_PENALTY : ASTRONOMY_MOON_MEDIUM_PENALTY));
     const cometChance = getChanceText(cometWindowScore);
+    const nowMs = nowDate.getTime();
+    const currentComets = KNOWN_COMETS.filter(c => nowMs >= c.visibleFrom.getTime() && nowMs <= c.visibleUntil.getTime());
 
     return {
       weatherScore,
@@ -14801,11 +14901,19 @@ export default function WeatherApp() {
       moonIllumination,
       meteorItems,
       cometChance,
+      cometWindowScore,
+      currentComets,
       auroraChance,
+      auroraChanceScore,
+      auroraKpMin,
+      auroraLatText,
       nlcChance,
+      nlcChanceScore,
+      nlcLatZone,
       avgCloud,
       hasWetRisk,
       nlcSeason,
+      lat,
     };
   }, [processedShort, lang, current, currentLoc, homeLoc]);
   
@@ -16624,35 +16732,91 @@ export default function WeatherApp() {
               </div>
 
               <div className={`${tileBg} rounded-m3-2xl p-4 border shadow-m3-1`}>
-                <div className="text-m3-title-small font-bold mb-2">{lang === 'en' ? 'Comets, aurora and noctilucent clouds' : 'Kometen, Polarlichter und leuchtende Nachtwolken'}</div>
+                <div className="text-m3-title-small font-bold mb-2">{lang === 'en' ? 'Comet sightings' : 'Kometen-Sichtung'}</div>
+                <div className="space-y-2 text-sm">
+                  {astronomyForecast.currentComets.length > 0 ? (
+                    astronomyForecast.currentComets.map((comet) => (
+                      <div key={comet.id} className="rounded-xl border border-m3-outline-variant/40 px-3 py-2">
+                        <div className="font-semibold">{lang === 'en' ? comet.nameEn : comet.nameDe}</div>
+                        <div className="text-xs opacity-80 mt-1">{lang === 'en' ? comet.descriptionEn : comet.descriptionDe}</div>
+                        <div className="text-xs opacity-80 mt-1">
+                          🌌 {lang === 'en' ? 'Constellation' : 'Sternbild'}: {lang === 'en' ? comet.constellationEn : comet.constellationDe}
+                        </div>
+                        <div className="text-xs opacity-80">
+                          🧭 {lang === 'en' ? 'Direction' : 'Richtung'}: {lang === 'en' ? comet.directionEn : comet.directionDe}
+                        </div>
+                        <div className="text-xs opacity-80">
+                          🕐 {lang === 'en' ? 'Best time' : 'Beste Zeit'}: {lang === 'en' ? comet.bestTimeEn : comet.bestTimeDe}
+                          {comet.photoOnly && <span className="ml-1 opacity-60">{lang === 'en' ? '(photo/telescope)' : '(Foto/Teleskop)'}</span>}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-xl border border-m3-outline-variant/40 px-3 py-2">
+                      <div className="text-xs opacity-80">
+                        {lang === 'en'
+                          ? 'No known bright comets currently in the database. Check kometen.info or aerith.net/comet/status for the latest discoveries.'
+                          : 'Aktuell keine bekannten hellen Kometen in der Datenbank. Aktuelle Sichtungen auf kometen.info oder aerith.net/comet/status prüfen.'}
+                      </div>
+                    </div>
+                  )}
+                  <div className="text-xs opacity-70 px-1">
+                    🌙 {lang === 'en' ? 'Moon illumination' : 'Mondbeleuchtung'}: {astronomyForecast.moonIllumination}% · {lang === 'en' ? 'Weather window' : 'Wetterfenster'}: <span className="font-semibold">{astronomyForecast.cometWindowScore}%</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`${tileBg} rounded-m3-2xl p-4 border shadow-m3-1`}>
+                <div className="text-m3-title-small font-bold mb-2">{lang === 'en' ? 'Aurora forecast' : 'Polarlicht-Prognose'}</div>
                 <div className="space-y-2 text-sm">
                   <div className="rounded-xl border border-m3-outline-variant/40 px-3 py-2">
-                    <div className="font-semibold">{lang === 'en' ? 'Potential comet visibility' : 'Potenzielle Kometensicht'}</div>
-                    <div className="text-xs opacity-80 mt-1">
-                      {lang === 'en' ? 'Moon illumination' : 'Mondbeleuchtung'}: {astronomyForecast.moonIllumination}% · {lang === 'en' ? 'Best after astronomical twilight, with moonless windows' : 'Am besten nach astronomischer Dämmerung, mit mondarmen Fenstern'}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="font-semibold">{lang === 'en' ? 'Your location' : 'Dein Standort'}</div>
+                      <div className="text-xs font-bold text-m3-primary">{astronomyForecast.auroraChanceScore}%</div>
                     </div>
-                    <div className="text-xs mt-1">
-                      {lang === 'en' ? 'Weather-based chance' : 'Wetterbasierte Chance'}: <span className="font-semibold">{astronomyForecast.cometChance}</span>
+                    <div className="text-xs opacity-80 mt-1">
+                      📍 {Math.abs(Math.round(astronomyForecast.lat))}°{astronomyForecast.lat >= 0 ? 'N' : 'S'} – {astronomyForecast.auroraLatText}
+                    </div>
+                    <div className="text-xs opacity-80">
+                      ⚡ {lang === 'en' ? 'Min. Kp-index required' : 'Mindest-Kp-Index nötig'}: <span className="font-semibold">Kp ≥ {astronomyForecast.auroraKpMin}</span>
+                    </div>
+                    <div className="text-xs opacity-80">
+                      🕐 {lang === 'en' ? 'Best time' : 'Beste Zeit'}: 22:30–02:30 {lang === 'en' ? '(darkest window)' : '(dunkelste Zeit)'}
+                    </div>
+                    <div className="text-xs mt-1 opacity-60">
+                      {lang === 'en'
+                        ? 'Probability based on location & weather. Solar activity (Kp) not included – check spaceweather.com for live Kp data.'
+                        : 'Wahrscheinlichkeit basiert auf Standort & Wetter. Sonnenaktivität (Kp) nicht enthalten – aktuelle Kp-Werte auf spaceweather.com.'}
                     </div>
                   </div>
+                </div>
+              </div>
+
+              <div className={`${tileBg} rounded-m3-2xl p-4 border shadow-m3-1`}>
+                <div className="text-m3-title-small font-bold mb-2">{lang === 'en' ? 'Noctilucent clouds (NLC)' : 'Leuchtende Nachtwolken (NLC)'}</div>
+                <div className="space-y-2 text-sm">
                   <div className="rounded-xl border border-m3-outline-variant/40 px-3 py-2">
-                    <div className="font-semibold">{lang === 'en' ? 'Aurora forecast (local heuristic)' : 'Polarlicht-Prognose (lokale Heuristik)'}</div>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="font-semibold">{lang === 'en' ? 'Your location' : 'Dein Standort'}</div>
+                      <div className="text-xs font-bold text-m3-primary">{astronomyForecast.nlcSeason ? astronomyForecast.nlcChanceScore : 0}%</div>
+                    </div>
                     <div className="text-xs opacity-80 mt-1">
-                      {lang === 'en' ? 'Suggested time' : 'Empfohlene Zeit'}: 22:30–02:30 · {lang === 'en' ? 'higher chance in northern regions' : 'höhere Chance in nördlichen Regionen'}
+                      📍 {Math.abs(Math.round(astronomyForecast.lat))}°{astronomyForecast.lat >= 0 ? 'N' : 'S'} – {astronomyForecast.nlcLatZone}
                     </div>
-                    <div className="text-xs mt-1">
-                      {lang === 'en' ? 'Weather-based chance' : 'Wetterbasierte Chance'}: <span className="font-semibold">{astronomyForecast.auroraChance}</span>
+                    <div className="text-xs opacity-80">
+                      📅 {astronomyForecast.nlcSeason
+                        ? (lang === 'en' ? 'Season active (May–August)' : 'Saison aktiv (Mai–August)')
+                        : (lang === 'en' ? 'Outside NLC season (May–August)' : 'Außerhalb der NLC-Saison (Mai–August)')}
                     </div>
-                  </div>
-                  <div className="rounded-xl border border-m3-outline-variant/40 px-3 py-2">
-                    <div className="font-semibold">{lang === 'en' ? 'Noctilucent clouds (NLC)' : 'Leuchtende Nachtwolken (NLC)'}</div>
-                    <div className="text-xs opacity-80 mt-1">
-                      {astronomyForecast.nlcSeason
-                        ? (lang === 'en' ? 'Season active (May–August), best around 22:00–00:30 and 02:30–04:30' : 'Saison aktiv (Mai–August), am besten gegen 22:00–00:30 und 02:30–04:30')
-                        : (lang === 'en' ? 'Outside season (mainly May–August)' : 'Außerhalb der Saison (hauptsächlich Mai–August)')}
-                    </div>
-                    <div className="text-xs mt-1">
-                      {lang === 'en' ? 'Weather-based chance' : 'Wetterbasierte Chance'}: <span className="font-semibold">{astronomyForecast.nlcChance}</span>
+                    {astronomyForecast.nlcSeason && (
+                      <div className="text-xs opacity-80">
+                        🕐 {lang === 'en' ? 'Best time' : 'Beste Zeit'}: 22:00–00:30 {lang === 'en' ? 'and' : 'und'} 02:30–04:30 {lang === 'en' ? '(twilight windows)' : '(Dämmerungsfenster)'}
+                      </div>
+                    )}
+                    <div className="text-xs mt-1 opacity-60">
+                      {lang === 'en'
+                        ? 'NLC form ~80 km altitude; visible as bright bluish-white clouds at twilight. Probability based on location & weather.'
+                        : 'NLC entstehen in ~80 km Höhe; als helle blau-weiße Wolken in der Dämmerung sichtbar. Wahrscheinlichkeit basiert auf Standort & Wetter.'}
                     </div>
                   </div>
                 </div>
