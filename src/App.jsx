@@ -5500,7 +5500,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
             todayText += lang === 'en'
                 ? ` ⚡ Thunderstorms approaching - seek shelter!`
                 : ` ⚡ Gewitter im Anmarsch – Schutz suchen!`;
-        } else if (tsRiskToday >= 3) {
+        } else if (tsWarnToday >= 3) {
             todayText += lang === 'en'
                 ? ` ⚡ Elevated thunderstorm risk (level ${tsWarnToday}) – keep an eye on the sky!`
                 : ` ⚡ Erhöhtes Gewitterrisiko (Stufe ${tsWarnToday}) – Himmel im Blick behalten!`;
@@ -5786,7 +5786,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
                 ? ` ⚡ Thunderstorms expected - be prepared!`
                 : ` ⚡ Gewitter erwartet – vorbereitet sein!`;
             if (!warning) warning = lang === 'en' ? "THUNDERSTORMS (Tomorrow)" : "GEWITTER (Morgen)";
-        } else if (tTsRisk >= 3) {
+        } else if (tTsWarnLevel >= 3) {
             tomorrowText += lang === 'en'
                 ? ` ⚡ Elevated thunderstorm risk tomorrow (level ${tTsWarnLevel}) – stay informed!`
                 : ` ⚡ Morgen erhöhtes Gewitterrisiko (Stufe ${tTsWarnLevel}) – Wetterwarnung beachten!`;
