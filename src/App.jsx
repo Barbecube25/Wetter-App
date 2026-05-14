@@ -82,6 +82,8 @@ const ACTIVITY_DEFINITIONS = [
 ];
 // Default activity filter: all activities enabled
 const DEFAULT_ACTIVITY_FILTER = ACTIVITY_DEFINITIONS.map(a => a.key);
+const CUSTOM_ACTIVITY_DEFAULT_PARAMS = { minTemp: 10, maxTemp: 25, maxWind: 25, rainOk: false };
+const CUSTOM_ACTIVITY_DEFAULT_EMOJI = '✨';
 
 // Default thresholds for activity index scoring (ideal temperature range, max wind, rain tolerance)
 const DEFAULT_ACTIVITY_PARAMS = {
@@ -94,6 +96,60 @@ const DEFAULT_ACTIVITY_PARAMS = {
   gardening: { minTemp: 12, maxTemp: 25, maxWind: 25, rainOk: false },
   picnic:    { minTemp: 18, maxTemp: 28, maxWind: 20, rainOk: false },
 };
+
+const sanitizeActivityKey = (value) => {
+  const base = String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return base.slice(0, 40);
+};
+
+const normalizeCustomActivities = (customActivities = []) => {
+  const builtInKeys = new Set(ACTIVITY_DEFINITIONS.map(({ key }) => key));
+  const seenKeys = new Set();
+
+  return (Array.isArray(customActivities) ? customActivities : []).reduce((list, activity, index) => {
+    const name = String(activity?.name || '').trim();
+    if (!name) return list;
+
+    const emoji = String(activity?.emoji || '').trim() || CUSTOM_ACTIVITY_DEFAULT_EMOJI;
+    const rawKey = sanitizeActivityKey(activity?.key || name) || `custom-activity-${index + 1}`;
+    let nextKey = rawKey;
+    let suffix = 2;
+    while (builtInKeys.has(nextKey) || seenKeys.has(nextKey)) {
+      nextKey = `${rawKey}-${suffix}`;
+      suffix += 1;
+    }
+
+    seenKeys.add(nextKey);
+    list.push({ key: nextKey, name, emoji });
+    return list;
+  }, []);
+};
+
+const getActivityDefinitions = (customActivities = []) => [
+  ...ACTIVITY_DEFINITIONS,
+  ...normalizeCustomActivities(customActivities).map(({ key, name, emoji }) => ({
+    key,
+    emoji,
+    label: { de: name, en: name },
+    isCustom: true,
+  })),
+];
+
+const getActivityParamDefaults = (customActivities = []) => {
+  const defaults = { ...DEFAULT_ACTIVITY_PARAMS };
+  normalizeCustomActivities(customActivities).forEach(({ key }) => {
+    defaults[key] = { ...CUSTOM_ACTIVITY_DEFAULT_PARAMS };
+  });
+  return defaults;
+};
+
+const getActivityDefaultsForKey = (key) => DEFAULT_ACTIVITY_PARAMS[key] || CUSTOM_ACTIVITY_DEFAULT_PARAMS;
+const getActivityLabel = (activity, lang = 'de') => activity?.label?.[lang] || activity?.label?.en || activity?.name || activity?.key || '';
 
 // DWD pollen regions: approximate center coordinates for each partregion (or region if no partregions)
 const DWD_POLLEN_REGIONS = [
@@ -4018,6 +4074,7 @@ const getTripPreviewCache = () => {
 const getSavedSettings = () => {
     try {
         const saved = localStorage.getItem('weather_settings');
+        const defaultCustomActivities = [];
         // Default Settings erweitert um theme: 'auto'
         const defaults = { 
             language: 'de', 
@@ -4028,12 +4085,17 @@ const getSavedSettings = () => {
             pollenFilter: DEFAULT_POLLEN_FILTER,
             activityFilter: DEFAULT_ACTIVITY_FILTER,
             activityParams: DEFAULT_ACTIVITY_PARAMS,
+            customActivities: defaultCustomActivities,
             homeTerrain: null,
             personalStation: null
         };
         if (!saved) return defaults;
         const parsed = JSON.parse(saved);
         const merged = { ...defaults, ...(parsed && typeof parsed === 'object' ? parsed : {}) };
+        merged.customActivities = normalizeCustomActivities(merged.customActivities);
+        const activityDefinitions = getActivityDefinitions(merged.customActivities);
+        const validActivityKeys = new Set(activityDefinitions.map(({ key }) => key));
+        const activityParamDefaults = getActivityParamDefaults(merged.customActivities);
         if (!['celsius', 'fahrenheit', 'kelvin'].includes(merged.unit)) {
             merged.unit = 'celsius';
         }
@@ -4048,12 +4110,19 @@ const getSavedSettings = () => {
         }
         if (!Array.isArray(merged.activityFilter)) {
             merged.activityFilter = DEFAULT_ACTIVITY_FILTER;
+        } else {
+            merged.activityFilter = merged.activityFilter.filter((key, index, list) => validActivityKeys.has(key) && list.indexOf(key) === index);
         }
         // Ensure activityParams is an object; merge per-key so new activities get defaults
         if (!merged.activityParams || typeof merged.activityParams !== 'object') {
-            merged.activityParams = DEFAULT_ACTIVITY_PARAMS;
+            merged.activityParams = activityParamDefaults;
         } else {
-            merged.activityParams = { ...DEFAULT_ACTIVITY_PARAMS, ...merged.activityParams };
+            const normalizedParams = { ...activityParamDefaults };
+            Object.entries(merged.activityParams).forEach(([key, value]) => {
+                if (!validActivityKeys.has(key) || !value || typeof value !== 'object') return;
+                normalizedParams[key] = { ...getActivityDefaultsForKey(key), ...value };
+            });
+            merged.activityParams = normalizedParams;
         }
         return merged;
     } catch (e) { 
@@ -4066,6 +4135,7 @@ const getSavedSettings = () => {
             pollenFilter: DEFAULT_POLLEN_FILTER,
             activityFilter: DEFAULT_ACTIVITY_FILTER,
             activityParams: DEFAULT_ACTIVITY_PARAMS,
+            customActivities: [],
             homeTerrain: null,
             personalStation: null
         }; 
@@ -4449,7 +4519,7 @@ const getActivityRating = (key, temp, wind, precip, uvIndex, code, customParams 
   const isHeavyRain = precip >= 5 || [65, 82].includes(code);
 
   // Merge defaults with user-defined params for this activity
-  const defaults = DEFAULT_ACTIVITY_PARAMS[key] || { minTemp: 10, maxTemp: 25, maxWind: 25, rainOk: false };
+  const defaults = getActivityDefaultsForKey(key);
   const p = { ...defaults, ...customParams };
 
   const rate = (score) => {
@@ -4527,8 +4597,13 @@ const getActivityRating = (key, temp, wind, precip, uvIndex, code, customParams 
       if (isIdeal) return rate(9);
       return rate(7);
     }
-    default:
-      return rate(5);
+    default: {
+      if (isThunderstorm || isStorm) return rate(1);
+      if ((!p.rainOk && hasRain) || isHeavyRain || temp < Math.min(-10, p.minTemp - 10) || temp > Math.max(38, p.maxTemp + 10)) return rate(2);
+      if (wind > Math.max(40, p.maxWind + 15) || temp < Math.min(0, p.minTemp - 5) || temp > Math.max(33, p.maxTemp + 5)) return rate(4);
+      if (isIdeal) return rate(9);
+      return rate(6);
+    }
   }
 };
 
@@ -5987,29 +6062,113 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
 };
 
 // --- 4. KOMPONENTEN ---
-// --- ACTIVITY PARAMS MODAL ---
-const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, lang, onSave, isSmallScreen = false }) => {
-    const [localParams, setLocalParams] = useState(activityParams || DEFAULT_ACTIVITY_PARAMS);
+const ActivityEditorModal = ({ isOpen, onClose, onSave, activity = null, lang = 'de', isSmallScreen = false }) => {
+    const [name, setName] = useState(activity?.name || '');
+    const [emoji, setEmoji] = useState(activity?.emoji || CUSTOM_ACTIVITY_DEFAULT_EMOJI);
+    const isGerman = lang === 'de';
 
     useEffect(() => {
-        setLocalParams(activityParams || DEFAULT_ACTIVITY_PARAMS);
-    }, [activityParams, isOpen]);
+        setName(activity?.name || '');
+        setEmoji(activity?.emoji || CUSTOM_ACTIVITY_DEFAULT_EMOJI);
+    }, [activity, isOpen]);
+
+    if (!isOpen) return null;
+
+    const handleSave = () => {
+        const trimmedName = name.trim();
+        if (!trimmedName) return;
+        onSave({
+            key: activity?.key,
+            name: trimmedName,
+            emoji: emoji.trim() || CUSTOM_ACTIVITY_DEFAULT_EMOJI,
+        });
+        onClose();
+    };
+
+    return (
+        <div className={`fixed inset-0 z-[80] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
+            <div className={`bg-m3-surface rounded-m3-xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-sm'} w-full shadow-m3-5 overflow-hidden animate-in zoom-in-95 duration-200`}>
+                <div className="flex justify-between items-center px-6 pt-6 pb-4 border-b border-m3-outline-variant">
+                    <h2 className="text-lg font-bold text-m3-on-surface flex items-center gap-2">
+                        <Activity size={20} className="text-m3-primary" />
+                        {activity ? (isGerman ? 'Aktivität bearbeiten' : 'Edit activity') : (isGerman ? 'Aktivität hinzufügen' : 'Add activity')}
+                    </h2>
+                    <button onClick={onClose}><X className="text-m3-on-surface-variant" /></button>
+                </div>
+
+                <div className="px-6 py-4 space-y-4">
+                    <div>
+                        <label className="block text-sm font-bold text-m3-on-surface mb-2">
+                            {isGerman ? 'Name' : 'Name'}
+                        </label>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder={isGerman ? 'z. B. Grillen' : 'e.g. Barbecue'}
+                            className="w-full px-3 py-3 rounded-m3-md border border-m3-outline-variant bg-m3-surface-container text-m3-on-surface focus:outline-none focus:ring-2 focus:ring-m3-primary"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-m3-on-surface mb-2">
+                            Emoji
+                        </label>
+                        <input
+                            type="text"
+                            value={emoji}
+                            onChange={(e) => setEmoji(e.target.value)}
+                            placeholder={CUSTOM_ACTIVITY_DEFAULT_EMOJI}
+                            maxLength={4}
+                            className="w-full px-3 py-3 rounded-m3-md border border-m3-outline-variant bg-m3-surface-container text-m3-on-surface focus:outline-none focus:ring-2 focus:ring-m3-primary"
+                        />
+                    </div>
+                </div>
+
+                <div className="px-6 pb-6 pt-2 flex gap-2">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 py-3 bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface font-bold rounded-m3-md transition"
+                    >
+                        {isGerman ? 'Abbrechen' : 'Cancel'}
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={!name.trim()}
+                        className="flex-1 py-3 bg-m3-primary hover:bg-m3-primary/90 disabled:opacity-50 text-m3-on-primary font-bold rounded-m3-md transition"
+                    >
+                        {isGerman ? 'Speichern' : 'Save'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- ACTIVITY PARAMS MODAL ---
+const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, customActivities = [], lang, onSave, isSmallScreen = false }) => {
+    const defaultParams = useMemo(() => getActivityParamDefaults(customActivities), [customActivities]);
+    const activityDefinitions = useMemo(() => getActivityDefinitions(customActivities), [customActivities]);
+    const [localParams, setLocalParams] = useState(activityParams || defaultParams);
+
+    useEffect(() => {
+        setLocalParams(activityParams || defaultParams);
+    }, [activityParams, defaultParams, isOpen]);
 
     if (!isOpen) return null;
 
     const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
-    const activeActivities = ACTIVITY_DEFINITIONS.filter(({ key }) =>
+    const activeActivities = activityDefinitions.filter(({ key }) =>
         Array.isArray(activityFilter) ? activityFilter.includes(key) : true
     );
 
     const updateParam = (key, field, value) => {
         setLocalParams(prev => ({
             ...prev,
-            [key]: { ...(prev[key] || DEFAULT_ACTIVITY_PARAMS[key]), [field]: value }
+            [key]: { ...(prev[key] || getActivityDefaultsForKey(key)), [field]: value }
         }));
     };
 
-    const resetAll = () => setLocalParams(DEFAULT_ACTIVITY_PARAMS);
+    const resetAll = () => setLocalParams(defaultParams);
 
     return (
         <div className={`fixed inset-0 z-[70] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
@@ -6024,8 +6183,8 @@ const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, 
 
                 <div className="overflow-y-auto px-6 py-4 flex-1 space-y-6">
                     {activeActivities.map(({ key, emoji, label }) => {
-                        const actLabel = label[lang] || label['en'] || key;
-                        const p = localParams[key] || DEFAULT_ACTIVITY_PARAMS[key] || {};
+                        const actLabel = getActivityLabel({ label, key }, lang);
+                        const p = localParams[key] || getActivityDefaultsForKey(key) || {};
                         return (
                             <div key={key} className="bg-m3-surface-container rounded-m3-md p-4">
                                 <div className="font-bold text-m3-on-surface mb-3 flex items-center gap-2">
@@ -6125,6 +6284,12 @@ const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, 
 const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmallScreen = false }) => {
     const [localSettings, setLocalSettings] = useState(settings);
     const [showActivityParams, setShowActivityParams] = useState(false);
+    const [showActivityEditor, setShowActivityEditor] = useState(false);
+    const [editingActivity, setEditingActivity] = useState(null);
+    const t = TRANSLATIONS[localSettings.language] || TRANSLATIONS['de'];
+    const isGerman = localSettings.language === 'de';
+    const activityDefinitions = useMemo(() => getActivityDefinitions(localSettings.customActivities), [localSettings.customActivities]);
+    const customActivities = useMemo(() => normalizeCustomActivities(localSettings.customActivities), [localSettings.customActivities]);
 
     useEffect(() => {
         setLocalSettings(settings);
@@ -6132,7 +6297,59 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
 
     if (!isOpen) return null;
 
-    const t = TRANSLATIONS[localSettings.language] || TRANSLATIONS['de'];
+    const updateCustomActivities = (nextCustomActivities, options = {}) => {
+        const normalizedCustomActivities = normalizeCustomActivities(nextCustomActivities);
+        const activityDefinitionsForSave = getActivityDefinitions(normalizedCustomActivities);
+        const validKeys = new Set(activityDefinitionsForSave.map(({ key }) => key));
+        const nextFilter = Array.isArray(localSettings.activityFilter)
+            ? localSettings.activityFilter.filter((key, index, list) => validKeys.has(key) && list.indexOf(key) === index)
+            : [...DEFAULT_ACTIVITY_FILTER];
+
+        if (options.activateKey && validKeys.has(options.activateKey) && !nextFilter.includes(options.activateKey)) {
+            nextFilter.push(options.activateKey);
+        }
+
+        const nextParams = { ...getActivityParamDefaults(normalizedCustomActivities) };
+        Object.entries(localSettings.activityParams || {}).forEach(([key, value]) => {
+            if (!validKeys.has(key) || !value || typeof value !== 'object') return;
+            nextParams[key] = { ...getActivityDefaultsForKey(key), ...value };
+        });
+
+        setLocalSettings({
+            ...localSettings,
+            customActivities: normalizedCustomActivities,
+            activityFilter: nextFilter,
+            activityParams: nextParams,
+        });
+    };
+
+    const handleSaveCustomActivity = (draft) => {
+        if (!draft?.name?.trim()) return;
+        const currentCustomActivities = normalizeCustomActivities(localSettings.customActivities);
+        let savedKey = draft.key;
+        const nextCustomActivities = draft.key
+            ? currentCustomActivities.map((activity) => {
+                if (activity.key !== draft.key) return activity;
+                return { ...activity, name: draft.name.trim(), emoji: draft.emoji?.trim() || CUSTOM_ACTIVITY_DEFAULT_EMOJI };
+              })
+            : [
+                ...currentCustomActivities,
+                {
+                    key: sanitizeActivityKey(draft.name) || `custom-activity-${currentCustomActivities.length + 1}`,
+                    name: draft.name.trim(),
+                    emoji: draft.emoji?.trim() || CUSTOM_ACTIVITY_DEFAULT_EMOJI,
+                },
+              ];
+
+        const normalizedNextCustomActivities = normalizeCustomActivities(nextCustomActivities);
+        if (!draft.key) {
+            const created = normalizedNextCustomActivities.find((activity) => activity.name === draft.name.trim() && activity.emoji === (draft.emoji?.trim() || CUSTOM_ACTIVITY_DEFAULT_EMOJI));
+            savedKey = created?.key;
+        }
+
+        updateCustomActivities(normalizedNextCustomActivities, { activateKey: savedKey });
+        setEditingActivity(null);
+    };
 
     return (
         <>
@@ -6423,18 +6640,18 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                  </div>
 
                  {/* ACTIVITY FILTER */}
-                 <div className="mb-8">
-                     <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
-                        <Activity size={16}/> {t.activityFilterLabel || 'Customize Activities'}
-                     </label>
-                     <div className="grid grid-cols-2 gap-2 bg-m3-surface-container p-2 rounded-m3-md mb-2">
-                         {ACTIVITY_DEFINITIONS.map(({ key, emoji, label }) => {
-                             const filter = localSettings.activityFilter || DEFAULT_ACTIVITY_FILTER;
-                             const isActive = filter.includes(key);
-                             const actLabel = label[localSettings.language] || label['en'] || key;
-                             return (
-                                 <button
-                                     key={key}
+                  <div className="mb-8">
+                      <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
+                         <Activity size={16}/> {t.activityFilterLabel || 'Customize Activities'}
+                      </label>
+                      <div className="grid grid-cols-2 gap-2 bg-m3-surface-container p-2 rounded-m3-md mb-2">
+                         {activityDefinitions.map(({ key, emoji, label }) => {
+                              const filter = localSettings.activityFilter || DEFAULT_ACTIVITY_FILTER;
+                              const isActive = filter.includes(key);
+                              const actLabel = getActivityLabel({ label, key }, localSettings.language);
+                              return (
+                                  <button
+                                      key={key}
                                      onClick={() => {
                                          const updated = isActive
                                              ? filter.filter(k => k !== key)
@@ -6446,12 +6663,52 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                                      <span>{emoji} {actLabel}</span>
                                      {isActive && <Check size={14} />}
                                  </button>
-                             );
-                         })}
-                     </div>
-                     <button
-                         onClick={() => setShowActivityParams(true)}
-                         className="w-full py-2 px-3 bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface font-bold rounded-m3-md transition flex items-center justify-center gap-2 text-sm"
+                              );
+                          })}
+                      </div>
+                      <div className="mb-2 flex items-center justify-between rounded-m3-md bg-m3-surface-container px-3 py-2">
+                          <span className="text-sm font-bold text-m3-on-surface">
+                              {isGerman ? 'Eigene Aktivitäten' : 'Custom activities'}
+                          </span>
+                          <button
+                              onClick={() => { setEditingActivity(null); setShowActivityEditor(true); }}
+                              className="inline-flex items-center gap-1 rounded-m3-sm bg-m3-primary px-3 py-1.5 text-sm font-bold text-m3-on-primary transition hover:bg-m3-primary/90"
+                          >
+                              <Plus size={14} />
+                              {isGerman ? 'Hinzufügen' : 'Add'}
+                          </button>
+                      </div>
+                      {customActivities.length > 0 && (
+                          <div className="mb-2 space-y-2">
+                              {customActivities.map((activity) => (
+                                  <div key={activity.key} className="flex items-center justify-between rounded-m3-md bg-m3-surface-container-high px-3 py-2">
+                                      <div className="min-w-0">
+                                          <div className="font-bold text-m3-on-surface truncate">{activity.emoji} {activity.name}</div>
+                                          <div className="text-xs text-m3-on-surface-variant">{activity.key}</div>
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                          <button
+                                              onClick={() => { setEditingActivity(activity); setShowActivityEditor(true); }}
+                                              className="p-2 rounded-full text-m3-on-surface-variant hover:bg-m3-surface-container-highest transition"
+                                              aria-label={isGerman ? 'Aktivität bearbeiten' : 'Edit activity'}
+                                          >
+                                              <Edit2 size={14} />
+                                          </button>
+                                          <button
+                                              onClick={() => updateCustomActivities(customActivities.filter(({ key }) => key !== activity.key))}
+                                              className="p-2 rounded-full text-red-500 hover:bg-red-500/10 transition"
+                                              aria-label={isGerman ? 'Aktivität löschen' : 'Delete activity'}
+                                          >
+                                              <Trash2 size={14} />
+                                          </button>
+                                      </div>
+                                  </div>
+                              ))}
+                          </div>
+                      )}
+                      <button
+                          onClick={() => setShowActivityParams(true)}
+                          className="w-full py-2 px-3 bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface font-bold rounded-m3-md transition flex items-center justify-center gap-2 text-sm"
                      >
                          <Zap size={14} className="text-yellow-500" />
                          {t.activityParamsLabel || 'Activity Parameters'}
@@ -6469,19 +6726,30 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                      </button>
                  </div>
              </div>
-        </div>
-        {showActivityParams && (
-            <ActivityParamsModal
+         </div>
+         {showActivityParams && (
+             <ActivityParamsModal
                 isOpen={showActivityParams}
                 onClose={() => setShowActivityParams(false)}
                 activityFilter={localSettings.activityFilter || DEFAULT_ACTIVITY_FILTER}
-                activityParams={localSettings.activityParams || DEFAULT_ACTIVITY_PARAMS}
+                activityParams={localSettings.activityParams || getActivityParamDefaults(localSettings.customActivities)}
+                customActivities={localSettings.customActivities}
                 lang={localSettings.language}
                 onSave={(params) => setLocalSettings({ ...localSettings, activityParams: params })}
                 isSmallScreen={isSmallScreen}
-            />
-        )}
-        </>
+             />
+         )}
+         {showActivityEditor && (
+             <ActivityEditorModal
+                isOpen={showActivityEditor}
+                onClose={() => { setShowActivityEditor(false); setEditingActivity(null); }}
+                onSave={handleSaveCustomActivity}
+                activity={editingActivity}
+                lang={localSettings.language}
+                isSmallScreen={isSmallScreen}
+             />
+         )}
+         </>
     );
 };
 
@@ -9951,7 +10219,7 @@ const getScoreBadgeClass = (score, isNight) =>
       : (isNight ? 'bg-red-900/50 text-red-400' : 'bg-red-100 text-red-700');
 
 // --- ACTIVITY INDEX MODAL ---
-const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null, activityFilter = null, activityParams = null, isRealNight = false }) => {
+const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScreen = false, airQualityData = null, pollenFilter = null, activityFilter = null, activityParams = null, customActivities = [], isRealNight = false }) => {
   const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
   const [selectedAdvice, setSelectedAdvice] = useState(null);
   const [selectedActivityChart, setSelectedActivityChart] = useState(null);
@@ -10038,16 +10306,17 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
   };
 
   // Compute per-activity ratings based on current hour's weather
+  const activityDefinitions = getActivityDefinitions(customActivities);
   const activeActivityFilter = Array.isArray(activityFilter) ? activityFilter : DEFAULT_ACTIVITY_FILTER;
-  const effectiveActivityParams = (activityParams && typeof activityParams === 'object') ? activityParams : DEFAULT_ACTIVITY_PARAMS;
+  const effectiveActivityParams = (activityParams && typeof activityParams === 'object') ? activityParams : getActivityParamDefaults(customActivities);
   const currentHourData = todayHours.find(h => h.hour === currentHour) || todayHours[0];
   const activityRatings = currentHourData
-    ? ACTIVITY_DEFINITIONS
+    ? activityDefinitions
         .filter(({ key }) => activeActivityFilter.includes(key))
         .map(({ key, emoji, label }) => ({
           key,
           emoji,
-          label: label[lang] || label['en'] || key,
+          label: getActivityLabel({ label, key }, lang),
           rating: getActivityRating(key, currentHourData.temp, currentHourData.wind, currentHourData.precip, currentHourData.uvIndex, currentHourData.code, effectiveActivityParams[key]),
         }))
     : [];
@@ -10247,7 +10516,7 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
       {/* Activity 24h chart popup */}
       {selectedActivityChart && (() => {
         const { key, emoji, label } = selectedActivityChart;
-        const effectiveParams = (activityParams && typeof activityParams === 'object') ? activityParams : DEFAULT_ACTIVITY_PARAMS;
+        const effectiveParams = (activityParams && typeof activityParams === 'object') ? activityParams : getActivityParamDefaults(customActivities);
         const chartData = todayHours.map(h => ({
           displayTime: String(h.hour).padStart(2, '0') + ':00',
           score: getActivityRating(key, h.temp, h.wind, h.precip, h.uvIndex, h.code, effectiveParams[key]).score,
@@ -10344,12 +10613,12 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
 };
 
 // --- ACTIVITY CHECK MODAL ---
-const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallScreen = false, activityFilter = null, activityParams = null, isRealNight = false }) => {
+const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallScreen = false, activityFilter = null, activityParams = null, customActivities = [], isRealNight = false }) => {
   const isGerman = lang === 'de';
   const activeActivities = useMemo(() => {
     const filter = Array.isArray(activityFilter) ? activityFilter : DEFAULT_ACTIVITY_FILTER;
-    return ACTIVITY_DEFINITIONS.filter(({ key }) => filter.includes(key));
-  }, [activityFilter]);
+    return getActivityDefinitions(customActivities).filter(({ key }) => filter.includes(key));
+  }, [activityFilter, customActivities]);
   const [selectedActivityKey, setSelectedActivityKey] = useState(activeActivities[0]?.key || 'walking');
   const [selectedHourIdx, setSelectedHourIdx] = useState(0);
 
@@ -10375,7 +10644,7 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
   const selectedActivity = activeActivities.find(a => a.key === selectedActivityKey) || activeActivities[0];
   const safeHourIdx = (selectedHourIdx >= 0 && selectedHourIdx < times.length) ? selectedHourIdx : 0;
   const selectedTime = times[safeHourIdx] || null;
-  const effectiveActivityParams = (activityParams && typeof activityParams === 'object') ? activityParams : DEFAULT_ACTIVITY_PARAMS;
+  const effectiveActivityParams = (activityParams && typeof activityParams === 'object') ? activityParams : getActivityParamDefaults(customActivities);
   const rating = (selectedActivity && selectedTime)
     ? getActivityRating(
         selectedActivity.key,
@@ -10414,7 +10683,7 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
             >
               {activeActivities.map(({ key, emoji, label }) => (
                 <option key={key} value={key}>
-                  {emoji} {label[lang] || label.en}
+                  {emoji} {getActivityLabel({ label, key }, lang)}
                 </option>
               ))}
             </select>
@@ -14879,6 +15148,7 @@ export default function WeatherApp() {
           pollenFilter={settings.pollenFilter}
           activityFilter={settings.activityFilter}
           activityParams={settings.activityParams}
+          customActivities={settings.customActivities}
           isRealNight={isRealNight}
         />
       )}
@@ -14891,6 +15161,7 @@ export default function WeatherApp() {
           isSmallScreen={isSmallScreen}
           activityFilter={settings.activityFilter}
           activityParams={settings.activityParams}
+          customActivities={settings.customActivities}
           isRealNight={isRealNight}
         />
       )}
