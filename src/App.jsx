@@ -4551,7 +4551,7 @@ const getActivityRating = (key, temp, wind, precip, uvIndex, code, customParams 
   };
 
   // Helper: check if conditions meet user's ideal threshold
-  const isIdeal = temp >= p.minTemp && temp <= p.maxTemp && wind < p.maxWind && (!hasRain || p.rainOk) && (!isCloud || p.cloudOk !== false);
+  const isIdeal = temp >= p.minTemp && temp <= p.maxTemp && wind < p.maxWind && (!hasRain || p.rainOk) && (!isCloud || p.cloudOk);
 
   // The safety thresholds below use Math.min/max to extend below/above the user's chosen ideal range
   // by activity-specific safety margins (e.g. 5–20°C beyond ideal) before penalising the score.
@@ -6282,11 +6282,11 @@ const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, 
 
                                 {/* Cloud OK toggle */}
                                 <button
-                                    onClick={() => updateParam(key, 'cloudOk', p.cloudOk === false ? true : false)}
-                                    className={`mt-2 w-full flex items-center justify-between py-2 px-3 rounded-m3-sm text-sm font-bold transition ${p.cloudOk === false ? 'bg-m3-surface-container-high text-m3-on-surface-variant' : 'bg-m3-primary-container text-m3-on-primary-container'}`}
+                                    onClick={() => updateParam(key, 'cloudOk', !p.cloudOk)}
+                                    className={`mt-2 w-full flex items-center justify-between py-2 px-3 rounded-m3-sm text-sm font-bold transition ${p.cloudOk ? 'bg-m3-primary-container text-m3-on-primary-container' : 'bg-m3-surface-container-high text-m3-on-surface-variant'}`}
                                 >
                                     <span>☁️ {t.activityParamsCloudOk || 'Clouds OK'}</span>
-                                    {p.cloudOk !== false && <Check size={14} />}
+                                    {p.cloudOk && <Check size={14} />}
                                 </button>
                             </div>
                         );
