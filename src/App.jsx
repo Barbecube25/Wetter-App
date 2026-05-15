@@ -8451,11 +8451,6 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
 // --- NEU: PRECIPITATION TILE (Wann, Wie lang, Wie viel) ---
 const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang='de', formatPrecip, getPrecipUnitLabel, setActiveTab, setShowPrecipModal }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
-  const fallbackNowcastData = useMemo(
-    () => normalizeOpenMeteoNowcast({ minutely_15: minutelyData }, 'open_meteo_forecast_minutely'),
-    [minutelyData]
-  );
-
   // Analyse der nächsten 24h
   const analysis = useMemo(() => {
     if (!data || data.length === 0) return null;
@@ -8474,9 +8469,10 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
     let currentPrecip = current.precip || 0;
     let currentSnow = current.snow || 0;
     
+    // Only use real radar data for precipitation timing – no model-based minutely fallback
     const nowcastData = (radarNowcast?.time?.length && radarNowcast?.precipitation?.length)
       ? radarNowcast
-      : fallbackNowcastData;
+      : null;
     const nowcastIntervalMinutes = nowcastData?.intervalMinutes || MINUTELY_SLOT_DURATION_MINUTES;
     const nowcastRateFactor = 60 / nowcastIntervalMinutes;
     const nowPlusTwoHoursMs = now.getTime() + (2 * 60 * 60 * 1000);
@@ -8803,7 +8799,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
     result.minutesUntilEnd = toMinutes(result.endTime);
     
     return result;
-  }, [data, fallbackNowcastData, radarNowcast, currentData]);
+  }, [data, radarNowcast, currentData]);
 
   if (!analysis) return null;
 
