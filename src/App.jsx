@@ -7585,6 +7585,11 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
           <stop offset="60%" stopColor="#bfdbfe" stopOpacity="0.2" />
           <stop offset="100%" stopColor="#93c5fd" stopOpacity="0.05" />
         </linearGradient>
+        <linearGradient id="cometGradient" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0%" stopColor="#7dd3fc" stopOpacity="0" />
+          <stop offset="55%" stopColor="#bfdbfe" stopOpacity="0.45" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0.95" />
+        </linearGradient>
       </defs>
 
       {/* Sky background - smooth blend between night and day */}
@@ -7719,6 +7724,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
 
       {showAurora && (
         <g opacity={Math.min(1, starOpacity * 0.95)} style={{ transition: `opacity ${CSS_TRANSITION_DURATION} ease-in-out` }}>
+          {/* Layered wave curtains to mimic moving aurora bands in the upper sky */}
           <path d="M-20 92 Q 50 52 120 90 T 260 90 T 400 84 V 120 H -20 Z" fill="url(#auroraGradient)" className="anim-aurora" />
           <path d="M-30 102 Q 70 70 170 100 T 370 96 V 130 H -30 Z" fill="url(#auroraGradient)" opacity="0.75" className="anim-aurora" style={{ animationDelay: '1.8s' }} />
         </g>
@@ -7734,7 +7740,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
 
       {showComet && (
         <g className="anim-comet" opacity={Math.min(1, starOpacity)}>
-          <ellipse cx="0" cy="0" rx="34" ry="3.2" fill="url(#nlcGradient)" opacity="0.55" />
+          <ellipse cx="0" cy="0" rx="34" ry="3.2" fill="url(#cometGradient)" opacity="0.55" />
           <ellipse cx="13" cy="-1.2" rx="18" ry="2.2" fill="#e0f2fe" opacity="0.75" />
           <circle cx="26" cy="-2.3" r="2.4" fill="#ffffff" />
           <circle cx="26" cy="-2.3" r="5.5" fill="#dbeafe" opacity="0.35" />
@@ -14988,6 +14994,11 @@ export default function WeatherApp() {
   const cardBg = isRealNight ? 'bg-m3-dark-surface-container/90 border-m3-outline-variant/70 text-m3-dark-on-surface' : 'bg-m3-surface-container/80 border-m3-outline-variant/40 text-m3-on-surface';
   const tileBg = isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/50 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant';
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
+  const astronomyAnimationFlags = {
+    showComet: astronomyForecast.currentComets.length > 0,
+    showAurora: astronomyForecast.auroraChanceScore >= ASTRONOMY_REPORT_MIN_CHANCE_SCORE,
+    showNlc: astronomyForecast.nlcSeason && astronomyForecast.nlcChanceScore >= ASTRONOMY_REPORT_MIN_CHANCE_SCORE,
+  };
 
   // Helper function to get responsive layout dimensions based on device orientation and size
   // Note: Landscape mode takes precedence over small screen when both are true,
@@ -15115,11 +15126,7 @@ export default function WeatherApp() {
               elevation={currentLoc?.elevation || 0}
               latitude={currentLoc?.lat}
               longitude={currentLoc?.lon}
-              astronomy={{
-                showComet: astronomyForecast.currentComets.length > 0,
-                showAurora: astronomyForecast.auroraChanceScore >= ASTRONOMY_REPORT_MIN_CHANCE_SCORE,
-                showNlc: astronomyForecast.nlcSeason && astronomyForecast.nlcChanceScore >= ASTRONOMY_REPORT_MIN_CHANCE_SCORE,
-              }}
+              astronomy={astronomyAnimationFlags}
             />
         </div>
         
@@ -15758,7 +15765,24 @@ export default function WeatherApp() {
             >
               {/* Weather background animation */}
               <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
-                <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} demoTerrain={effectiveTerrain} elevation={currentLoc?.elevation || 0} latitude={currentLoc?.lat} longitude={currentLoc?.lon} astronomy={{ showComet: astronomyForecast.currentComets.length > 0, showAurora: astronomyForecast.auroraChanceScore >= ASTRONOMY_REPORT_MIN_CHANCE_SCORE, showNlc: astronomyForecast.nlcSeason && astronomyForecast.nlcChanceScore >= ASTRONOMY_REPORT_MIN_CHANCE_SCORE }} />
+                <WeatherLandscape
+                  code={current.code}
+                  isDay={isRealNight ? 0 : 1}
+                  date={locationTime}
+                  temp={current.temp}
+                  sunrise={sunriseSunset.sunrise}
+                  sunset={sunriseSunset.sunset}
+                  windSpeed={current.wind}
+                  cloudCover={current.cloudCover}
+                  precipitation={current.precip}
+                  snowfall={current.snow}
+                  lang={lang}
+                  demoTerrain={effectiveTerrain}
+                  elevation={currentLoc?.elevation || 0}
+                  latitude={currentLoc?.lat}
+                  longitude={currentLoc?.lon}
+                  astronomy={astronomyAnimationFlags}
+                />
               </div>
               
               <div
