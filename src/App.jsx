@@ -8937,11 +8937,11 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
     if (dryNextTwoHours) {
       if (hasModelPrecipAfterDryWindow) {
         postNowcastModelText = lang === 'en'
-          ? `${nowcastTypeLabel} stays dry for the next 2 hours via ${nowcastSourceLabel}; afterwards the hourly models expect precipitation from ${startTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})}.`
+          ? `${nowcastTypeLabel} shows no precipitation for the next 2 hours via ${nowcastSourceLabel}; afterwards the hourly models expect precipitation from ${startTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})}.`
           : `${nowcastTypeLabel} zeigt über ${nowcastSourceLabel} in den nächsten 2 Stunden keinen Niederschlag; danach erwarten die Stundenmodelle ab ${startTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})} Uhr wieder Niederschlag.`;
       } else {
         postNowcastModelText = lang === 'en'
-          ? `${nowcastTypeLabel} stays dry for the next 2 hours via ${nowcastSourceLabel}; afterwards the hourly models also remain dry.`
+          ? `${nowcastTypeLabel} shows no precipitation for the next 2 hours via ${nowcastSourceLabel}; afterwards the hourly models also remain dry.`
           : `${nowcastTypeLabel} zeigt über ${nowcastSourceLabel} in den nächsten 2 Stunden keinen Niederschlag; danach bleiben auch die Stundenmodelle trocken.`;
       }
     } else {
