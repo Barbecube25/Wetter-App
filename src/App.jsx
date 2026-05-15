@@ -4406,6 +4406,20 @@ const styles = `
     50% { transform: translateX(0px) translateY(-2px); } 
     75% { transform: translateX(5px) translateY(-1px); } 
   }
+  @keyframes comet-fly {
+    0% { transform: translate(140px, 36px) rotate(-18deg); opacity: 0; }
+    8% { opacity: 1; }
+    82% { opacity: 1; }
+    100% { transform: translate(-80px, 88px) rotate(-18deg); opacity: 0; }
+  }
+  @keyframes aurora-flow {
+    0%, 100% { transform: translateX(-10px) skewX(-4deg); opacity: 0.55; }
+    50% { transform: translateX(12px) skewX(4deg); opacity: 0.95; }
+  }
+  @keyframes nlc-drift {
+    0%, 100% { transform: translateX(-6px) translateY(0px); opacity: 0.45; }
+    50% { transform: translateX(6px) translateY(-2px); opacity: 0.8; }
+  }
   
   .animate-float { animation: float 6s ease-in-out infinite; }
   .anim-clouds { animation: float-clouds 20s ease-in-out infinite; }
@@ -4450,6 +4464,9 @@ const styles = `
   .anim-tropical { animation: tropical-glow 3s infinite ease-in-out; }
   .anim-firework { animation: firework 2s infinite ease-out; }
   .animate-leaves { animation: float-leaves 8s infinite linear; }
+  .anim-comet { animation: comet-fly 8.5s linear infinite; }
+  .anim-aurora { animation: aurora-flow 6.5s ease-in-out infinite; transform-origin: center; }
+  .anim-nlc { animation: nlc-drift 9s ease-in-out infinite; }
 `;
 
 // --- 2. HILFSFUNKTIONEN ---
@@ -6970,7 +6987,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
     );
 };
 
-const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed, cloudCover = 0, precipitation = 0, snowfall = 0, lang='de', demoWeather, demoSeason, demoEvent, demoTime, demoWindSpeed, demoTerrain, elevation = 0, latitude = null, longitude = null }) => {
+const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed, cloudCover = 0, precipitation = 0, snowfall = 0, lang='de', demoWeather, demoSeason, demoEvent, demoTime, demoWindSpeed, demoTerrain, elevation = 0, latitude = null, longitude = null, astronomy = null }) => {
   // Move helper to top of component to use it for initial variables
   const getDecimalHour = (dateInput) => {
     if (!dateInput) return 0;
@@ -7428,6 +7445,10 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   }
 
   const moonPhase = date ? getMoonPhase(date) : 0;
+  const showAstronomyEffects = isNight && starOpacity >= 0.35;
+  const showComet = showAstronomyEffects && Boolean(astronomy?.showComet);
+  const showAurora = showAstronomyEffects && Boolean(astronomy?.showAurora);
+  const showNlc = showAstronomyEffects && Boolean(astronomy?.showNlc);
   
   const groundColor = (isSnow || isDeepFreeze) ? "#e2e8f0" : (isNight ? "#0f172a" : "#4ade80"); // Nachts dunklerer Boden
   const mountainColor = (isSnow || isDeepFreeze) ? "#f1f5f9" : (isNight ? "#1e293b" : "#64748b"); 
@@ -7545,7 +7566,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
            <stop offset="80%" stopColor="white" stopOpacity="0.5" />
            <stop offset="100%" stopColor="white" stopOpacity="0.1" />
         </linearGradient>
-         <filter id="iceGlow">
+        <filter id="iceGlow">
             <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
             <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 1  0 0 0 18 -7" result="glow" />
             <feMerge>
@@ -7553,6 +7574,17 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
                 <feMergeNode in="glow" />
             </feMerge>
         </filter>
+        <linearGradient id="auroraGradient" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.15" />
+          <stop offset="40%" stopColor="#2dd4bf" stopOpacity="0.4" />
+          <stop offset="70%" stopColor="#a3e635" stopOpacity="0.5" />
+          <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.18" />
+        </linearGradient>
+        <linearGradient id="nlcGradient" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor="#dbeafe" stopOpacity="0.35" />
+          <stop offset="60%" stopColor="#bfdbfe" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#93c5fd" stopOpacity="0.05" />
+        </linearGradient>
       </defs>
 
       {/* Sky background - smooth blend between night and day */}
@@ -7683,6 +7715,30 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
             <circle cx="80" cy="20" r="1" fill="white" className="animate-twinkle-3" style={{animationDelay: '1.8s'}} />
             <circle cx="180" cy="55" r="0.9" fill="white" className="animate-twinkle-1" style={{animationDelay: '2.2s'}} />
          </g>
+      )}
+
+      {showAurora && (
+        <g opacity={Math.min(1, starOpacity * 0.95)} style={{ transition: `opacity ${CSS_TRANSITION_DURATION} ease-in-out` }}>
+          <path d="M-20 92 Q 50 52 120 90 T 260 90 T 400 84 V 120 H -20 Z" fill="url(#auroraGradient)" className="anim-aurora" />
+          <path d="M-30 102 Q 70 70 170 100 T 370 96 V 130 H -30 Z" fill="url(#auroraGradient)" opacity="0.75" className="anim-aurora" style={{ animationDelay: '1.8s' }} />
+        </g>
+      )}
+
+      {showNlc && (
+        <g opacity={Math.min(1, starOpacity * 0.9)} style={{ transition: `opacity ${CSS_TRANSITION_DURATION} ease-in-out` }}>
+          <ellipse cx="88" cy="62" rx="44" ry="9" fill="url(#nlcGradient)" className="anim-nlc" />
+          <ellipse cx="198" cy="58" rx="52" ry="10" fill="url(#nlcGradient)" className="anim-nlc" style={{ animationDelay: '1.1s' }} />
+          <ellipse cx="302" cy="66" rx="40" ry="8" fill="url(#nlcGradient)" className="anim-nlc" style={{ animationDelay: '2.4s' }} />
+        </g>
+      )}
+
+      {showComet && (
+        <g className="anim-comet" opacity={Math.min(1, starOpacity)}>
+          <ellipse cx="0" cy="0" rx="34" ry="3.2" fill="url(#nlcGradient)" opacity="0.55" />
+          <ellipse cx="13" cy="-1.2" rx="18" ry="2.2" fill="#e0f2fe" opacity="0.75" />
+          <circle cx="26" cy="-2.3" r="2.4" fill="#ffffff" />
+          <circle cx="26" cy="-2.3" r="5.5" fill="#dbeafe" opacity="0.35" />
+        </g>
       )}
 
 
@@ -14936,13 +14992,21 @@ export default function WeatherApp() {
   // Helper function to get responsive layout dimensions based on device orientation and size
   // Note: Landscape mode takes precedence over small screen when both are true,
   // as landscape orientation is a more significant layout constraint
-  const getLayoutDimensions = ({ isLandscape, isSmallScreen, isTabletScreen }) => {
+  const getLayoutDimensions = ({ isLandscape, isSmallScreen, isTabletScreen, isFoldableCompactScreen }) => {
     if (isLandscape) {
       return {
         animationCardHeight: '100px',
         navBarHeight: '56px',
         fixedElementsGap: '8px',
         fixedTopOffset: 'calc(env(safe-area-inset-top, 0px) + 12px)'
+      };
+    }
+    if (isFoldableCompactScreen) {
+      return {
+        animationCardHeight: '220px',
+        navBarHeight: '84px',
+        fixedElementsGap: '9px',
+        fixedTopOffset: 'calc(env(safe-area-inset-top, 0px) + 14px)'
       };
     }
     if (isSmallScreen) {
@@ -14971,7 +15035,7 @@ export default function WeatherApp() {
 
   // Dynamic layout constants for landscape mode and small screen support
   const headerHeight = '0px'; // Header removed, location moved to animation card
-  const layoutDimensions = getLayoutDimensions({ isLandscape, isSmallScreen, isTabletScreen });
+  const layoutDimensions = getLayoutDimensions({ isLandscape, isSmallScreen, isTabletScreen, isFoldableCompactScreen });
   const animationCardHeight = layoutDimensions.animationCardHeight;
   const navBarHeight = layoutDimensions.navBarHeight;
   const fixedElementsGap = layoutDimensions.fixedElementsGap;
@@ -14989,6 +15053,7 @@ export default function WeatherApp() {
   // Landscape mode takes precedence when both isLandscape and isSmallScreen are true
   const getAnimationCardPadding = () => {
     if (isLandscape) return 'pt-4 px-4 pb-4';
+    if (isFoldableCompactScreen) return 'pt-4 px-4 pb-4';
     if (isSmallScreen) return 'pt-3 px-3 pb-3';
     if (isTabletScreen) return 'pt-5 px-5 pb-5';
     return 'pt-4 px-4 pb-4';
@@ -14999,6 +15064,7 @@ export default function WeatherApp() {
   // Fixed height (h-) instead of min-height (min-h-) prevents the card from changing size
   const getAnimationCardHeight = () => {
     if (isLandscape) return 'h-[100px]';
+    if (isFoldableCompactScreen) return 'h-[220px]';
     if (isSmallScreen) return 'h-[180px]';
     if (isTabletScreen) return 'h-[240px]';
     return 'h-[210px]';
@@ -15049,6 +15115,11 @@ export default function WeatherApp() {
               elevation={currentLoc?.elevation || 0}
               latitude={currentLoc?.lat}
               longitude={currentLoc?.lon}
+              astronomy={{
+                showComet: astronomyForecast.currentComets.length > 0,
+                showAurora: astronomyForecast.auroraChanceScore >= ASTRONOMY_REPORT_MIN_CHANCE_SCORE,
+                showNlc: astronomyForecast.nlcSeason && astronomyForecast.nlcChanceScore >= ASTRONOMY_REPORT_MIN_CHANCE_SCORE,
+              }}
             />
         </div>
         
@@ -15687,7 +15758,7 @@ export default function WeatherApp() {
             >
               {/* Weather background animation */}
               <div className="absolute inset-0 z-0 pointer-events-none opacity-100">
-                <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} demoTerrain={effectiveTerrain} elevation={currentLoc?.elevation || 0} latitude={currentLoc?.lat} longitude={currentLoc?.lon} />
+                <WeatherLandscape code={current.code} isDay={isRealNight ? 0 : 1} date={locationTime} temp={current.temp} sunrise={sunriseSunset.sunrise} sunset={sunriseSunset.sunset} windSpeed={current.wind} cloudCover={current.cloudCover} precipitation={current.precip} snowfall={current.snow} lang={lang} demoTerrain={effectiveTerrain} elevation={currentLoc?.elevation || 0} latitude={currentLoc?.lat} longitude={currentLoc?.lon} astronomy={{ showComet: astronomyForecast.currentComets.length > 0, showAurora: astronomyForecast.auroraChanceScore >= ASTRONOMY_REPORT_MIN_CHANCE_SCORE, showNlc: astronomyForecast.nlcSeason && astronomyForecast.nlcChanceScore >= ASTRONOMY_REPORT_MIN_CHANCE_SCORE }} />
               </div>
               
               <div
