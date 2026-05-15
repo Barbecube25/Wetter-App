@@ -146,6 +146,8 @@ const KNOWN_COMETS = [
 ];
 const MINUTELY_NOWCAST_WINDOW_SLOTS = 8;
 const MINUTELY_TO_HOURLY_RATE_FACTOR = 60 / MINUTELY_SLOT_DURATION_MINUTES;
+const NOWCAST_LOOKAHEAD_MINUTES = MINUTELY_NOWCAST_WINDOW_SLOTS * MINUTELY_SLOT_DURATION_MINUTES;
+const NOWCAST_LOOKAHEAD_MS = NOWCAST_LOOKAHEAD_MINUTES * 60 * 1000;
 const RADAR_SLOT_DURATION_MINUTES = 5;
 const RADAR_NOWCAST_DISTANCE_METERS = 6000;
 const RADAR_CENTER_RADIUS_CELLS = 1;
@@ -8539,7 +8541,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
       : null;
     const nowcastIntervalMinutes = nowcastData?.intervalMinutes || MINUTELY_SLOT_DURATION_MINUTES;
     const nowcastRateFactor = 60 / nowcastIntervalMinutes;
-    const nowPlusTwoHoursMs = now.getTime() + (2 * 60 * 60 * 1000);
+    const nowPlusTwoHoursMs = now.getTime() + NOWCAST_LOOKAHEAD_MS;
     let nowcastCurrentRate = null;
     let nowcastHasPrecipSoon = false;
 
@@ -8920,6 +8922,34 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
     ? formatMinutesDuration(eventDurationMinutes, lang)
     : null;
   const nowcastTypeLabel = nowcastSourceType === 'radar' ? 'Radar' : 'Nowcast';
+  const hasIndependentNowcast = nowcastSourceType === 'radar' || nowcastSourceType === 'nowcast';
+  const hasModelPrecipAfterDryWindow = Boolean(
+    startTime && minutesUntilStart !== null && minutesUntilStart > NOWCAST_LOOKAHEAD_MINUTES
+  );
+  const noUpcomingPrecipWithinNowcastWindow = minutesUntilStart === null || hasModelPrecipAfterDryWindow;
+  // True when radar/nowcast stays dry for the full 2-hour window and any later precipitation comes only from hourly models.
+  const dryNextTwoHours = hasIndependentNowcast && !isNow && noUpcomingPrecipWithinNowcastWindow;
+  const dryNextTwoHoursHeadline = lang === 'en'
+    ? 'No precipitation expected in the next 2 hours'
+    : 'In den nächsten 2 Stunden kein Niederschlag erwartet';
+  let postNowcastModelText = null;
+  if (nowcastSourceLabel) {
+    if (dryNextTwoHours) {
+      if (hasModelPrecipAfterDryWindow) {
+        postNowcastModelText = lang === 'en'
+          ? `${nowcastTypeLabel} shows no precipitation for the next 2 hours via ${nowcastSourceLabel}; afterwards the hourly models expect precipitation from ${startTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})}.`
+          : `${nowcastTypeLabel} zeigt über ${nowcastSourceLabel} in den nächsten 2 Stunden keinen Niederschlag; danach erwarten die Stundenmodelle ab ${startTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})} Uhr wieder Niederschlag.`;
+      } else {
+        postNowcastModelText = lang === 'en'
+          ? `${nowcastTypeLabel} shows no precipitation for the next 2 hours via ${nowcastSourceLabel}; afterwards the hourly models also remain dry.`
+          : `${nowcastTypeLabel} zeigt über ${nowcastSourceLabel} in den nächsten 2 Stunden keinen Niederschlag; danach bleiben auch die Stundenmodelle trocken.`;
+      }
+    } else {
+      postNowcastModelText = lang === 'en'
+        ? `${nowcastTypeLabel} drives the next 2 hours via ${nowcastSourceLabel}; afterwards the hourly models take over.`
+        : `${nowcastTypeLabel} steuert die nächsten 2 Stunden über ${nowcastSourceLabel}; danach übernehmen die Stundenmodelle.`;
+    }
+  }
   const conflictMessage = modelConflict === 'radar_wetter_than_model'
     ? (lang === 'en'
         ? 'Radar/Nowcast already sees precipitation near you while the hourly models are still mostly dry.'
@@ -8931,7 +8961,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
       : null;
 
   if (type === 'none') {
-      headline = t.noPrecipExp;
+      headline = dryNextTwoHours ? dryNextTwoHoursHeadline : t.noPrecipExp;
   } else if (isNow) {
       if (isMixedPrecip) {
           headline = lang === 'en' ? 'Mixed Precipitation Now' : 'Mischniederschlag jetzt';
@@ -8978,7 +9008,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                 <div className="p-3 bg-m3-secondary-container rounded-full text-m3-on-secondary-container"><Sun size={28} /></div>
                 <div>
                     <div className="font-bold text-m3-on-surface text-m3-title-large">{headline}</div>
-                    <div className="text-m3-body-large text-m3-on-surface-variant font-medium">{t.noRainExp}</div>
+                    <div className="text-m3-body-large text-m3-on-surface-variant font-medium">{dryNextTwoHours ? postNowcastModelText : t.noRainExp}</div>
                 </div>
             </div>
         </div>
@@ -9113,9 +9143,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                 <div className="flex items-start gap-2 bg-m3-surface-container-high rounded-m3-xl p-3">
                     <Crosshair size={18} className="text-m3-primary mt-0.5" />
                     <span className="text-m3-label-large font-bold text-m3-on-surface">
-                        {lang === 'en'
-                          ? `${nowcastTypeLabel} drives the next 2 hours via ${nowcastSourceLabel}; afterwards the hourly models take over.`
-                          : `${nowcastTypeLabel} steuert die nächsten 2 Stunden über ${nowcastSourceLabel}; danach übernehmen die Stundenmodelle.`}
+                        {postNowcastModelText}
                     </span>
                 </div>
             )}
