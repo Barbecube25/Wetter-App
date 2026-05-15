@@ -8926,28 +8926,30 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
   const hasModelPrecipAfterDryWindow = Boolean(
     startTime && minutesUntilStart !== null && minutesUntilStart > NOWCAST_LOOKAHEAD_MINUTES
   );
+  const noUpcomingPrecipWithinNowcastWindow = minutesUntilStart === null || hasModelPrecipAfterDryWindow;
   // True when radar/nowcast stays dry for the full 2-hour window and any later precipitation comes only from hourly models.
-  const dryNextTwoHours = hasIndependentNowcast && !isNow && (minutesUntilStart === null || hasModelPrecipAfterDryWindow);
+  const dryNextTwoHours = hasIndependentNowcast && !isNow && noUpcomingPrecipWithinNowcastWindow;
   const dryNextTwoHoursHeadline = lang === 'en'
     ? 'No precipitation expected in the next 2 hours'
     : 'In den nächsten 2 Stunden kein Niederschlag erwartet';
-  const postNowcastModelText = nowcastSourceLabel
-    ? (
-        dryNextTwoHours
-          ? (
-              hasModelPrecipAfterDryWindow
-                ? (lang === 'en'
-                    ? `${nowcastTypeLabel} stays dry for the next 2 hours via ${nowcastSourceLabel}; afterwards the hourly models expect precipitation from ${startTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})}.`
-                    : `${nowcastTypeLabel} zeigt über ${nowcastSourceLabel} in den nächsten 2 Stunden keinen Niederschlag; danach erwarten die Stundenmodelle ab ${startTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})} Uhr wieder Niederschlag.`)
-                : (lang === 'en'
-                    ? `${nowcastTypeLabel} stays dry for the next 2 hours via ${nowcastSourceLabel}; afterwards the hourly models also remain dry.`
-                    : `${nowcastTypeLabel} zeigt über ${nowcastSourceLabel} in den nächsten 2 Stunden keinen Niederschlag; danach bleiben auch die Stundenmodelle trocken.`)
-            )
-          : (lang === 'en'
-              ? `${nowcastTypeLabel} drives the next 2 hours via ${nowcastSourceLabel}; afterwards the hourly models take over.`
-              : `${nowcastTypeLabel} steuert die nächsten 2 Stunden über ${nowcastSourceLabel}; danach übernehmen die Stundenmodelle.`)
-      )
-    : null;
+  let postNowcastModelText = null;
+  if (nowcastSourceLabel) {
+    if (dryNextTwoHours) {
+      if (hasModelPrecipAfterDryWindow) {
+        postNowcastModelText = lang === 'en'
+          ? `${nowcastTypeLabel} stays dry for the next 2 hours via ${nowcastSourceLabel}; afterwards the hourly models expect precipitation from ${startTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})}.`
+          : `${nowcastTypeLabel} zeigt über ${nowcastSourceLabel} in den nächsten 2 Stunden keinen Niederschlag; danach erwarten die Stundenmodelle ab ${startTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})} Uhr wieder Niederschlag.`;
+      } else {
+        postNowcastModelText = lang === 'en'
+          ? `${nowcastTypeLabel} stays dry for the next 2 hours via ${nowcastSourceLabel}; afterwards the hourly models also remain dry.`
+          : `${nowcastTypeLabel} zeigt über ${nowcastSourceLabel} in den nächsten 2 Stunden keinen Niederschlag; danach bleiben auch die Stundenmodelle trocken.`;
+      }
+    } else {
+      postNowcastModelText = lang === 'en'
+        ? `${nowcastTypeLabel} drives the next 2 hours via ${nowcastSourceLabel}; afterwards the hourly models take over.`
+        : `${nowcastTypeLabel} steuert die nächsten 2 Stunden über ${nowcastSourceLabel}; danach übernehmen die Stundenmodelle.`;
+    }
+  }
   const conflictMessage = modelConflict === 'radar_wetter_than_model'
     ? (lang === 'en'
         ? 'Radar/Nowcast already sees precipitation near you while the hourly models are still mostly dry.'
