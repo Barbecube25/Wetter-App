@@ -4407,6 +4407,7 @@ const styles = `
     75% { transform: translateX(5px) translateY(-1px); } 
   }
   @keyframes comet-fly {
+    /* Coordinates target the 360x160 WeatherLandscape SVG viewBox and scale with it */
     0% { transform: translate(140px, 36px) rotate(-18deg); opacity: 0; }
     8% { opacity: 1; }
     82% { opacity: 1; }
@@ -7338,6 +7339,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const TRANSITION_DURATION = 1.0; // Duration in hours for dawn/dusk transition (60 minutes) - extended for smoother twilight
   const TWILIGHT_EXTENSION = 0.5; // Extended twilight period for stars to fade (30 minutes before/after main transition)
   const CSS_TRANSITION_DURATION = '4s'; // CSS transition duration for smooth opacity changes
+  const MIN_STAR_OPACITY_FOR_ASTRONOMY_EFFECTS = 0.35;
   
   // Multiplier for dawn/dusk gradient opacity calculation
   // Formula: max opacity = (1/4) * multiplier (occurs at factor=0.5)
@@ -7445,7 +7447,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   }
 
   const moonPhase = date ? getMoonPhase(date) : 0;
-  const showAstronomyEffects = isNight && starOpacity >= 0.35;
+  const showAstronomyEffects = isNight && starOpacity >= MIN_STAR_OPACITY_FOR_ASTRONOMY_EFFECTS;
   const showComet = showAstronomyEffects && Boolean(astronomy?.showComet);
   const showAurora = showAstronomyEffects && Boolean(astronomy?.showAurora);
   const showNlc = showAstronomyEffects && Boolean(astronomy?.showNlc);
@@ -14995,9 +14997,9 @@ export default function WeatherApp() {
   const tileBg = isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/50 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant';
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
   const astronomyAnimationFlags = {
-    showComet: astronomyForecast.currentComets.length > 0,
-    showAurora: astronomyForecast.auroraChanceScore >= ASTRONOMY_REPORT_MIN_CHANCE_SCORE,
-    showNlc: astronomyForecast.nlcSeason && astronomyForecast.nlcChanceScore >= ASTRONOMY_REPORT_MIN_CHANCE_SCORE,
+    showComet: (astronomyForecast?.currentComets?.length ?? 0) > 0,
+    showAurora: (astronomyForecast?.auroraChanceScore ?? 0) >= ASTRONOMY_REPORT_MIN_CHANCE_SCORE,
+    showNlc: Boolean(astronomyForecast?.nlcSeason) && (astronomyForecast?.nlcChanceScore ?? 0) >= ASTRONOMY_REPORT_MIN_CHANCE_SCORE,
   };
 
   // Helper function to get responsive layout dimensions based on device orientation and size
@@ -15013,6 +15015,7 @@ export default function WeatherApp() {
       };
     }
     if (isFoldableCompactScreen) {
+      // Foldable innerscreens need a middle ground between phone and tablet card heights.
       return {
         animationCardHeight: '220px',
         navBarHeight: '84px',
