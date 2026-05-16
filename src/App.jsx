@@ -8608,6 +8608,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
     if (nowcastData?.time?.length && nowcastData?.precipitation?.length) {
         const mTime = nowcastData.time;
         const mPrecip = nowcastData.precipitation;
+        const slotStartTimesMs = mTime.map((slotTime) => new Date(slotTime).getTime());
         let strongMinutelyStart = null;
         let minutelyPeak = 0;
         let minutelyPeakTime = null;
@@ -8622,7 +8623,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
         let startIndex = -1;
         
         for(let i=0; i<mTime.length; i++) {
-            const slotStartMs = new Date(mTime[i]).getTime();
+            const slotStartMs = slotStartTimesMs[i];
             const slotEndMs = slotStartMs + (nowcastIntervalMinutes * 60 * 1000);
             if (slotEndMs > nowMs) {
                 startIndex = i;
@@ -8635,20 +8636,20 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
             for(let i=startIndex; i < Math.min(startIndex + maxSlots, mTime.length); i++) {
                 const slotPrecip = mPrecip[i] || 0;
                 const slotRate = slotPrecip * nowcastRateFactor;
-                const slotStartMs = new Date(mTime[i]).getTime();
+                const slotStartMs = slotStartTimesMs[i];
                 const slotEndMs = slotStartMs + (nowcastIntervalMinutes * 60 * 1000);
                 const slotHasPrecip = slotPrecip > LIGHT_PRECIP_THRESHOLD;
                 if (!result.minutelyStart && slotHasPrecip) {
                      result.minutelyStart = new Date(Math.max(slotStartMs, nowMs));
                  }
                 if (!strongMinutelyStart && slotRate > STRONG_PRECIP_THRESHOLD) {
-                     strongMinutelyStart = new Date(mTime[i]);
+                     strongMinutelyStart = new Date(slotStartMs);
                  }
 
                 if (slotHasPrecip && !minutelyEventClosed) {
                   if (slotRate > minutelyPeak) {
                     minutelyPeak = slotRate;
-                    minutelyPeakTime = new Date(mTime[i]);
+                    minutelyPeakTime = new Date(slotStartMs);
                   }
                   minutelyTotal += slotPrecip;
                   minutelySlots++;
