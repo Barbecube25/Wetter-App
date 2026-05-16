@@ -8617,6 +8617,8 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
         let minutelyEventStart = null;
         let minutelyEventEnd = null;
         let minutelySlots = 0;
+        // Track only the first continuous nowcast precipitation event (current/next event),
+        // so "Ends in" reflects when the ongoing/next rain stops, not later separate showers.
         let minutelyEventClosed = false;
         
         // Find index for "now"
@@ -8640,6 +8642,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                 const slotStartMs = slotStartTimesMs[i];
                 const slotEndMs = slotStartMs + nowcastSlotDurationMs;
                 const slotHasPrecip = slotPrecip > LIGHT_PRECIP_THRESHOLD;
+                // After the first continuous event has ended, stop extending timing/peak with later isolated events.
                 if (minutelyEventClosed) continue;
                 if (!result.minutelyStart && slotHasPrecip) {
                      result.minutelyStart = new Date(Math.max(slotStartMs, nowMs));
