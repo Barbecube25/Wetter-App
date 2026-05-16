@@ -8541,6 +8541,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
       : null;
     const nowcastIntervalMinutes = nowcastData?.intervalMinutes || MINUTELY_SLOT_DURATION_MINUTES;
     const nowcastRateFactor = 60 / nowcastIntervalMinutes;
+    const nowcastSlotDurationMs = nowcastIntervalMinutes * 60 * 1000;
     const nowPlusTwoHoursMs = now.getTime() + NOWCAST_LOOKAHEAD_MS;
     let nowcastCurrentRate = null;
     let nowcastHasPrecipSoon = false;
@@ -8550,7 +8551,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
       for (let i = 0; i < nowcastData.time.length; i++) {
         const slotTime = new Date(nowcastData.time[i]);
         const slotMs = slotTime.getTime();
-        const slotEndMs = slotMs + (nowcastIntervalMinutes * 60 * 1000);
+        const slotEndMs = slotMs + nowcastSlotDurationMs;
         const slotPrecip = Number(nowcastData.precipitation[i]) || 0;
         const slotRate = slotPrecip * nowcastRateFactor;
 
@@ -8608,6 +8609,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
     if (nowcastData?.time?.length && nowcastData?.precipitation?.length) {
         const mTime = nowcastData.time;
         const mPrecip = nowcastData.precipitation;
+        const slotStartTimesMs = mTime.map((slotTime) => new Date(slotTime).getTime());
         let strongMinutelyStart = null;
         let minutelyPeak = 0;
         let minutelyPeakTime = null;
@@ -8615,14 +8617,18 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
         let minutelyEventStart = null;
         let minutelyEventEnd = null;
         let minutelySlots = 0;
+        // Track only the first continuous nowcast precipitation event (current/next event),
+        // so "Ends in" reflects when the ongoing/next rain stops, not later separate showers.
+        let minutelyEventClosed = false;
         
         // Find index for "now"
         const nowMs = now.getTime();
         let startIndex = -1;
         
         for(let i=0; i<mTime.length; i++) {
-            const t = new Date(mTime[i]).getTime();
-            if (t >= nowMs) {
+            const slotStartMs = slotStartTimesMs[i];
+            const slotEndMs = slotStartMs + nowcastSlotDurationMs;
+            if (slotEndMs > nowMs) {
                 startIndex = i;
                 break;
             }
@@ -8633,26 +8639,31 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
             for(let i=startIndex; i < Math.min(startIndex + maxSlots, mTime.length); i++) {
                 const slotPrecip = mPrecip[i] || 0;
                 const slotRate = slotPrecip * nowcastRateFactor;
-                if (!result.minutelyStart && slotPrecip > LIGHT_PRECIP_THRESHOLD) {
-                     result.minutelyStart = new Date(mTime[i]);
+                const slotStartMs = slotStartTimesMs[i];
+                const slotEndMs = slotStartMs + nowcastSlotDurationMs;
+                const slotHasPrecip = slotPrecip > LIGHT_PRECIP_THRESHOLD;
+                // After the first continuous event has ended, stop extending timing/peak with later isolated events.
+                if (minutelyEventClosed) continue;
+                if (!result.minutelyStart && slotHasPrecip) {
+                     result.minutelyStart = new Date(Math.max(slotStartMs, nowMs));
                  }
                 if (!strongMinutelyStart && slotRate > STRONG_PRECIP_THRESHOLD) {
-                     strongMinutelyStart = new Date(mTime[i]);
+                     strongMinutelyStart = new Date(slotStartMs);
                  }
 
-                if (slotRate > minutelyPeak) {
-                  minutelyPeak = slotRate;
-                  minutelyPeakTime = new Date(mTime[i]);
-                }
-
-                if (slotPrecip > LIGHT_PRECIP_THRESHOLD) {
+                if (slotHasPrecip) {
+                  if (slotRate > minutelyPeak) {
+                    minutelyPeak = slotRate;
+                    minutelyPeakTime = new Date(slotStartMs);
+                  }
                   minutelyTotal += slotPrecip;
                   minutelySlots++;
                   if (!minutelyEventStart) {
-                    minutelyEventStart = new Date(mTime[i]);
+                    minutelyEventStart = new Date(Math.max(slotStartMs, nowMs));
                   }
-                  const slotStartTime = new Date(mTime[i]).getTime();
-                  minutelyEventEnd = new Date(slotStartTime + nowcastIntervalMinutes * 60 * 1000);
+                  minutelyEventEnd = new Date(slotEndMs);
+                } else if (minutelyEventStart) {
+                  minutelyEventClosed = true;
                 }
             }
         }
