@@ -16222,7 +16222,7 @@ export default function WeatherApp() {
         )}
 
         {/* Activity check tile + details toggle: side-by-side on expanded layout */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-2 sm:gap-4">
         {/* Activity check tile between navigation and details toggle */}
         <button
           onClick={() => setShowActivityCheckModal(true)}
