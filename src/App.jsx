@@ -9440,15 +9440,24 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                                     </div>
                                     {hasMixedInHour ? (
                                         <div className="flex flex-col items-end text-xs font-bold min-w-[92px]">
-                                            <span className="flex items-center gap-1 text-m3-primary whitespace-nowrap">
+                                            <span
+                                                className="flex items-center gap-1 text-m3-primary whitespace-nowrap"
+                                                aria-label={`${t.rain}: ${formatPrecip ? formatPrecip(forecast.rain) : forecast.rain.toFixed(1)} ${getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}`}
+                                            >
                                                 <CloudRain size={10}/>{formatPrecip ? formatPrecip(forecast.rain) : forecast.rain.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                                             </span>
-                                            <span className="flex items-center gap-1 text-m3-tertiary whitespace-nowrap">
+                                            <span
+                                                className="flex items-center gap-1 text-m3-tertiary whitespace-nowrap"
+                                                aria-label={`${t.snow}: ${formatPrecip ? formatPrecip(forecast.snow) : forecast.snow.toFixed(1)} ${getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}`}
+                                            >
                                                 <Snowflake size={10}/>{formatPrecip ? formatPrecip(forecast.snow) : forecast.snow.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                                             </span>
                                         </div>
                                     ) : (
-                                        <span className={`text-sm font-bold text-right min-w-[92px] whitespace-nowrap ${forecast.snow > 0.1 ? 'text-m3-tertiary' : 'text-m3-primary'}`}>
+                                        <span
+                                            className={`text-sm font-bold text-right min-w-[92px] whitespace-nowrap ${forecast.snow > 0.1 ? 'text-m3-tertiary' : 'text-m3-primary'}`}
+                                            aria-label={`${forecast.snow > 0.1 ? t.snow : t.rain}: ${formatPrecip ? formatPrecip(forecast.amount) : forecast.amount.toFixed(1)} ${getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}`}
+                                        >
                                             {formatPrecip ? formatPrecip(forecast.amount) : forecast.amount.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                                         </span>
                                     )}
