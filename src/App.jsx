@@ -16,8 +16,8 @@ const HEADER_HEIGHT = '100px';
 // Animation card height constant for fixed positioning and spacing calculations
 const ANIMATION_CARD_HEIGHT = '210px'; 
 
-// Navigation bar height constant for spacing calculations (82px actual rendered height + 8px spacing)
-const NAV_BAR_HEIGHT = '90px'; 
+// Navigation bar height constant for spacing calculations (matches Material 3 nav bar rendered height)
+const NAV_BAR_HEIGHT = '92px'; 
 
 // Gap between fixed elements for consistent spacing (8px – symmetric and tight between animation tile, navigation and content)
 const FIXED_ELEMENTS_GAP = '8px'; 
@@ -15270,7 +15270,7 @@ export default function WeatherApp() {
     if (isLandscape) {
       return {
         animationCardHeight: '100px',
-        navBarHeight: '56px',
+        navBarHeight: '70px',
         fixedElementsGap: '8px',
         fixedTopOffset: 'calc(env(safe-area-inset-top, 0px) + 12px)'
       };
@@ -15279,7 +15279,7 @@ export default function WeatherApp() {
       // Foldable innerscreens need a middle ground between phone and tablet card heights.
       return {
         animationCardHeight: '220px',
-        navBarHeight: '84px',
+        navBarHeight: '92px',
         fixedElementsGap: '9px',
         fixedTopOffset: 'calc(env(safe-area-inset-top, 0px) + 14px)'
       };
@@ -15287,7 +15287,7 @@ export default function WeatherApp() {
     if (isSmallScreen) {
       return {
         animationCardHeight: '180px',
-        navBarHeight: '70px',
+        navBarHeight: '84px',
         fixedElementsGap: '8px',
         fixedTopOffset: 'calc(env(safe-area-inset-top, 0px) + 12px)'
       };
@@ -15295,7 +15295,7 @@ export default function WeatherApp() {
     if (isTabletScreen) {
       return {
         animationCardHeight: '240px',
-        navBarHeight: '96px',
+        navBarHeight: '92px',
         fixedElementsGap: '10px',
         fixedTopOffset: 'calc(env(safe-area-inset-top, 0px) + 16px)'
       };
@@ -16198,27 +16198,61 @@ export default function WeatherApp() {
           </div>
         </div>
 
-        {/* Enhanced Tab Navigation - Fixed positioned below fixed animation card with gap, hidden in landscape when controls are hidden */}
+        {/* Material 3 Navigation Bar - Fixed positioned below animation card */}
         {!(isLandscape && hideControlsInLandscape) && (
         <div className={`fixed left-0 right-0 z-30 ${horizontalPagePaddingClass}`} style={{ top: `calc(${animationCardHeight} + ${fixedElementsGap} + ${fixedTopOffset})` }}>
           <div className={`${contentContainerMaxWidthClass} mx-auto`}>
-            <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl ${isLandscape ? 'p-1' : (isSmallScreen ? 'p-1.5' : 'p-2')} shadow-m3-2 border border-m3-outline-variant`}>
-          <div className={`grid ${isFoldableCompactScreen ? 'grid-cols-4' : 'grid-cols-7'} ${isSmallScreen ? 'gap-0.5' : 'gap-1'}`}>
-            {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'precipitation', label:t('precip'), icon: Droplets}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}, {id:'astronomy', label: lang === 'en' ? 'Astronomy' : 'Astronomie', icon: Star}].map(tab => (
-              <button 
-                key={tab.id} 
-                onClick={() => setActiveTab(tab.id)} 
-                className={`flex flex-col items-center justify-center ${isLandscape ? 'py-2 px-1' : (isSmallScreen ? 'py-2 px-0.5' : 'py-3 px-2')} rounded-m3-2xl ${isLandscape ? 'text-m3-label-small' : 'text-m3-label-medium'} font-medium transition-all ${
-                  activeTab === tab.id 
-                    ? 'bg-m3-primary text-m3-on-primary shadow-m3-2' 
-                    : (isRealNight ? 'text-m3-dark-on-surface-variant hover:bg-m3-dark-surface-container-high hover:text-m3-dark-on-surface' : 'text-m3-on-surface-variant hover:bg-m3-surface-container-high hover:text-m3-on-surface')
-                }`}
+            <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl shadow-m3-2 border border-m3-outline-variant overflow-hidden`}>
+              <div
+                className="nav-scroll flex justify-evenly overflow-x-auto"
+                style={{ scrollbarWidth: 'thin', msOverflowStyle: 'auto', padding: isLandscape ? '4px 4px' : (isSmallScreen ? '6px 4px' : '8px 4px') }}
               >
-                <tab.icon size={isLandscape ? 16 : (isSmallScreen ? 16 : 20)} className={isLandscape ? 'mb-0.5' : (isSmallScreen ? 'mb-0.5' : 'mb-1')} />
-                <span className={isLandscape ? 'text-[11px]' : (isSmallScreen ? 'text-[11px]' : 'text-[12px] sm:text-[11px]')}>{tab.label}</span>
-              </button>
-            ))}
-          </div>
+                {[
+                  {id:'overview',      label:t('overview'),   icon: List},
+                  {id:'longterm',      label:t('longterm'),   icon: CalendarDays},
+                  {id:'precipitation', label:t('precip'),     icon: Droplets},
+                  {id:'radar',         label:t('radar'),      icon: MapIcon},
+                  {id:'chart',         label:t('compare'),    icon: BarChart2},
+                  {id:'travel',        label:t('travel'),     icon: Plane},
+                  {id:'astronomy',     label: lang === 'en' ? 'Astronomy' : 'Astronomie', icon: Star}
+                ].map(tab => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className="flex flex-col items-center justify-center gap-1 transition-all"
+                      style={{ minWidth: isSmallScreen ? '40px' : '48px', padding: isLandscape ? '6px 4px' : (isSmallScreen ? '8px 4px' : '10px 4px') }}
+                    >
+                      {/* Active indicator pill behind icon */}
+                      <div className={`flex items-center justify-center rounded-full transition-all ${
+                        isLandscape ? 'w-12 h-7' : (isSmallScreen ? 'w-14 h-8' : 'w-16 h-8')
+                      } ${
+                        isActive
+                          ? (isRealNight ? 'bg-m3-dark-secondary-container' : 'bg-m3-secondary-container')
+                          : 'bg-transparent'
+                      }`}>
+                        <tab.icon
+                          size={isLandscape ? 16 : (isSmallScreen ? 18 : 20)}
+                          className={`transition-colors ${
+                            isActive
+                              ? (isRealNight ? 'text-m3-dark-on-secondary-container' : 'text-m3-on-secondary-container')
+                              : (isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant')
+                          }`}
+                        />
+                      </div>
+                      {/* Label */}
+                      <span className={`leading-none transition-colors ${
+                        isLandscape ? 'text-[10px]' : (isSmallScreen ? 'text-[10px]' : 'text-[11px]')
+                      } ${
+                        isActive
+                          ? (isRealNight ? 'text-m3-dark-on-surface font-semibold' : 'text-m3-on-surface font-semibold')
+                          : (isRealNight ? 'text-m3-dark-on-surface-variant font-medium' : 'text-m3-on-surface-variant font-medium')
+                      }`}>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
