@@ -10011,23 +10011,25 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                   );
                   return (
                     <div className="space-y-2 mb-2">
-                      {quickDays.length > 1 && (
-                        <div className="grid grid-cols-2 gap-2">
-                          {quickDays.map((day) => (
+                      <div className="grid grid-cols-2 gap-2">
+                        {[{ key: 'today', label: t.today }, { key: 'tomorrow', label: t.tomorrow }].map((tabDay) => {
+                          const isDisabled = tabDay.key === 'tomorrow' && quickDays.length <= 1;
+                          const isActive = !isDisabled && activeQuickDay === tabDay.key;
+                          return (
                             <button
-                              key={day.key}
-                              onClick={() => setActiveQuickDay(day.key)}
+                              key={tabDay.key}
+                              type="button"
+                              onClick={() => !isDisabled && setActiveQuickDay(tabDay.key)}
+                              disabled={isDisabled}
                               className={`rounded-lg px-3 py-2 text-base font-bold border transition-all duration-300 ${
-                                activeQuickDay === day.key
-                                  ? quickToggleActiveClass
-                                  : quickToggleInactiveClass
-                              }`}
+                                isActive ? quickToggleActiveClass : quickToggleInactiveClass
+                              } ${isDisabled ? 'opacity-60 cursor-not-allowed' : ''}`}
                             >
-                              {day.label}
+                              {tabDay.label}
                             </button>
-                          ))}
-                        </div>
-                      )}
+                          );
+                        })}
+                      </div>
 
                       <div
                         className={quickPanelClass}
