@@ -13164,8 +13164,10 @@ export default function WeatherApp() {
   const isCardDragging = useRef(false);
   const pendingLocChange = useRef(null);
   const swipeInScrollable = useRef(false);
+  const navBarRef = useRef(null);
   const [cardTransX, setCardTransX] = useState(0);
   const [cardTransition, setCardTransition] = useState('none');
+  const [measuredNavBarHeight, setMeasuredNavBarHeight] = useState(null);
 
   // Model info tooltip
   const [showModelTooltip, setShowModelTooltip] = useState(false);
@@ -15315,6 +15317,7 @@ export default function WeatherApp() {
   const navBarHeight = layoutDimensions.navBarHeight;
   const fixedElementsGap = layoutDimensions.fixedElementsGap;
   const fixedTopOffset = layoutDimensions.fixedTopOffset;
+  const effectiveNavBarHeight = measuredNavBarHeight ? `${measuredNavBarHeight}px` : navBarHeight;
   const isExpandedLayoutActive = !isLandscape && (isTabletScreen || isFoldableScreen);
   const contentContainerMaxWidthClass = isExpandedLayoutActive ? TABLET_CONTENT_MAX_WIDTH_CLASS : DEFAULT_CONTENT_MAX_WIDTH_CLASS;
   const horizontalPagePaddingClass = isSmallScreen ? 'px-2' : (isExpandedLayoutActive ? 'px-6' : 'px-4');
@@ -15326,6 +15329,32 @@ export default function WeatherApp() {
   const isFoldableInExpandedMode = isFoldableCompactScreen && isExpandedLayoutActive;
   const detailsStackSpacingClass = isSmallScreen ? 'space-y-2' : (isExpandedLayoutActive ? 'space-y-5' : 'space-y-4');
   const contentCardPaddingClass = isSmallScreen ? 'p-4' : (isExpandedLayoutActive ? 'p-8' : 'p-6');
+
+  useEffect(() => {
+    const measureNavBarHeight = () => {
+      if (!navBarRef.current) {
+        setMeasuredNavBarHeight(null);
+        return;
+      }
+      setMeasuredNavBarHeight(Math.ceil(navBarRef.current.getBoundingClientRect().height));
+    };
+
+    measureNavBarHeight();
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measureNavBarHeight);
+      return () => window.removeEventListener('resize', measureNavBarHeight);
+    }
+
+    const resizeObserver = new ResizeObserver(measureNavBarHeight);
+    resizeObserver.observe(navBarRef.current);
+    window.addEventListener('resize', measureNavBarHeight);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', measureNavBarHeight);
+    };
+  }, [activeTab, lang, isLandscape, isSmallScreen, isTabletScreen, isFoldableCompactScreen]);
 
   // Helper function to get animation card padding classes
   // Landscape mode takes precedence when both isLandscape and isSmallScreen are true
@@ -15982,7 +16011,7 @@ export default function WeatherApp() {
         </button>
       )}
 
-      <main className={`${contentContainerMaxWidthClass} mx-auto ${horizontalPagePaddingClass} z-10 relative ${detailsStackSpacingClass}`} style={{ paddingTop: `calc(${animationCardHeight} + ${navBarHeight} + 2 * ${fixedElementsGap} + ${fixedTopOffset})`, paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
+      <main className={`${contentContainerMaxWidthClass} mx-auto ${horizontalPagePaddingClass} z-10 relative ${detailsStackSpacingClass}`} style={{ paddingTop: `calc(${animationCardHeight} + ${effectiveNavBarHeight} + 2 * ${fixedElementsGap} + ${fixedTopOffset})`, paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
         {/* Fixed Animation Card Container - Matches main content width, extends to top edge */}
         <div className={`fixed left-0 right-0 z-20 ${horizontalPagePaddingClass}`} style={{ top: fixedTopOffset }}>
           <div className={`${contentContainerMaxWidthClass} mx-auto`}>
@@ -16202,7 +16231,7 @@ export default function WeatherApp() {
         {!(isLandscape && hideControlsInLandscape) && (
         <div className={`fixed left-0 right-0 z-30 ${horizontalPagePaddingClass}`} style={{ top: `calc(${animationCardHeight} + ${fixedElementsGap} + ${fixedTopOffset})` }}>
           <div className={`${contentContainerMaxWidthClass} mx-auto`}>
-            <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl ${isLandscape ? 'p-1' : (isSmallScreen ? 'p-1.5' : 'p-2')} shadow-m3-2 border border-m3-outline-variant`}>
+            <div ref={navBarRef} className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl ${isLandscape ? 'p-1' : (isSmallScreen ? 'p-1.5' : 'p-2')} shadow-m3-2 border border-m3-outline-variant`}>
           <div className={`grid ${isFoldableCompactScreen ? 'grid-cols-4' : 'grid-cols-7'} ${isSmallScreen ? 'gap-0.5' : 'gap-1'}`}>
             {[{id:'overview', label:t('overview'), icon: List}, {id:'longterm', label:t('longterm'), icon: CalendarDays}, {id:'precipitation', label:t('precip'), icon: Droplets}, {id:'radar', label:t('radar'), icon: MapIcon}, {id:'chart', label:t('compare'), icon: BarChart2}, {id:'travel', label:t('travel'), icon: Plane}, {id:'astronomy', label: lang === 'en' ? 'Astronomy' : 'Astronomie', icon: Star}].map(tab => (
               <button 
