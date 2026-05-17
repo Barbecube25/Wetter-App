@@ -9218,6 +9218,30 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
       isSnow,
       isMixed: isMixedPrecip,
   });
+  const precipProgressMessage = (() => {
+      if (!isNow || minutesRemainingCurrentPhase === null || minutesUntilEnd === null) return null;
+      if (minutesRemainingCurrentPhase <= 0 || minutesUntilEnd <= 0) return null;
+      if (minutesUntilEnd <= minutesRemainingCurrentPhase) return null;
+
+      const phaseText = formatMinutesDuration(minutesRemainingCurrentPhase, lang);
+      const endText = formatMinutesDuration(minutesUntilEnd, lang);
+
+      if (intensityTrend === 'weaker') {
+          return lang === 'en'
+              ? `Precipitation continues at this intensity for the next ${phaseText}, then gets lighter. It stops completely in ${endText}.`
+              : `Es regnet die nächsten ${phaseText} so weiter, danach wird es weniger. In ${endText} hört es ganz auf.`;
+      }
+
+      if (intensityTrend === 'stronger') {
+          return lang === 'en'
+              ? `Precipitation continues at this intensity for the next ${phaseText}, then gets stronger. It stops completely in ${endText}.`
+              : `Es regnet die nächsten ${phaseText} so weiter, danach wird es stärker. In ${endText} hört es ganz auf.`;
+      }
+
+      return lang === 'en'
+          ? `Precipitation continues for the next ${phaseText}. It stops completely in ${endText}.`
+          : `Es regnet die nächsten ${phaseText} weiter. In ${endText} hört es ganz auf.`;
+  })();
 
   return (
     <div className={`${bgClass} border ${isMixedPrecip ? 'border-m3-tertiary' : (isSnow ? 'border-m3-secondary' : 'border-m3-primary')} rounded-2xl p-4 shadow-sm mb-4 relative overflow-hidden`}>
@@ -9303,6 +9327,15 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                         : <ArrowDown size={18} className="text-m3-primary mt-0.5" />}
                     <span className="text-m3-label-large font-bold text-m3-on-surface">
                         {trendMessage}
+                    </span>
+                </div>
+            )}
+
+            {isNow && precipProgressMessage && (
+                <div className="flex items-start gap-2 bg-m3-surface-container-high rounded-xl p-3">
+                    <CloudDrizzle size={18} className="text-m3-primary mt-0.5" />
+                    <span className="text-m3-label-large font-bold text-m3-on-surface">
+                        {precipProgressMessage}
                     </span>
                 </div>
             )}
