@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts';
 import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Clock3, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, ArrowUp, ArrowDown, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Eye, Activity, Leaf } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
@@ -15330,22 +15330,41 @@ export default function WeatherApp() {
   const detailsStackSpacingClass = isSmallScreen ? 'space-y-2' : (isExpandedLayoutActive ? 'space-y-5' : 'space-y-4');
   const contentCardPaddingClass = isSmallScreen ? 'p-4' : (isExpandedLayoutActive ? 'p-8' : 'p-6');
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const navBarNode = navBarRef.current;
     if (!navBarNode) {
       setMeasuredNavBarHeight(null);
       return undefined;
     }
 
-    const measureNavBarHeight = () => {
+    let frameId = null;
+    const updateMeasuredNavBarHeight = () => {
       setMeasuredNavBarHeight(Math.ceil(navBarNode.getBoundingClientRect().height));
     };
+    const measureNavBarHeight = () => {
+      if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
+        updateMeasuredNavBarHeight();
+        return;
+      }
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        updateMeasuredNavBarHeight();
+      });
+    };
 
-    measureNavBarHeight();
+    updateMeasuredNavBarHeight();
 
     if (typeof ResizeObserver === 'undefined') {
       window.addEventListener('resize', measureNavBarHeight);
-      return () => window.removeEventListener('resize', measureNavBarHeight);
+      return () => {
+        window.removeEventListener('resize', measureNavBarHeight);
+        if (frameId !== null) {
+          window.cancelAnimationFrame(frameId);
+        }
+      };
     }
 
     const resizeObserver = new ResizeObserver(measureNavBarHeight);
@@ -15353,6 +15372,9 @@ export default function WeatherApp() {
 
     return () => {
       resizeObserver.disconnect();
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
     };
   }, [isLandscape, hideControlsInLandscape]);
 
