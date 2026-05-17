@@ -16734,19 +16734,22 @@ export default function WeatherApp() {
                             
                              <div className="min-h-[16px] flex items-center justify-end min-w-[72px]">
                                 {parseFloat(day.rain) > 0.1 && parseFloat(day.snow) > 0.1 ? (
-                                  // Mixed precipitation - show both
                                   <div className="flex flex-col items-end gap-0.5">
                                     <span className="text-blue-400 font-bold text-xs flex items-center gap-1 whitespace-nowrap"><CloudRain size={10}/> {formatPrecip(day.rain)}{getPrecipUnitLabel()}</span>
                                     <span className="text-cyan-400 font-bold text-xs flex items-center gap-1 whitespace-nowrap"><Snowflake size={10}/> {formatPrecip(day.snow)}{getPrecipUnitLabel()}</span>
                                   </div>
                                 ) : isDaySnow ? (
                                   parseFloat(day.snow) > 0 || parseFloat(day.rain) > 0.1 ? (
-                                    <span className="text-cyan-400 font-bold text-xs flex items-center gap-1 whitespace-nowrap"><Snowflake size={12}/> {formatPrecip(parseFloat(day.snow) > 0 ? parseFloat(day.snow) : (parseFloat(day.rain) / 10))}{getPrecipUnitLabel()}</span>
-                                 ) : ( <span className="opacity-20 text-xs">-</span> )
-                               ) : parseFloat(day.rain) > 0.1 ? (
-                                  <span className="text-blue-400 font-bold text-xs flex items-center gap-1 whitespace-nowrap"><Droplets size={12}/> {formatPrecip(day.rain)}{getPrecipUnitLabel()}</span>
-                               ) : ( <span className="opacity-20 text-xs">-</span> )}
-                            </div>
+                                    <div className="flex flex-col items-end gap-0.5">
+                                      <span className="text-cyan-400 font-bold text-xs flex items-center gap-1 whitespace-nowrap"><Snowflake size={12}/> {formatPrecip(parseFloat(day.snow) > 0 ? parseFloat(day.snow) : (parseFloat(day.rain) / 10))}{getPrecipUnitLabel()}</span>
+                                    </div>
+                                  ) : ( <div className="flex flex-col items-end gap-0.5"><span className="opacity-20 text-xs">-</span></div> )
+                                ) : parseFloat(day.rain) > 0.1 ? (
+                                  <div className="flex flex-col items-end gap-0.5">
+                                    <span className="text-blue-400 font-bold text-xs flex items-center gap-1 whitespace-nowrap"><Droplets size={12}/> {formatPrecip(day.rain)}{getPrecipUnitLabel()}</span>
+                                  </div>
+                                ) : ( <div className="flex flex-col items-end gap-0.5"><span className="opacity-20 text-xs">-</span></div> )}
+                             </div>
                             {/* Wind */}
                             <div className="flex items-center justify-end min-w-[76px]">
                                 <div className="flex items-center justify-end gap-1">
