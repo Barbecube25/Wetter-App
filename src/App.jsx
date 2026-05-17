@@ -15346,13 +15346,15 @@ export default function WeatherApp() {
       return () => window.removeEventListener('resize', measureNavBarHeight);
     }
 
+    if (!navBarRef.current) {
+      return undefined;
+    }
+
     const resizeObserver = new ResizeObserver(measureNavBarHeight);
     resizeObserver.observe(navBarRef.current);
-    window.addEventListener('resize', measureNavBarHeight);
 
     return () => {
       resizeObserver.disconnect();
-      window.removeEventListener('resize', measureNavBarHeight);
     };
   }, [activeTab, lang, isLandscape, isSmallScreen, isTabletScreen, isFoldableCompactScreen]);
 
