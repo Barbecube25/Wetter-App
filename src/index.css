@@ -90,3 +90,8 @@ textarea {
 .dark .text-m3-on-tertiary-container {
   color: #FFD8E4;
 }
+
+/* Hide scrollbar for navigation bar on WebKit browsers */
+.nav-scroll::-webkit-scrollbar {
+  display: none;
+}
