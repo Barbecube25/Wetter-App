@@ -15331,12 +15331,14 @@ export default function WeatherApp() {
   const contentCardPaddingClass = isSmallScreen ? 'p-4' : (isExpandedLayoutActive ? 'p-8' : 'p-6');
 
   useEffect(() => {
+    const navBarNode = navBarRef.current;
+    if (!navBarNode) {
+      setMeasuredNavBarHeight(null);
+      return undefined;
+    }
+
     const measureNavBarHeight = () => {
-      if (!navBarRef.current) {
-        setMeasuredNavBarHeight(null);
-        return;
-      }
-      setMeasuredNavBarHeight(Math.ceil(navBarRef.current.getBoundingClientRect().height));
+      setMeasuredNavBarHeight(Math.ceil(navBarNode.getBoundingClientRect().height));
     };
 
     measureNavBarHeight();
@@ -15346,17 +15348,13 @@ export default function WeatherApp() {
       return () => window.removeEventListener('resize', measureNavBarHeight);
     }
 
-    if (!navBarRef.current) {
-      return undefined;
-    }
-
     const resizeObserver = new ResizeObserver(measureNavBarHeight);
-    resizeObserver.observe(navBarRef.current);
+    resizeObserver.observe(navBarNode);
 
     return () => {
       resizeObserver.disconnect();
     };
-  }, [activeTab, lang, isLandscape, isSmallScreen, isTabletScreen, isFoldableCompactScreen]);
+  }, [isLandscape, hideControlsInLandscape]);
 
   // Helper function to get animation card padding classes
   // Landscape mode takes precedence when both isLandscape and isSmallScreen are true
