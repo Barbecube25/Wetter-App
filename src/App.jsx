@@ -16713,45 +16713,48 @@ export default function WeatherApp() {
                        if (day.prob >= 50) probColor = "text-blue-600 font-bold"; else if (day.prob >= 20) probColor = "text-blue-400 font-medium";
 
                        return (
-                         <div key={i} className={`grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2 ${isRealNight ? 'bg-m3-dark-surface-container/80' : 'bg-m3-surface-container/80'} backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl px-3 py-2 w-full shadow-m3-1 hover:shadow-m3-2 transition-all relative group`}>
-                           {/* Day & Date */}
-                           <div className="flex flex-col min-w-0">
-                             <div className="text-sm font-bold text-m3-on-surface truncate">{day.dayName}</div>
-                             <div className="text-xs font-medium text-m3-on-surface-variant truncate">{day.dateShort}</div>
-                           </div>
+                          <div key={i} className={`grid grid-cols-[auto_auto_1fr_auto_auto] items-center gap-2 ${isRealNight ? 'bg-m3-dark-surface-container/80' : 'bg-m3-surface-container/80'} backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl px-3 py-2 w-full shadow-m3-1 hover:shadow-m3-2 transition-all`}>
+                            {/* Day & Date */}
+                            <div className="flex flex-col min-w-[64px]">
+                              <div className="text-sm font-bold text-m3-on-surface leading-tight truncate">{day.dayName}</div>
+                              <div className="text-xs font-medium text-m3-on-surface-variant leading-tight truncate">{day.dateShort}</div>
+                            </div>
                            
                            {/* Icon */}
                            <DayIcon size={24} className="text-m3-on-surface" />
                            
                            {/* Temp Range */}
-                           <div className="flex items-center gap-1">
-                             <span className="text-sm font-bold text-blue-400">{formatTemp(day.min)}{getTempUnitSymbol()}</span>
-                             <div className="h-1 w-4 bg-white/10 rounded-full overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
+                            <div className="flex items-center gap-1 min-w-0">
+                              <span className="text-sm font-bold text-blue-400 whitespace-nowrap">{formatTemp(day.min)}{getTempUnitSymbol()}</span>
+                              <div className="h-1 w-4 bg-white/10 rounded-full overflow-hidden">
+                                 <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
+                              </div>
+                              <span className="text-sm font-bold text-red-400 whitespace-nowrap">{formatTemp(day.max)}{getTempUnitSymbol()}</span>
+                           </div>
+                            
+                             <div className="min-h-[16px] flex items-center justify-end min-w-[72px]">
+                                {parseFloat(day.rain) > 0.1 && parseFloat(day.snow) > 0.1 ? (
+                                  <div className="flex flex-col items-end gap-0.5">
+                                    <span className="text-blue-400 font-bold text-xs flex items-center gap-1 whitespace-nowrap"><CloudRain size={10}/> {formatPrecip(day.rain)}{getPrecipUnitLabel()}</span>
+                                    <span className="text-cyan-400 font-bold text-xs flex items-center gap-1 whitespace-nowrap"><Snowflake size={10}/> {formatPrecip(day.snow)}{getPrecipUnitLabel()}</span>
+                                  </div>
+                                ) : isDaySnow ? (
+                                  parseFloat(day.snow) > 0 || parseFloat(day.rain) > 0.1 ? (
+                                    <div className="flex flex-col items-end gap-0.5">
+                                      <span className="text-cyan-400 font-bold text-xs flex items-center gap-1 whitespace-nowrap"><Snowflake size={12}/> {formatPrecip(parseFloat(day.snow) > 0 ? parseFloat(day.snow) : (parseFloat(day.rain) / 10))}{getPrecipUnitLabel()}</span>
+                                    </div>
+                                  ) : ( <div className="flex flex-col items-end gap-0.5"><span className="opacity-20 text-xs">-</span></div> )
+                                ) : parseFloat(day.rain) > 0.1 ? (
+                                  <div className="flex flex-col items-end gap-0.5">
+                                    <span className="text-blue-400 font-bold text-xs flex items-center gap-1 whitespace-nowrap"><Droplets size={12}/> {formatPrecip(day.rain)}{getPrecipUnitLabel()}</span>
+                                  </div>
+                                ) : ( <div className="flex flex-col items-end gap-0.5"><span className="opacity-20 text-xs">-</span></div> )}
                              </div>
-                             <span className="text-sm font-bold text-red-400">{formatTemp(day.max)}{getTempUnitSymbol()}</span>
-                          </div>
-                           
-                            <div className="min-h-[16px] flex items-center justify-end min-w-[72px]">
-                               {parseFloat(day.rain) > 0.1 && parseFloat(day.snow) > 0.1 ? (
-                                 // Mixed precipitation - show both
-                                 <>
-                                   <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><CloudRain size={10}/> {formatPrecip(day.rain)}{getPrecipUnitLabel()}</span>
-                                   <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={10}/> {formatPrecip(day.snow)}{getPrecipUnitLabel()}</span>
-                                 </>
-                               ) : isDaySnow ? (
-                                 parseFloat(day.snow) > 0 || parseFloat(day.rain) > 0.1 ? (
-                                   <span className="text-cyan-400 font-bold text-xs flex items-center gap-1"><Snowflake size={12}/> {formatPrecip(parseFloat(day.snow) > 0 ? parseFloat(day.snow) : (parseFloat(day.rain) / 10))}{getPrecipUnitLabel()}</span>
-                                 ) : ( <span className="opacity-20 text-xs">-</span> )
-                               ) : parseFloat(day.rain) > 0.1 ? (
-                                 <span className="text-blue-400 font-bold text-xs flex items-center gap-1"><Droplets size={12}/> {formatPrecip(day.rain)}{getPrecipUnitLabel()}</span>
-                               ) : ( <span className="opacity-20 text-xs">-</span> )}
-                            </div>
                             {/* Wind */}
                             <div className="flex items-center justify-end min-w-[76px]">
                                 <div className="flex items-center justify-end gap-1">
                                    <Navigation size={12} style={{ transform: `rotate(${day.dir}deg)` }} />
-                                   <span className={`text-xs font-bold ${getWindColorClass(day.wind, isRealNight)}`}>{formatWind(day.wind)} {getWindUnitLabel()}</span>
+                                    <span className={`text-xs font-bold whitespace-nowrap ${getWindColorClass(day.wind, isRealNight)}`}>{formatWind(day.wind)} {getWindUnitLabel()}</span>
                                 </div>
                             </div>
                              
