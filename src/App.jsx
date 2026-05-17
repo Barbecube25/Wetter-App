@@ -328,6 +328,30 @@ const formatMinutesDuration = (totalMinutes, lang) => {
   return `${hours} ${hourLabel} ${remainingMinutes} ${minuteLabel}`;
 };
 
+const getPrecipIntensityLevel = (rate) => {
+  const numericRate = Number(rate) || 0;
+  if (numericRate < LIGHT_PRECIP_THRESHOLD) return 'none';
+  if (numericRate < STRONG_PRECIP_THRESHOLD) return 'light';
+  if (numericRate < 1) return 'moderate';
+  if (numericRate < 4) return 'heavy';
+  return 'very_heavy';
+};
+
+const getPrecipIntensityRank = (level) => {
+  switch (level) {
+    case 'light':
+      return 1;
+    case 'moderate':
+      return 2;
+    case 'heavy':
+      return 3;
+    case 'very_heavy':
+      return 4;
+    default:
+      return 0;
+  }
+};
+
 const extractLocalRadarPrecipitation = (grid) => {
   if (!Array.isArray(grid) || grid.length === 0 || !Array.isArray(grid[0]) || grid[0].length === 0) return 0;
 
@@ -8594,14 +8618,20 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
         maxIntensity: 0,
         minutelyStart: null,
         currentIntensity: 0,
-        peakTime: null,
-         hourlyForecast: [], // Array of {time, amount, rain, snow} for next hours
-         nowcastSourceLabel: nowcastData?.label || null,
-         nowcastSourceType: nowcastData?.kind || null,
-         modelConflict: null,
-         minutesUntilStart: null,
-         minutesUntilEnd: null
-    };
+         peakTime: null,
+          hourlyForecast: [], // Array of {time, amount, rain, snow} for next hours
+          nowcastSourceLabel: nowcastData?.label || null,
+          nowcastSourceType: nowcastData?.kind || null,
+          modelConflict: null,
+          minutesUntilStart: null,
+          minutesUntilEnd: null,
+          currentPhaseLevel: null,
+          currentPhaseEnd: null,
+          intensityTrend: null,
+          intensityTrendTime: null,
+          minutesUntilTrend: null,
+          minutesRemainingCurrentPhase: null
+     };
 
     let minutelyNowcast = null;
 
@@ -8617,6 +8647,10 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
         let minutelyEventStart = null;
         let minutelyEventEnd = null;
         let minutelySlots = 0;
+        let currentPhaseLevel = null;
+        let currentPhaseEnd = null;
+        let intensityTrend = null;
+        let intensityTrendTime = null;
         // Track only the first continuous nowcast precipitation event (current/next event),
         // so "Ends in" reflects when the ongoing/next rain stops, not later separate showers.
         let minutelyEventClosed = false;
@@ -8642,6 +8676,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                 const slotStartMs = slotStartTimesMs[i];
                 const slotEndMs = slotStartMs + nowcastSlotDurationMs;
                 const slotHasPrecip = slotPrecip > LIGHT_PRECIP_THRESHOLD;
+                const slotLevel = getPrecipIntensityLevel(slotRate);
                 // After the first continuous event has ended, stop extending timing/peak with later isolated events.
                 if (minutelyEventClosed) continue;
                 if (!result.minutelyStart && slotHasPrecip) {
@@ -8665,6 +8700,25 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                 } else if (minutelyEventStart) {
                   minutelyEventClosed = true;
                 }
+
+                if (slotHasPrecip && slotStartMs <= nowMs && slotEndMs > nowMs) {
+                  currentPhaseLevel = slotLevel;
+                  currentPhaseEnd = new Date(slotEndMs);
+                } else if (currentPhaseLevel && !intensityTrendTime) {
+                  if (!slotHasPrecip) {
+                    currentPhaseEnd = new Date(slotStartMs);
+                  } else {
+                    const currentPhaseRank = getPrecipIntensityRank(currentPhaseLevel);
+                    const slotRank = getPrecipIntensityRank(slotLevel);
+                    if (slotRank === currentPhaseRank) {
+                      currentPhaseEnd = new Date(slotEndMs);
+                    } else {
+                      intensityTrend = slotRank > currentPhaseRank ? 'stronger' : 'weaker';
+                      intensityTrendTime = new Date(slotStartMs);
+                      currentPhaseEnd = new Date(slotStartMs);
+                    }
+                  }
+                }
             }
         }
         result.strongStart = strongMinutelyStart;
@@ -8676,6 +8730,10 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
           peakTime: minutelyPeakTime,
           durationHours: minutelySlots > 0 ? (Math.round((minutelySlots * nowcastIntervalMinutes * 100) / 60) / 100) : 0
         };
+        result.currentPhaseLevel = currentPhaseLevel;
+        result.currentPhaseEnd = currentPhaseEnd;
+        result.intensityTrend = intensityTrend;
+        result.intensityTrendTime = intensityTrendTime;
     }
 
     // Calculate total precipitation for next 24 hours (for display on tile)
@@ -8874,13 +8932,15 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
     };
     result.minutesUntilStart = toMinutes(result.startTime);
     result.minutesUntilEnd = toMinutes(result.endTime);
+    result.minutesUntilTrend = toMinutes(result.intensityTrendTime);
+    result.minutesRemainingCurrentPhase = toMinutes(result.currentPhaseEnd);
     
     return result;
   }, [data, radarNowcast, currentData]);
 
   if (!analysis) return null;
 
-  const { type, startTime, endTime, duration, amount, rainAmount, snowAmount, isSnow, isMixed, strongStart, strongEnd, strongEndIsEstimate, maxIntensity, minutelyStart, currentIntensity, peakTime, hourlyForecast, nowcastSourceLabel, nowcastSourceType, modelConflict, minutesUntilStart, minutesUntilEnd } = analysis;
+  const { type, startTime, endTime, duration, amount, rainAmount, snowAmount, isSnow, isMixed, strongStart, strongEnd, strongEndIsEstimate, maxIntensity, minutelyStart, currentIntensity, peakTime, hourlyForecast, nowcastSourceLabel, nowcastSourceType, modelConflict, minutesUntilStart, minutesUntilEnd, currentPhaseLevel, currentPhaseEnd, intensityTrend, minutesUntilTrend, minutesRemainingCurrentPhase } = analysis;
   const isRain = type.includes('rain');
   const isNow = type.includes('now');
   const isMixedPrecip = type.includes('mixed');
@@ -9054,6 +9114,31 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
   };
 
   const intensity = getIntensityInfo(maxIntensity);
+  const getCurrentPhaseLabel = (level) => {
+      const precipitationWord = isMixedPrecip ? (lang === 'en' ? 'precipitation' : 'Niederschlag') : (isSnow ? (lang === 'en' ? 'snow' : 'Schnee') : (lang === 'en' ? 'rain' : 'Regen'));
+      switch (level) {
+          case 'light':
+              return lang === 'en' ? `Light ${precipitationWord}` : `Leichter ${precipitationWord}`;
+          case 'moderate':
+              return lang === 'en' ? `Moderate ${precipitationWord}` : `Mäßiger ${precipitationWord}`;
+          case 'heavy':
+              return lang === 'en' ? `Heavy ${precipitationWord}` : `Starker ${precipitationWord}`;
+          case 'very_heavy':
+              return lang === 'en' ? `Very heavy ${precipitationWord}` : `Sehr starker ${precipitationWord}`;
+          default:
+              return isMixedPrecip ? (lang === 'en' ? 'Precipitation' : 'Niederschlag') : (isSnow ? t.snow : t.rain);
+      }
+  };
+  const currentPhaseLabel = getCurrentPhaseLabel(currentPhaseLevel);
+  const trendMessage = intensityTrend && minutesUntilTrend !== null && minutesUntilTrend > 0
+      ? (intensityTrend === 'stronger'
+          ? (lang === 'en'
+              ? `${isMixedPrecip ? 'Precipitation' : (isSnow ? 'Snow' : 'Rain')} gets stronger in ${formatMinutesDuration(minutesUntilTrend, lang)}.`
+              : `${isMixedPrecip ? 'Der Niederschlag' : (isSnow ? 'Der Schneefall' : 'Der Regen')} wird in ${formatMinutesDuration(minutesUntilTrend, lang)} stärker.`)
+          : (lang === 'en'
+              ? `${isMixedPrecip ? 'Precipitation' : (isSnow ? 'Snow' : 'Rain')} gets lighter in ${formatMinutesDuration(minutesUntilTrend, lang)}.`
+              : `${isMixedPrecip ? 'Der Niederschlag' : (isSnow ? 'Der Schneefall' : 'Der Regen')} wird in ${formatMinutesDuration(minutesUntilTrend, lang)} schwächer.`))
+      : null;
 
   return (
     <div className={`${bgClass} border ${isMixedPrecip ? 'border-m3-tertiary' : (isSnow ? 'border-m3-secondary' : 'border-m3-primary')} rounded-2xl p-4 shadow-sm mb-4 relative overflow-hidden`}>
@@ -9117,6 +9202,29 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                         <span className="text-m3-label-large font-bold text-m3-on-surface">{t.currentIntensity}</span>
                     </div>
                     <span className="text-m3-body-large font-bold text-m3-on-surface">{formatPrecip ? formatPrecip(currentIntensity) : currentIntensity.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}/h</span>
+                </div>
+            )}
+
+            {isNow && currentPhaseEnd && minutesRemainingCurrentPhase !== null && minutesRemainingCurrentPhase > 0 && (
+                <div className="flex items-center justify-between bg-m3-surface-container/50 rounded-xl p-3">
+                    <div className="flex items-center gap-2">
+                        <Timer size={18} className="text-m3-primary" />
+                        <span className="text-m3-label-large font-bold text-m3-on-surface">
+                            {lang === 'en' ? `${currentPhaseLabel} for` : `${currentPhaseLabel} noch`}
+                        </span>
+                    </div>
+                    <span className="text-m3-body-large font-bold text-m3-on-surface">{formatMinutesDuration(minutesRemainingCurrentPhase, lang)}</span>
+                </div>
+            )}
+
+            {isNow && trendMessage && (
+                <div className="flex items-start gap-2 bg-m3-surface-container-high rounded-m3-xl p-3">
+                    {intensityTrend === 'stronger'
+                        ? <ArrowUp size={18} className="text-m3-primary mt-0.5" />
+                        : <ArrowDown size={18} className="text-m3-primary mt-0.5" />}
+                    <span className="text-m3-label-large font-bold text-m3-on-surface">
+                        {trendMessage}
+                    </span>
                 </div>
             )}
 
