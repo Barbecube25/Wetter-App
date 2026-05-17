@@ -16204,8 +16204,8 @@ export default function WeatherApp() {
           <div className={`${contentContainerMaxWidthClass} mx-auto`}>
             <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-m3-surface-container'} rounded-m3-3xl shadow-m3-2 border border-m3-outline-variant overflow-hidden`}>
               <div
-                className="nav-scroll flex overflow-x-auto"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', padding: isLandscape ? '4px 4px' : (isSmallScreen ? '6px 4px' : '8px 4px') }}
+                className="nav-scroll flex justify-evenly overflow-x-auto"
+                style={{ scrollbarWidth: 'thin', msOverflowStyle: 'auto', padding: isLandscape ? '4px 4px' : (isSmallScreen ? '6px 4px' : '8px 4px') }}
               >
                 {[
                   {id:'overview',      label:t('overview'),   icon: List},
@@ -16221,8 +16221,8 @@ export default function WeatherApp() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className="flex flex-col items-center justify-center flex-1 gap-1 transition-all"
-                      style={{ minWidth: isSmallScreen ? '52px' : '60px', padding: isLandscape ? '6px 4px' : (isSmallScreen ? '8px 4px' : '10px 4px') }}
+                      className="flex flex-col items-center justify-center gap-1 transition-all"
+                      style={{ minWidth: isSmallScreen ? '40px' : '48px', padding: isLandscape ? '6px 4px' : (isSmallScreen ? '8px 4px' : '10px 4px') }}
                     >
                       {/* Active indicator pill behind icon */}
                       <div className={`flex items-center justify-center rounded-full transition-all ${

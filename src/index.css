@@ -91,7 +91,14 @@ textarea {
   color: #FFD8E4;
 }
 
-/* Hide scrollbar for navigation bar on WebKit browsers */
+/* Hide scrollbar for navigation bar on WebKit browsers when not needed */
 .nav-scroll::-webkit-scrollbar {
-  display: none;
+  height: 2px;
+}
+.nav-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.nav-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 2px;
 }
