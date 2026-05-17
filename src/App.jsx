@@ -9724,7 +9724,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                   <div className="flex items-center gap-3">
                      <div className="shrink-0">{icon}</div>
                      <div>
-                       <div className="font-extrabold uppercase text-[10px] tracking-wider opacity-80">{t.officialWarning}</div>
+                       <div className="font-extrabold uppercase text-[13px] tracking-wider opacity-80">{t.officialWarning}</div>
                        <div className="font-bold leading-tight text-sm">{dwdWarnings.length} {t.activeWarnings}</div>
                      </div>
                   </div>
@@ -9733,7 +9733,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                 {expanded && (
                    <div className="mt-3 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
                       {dwdWarnings.map((alert, i) => <DwdAlertItem key={i} alert={alert} lang={lang} />)}
-                      <div className="text-[10px] text-center opacity-50 pt-1">Quelle: DWD via Brightsky</div>
+                      <div className="text-[13px] text-center opacity-50 pt-1">Quelle: DWD via Brightsky</div>
                    </div>
                 )}
               </div>
@@ -10568,7 +10568,7 @@ const PollenDetailsModal = ({ isOpen, onClose, airQualityData, lang='de', isSmal
                     return (
                       <div key={i} className="flex flex-col items-center gap-0.5">
                         <div className={`w-2.5 h-2.5 rounded-full ${dot}`} />
-                        <span className={`text-[10px] font-semibold ${textColor} leading-tight text-center`}>{lvlLabel}</span>
+                        <span className={`text-[13px] font-semibold ${textColor} leading-tight text-center`}>{lvlLabel}</span>
                       </div>
                     );
                   })}
@@ -10933,11 +10933,11 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
                     onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setSelectedAdvice({ ...h.advice, displayTime: h.displayTime })}
                     aria-label={`${h.displayTime} – ${h.advice.text}`}
                   >
-                    <span className={`text-[10px] font-semibold leading-none ${isNow ? 'text-yellow-500' : (isRealNight ? 'text-slate-400' : 'text-slate-500')}`}>
+                    <span className={`text-[13px] font-semibold leading-none ${isNow ? 'text-yellow-500' : (isRealNight ? 'text-slate-400' : 'text-slate-500')}`}>
                       {String(h.hour).padStart(2, '0')}
                     </span>
                     <span className="text-sm leading-none mt-0.5">{h.advice.emoji}</span>
-                    <span className={`text-[9px] ${isRealNight ? 'text-slate-400' : 'text-slate-500'} leading-none mt-0.5`}>{h.temp}°</span>
+                    <span className={`text-[12px] ${isRealNight ? 'text-slate-400' : 'text-slate-500'} leading-none mt-0.5`}>{h.temp}°</span>
                   </div>
                 );
               })}
@@ -11534,11 +11534,11 @@ const MoonPhaseModal = ({ isOpen, onClose, date, lang = 'de', isSmallScreen = fa
                       : ''
                   }`}
                 >
-                  <span className={`text-[10px] font-medium ${isToday ? (isRealNight ? 'text-indigo-300' : 'text-indigo-600') : nightSubText}`}>
+                  <span className={`text-[13px] font-medium ${isToday ? (isRealNight ? 'text-indigo-300' : 'text-indigo-600') : nightSubText}`}>
                     {d.toLocaleDateString(locale, { weekday: 'narrow' })}
                   </span>
                   <span className="text-base leading-none">{MOON_PHASE_EMOJIS[p]}</span>
-                  <span className={`text-[9px] ${nightSubText}`}>{ill}%</span>
+                  <span className={`text-[12px] ${nightSubText}`}>{ill}%</span>
                 </div>
               ))}
             </div>
@@ -11767,7 +11767,7 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
                                     >
                                         <div>
                                             <div className="font-bold text-slate-700 text-sm">{res.name}</div>
-                                            <div className="text-[10px] text-slate-400">{res.admin1}, {res.country}</div>
+                                            <div className="text-[13px] text-slate-400">{res.admin1}, {res.country}</div>
                                         </div>
                                         <Plus size={16} className="text-blue-400 group-hover:text-blue-600"/>
                                     </button>
@@ -11808,7 +11808,7 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
                                          ) : (
                                              <button onClick={() => { onSelectLocation(homeLoc); onClose(); }} className="text-left w-full">
                                                  <div className="font-bold text-slate-700 text-sm truncate">{homeLoc.name}</div>
-                                                 <div className="text-[10px] text-slate-400">{t.homeLoc}</div>
+                                                 <div className="text-[13px] text-slate-400">{t.homeLoc}</div>
                                              </button>
                                          )}
                                      </div>
@@ -11848,7 +11848,7 @@ const LocationModal = ({ isOpen, onClose, savedLocations, onSelectLocation, onAd
                                              ) : (
                                                  <button onClick={() => { onSelectLocation(loc); onClose(); }} className="text-left w-full">
                                                     <div className="font-bold text-slate-700 text-sm truncate">{loc.name}</div>
-                                                    <div className="text-[10px] text-slate-400">Lat: {loc.lat.toFixed(2)}</div>
+                                                    <div className="text-[13px] text-slate-400">Lat: {loc.lat.toFixed(2)}</div>
                                                  </button>
                                              )}
                                         </div>
@@ -12924,15 +12924,15 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
             <div className="flex items-center gap-2 bg-m3-tertiary-container/40 px-2 py-2 rounded-xl w-full">
                 <span className="text-xl flex-shrink-0">🔮</span>
                 <div className="min-w-0">
-                  <div className="font-semibold text-m3-on-tertiary-container text-[10px] leading-tight">{t('tripTooFarFuture')}</div>
-                  <div className="text-[9px] text-m3-on-tertiary-container/60">{t('tripTooFarFutureHint')}</div>
+                  <div className="font-semibold text-m3-on-tertiary-container text-[13px] leading-tight">{t('tripTooFarFuture')}</div>
+                  <div className="text-[12px] text-m3-on-tertiary-container/60">{t('tripTooFarFutureHint')}</div>
                 </div>
             </div>
         );
     }
 
     if (loading) return <div className="w-full h-10 rounded-xl bg-m3-surface-container animate-pulse"></div>;
-    if (!weather) return <div className="text-[10px] text-m3-on-surface-variant">--</div>;
+    if (!weather) return <div className="text-[13px] text-m3-on-surface-variant">--</div>;
 
     const conf = getWeatherConfig(weather.code, 1, lang);
     const Icon = conf.icon;
@@ -12943,10 +12943,10 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
               <div className="flex items-baseline gap-1.5">
                 <span className="font-bold text-m3-on-surface text-sm">{formatTemp(weather.max)}{getTempUnitSymbol()}</span>
                 {weather.min !== null && weather.min !== undefined && (
-                  <span className="text-[10px] text-m3-on-surface-variant">{formatTemp(weather.min)}{getTempUnitSymbol()}</span>
+                  <span className="text-[13px] text-m3-on-surface-variant">{formatTemp(weather.min)}{getTempUnitSymbol()}</span>
                 )}
               </div>
-              <div className="text-[10px] text-m3-on-surface-variant truncate leading-tight">{conf.text}</div>
+              <div className="text-[13px] text-m3-on-surface-variant truncate leading-tight">{conf.text}</div>
             </div>
         </div>
     );
@@ -16212,7 +16212,7 @@ export default function WeatherApp() {
                 }`}
               >
                 <tab.icon size={isLandscape ? 16 : (isSmallScreen ? 16 : 20)} className={isLandscape ? 'mb-0.5' : (isSmallScreen ? 'mb-0.5' : 'mb-1')} />
-                <span className={isLandscape ? 'text-[9px]' : (isSmallScreen ? 'text-[9px]' : 'text-[10px] sm:text-xs')}>{tab.label}</span>
+                <span className={isLandscape ? 'text-[12px]' : (isSmallScreen ? 'text-[12px]' : 'text-[13px] sm:text-xs')}>{tab.label}</span>
               </button>
             ))}
           </div>
@@ -16373,7 +16373,7 @@ export default function WeatherApp() {
             <div 
               className={`bg-m3-tertiary-container rounded-m3-xl border border-m3-tertiary shadow-m3-1 relative overflow-hidden flex flex-col justify-center ${isFoldableInExpandedMode ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2'}`}
             >
-              <div className={`flex items-center justify-center gap-2 text-m3-on-tertiary-container mb-1 ${isFoldableInExpandedMode ? 'text-[11px] leading-tight' : 'text-m3-label-small'}`}>
+              <div className={`flex items-center justify-center gap-2 text-m3-on-tertiary-container mb-1 ${isFoldableInExpandedMode ? 'text-[14px] leading-tight' : 'text-m3-label-small'}`}>
                 {next24HoursPrecip.snow > 0.1 ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
               </div>
               <div className="text-m3-title-large font-bold text-m3-on-tertiary-container text-center mb-2">
@@ -16399,7 +16399,7 @@ export default function WeatherApp() {
             </div>
           ) : (
             <div className={`${tileBg} rounded-m3-xl border shadow-m3-1 flex flex-col justify-center items-center text-center ${isFoldableInExpandedMode ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2'}`}>
-              <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mb-1 ${isFoldableInExpandedMode ? 'text-[11px] leading-tight' : 'text-m3-label-small'}`}>
+              <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mb-1 ${isFoldableInExpandedMode ? 'text-[14px] leading-tight' : 'text-m3-label-small'}`}>
                 <CloudRain size={14}/> {t('precip24h')}
               </div>
               <div className="flex items-center justify-center gap-1 mt-1">
@@ -16767,7 +16767,7 @@ export default function WeatherApp() {
                     title="Windy Radar"
                   ></iframe>
                 </div>
-                <div className="text-[10px] text-center opacity-50 mt-2">{t('radarCredit')}</div>
+                <div className="text-[13px] text-center opacity-50 mt-2">{t('radarCredit')}</div>
                 
                 {/* Quick Actions */}
                 {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) && (
@@ -16808,7 +16808,7 @@ export default function WeatherApp() {
                         </div>
                         <div className="text-center">
                           <span className="font-bold text-m3-primary text-sm block">{t('planTrip')}</span>
-                          <span className="text-[11px] text-m3-primary/70 mt-0.5 block">{t('travelDesc')}</span>
+                          <span className="text-[14px] text-m3-primary/70 mt-0.5 block">{t('travelDesc')}</span>
                         </div>
                       </button>
 
@@ -16829,7 +16829,7 @@ export default function WeatherApp() {
                                     <div className="min-w-0">
                                       <div className="font-bold text-m3-on-secondary-container text-sm leading-tight truncate">{trip.customName || trip.name}</div>
                                       {trip.customName && (
-                                        <div className="text-[10px] text-m3-on-secondary-container/60 truncate mt-0.5">📍 {trip.name}</div>
+                                        <div className="text-[13px] text-m3-on-secondary-container/60 truncate mt-0.5">📍 {trip.name}</div>
                                       )}
                                     </div>
                                     <div className="flex-shrink-0 bg-m3-secondary/20 rounded-full p-1.5">
@@ -16845,7 +16845,7 @@ export default function WeatherApp() {
                                   </div>
                                   <div className="inline-flex items-center gap-1 bg-m3-primary/10 px-2 py-0.5 rounded-full">
                                     <Timer size={10} className="text-m3-primary flex-shrink-0"/>
-                                    <span className="text-[10px] font-medium text-m3-primary">{countdownLabel}</span>
+                                    <span className="text-[13px] font-medium text-m3-primary">{countdownLabel}</span>
                                   </div>
                                   <TripWeatherPreview trip={trip} tripPreviewCache={tripPreviewCache} setTripPreviewCache={setTripPreviewCache} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} lang={lang} />
                                 </div>
