@@ -29,8 +29,9 @@ const EVENING_START_HOUR = 16;
 const NIGHT_START_HOUR = 20;
 const LIGHT_PRECIP_THRESHOLD = 0.1;
 const STRONG_PRECIP_THRESHOLD = 0.5;
-const MODERATE_PRECIP_THRESHOLD = 1;
-const HEAVY_PRECIP_THRESHOLD = 4;
+const MODERATE_PRECIP_RATE_THRESHOLD = STRONG_PRECIP_THRESHOLD;
+const HEAVY_PRECIP_RATE_THRESHOLD = 1;
+const VERY_HEAVY_PRECIP_RATE_THRESHOLD = 4;
 const UMBRELLA_PRECIP_THRESHOLD = 0.5;
 const ASTRONOMY_OBSERVATION_START_HOUR = 22;
 const ASTRONOMY_OBSERVATION_END_HOUR = 4;
@@ -333,9 +334,9 @@ const formatMinutesDuration = (totalMinutes, lang) => {
 const getPrecipIntensityLevel = (rate) => {
   const numericRate = Number(rate) || 0;
   if (numericRate < LIGHT_PRECIP_THRESHOLD) return 'none';
-  if (numericRate < STRONG_PRECIP_THRESHOLD) return 'light';
-  if (numericRate < MODERATE_PRECIP_THRESHOLD) return 'moderate';
-  if (numericRate < HEAVY_PRECIP_THRESHOLD) return 'heavy';
+  if (numericRate < MODERATE_PRECIP_RATE_THRESHOLD) return 'light';
+  if (numericRate < HEAVY_PRECIP_RATE_THRESHOLD) return 'moderate';
+  if (numericRate < VERY_HEAVY_PRECIP_RATE_THRESHOLD) return 'heavy';
   return 'very_heavy';
 };
 
@@ -9182,17 +9183,17 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
   // Intensitäts-Logik
   const getIntensityInfo = (rate) => {
       // Basic translation mapping for intensity
-      if (rate < STRONG_PRECIP_THRESHOLD) {
+      if (rate < MODERATE_PRECIP_RATE_THRESHOLD) {
            if (isMixedPrecip) return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: 'bg-m3-tertiary' };
            if (isSnow) return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: 'bg-m3-secondary' };
            return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: 'bg-m3-primary' };
        }
-      if (rate < MODERATE_PRECIP_THRESHOLD) {
+      if (rate < HEAVY_PRECIP_RATE_THRESHOLD) {
            if (isMixedPrecip) return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: 'bg-m3-tertiary' };
            if (isSnow) return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: 'bg-m3-secondary' };
            return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: 'bg-m3-primary' };
        }
-      if (rate < HEAVY_PRECIP_THRESHOLD) {
+      if (rate < VERY_HEAVY_PRECIP_RATE_THRESHOLD) {
            if (isMixedPrecip) return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: 'bg-m3-tertiary' };
            if (isSnow) return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: 'bg-m3-secondary' };
            return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: 'bg-m3-primary' };
