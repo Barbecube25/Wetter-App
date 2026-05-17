@@ -16212,7 +16212,7 @@ export default function WeatherApp() {
                 }`}
               >
                 <tab.icon size={isLandscape ? 16 : (isSmallScreen ? 16 : 20)} className={isLandscape ? 'mb-0.5' : (isSmallScreen ? 'mb-0.5' : 'mb-1')} />
-                <span className={isLandscape ? 'text-[12px]' : (isSmallScreen ? 'text-[12px]' : 'text-[13px] sm:text-xs')}>{tab.label}</span>
+                <span className={isLandscape ? 'text-[11px]' : (isSmallScreen ? 'text-[11px]' : 'text-[12px] sm:text-[11px]')}>{tab.label}</span>
               </button>
             ))}
           </div>
@@ -16222,7 +16222,7 @@ export default function WeatherApp() {
         )}
 
         {/* Activity check tile + details toggle: side-by-side on expanded layout */}
-        <div className={isExpandedLayoutActive ? 'grid grid-cols-2 gap-4' : 'space-y-4'}>
+        <div className="grid grid-cols-2 gap-4">
         {/* Activity check tile between navigation and details toggle */}
         <button
           onClick={() => setShowActivityCheckModal(true)}
