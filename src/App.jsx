@@ -8558,8 +8558,8 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
   const hourlyData = data.slice(0, 24);
   
   return (
-    <div className={`${isRealNight ? 'bg-m3-dark-surface-container-high/60' : 'bg-m3-surface-container-high/60'} backdrop-blur-sm rounded-m3-2xl p-4 border border-m3-outline-variant/40 shadow-m3-2`}>
-      <div className="flex items-center gap-2 mb-3">
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 ml-2">
         <Clock size={18} className="text-m3-on-surface-variant" />
         <span className="text-m3-label-large font-bold text-m3-on-surface">{t.nextHours}</span>
       </div>
