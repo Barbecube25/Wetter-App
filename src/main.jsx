@@ -65,7 +65,7 @@ class ErrorBoundary extends React.Component {
           height: '100vh',
           padding: '20px',
           textAlign: 'center',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
+          fontFamily: 'Roboto, system-ui, -apple-system, sans-serif',
           backgroundColor: '#f5f5f5'
         }}>
           <div style={{

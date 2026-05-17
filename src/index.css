@@ -17,6 +17,15 @@ body {
   min-width: 320px;
   min-height: 100vh;
   font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+  font-size: 1rem;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 1rem;
 }
 
 /* Safe area padding for notched devices (iPhone X+, newer Android) */
