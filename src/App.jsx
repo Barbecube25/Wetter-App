@@ -15321,7 +15321,7 @@ export default function WeatherApp() {
   const weatherTileGridClass = isExpandedLayoutActive ? 'grid-cols-4' : 'grid-cols-2 md:grid-cols-4';
   const weatherTileGapClass = isSmallScreen ? 'gap-2' : (isExpandedLayoutActive ? 'gap-5' : 'gap-4');
   const isFoldableInExpandedMode = isFoldableCompactScreen && isExpandedLayoutActive;
-  const detailsStackSpacingClass = isSmallScreen ? 'space-y-2' : (isExpandedLayoutActive ? 'space-y-4' : 'space-y-2');
+  const detailsStackSpacingClass = isSmallScreen ? 'space-y-2' : (isExpandedLayoutActive ? 'space-y-5' : 'space-y-4');
   const contentCardPaddingClass = isSmallScreen ? 'p-4' : (isExpandedLayoutActive ? 'p-8' : 'p-6');
 
   // Helper function to get animation card padding classes
@@ -16260,7 +16260,7 @@ export default function WeatherApp() {
         {/* Collapsible Weather Details Container */}
         <div 
           id="weather-details-tiles"
-          className={`transition-all duration-300 ease-in-out overflow-hidden ${isSmallScreen ? 'space-y-2' : 'space-y-4'} ${
+          className={`transition-all duration-300 ease-in-out overflow-hidden ${detailsStackSpacingClass} ${
             tilesExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
