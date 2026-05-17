@@ -9227,22 +9227,21 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
       const phaseText = formatMinutesDuration(minutesRemainingCurrentPhase, lang);
       const endText = formatMinutesDuration(minutesUntilEnd, lang);
       const precipitationSubject = getPrecipitationSubject({ lang, isSnow, isMixed: isMixedPrecip });
-      const precipitationNounEn = getPrecipitationWord({ lang: 'en', isSnow, isMixed: isMixedPrecip });
 
       if (intensityTrend === 'weaker') {
           return lang === 'en'
-              ? `${precipitationNounEn} continues at this intensity for the next ${phaseText}, then gets lighter. It stops completely in ${endText}.`
+              ? `${getPrecipitationWord({ lang: 'en', isSnow, isMixed: isMixedPrecip })} continues at this intensity for the next ${phaseText}, then gets lighter. It stops completely in ${endText}.`
               : `${precipitationSubject} bleibt die nächsten ${phaseText} so, danach wird er schwächer. In ${endText} hört er ganz auf.`;
       }
 
       if (intensityTrend === 'stronger') {
           return lang === 'en'
-              ? `${precipitationNounEn} continues at this intensity for the next ${phaseText}, then gets stronger. It stops completely in ${endText}.`
+              ? `${getPrecipitationWord({ lang: 'en', isSnow, isMixed: isMixedPrecip })} continues at this intensity for the next ${phaseText}, then gets stronger. It stops completely in ${endText}.`
               : `${precipitationSubject} bleibt die nächsten ${phaseText} so, danach wird er stärker. In ${endText} hört er ganz auf.`;
       }
 
       return lang === 'en'
-          ? `${precipitationNounEn} continues for the next ${phaseText}. It stops completely in ${endText}.`
+          ? `${getPrecipitationWord({ lang: 'en', isSnow, isMixed: isMixedPrecip })} continues for the next ${phaseText}. It stops completely in ${endText}.`
           : `${precipitationSubject} geht die nächsten ${phaseText} weiter. In ${endText} hört er ganz auf.`;
   })();
 
