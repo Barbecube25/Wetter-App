@@ -9221,6 +9221,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
   const precipProgressMessage = (() => {
       if (!isNow || minutesRemainingCurrentPhase === null || minutesUntilEnd === null) return null;
       if (minutesRemainingCurrentPhase <= 0 || minutesUntilEnd <= 0) return null;
+      // If the event ends at/before the current phase transition, there is no meaningful "afterwards" segment to describe.
       if (minutesUntilEnd <= minutesRemainingCurrentPhase) return null;
 
       const phaseText = formatMinutesDuration(minutesRemainingCurrentPhase, lang);
