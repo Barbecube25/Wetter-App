@@ -9433,8 +9433,10 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                                     <span className="text-sm font-bold text-m3-on-surface min-w-[64px]">
                                         {forecast.time.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})}
                                     </span>
-                                    <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
-                                        <div className={`h-full ${forecast.snow > 0.1 ? 'bg-gradient-to-r from-cyan-400 to-blue-300' : 'bg-gradient-to-r from-blue-400 to-red-400'} opacity-60`} />
+                                    <div className="flex justify-center">
+                                        <div className="h-1 w-4 bg-white/10 rounded-full overflow-hidden">
+                                            <div className={`h-full ${forecast.snow > 0.1 ? 'bg-gradient-to-r from-cyan-400 to-blue-300' : 'bg-gradient-to-r from-blue-400 to-red-400'} opacity-60`} />
+                                        </div>
                                     </div>
                                     {hasMixedInHour ? (
                                         <div className="flex flex-col items-end text-xs font-bold min-w-[92px]">
@@ -9447,7 +9449,6 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                                         </div>
                                     ) : (
                                         <span className={`text-sm font-bold text-right min-w-[92px] whitespace-nowrap ${forecast.snow > 0.1 ? 'text-m3-tertiary' : 'text-m3-primary'}`}>
-                                            {forecast.snow > 0.1 ? <Snowflake size={11} className="inline mr-1" /> : <Droplets size={11} className="inline mr-1" />}
                                             {formatPrecip ? formatPrecip(forecast.amount) : forecast.amount.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                                         </span>
                                     )}
