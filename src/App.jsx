@@ -15367,7 +15367,7 @@ export default function WeatherApp() {
       };
     }
 
-    const resizeObserver = new ResizeObserver(measureNavBarHeight);
+    const resizeObserver = new ResizeObserver(updateMeasuredNavBarHeight);
     resizeObserver.observe(navBarNode);
 
     return () => {
