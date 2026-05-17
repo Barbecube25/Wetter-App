@@ -8687,9 +8687,11 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
       }
     }
 
+    const hasIndependentNowcast = nowcastData?.kind === 'radar' || nowcastData?.kind === 'nowcast';
+
     if (nowcastCurrentRate !== null) {
       currentPrecip = nowcastCurrentRate;
-    } else if (currentData && currentData.precipitation !== undefined) {
+    } else if (!hasIndependentNowcast && currentData && currentData.precipitation !== undefined) {
       // Use total precipitation which includes all types (rain, showers, snow, etc.)
       // precipitation = total, rain = stratiform rain only (excludes showers!), snowfall = snow only
       // Using total precipitation ensures convective showers (codes 80-82) are correctly detected.
@@ -8999,7 +9001,16 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
         result.isSnow = false;
     }
 
-    const hasIndependentNowcast = result.nowcastSourceType === 'radar' || result.nowcastSourceType === 'nowcast';
+    if (hasIndependentNowcast && !isRainingNow && !minutelyNowcast?.start) {
+      result.type = 'none';
+      result.startTime = null;
+      result.endTime = null;
+      result.minutelyStart = null;
+      result.currentIntensity = 0;
+      result.minutesUntilStart = null;
+      result.minutesUntilEnd = null;
+    }
+
     const isNearTermEvent = !result.startTime || result.startTime.getTime() <= nowPlusTwoHoursMs;
 
     // Prioritize radar/nowcast timing for near-term precipitation windows
