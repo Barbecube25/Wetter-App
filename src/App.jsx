@@ -15320,6 +15320,9 @@ export default function WeatherApp() {
   const horizontalPagePaddingClass = isSmallScreen ? 'px-2' : (isExpandedLayoutActive ? 'px-6' : 'px-4');
   const weatherTileGridClass = isExpandedLayoutActive ? 'grid-cols-4' : 'grid-cols-2 md:grid-cols-4';
   const weatherTileGapClass = isSmallScreen ? 'gap-2' : (isExpandedLayoutActive ? 'gap-5' : 'gap-4');
+  const activityControlsRowClass = isExpandedLayoutActive
+    ? 'grid grid-cols-2 gap-2 sm:gap-4'
+    : 'grid grid-cols-2 gap-2 sm:gap-4 max-w-3xl mx-auto';
   const isFoldableInExpandedMode = isFoldableCompactScreen && isExpandedLayoutActive;
   const detailsStackSpacingClass = isSmallScreen ? 'space-y-2' : (isExpandedLayoutActive ? 'space-y-5' : 'space-y-4');
   const contentCardPaddingClass = isSmallScreen ? 'p-4' : (isExpandedLayoutActive ? 'p-8' : 'p-6');
@@ -16222,7 +16225,7 @@ export default function WeatherApp() {
         )}
 
         {/* Activity check tile + details toggle: side-by-side on expanded layout */}
-        <div className="grid grid-cols-2 gap-2 sm:gap-4">
+        <div className={activityControlsRowClass}>
         {/* Activity check tile between navigation and details toggle */}
         <button
           onClick={() => setShowActivityCheckModal(true)}
