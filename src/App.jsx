@@ -9226,8 +9226,8 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
 
       const phaseText = formatMinutesDuration(minutesRemainingCurrentPhase, lang);
       const endText = formatMinutesDuration(minutesUntilEnd, lang);
-      const precipitationSubject = isMixedPrecip ? 'Der Niederschlag' : (isSnow ? 'Der Schneefall' : 'Der Regen');
-      const precipitationNounEn = isMixedPrecip ? 'Precipitation' : (isSnow ? 'Snowfall' : 'Rain');
+      const precipitationSubject = getPrecipitationSubject({ lang, isSnow, isMixed: isMixedPrecip });
+      const precipitationNounEn = getPrecipitationWord({ lang: 'en', isSnow, isMixed: isMixedPrecip });
 
       if (intensityTrend === 'weaker') {
           return lang === 'en'
