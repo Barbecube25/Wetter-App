@@ -10023,7 +10023,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                               disabled={isDisabled}
                               className={`rounded-lg px-3 py-2 text-base font-bold border transition-all duration-300 ${
                                 isActive ? quickToggleActiveClass : quickToggleInactiveClass
-                              } ${isDisabled ? 'opacity-60 cursor-not-allowed' : ''}`}
+                              } disabled:opacity-60 disabled:cursor-not-allowed`}
                             >
                               {tabDay.label}
                             </button>
