@@ -29,6 +29,8 @@ const EVENING_START_HOUR = 16;
 const NIGHT_START_HOUR = 20;
 const LIGHT_PRECIP_THRESHOLD = 0.1;
 const STRONG_PRECIP_THRESHOLD = 0.5;
+const MODERATE_PRECIP_THRESHOLD = 1;
+const HEAVY_PRECIP_THRESHOLD = 4;
 const UMBRELLA_PRECIP_THRESHOLD = 0.5;
 const ASTRONOMY_OBSERVATION_START_HOUR = 22;
 const ASTRONOMY_OBSERVATION_END_HOUR = 4;
@@ -332,8 +334,8 @@ const getPrecipIntensityLevel = (rate) => {
   const numericRate = Number(rate) || 0;
   if (numericRate < LIGHT_PRECIP_THRESHOLD) return 'none';
   if (numericRate < STRONG_PRECIP_THRESHOLD) return 'light';
-  if (numericRate < 1) return 'moderate';
-  if (numericRate < 4) return 'heavy';
+  if (numericRate < MODERATE_PRECIP_THRESHOLD) return 'moderate';
+  if (numericRate < HEAVY_PRECIP_THRESHOLD) return 'heavy';
   return 'very_heavy';
 };
 
@@ -352,6 +354,99 @@ const getPrecipIntensityRank = (level) => {
     default:
       return 0;
   }
+};
+
+const getPrecipitationWord = ({ lang, isSnow, isMixed }) => {
+  if (isMixed) return lang === 'en' ? 'precipitation' : 'Niederschlag';
+  if (isSnow) return lang === 'en' ? 'snow' : 'Schnee';
+  return lang === 'en' ? 'rain' : 'Regen';
+};
+
+const getPrecipitationSubject = ({ lang, isSnow, isMixed }) => {
+  if (isMixed) return lang === 'en' ? 'Precipitation' : 'Der Niederschlag';
+  if (isSnow) return lang === 'en' ? 'Snow' : 'Der Schneefall';
+  return lang === 'en' ? 'Rain' : 'Der Regen';
+};
+
+const getCurrentPhaseLabelText = ({ level, lang, isSnow, isMixed, fallbackLabel }) => {
+  const precipitationWord = getPrecipitationWord({ lang, isSnow, isMixed });
+  switch (level) {
+    case 'light':
+      return lang === 'en' ? `Light ${precipitationWord}` : `Leichter ${precipitationWord}`;
+    case 'moderate':
+      return lang === 'en' ? `Moderate ${precipitationWord}` : `Mäßiger ${precipitationWord}`;
+    case 'heavy':
+      return lang === 'en' ? `Heavy ${precipitationWord}` : `Starker ${precipitationWord}`;
+    case 'very_heavy':
+      return lang === 'en' ? `Very heavy ${precipitationWord}` : `Sehr starker ${precipitationWord}`;
+    default:
+      return fallbackLabel;
+  }
+};
+
+const getIntensityTrendMessage = ({ intensityTrend, minutesUntilTrend, lang, isSnow, isMixed }) => {
+  if (!intensityTrend || minutesUntilTrend === null || minutesUntilTrend <= 0) return null;
+
+  const subject = getPrecipitationSubject({ lang, isSnow, isMixed });
+  const trendDuration = formatMinutesDuration(minutesUntilTrend, lang);
+
+  if (intensityTrend === 'stronger') {
+    return lang === 'en'
+      ? `${subject} gets stronger in ${trendDuration}.`
+      : `${subject} wird in ${trendDuration} stärker.`;
+  }
+
+  if (intensityTrend === 'weaker') {
+    return lang === 'en'
+      ? `${subject} gets lighter in ${trendDuration}.`
+      : `${subject} wird in ${trendDuration} schwächer.`;
+  }
+
+  return null;
+};
+
+const updateCurrentPrecipitationPhase = ({
+  phaseTracking,
+  slotHasPrecip,
+  slotLevel,
+  slotStartMs,
+  slotEndMs,
+  nowMs,
+}) => {
+  if (slotHasPrecip && slotStartMs <= nowMs && slotEndMs > nowMs) {
+    return {
+      ...phaseTracking,
+      currentPhaseLevel: slotLevel,
+      currentPhaseEnd: new Date(slotEndMs),
+    };
+  }
+
+  if (!phaseTracking.currentPhaseLevel || phaseTracking.intensityTrendTime) {
+    return phaseTracking;
+  }
+
+  if (!slotHasPrecip) {
+    return {
+      ...phaseTracking,
+      currentPhaseEnd: new Date(slotStartMs),
+    };
+  }
+
+  const currentPhaseRank = getPrecipIntensityRank(phaseTracking.currentPhaseLevel);
+  const slotRank = getPrecipIntensityRank(slotLevel);
+  if (slotRank === currentPhaseRank) {
+    return {
+      ...phaseTracking,
+      currentPhaseEnd: new Date(slotEndMs),
+    };
+  }
+
+  return {
+    ...phaseTracking,
+    currentPhaseEnd: new Date(slotStartMs),
+    intensityTrend: slotRank > currentPhaseRank ? 'stronger' : 'weaker',
+    intensityTrendTime: new Date(slotStartMs),
+  };
 };
 
 const extractLocalRadarPrecipitation = (grid) => {
@@ -8649,10 +8744,12 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
         let minutelyEventStart = null;
         let minutelyEventEnd = null;
         let minutelySlots = 0;
-        let currentPhaseLevel = null;
-        let currentPhaseEnd = null;
-        let intensityTrend = null;
-        let intensityTrendTime = null;
+        let phaseTracking = {
+          currentPhaseLevel: null,
+          currentPhaseEnd: null,
+          intensityTrend: null,
+          intensityTrendTime: null,
+        };
         // Track only the first continuous nowcast precipitation event (current/next event),
         // so "Ends in" reflects when the ongoing/next rain stops, not later separate showers.
         let minutelyEventClosed = false;
@@ -8703,24 +8800,14 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                   minutelyEventClosed = true;
                 }
 
-                if (slotHasPrecip && slotStartMs <= nowMs && slotEndMs > nowMs) {
-                  currentPhaseLevel = slotLevel;
-                  currentPhaseEnd = new Date(slotEndMs);
-                } else if (currentPhaseLevel && !intensityTrendTime) {
-                  if (!slotHasPrecip) {
-                    currentPhaseEnd = new Date(slotStartMs);
-                  } else {
-                    const currentPhaseRank = getPrecipIntensityRank(currentPhaseLevel);
-                    const slotRank = getPrecipIntensityRank(slotLevel);
-                    if (slotRank === currentPhaseRank) {
-                      currentPhaseEnd = new Date(slotEndMs);
-                    } else {
-                      intensityTrend = slotRank > currentPhaseRank ? 'stronger' : 'weaker';
-                      intensityTrendTime = new Date(slotStartMs);
-                      currentPhaseEnd = new Date(slotStartMs);
-                    }
-                  }
-                }
+                phaseTracking = updateCurrentPrecipitationPhase({
+                  phaseTracking,
+                  slotHasPrecip,
+                  slotLevel,
+                  slotStartMs,
+                  slotEndMs,
+                  nowMs,
+                });
             }
         }
         result.strongStart = strongMinutelyStart;
@@ -8732,10 +8819,10 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
           peakTime: minutelyPeakTime,
           durationHours: minutelySlots > 0 ? (Math.round((minutelySlots * nowcastIntervalMinutes * 100) / 60) / 100) : 0
         };
-        result.currentPhaseLevel = currentPhaseLevel;
-        result.currentPhaseEnd = currentPhaseEnd;
-        result.intensityTrend = intensityTrend;
-        result.intensityTrendTime = intensityTrendTime;
+        result.currentPhaseLevel = phaseTracking.currentPhaseLevel;
+        result.currentPhaseEnd = phaseTracking.currentPhaseEnd;
+        result.intensityTrend = phaseTracking.intensityTrend;
+        result.intensityTrendTime = phaseTracking.intensityTrendTime;
     }
 
     // Calculate total precipitation for next 24 hours (for display on tile)
@@ -9095,61 +9182,41 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
   // Intensitäts-Logik
   const getIntensityInfo = (rate) => {
       // Basic translation mapping for intensity
-      if (rate < 0.5) {
-          if (isMixedPrecip) return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: 'bg-m3-tertiary' };
-          if (isSnow) return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: 'bg-m3-secondary' };
-          return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: 'bg-m3-primary' };
-      }
-      if (rate < 1.0) {
-          if (isMixedPrecip) return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: 'bg-m3-tertiary' };
-          if (isSnow) return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: 'bg-m3-secondary' };
-          return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: 'bg-m3-primary' };
-      }
-      if (rate < 4.0) {
-          if (isMixedPrecip) return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: 'bg-m3-tertiary' };
-          if (isSnow) return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: 'bg-m3-secondary' };
-          return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: 'bg-m3-primary' };
-      }
+      if (rate < STRONG_PRECIP_THRESHOLD) {
+           if (isMixedPrecip) return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: 'bg-m3-tertiary' };
+           if (isSnow) return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: 'bg-m3-secondary' };
+           return { label: lang === 'en' ? 'Light' : 'Leicht', percent: 25, color: 'bg-m3-primary' };
+       }
+      if (rate < MODERATE_PRECIP_THRESHOLD) {
+           if (isMixedPrecip) return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: 'bg-m3-tertiary' };
+           if (isSnow) return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: 'bg-m3-secondary' };
+           return { label: lang === 'en' ? 'Moderate' : 'Mäßig', percent: 50, color: 'bg-m3-primary' };
+       }
+      if (rate < HEAVY_PRECIP_THRESHOLD) {
+           if (isMixedPrecip) return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: 'bg-m3-tertiary' };
+           if (isSnow) return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: 'bg-m3-secondary' };
+           return { label: lang === 'en' ? 'Heavy' : 'Stark', percent: 75, color: 'bg-m3-primary' };
+       }
       if (isMixedPrecip) return { label: lang === 'en' ? 'Very Heavy' : 'Sehr Stark', percent: 100, color: 'bg-m3-error' };
       if (isSnow) return { label: lang === 'en' ? 'Very Heavy' : 'Sehr Stark', percent: 100, color: 'bg-m3-error' };
       return { label: lang === 'en' ? 'Very Heavy' : 'Sehr Stark', percent: 100, color: 'bg-m3-error' };
   };
 
   const intensity = getIntensityInfo(maxIntensity);
-  const basePrecipitationWord = isMixedPrecip
-      ? (lang === 'en' ? 'precipitation' : 'Niederschlag')
-      : (isSnow ? (lang === 'en' ? 'snow' : 'Schnee') : (lang === 'en' ? 'rain' : 'Regen'));
-  const precipTrendSubject = isMixedPrecip
-      ? (lang === 'en' ? 'Precipitation' : 'Der Niederschlag')
-      : (isSnow ? (lang === 'en' ? 'Snow' : 'Der Schneefall') : (lang === 'en' ? 'Rain' : 'Der Regen'));
-  const getCurrentPhaseLabel = (level) => {
-      switch (level) {
-          case 'light':
-              return lang === 'en' ? `Light ${basePrecipitationWord}` : `Leichter ${basePrecipitationWord}`;
-          case 'moderate':
-              return lang === 'en' ? `Moderate ${basePrecipitationWord}` : `Mäßiger ${basePrecipitationWord}`;
-          case 'heavy':
-              return lang === 'en' ? `Heavy ${basePrecipitationWord}` : `Starker ${basePrecipitationWord}`;
-          case 'very_heavy':
-              return lang === 'en' ? `Very heavy ${basePrecipitationWord}` : `Sehr starker ${basePrecipitationWord}`;
-          default:
-              return isMixedPrecip ? (lang === 'en' ? 'Precipitation' : 'Niederschlag') : (isSnow ? t.snow : t.rain);
-      }
-  };
-  const currentPhaseLabel = getCurrentPhaseLabel(currentPhaseLevel);
-  let trendMessage = null;
-  if (intensityTrend && minutesUntilTrend !== null && minutesUntilTrend > 0) {
-      const trendDuration = formatMinutesDuration(minutesUntilTrend, lang);
-      if (intensityTrend === 'stronger') {
-          trendMessage = lang === 'en'
-              ? `${precipTrendSubject} gets stronger in ${trendDuration}.`
-              : `${precipTrendSubject} wird in ${trendDuration} stärker.`;
-      } else if (intensityTrend === 'weaker') {
-          trendMessage = lang === 'en'
-              ? `${precipTrendSubject} gets lighter in ${trendDuration}.`
-              : `${precipTrendSubject} wird in ${trendDuration} schwächer.`;
-      }
-  }
+  const currentPhaseLabel = getCurrentPhaseLabelText({
+      level: currentPhaseLevel,
+      lang,
+      isSnow,
+      isMixed: isMixedPrecip,
+      fallbackLabel: isMixedPrecip ? (lang === 'en' ? 'Precipitation' : 'Niederschlag') : (isSnow ? t.snow : t.rain),
+  });
+  const trendMessage = getIntensityTrendMessage({
+      intensityTrend,
+      minutesUntilTrend,
+      lang,
+      isSnow,
+      isMixed: isMixedPrecip,
+  });
 
   return (
     <div className={`${bgClass} border ${isMixedPrecip ? 'border-m3-tertiary' : (isSnow ? 'border-m3-secondary' : 'border-m3-primary')} rounded-2xl p-4 shadow-sm mb-4 relative overflow-hidden`}>
