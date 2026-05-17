@@ -339,6 +339,8 @@ const getPrecipIntensityLevel = (rate) => {
 
 const getPrecipIntensityRank = (level) => {
   switch (level) {
+    case 'none':
+      return 0;
     case 'light':
       return 1;
     case 'moderate':
@@ -9114,31 +9116,40 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
   };
 
   const intensity = getIntensityInfo(maxIntensity);
+  const basePrecipitationWord = isMixedPrecip
+      ? (lang === 'en' ? 'precipitation' : 'Niederschlag')
+      : (isSnow ? (lang === 'en' ? 'snow' : 'Schnee') : (lang === 'en' ? 'rain' : 'Regen'));
+  const precipTrendSubject = isMixedPrecip
+      ? (lang === 'en' ? 'Precipitation' : 'Der Niederschlag')
+      : (isSnow ? (lang === 'en' ? 'Snow' : 'Der Schneefall') : (lang === 'en' ? 'Rain' : 'Der Regen'));
   const getCurrentPhaseLabel = (level) => {
-      const precipitationWord = isMixedPrecip ? (lang === 'en' ? 'precipitation' : 'Niederschlag') : (isSnow ? (lang === 'en' ? 'snow' : 'Schnee') : (lang === 'en' ? 'rain' : 'Regen'));
       switch (level) {
           case 'light':
-              return lang === 'en' ? `Light ${precipitationWord}` : `Leichter ${precipitationWord}`;
+              return lang === 'en' ? `Light ${basePrecipitationWord}` : `Leichter ${basePrecipitationWord}`;
           case 'moderate':
-              return lang === 'en' ? `Moderate ${precipitationWord}` : `Mäßiger ${precipitationWord}`;
+              return lang === 'en' ? `Moderate ${basePrecipitationWord}` : `Mäßiger ${basePrecipitationWord}`;
           case 'heavy':
-              return lang === 'en' ? `Heavy ${precipitationWord}` : `Starker ${precipitationWord}`;
+              return lang === 'en' ? `Heavy ${basePrecipitationWord}` : `Starker ${basePrecipitationWord}`;
           case 'very_heavy':
-              return lang === 'en' ? `Very heavy ${precipitationWord}` : `Sehr starker ${precipitationWord}`;
+              return lang === 'en' ? `Very heavy ${basePrecipitationWord}` : `Sehr starker ${basePrecipitationWord}`;
           default:
               return isMixedPrecip ? (lang === 'en' ? 'Precipitation' : 'Niederschlag') : (isSnow ? t.snow : t.rain);
       }
   };
   const currentPhaseLabel = getCurrentPhaseLabel(currentPhaseLevel);
-  const trendMessage = intensityTrend && minutesUntilTrend !== null && minutesUntilTrend > 0
-      ? (intensityTrend === 'stronger'
-          ? (lang === 'en'
-              ? `${isMixedPrecip ? 'Precipitation' : (isSnow ? 'Snow' : 'Rain')} gets stronger in ${formatMinutesDuration(minutesUntilTrend, lang)}.`
-              : `${isMixedPrecip ? 'Der Niederschlag' : (isSnow ? 'Der Schneefall' : 'Der Regen')} wird in ${formatMinutesDuration(minutesUntilTrend, lang)} stärker.`)
-          : (lang === 'en'
-              ? `${isMixedPrecip ? 'Precipitation' : (isSnow ? 'Snow' : 'Rain')} gets lighter in ${formatMinutesDuration(minutesUntilTrend, lang)}.`
-              : `${isMixedPrecip ? 'Der Niederschlag' : (isSnow ? 'Der Schneefall' : 'Der Regen')} wird in ${formatMinutesDuration(minutesUntilTrend, lang)} schwächer.`))
-      : null;
+  let trendMessage = null;
+  if (intensityTrend && minutesUntilTrend !== null && minutesUntilTrend > 0) {
+      const trendDuration = formatMinutesDuration(minutesUntilTrend, lang);
+      if (intensityTrend === 'stronger') {
+          trendMessage = lang === 'en'
+              ? `${precipTrendSubject} gets stronger in ${trendDuration}.`
+              : `${precipTrendSubject} wird in ${trendDuration} stärker.`;
+      } else if (intensityTrend === 'weaker') {
+          trendMessage = lang === 'en'
+              ? `${precipTrendSubject} gets lighter in ${trendDuration}.`
+              : `${precipTrendSubject} wird in ${trendDuration} schwächer.`;
+      }
+  }
 
   return (
     <div className={`${bgClass} border ${isMixedPrecip ? 'border-m3-tertiary' : (isSnow ? 'border-m3-secondary' : 'border-m3-primary')} rounded-2xl p-4 shadow-sm mb-4 relative overflow-hidden`}>
@@ -9218,7 +9229,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
             )}
 
             {isNow && trendMessage && (
-                <div className="flex items-start gap-2 bg-m3-surface-container-high rounded-m3-xl p-3">
+                <div className="flex items-start gap-2 bg-m3-surface-container-high rounded-xl p-3">
                     {intensityTrend === 'stronger'
                         ? <ArrowUp size={18} className="text-m3-primary mt-0.5" />
                         : <ArrowDown size={18} className="text-m3-primary mt-0.5" />}
