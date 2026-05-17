@@ -9422,25 +9422,32 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                         <BarChart2 size={18} className={isMixedPrecip ? "text-m3-tertiary" : "text-m3-primary"} />
                         <span className="text-m3-label-large font-bold text-m3-on-surface">{t.nextHours}</span>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="flex flex-col gap-2">
                         {hourlyForecast.slice(0, 24).map((forecast, idx) => {
                             const hasMixedInHour = forecast.rain > 0.1 && forecast.snow > 0.1;
                             return (
-                                <div key={idx} className="flex flex-col items-center bg-m3-surface-container rounded-m3-md p-2">
-                                    <span className="text-m3-label-small font-medium text-m3-on-surface-variant">
+                                <div
+                                    key={idx}
+                                    className="grid grid-cols-[auto_1fr_auto] items-center gap-2 bg-m3-surface-container/80 backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl px-3 py-2 w-full shadow-m3-1 hover:shadow-m3-2 transition-all"
+                                >
+                                    <span className="text-sm font-bold text-m3-on-surface min-w-[64px]">
                                         {forecast.time.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})}
                                     </span>
+                                    <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                                        <div className={`h-full ${forecast.snow > 0.1 ? 'bg-gradient-to-r from-cyan-400 to-blue-300' : 'bg-gradient-to-r from-blue-400 to-red-400'} opacity-60`} />
+                                    </div>
                                     {hasMixedInHour ? (
-                                        <div className="text-m3-label-small font-bold mt-1">
-                                            <div className="flex items-center gap-1 text-m3-primary">
+                                        <div className="flex flex-col items-end text-xs font-bold min-w-[92px]">
+                                            <span className="flex items-center gap-1 text-m3-primary whitespace-nowrap">
                                                 <CloudRain size={10}/>{formatPrecip ? formatPrecip(forecast.rain) : forecast.rain.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
-                                            </div>
-                                            <div className="flex items-center gap-1 text-m3-tertiary">
+                                            </span>
+                                            <span className="flex items-center gap-1 text-m3-tertiary whitespace-nowrap">
                                                 <Snowflake size={10}/>{formatPrecip ? formatPrecip(forecast.snow) : forecast.snow.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
-                                            </div>
+                                            </span>
                                         </div>
                                     ) : (
-                                        <span className={`text-m3-label-large font-bold mt-1 ${forecast.snow > 0.1 ? 'text-m3-tertiary' : 'text-m3-primary'}`}>
+                                        <span className={`text-sm font-bold text-right min-w-[92px] whitespace-nowrap ${forecast.snow > 0.1 ? 'text-m3-tertiary' : 'text-m3-primary'}`}>
+                                            {forecast.snow > 0.1 ? <Snowflake size={11} className="inline mr-1" /> : <Droplets size={11} className="inline mr-1" />}
                                             {formatPrecip ? formatPrecip(forecast.amount) : forecast.amount.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                                         </span>
                                     )}
