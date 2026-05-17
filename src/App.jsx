@@ -9226,22 +9226,24 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
 
       const phaseText = formatMinutesDuration(minutesRemainingCurrentPhase, lang);
       const endText = formatMinutesDuration(minutesUntilEnd, lang);
+      const precipitationSubject = isMixedPrecip ? 'Der Niederschlag' : (isSnow ? 'Der Schneefall' : 'Der Regen');
+      const precipitationNounEn = isMixedPrecip ? 'Precipitation' : (isSnow ? 'Snowfall' : 'Rain');
 
       if (intensityTrend === 'weaker') {
           return lang === 'en'
-              ? `Precipitation continues at this intensity for the next ${phaseText}, then gets lighter. It stops completely in ${endText}.`
-              : `Es regnet die nächsten ${phaseText} so weiter, danach wird es weniger. In ${endText} hört es ganz auf.`;
+              ? `${precipitationNounEn} continues at this intensity for the next ${phaseText}, then gets lighter. It stops completely in ${endText}.`
+              : `${precipitationSubject} bleibt die nächsten ${phaseText} so, danach wird er schwächer. In ${endText} hört er ganz auf.`;
       }
 
       if (intensityTrend === 'stronger') {
           return lang === 'en'
-              ? `Precipitation continues at this intensity for the next ${phaseText}, then gets stronger. It stops completely in ${endText}.`
-              : `Es regnet die nächsten ${phaseText} so weiter, danach wird es stärker. In ${endText} hört es ganz auf.`;
+              ? `${precipitationNounEn} continues at this intensity for the next ${phaseText}, then gets stronger. It stops completely in ${endText}.`
+              : `${precipitationSubject} bleibt die nächsten ${phaseText} so, danach wird er stärker. In ${endText} hört er ganz auf.`;
       }
 
       return lang === 'en'
-          ? `Precipitation continues for the next ${phaseText}. It stops completely in ${endText}.`
-          : `Es regnet die nächsten ${phaseText} weiter. In ${endText} hört es ganz auf.`;
+          ? `${precipitationNounEn} continues for the next ${phaseText}. It stops completely in ${endText}.`
+          : `${precipitationSubject} geht die nächsten ${phaseText} weiter. In ${endText} hört er ganz auf.`;
   })();
 
   return (
