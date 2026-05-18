@@ -44,7 +44,6 @@
         android:layout_marginTop="8dp"
         android:background="@android:color/transparent"
         android:contentDescription="@string/widget_refresh_content_description"
-        android:src="@android:drawable/ic_popup_sync"
-        android:tint="@android:color/white" />
+        android:src="@android:drawable/ic_popup_sync" />
 
 </LinearLayout>

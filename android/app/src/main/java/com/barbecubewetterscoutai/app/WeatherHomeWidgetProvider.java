@@ -43,10 +43,16 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             context.getString(R.string.widget_updated_format, formattedTime)
         );
 
+        Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+        if (launchIntent == null) {
+            launchIntent = new Intent(context, MainActivity.class);
+            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        }
+
         PendingIntent openAppIntent = PendingIntent.getActivity(
             context,
             appWidgetId,
-            context.getPackageManager().getLaunchIntentForPackage(context.getPackageName()),
+            launchIntent,
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
         views.setOnClickPendingIntent(R.id.widget_root, openAppIntent);
