@@ -10748,12 +10748,12 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
               </div>
               {isLastPast && (
                 <div className="flex items-center gap-2 py-1">
-                  <div className="flex-1 h-px bg-violet-400/60 dark:bg-violet-300/60"></div>
-                  <span className="flex items-center gap-1 text-xs font-bold text-violet-600 dark:text-violet-200">
-                    <span className="w-2 h-2 rounded-full bg-violet-500 dark:bg-violet-300 inline-block" aria-hidden="true"></span>
+                  <div className={`flex-1 h-px ${isRealNight ? 'bg-violet-300/60' : 'bg-violet-400/60'}`}></div>
+                  <span className={`flex items-center gap-1 text-xs font-bold ${isRealNight ? 'text-violet-200' : 'text-violet-600'}`}>
+                    <span className={`w-2 h-2 rounded-full inline-block ${isRealNight ? 'bg-violet-300' : 'bg-violet-500'}`} aria-hidden="true"></span>
                     {t.now}
                   </span>
-                  <div className="flex-1 h-px bg-violet-400/60 dark:bg-violet-300/60"></div>
+                  <div className={`flex-1 h-px ${isRealNight ? 'bg-violet-300/60' : 'bg-violet-400/60'}`}></div>
                 </div>
               )}
             </React.Fragment>
