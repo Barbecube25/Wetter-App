@@ -8637,7 +8637,7 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
 };
 
 // --- NEU: PRECIPITATION TILE (Wann, Wie lang, Wie viel) ---
-const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang='de', formatPrecip, getPrecipUnitLabel, setActiveTab, setShowPrecipModal }) => {
+const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang='de', formatPrecip, getPrecipUnitLabel, setActiveTab, setShowPrecipModal, isRealNight = false }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
   // Analyse der nächsten 24h
   const analysis = useMemo(() => {
@@ -9256,24 +9256,30 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
           : `${precipitationSubject} geht die nächsten ${phaseText} weiter. In ${endText} hört er ganz auf.`;
   })();
 
+  const onSurfaceTextClass = isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface';
+  const onSurfaceVariantTextClass = isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant';
+  const sectionBgClass = isRealNight ? 'bg-m3-dark-surface-container-high/70' : 'bg-m3-surface-container/50';
+  const sectionHighBgClass = isRealNight ? 'bg-m3-dark-surface-container-high' : 'bg-m3-surface-container-high';
+  const hourlyRowBgClass = isRealNight ? 'bg-m3-dark-surface-container/90 border border-m3-outline-variant/50' : 'bg-m3-surface-container/80 border border-m3-outline-variant/30';
+
   return (
-    <div className={`${bgClass} border ${isMixedPrecip ? 'border-m3-tertiary' : (isSnow ? 'border-m3-secondary' : 'border-m3-primary')} rounded-2xl p-4 shadow-sm mb-4 relative overflow-hidden`}>
+    <div className={`${isRealNight ? 'bg-m3-dark-surface-container-high/80' : bgClass} border ${isMixedPrecip ? 'border-m3-tertiary' : (isSnow ? 'border-m3-secondary' : 'border-m3-primary')} rounded-2xl p-4 shadow-sm mb-4 relative overflow-hidden`}>
         <div className="flex justify-between items-center z-10 relative">
             <div className="flex items-center gap-4">
                 <div className={`p-3 rounded-lg ${colorClass} bg-opacity-30`}>
                     <Icon size={32} strokeWidth={2.5} />
                 </div>
                 <div>
-                    <div className="font-bold text-m3-on-surface text-m3-title-large uppercase tracking-wide opacity-80 mb-0.5">
+                    <div className={`font-bold text-m3-title-large uppercase tracking-wide mb-0.5 ${onSurfaceTextClass} ${isRealNight ? 'opacity-100' : 'opacity-80'}`}>
                         {headline}
                     </div>
                     <div className="flex items-center gap-2">
                         {/* Time Display Logic */}
-                        {!isNow && isLaterThan2h && !minutelyStart && <span className="text-m3-body-large font-bold text-m3-on-surface-variant">{t.ab}</span>}
-                        <span className="text-m3-display-small font-black text-m3-on-surface tracking-tight leading-none">
+                        {!isNow && isLaterThan2h && !minutelyStart && <span className={`text-m3-body-large font-bold ${onSurfaceVariantTextClass}`}>{t.ab}</span>}
+                        <span className={`text-m3-display-small font-black tracking-tight leading-none ${onSurfaceTextClass}`}>
                             {timeDisplay}
                         </span>
-                        {!isNow && !isSoon && !minutelyStart && <span className="text-m3-label-large font-bold text-m3-on-surface-variant uppercase">{t.oclock}</span>}
+                        {!isNow && !isSoon && !minutelyStart && <span className={`text-m3-label-large font-bold uppercase ${onSurfaceVariantTextClass}`}>{t.oclock}</span>}
                         
                         {/* Ping Animation if Raining Now or very soon */}
                         {(isNow || (minutelyStart && (minutelyStart - now) < 300000)) && (
@@ -9283,25 +9289,25 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                             </span>
                         )}
                     </div>
-                    <div className="text-m3-label-large font-bold uppercase text-m3-on-surface-variant tracking-wide mt-1">
+                    <div className={`text-m3-label-large font-bold uppercase tracking-wide mt-1 ${onSurfaceVariantTextClass}`}>
                 {isMixedPrecip ? (lang === 'en' ? 'Mixed Precipitation' : 'Mischniederschlag') : (isSnow ? t.snow : t.rain)} • {intensity.label}
               </div>
             </div>
           </div>
 
           <div className="text-right">
-                <div className="text-m3-title-large font-bold text-m3-on-surface leading-tight">{formatPrecip ? formatPrecip(amount) : amount.toFixed(1)}<span className="text-m3-label-large text-m3-on-surface-variant font-normal ml-0.5">{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}</span></div>
+                <div className={`text-m3-title-large font-bold leading-tight ${onSurfaceTextClass}`}>{formatPrecip ? formatPrecip(amount) : amount.toFixed(1)}<span className={`text-m3-label-large font-normal ml-0.5 ${onSurfaceVariantTextClass}`}>{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}</span></div>
                 {isMixedPrecip && (rainAmount > 0.1 || snowAmount > 0.1) && (
-                    <div className="text-m3-label-small text-m3-on-surface-variant mt-1">
+                    <div className={`text-m3-label-small mt-1 ${onSurfaceVariantTextClass}`}>
                         {rainAmount > 0.1 && <span className="flex items-center justify-end gap-1"><CloudRain size={12}/>{formatPrecip ? formatPrecip(rainAmount) : rainAmount.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}</span>}
                         {snowAmount > 0.1 && <span className="flex items-center justify-end gap-1"><Snowflake size={12}/>{formatPrecip ? formatPrecip(snowAmount) : snowAmount.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}</span>}
                     </div>
                 )}
-                <div className="text-m3-title-medium font-medium text-m3-on-surface-variant leading-tight">{duration} <span className="text-m3-label-large">{t.hours}</span></div>
+                <div className={`text-m3-title-medium font-medium leading-tight ${onSurfaceVariantTextClass}`}>{duration} <span className="text-m3-label-large">{t.hours}</span></div>
             </div>
         </div>
 
-        <div className="mt-4 h-3 w-full bg-m3-surface-container-high rounded-full overflow-hidden relative">
+        <div className={`mt-4 h-3 w-full rounded-full overflow-hidden relative ${sectionHighBgClass}`}>
             <div 
                 className={`h-full ${intensity.color} rounded-full transition-all duration-1000 ease-out`} 
                 style={{ width: `${intensity.percent}%` }}
@@ -9312,81 +9318,81 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
         <div className="mt-4 space-y-3">
             {/* Current Intensity (only when raining now) */}
             {isNow && currentIntensity > 0 && (
-                <div className="flex items-center justify-between bg-m3-surface-container/50 rounded-xl p-3">
+                <div className={`flex items-center justify-between rounded-xl p-3 ${sectionBgClass}`}>
                     <div className="flex items-center gap-2">
                         <Droplets size={18} className="text-m3-primary" />
-                        <span className="text-m3-label-large font-bold text-m3-on-surface">{t.currentIntensity}</span>
+                        <span className={`text-m3-label-large font-bold ${onSurfaceTextClass}`}>{t.currentIntensity}</span>
                     </div>
-                    <span className="text-m3-body-large font-bold text-m3-on-surface">{formatPrecip ? formatPrecip(currentIntensity) : currentIntensity.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}/h</span>
+                    <span className={`text-m3-body-large font-bold ${onSurfaceTextClass}`}>{formatPrecip ? formatPrecip(currentIntensity) : currentIntensity.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}/h</span>
                 </div>
             )}
 
             {isNow && currentPhaseEnd && minutesRemainingCurrentPhase !== null && minutesRemainingCurrentPhase > 0 && (
-                <div className="flex items-center justify-between bg-m3-surface-container/50 rounded-xl p-3">
+                <div className={`flex items-center justify-between rounded-xl p-3 ${sectionBgClass}`}>
                     <div className="flex items-center gap-2">
                         <Timer size={18} className="text-m3-primary" />
-                        <span className="text-m3-label-large font-bold text-m3-on-surface">
+                        <span className={`text-m3-label-large font-bold ${onSurfaceTextClass}`}>
                             {lang === 'en' ? `${currentPhaseLabel} for` : `${currentPhaseLabel} noch`}
                         </span>
                     </div>
-                    <span className="text-m3-body-large font-bold text-m3-on-surface">{formatMinutesDuration(minutesRemainingCurrentPhase, lang)}</span>
+                    <span className={`text-m3-body-large font-bold ${onSurfaceTextClass}`}>{formatMinutesDuration(minutesRemainingCurrentPhase, lang)}</span>
                 </div>
             )}
 
             {isNow && trendMessage && (
-                <div className="flex items-start gap-2 bg-m3-surface-container-high rounded-xl p-3">
+                <div className={`flex items-start gap-2 rounded-xl p-3 ${sectionHighBgClass}`}>
                     {intensityTrend === 'stronger'
                         ? <ArrowUp size={18} className="text-m3-primary mt-0.5" />
                         : <ArrowDown size={18} className="text-m3-primary mt-0.5" />}
-                    <span className="text-m3-label-large font-bold text-m3-on-surface">
+                    <span className={`text-m3-label-large font-bold ${onSurfaceTextClass}`}>
                         {trendMessage}
                     </span>
                 </div>
             )}
 
             {isNow && precipProgressMessage && (
-                <div className="flex items-start gap-2 bg-m3-surface-container-high rounded-xl p-3">
+                <div className={`flex items-start gap-2 rounded-xl p-3 ${sectionHighBgClass}`}>
                     <CloudDrizzle size={18} className="text-m3-primary mt-0.5" />
-                    <span className="text-m3-label-large font-bold text-m3-on-surface">
+                    <span className={`text-m3-label-large font-bold ${onSurfaceTextClass}`}>
                         {precipProgressMessage}
                     </span>
                 </div>
             )}
 
             {!isNow && minutesUntilStart !== null && minutesUntilStart > 0 && (
-                <div className="flex items-center justify-between bg-m3-surface-container/50 rounded-xl p-3">
+                <div className={`flex items-center justify-between rounded-xl p-3 ${sectionBgClass}`}>
                     <div className="flex items-center gap-2">
                         <Clock3 size={18} className="text-m3-primary" />
-                        <span className="text-m3-label-large font-bold text-m3-on-surface">{startsInText}</span>
+                        <span className={`text-m3-label-large font-bold ${onSurfaceTextClass}`}>{startsInText}</span>
                     </div>
-                    <span className="text-m3-body-large font-bold text-m3-on-surface">{formatMinutesDuration(minutesUntilStart, lang)}</span>
+                    <span className={`text-m3-body-large font-bold ${onSurfaceTextClass}`}>{formatMinutesDuration(minutesUntilStart, lang)}</span>
                 </div>
             )}
 
             {!isNow && startTime && endTime && endTime > startTime && eventDurationText && (
-                <div className="flex items-center justify-between bg-m3-surface-container/50 rounded-xl p-3">
+                <div className={`flex items-center justify-between rounded-xl p-3 ${sectionBgClass}`}>
                     <div className="flex items-center gap-2">
                         <Timer size={18} className="text-m3-primary" />
-                        <span className="text-m3-label-large font-bold text-m3-on-surface">{durationText}</span>
+                        <span className={`text-m3-label-large font-bold ${onSurfaceTextClass}`}>{durationText}</span>
                     </div>
-                    <span className="text-m3-body-large font-bold text-m3-on-surface">{eventDurationText}</span>
+                    <span className={`text-m3-body-large font-bold ${onSurfaceTextClass}`}>{eventDurationText}</span>
                 </div>
             )}
 
             {isNow && endTime && minutesUntilEnd !== null && minutesUntilEnd > 0 && (
-                <div className="flex items-center justify-between bg-m3-surface-container/50 rounded-xl p-3">
+                <div className={`flex items-center justify-between rounded-xl p-3 ${sectionBgClass}`}>
                     <div className="flex items-center gap-2">
                         <Clock3 size={18} className="text-m3-primary" />
-                        <span className="text-m3-label-large font-bold text-m3-on-surface">{endsInText}</span>
+                        <span className={`text-m3-label-large font-bold ${onSurfaceTextClass}`}>{endsInText}</span>
                     </div>
-                    <span className="text-m3-body-large font-bold text-m3-on-surface">{formatMinutesDuration(minutesUntilEnd, lang)}</span>
+                    <span className={`text-m3-body-large font-bold ${onSurfaceTextClass}`}>{formatMinutesDuration(minutesUntilEnd, lang)}</span>
                 </div>
             )}
 
             {nowcastSourceLabel && nowcastSourceType !== 'model' && (
-                <div className="flex items-start gap-2 bg-m3-surface-container-high rounded-m3-xl p-3">
+                <div className={`flex items-start gap-2 rounded-m3-xl p-3 ${sectionHighBgClass}`}>
                     <Crosshair size={18} className="text-m3-primary mt-0.5" />
-                    <span className="text-m3-label-large font-bold text-m3-on-surface">
+                    <span className={`text-m3-label-large font-bold ${onSurfaceTextClass}`}>
                         {postNowcastModelText}
                     </span>
                 </div>
@@ -9395,7 +9401,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
             {modelConflict && (
                 <div className="flex items-start gap-2 bg-m3-tertiary-container/50 rounded-m3-xl p-3 border border-m3-tertiary/30">
                     <AlertTriangle size={18} className="text-m3-tertiary mt-0.5" />
-                    <span className="text-m3-label-large font-bold text-m3-on-surface">
+                    <span className={`text-m3-label-large font-bold ${onSurfaceTextClass}`}>
                         {conflictMessage}
                     </span>
                 </div>
@@ -9403,12 +9409,12 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
             
             {/* Peak Rain Time */}
             {peakTime && maxIntensity > 0 && (
-                <div className="flex items-center justify-between bg-m3-surface-container-high rounded-m3-xl p-3">
+                <div className={`flex items-center justify-between rounded-m3-xl p-3 ${sectionHighBgClass}`}>
                     <div className="flex items-center gap-2">
                         <Clock size={18} className="text-m3-primary" />
-                        <span className="text-m3-label-large font-bold text-m3-on-surface">{t.peakRainAt}</span>
+                        <span className={`text-m3-label-large font-bold ${onSurfaceTextClass}`}>{t.peakRainAt}</span>
                     </div>
-                    <span className="text-m3-body-large font-bold text-m3-on-surface">
+                    <span className={`text-m3-body-large font-bold ${onSurfaceTextClass}`}>
                         {peakTime.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})} ({formatPrecip ? formatPrecip(maxIntensity) : maxIntensity.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}/h)
                     </span>
                 </div>
@@ -9416,9 +9422,9 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
 
             {/* Light rain before stronger start */}
             {hasLightBeforeStrong && (
-                <div className="flex items-start gap-2 bg-m3-surface-container-high rounded-m3-xl p-3">
+                <div className={`flex items-start gap-2 rounded-m3-xl p-3 ${sectionHighBgClass}`}>
                     <CloudDrizzle size={18} className="text-m3-primary mt-0.5" />
-                    <span className="text-m3-label-large font-bold text-m3-on-surface">
+                    <span className={`text-m3-label-large font-bold ${onSurfaceTextClass}`}>
                         {lang === 'en'
                             ? `Light precipitation from ${lightStartLabel}, heavier from ${strongStartLabel}${strongEndSuffixEn}.`
                             : `Leichter Niederschlag ab ${lightStartLabel} Uhr, stärker ab ${strongStartLabel}${strongEndSuffixDe}.`}
@@ -9428,10 +9434,10 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
             
             {/* Hourly Forecast (if available) */}
             {hourlyForecast.length > 0 && (
-                <div className="bg-m3-surface-container-high rounded-m3-xl p-3">
+                <div className={`${sectionHighBgClass} rounded-m3-xl p-3`}>
                     <div className="flex items-center gap-2 mb-2">
                         <BarChart2 size={18} className={isMixedPrecip ? "text-m3-tertiary" : "text-m3-primary"} />
-                        <span className="text-m3-label-large font-bold text-m3-on-surface">{t.nextHours}</span>
+                        <span className={`text-m3-label-large font-bold ${onSurfaceTextClass}`}>{t.nextHours}</span>
                     </div>
                     <div className="flex flex-col gap-2">
                         {hourlyForecast.slice(0, 24).map((forecast, idx) => {
@@ -9439,13 +9445,13 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                             return (
                                 <div
                                     key={idx}
-                                    className="grid grid-cols-[auto_1fr_auto] items-center gap-2 bg-m3-surface-container/80 backdrop-blur-sm border border-m3-outline-variant/30 rounded-m3-xl px-3 py-2 w-full shadow-m3-1 hover:shadow-m3-2 transition-all"
+                                    className={`grid grid-cols-[auto_1fr_auto] items-center gap-2 backdrop-blur-sm rounded-m3-xl px-3 py-2 w-full shadow-m3-1 hover:shadow-m3-2 transition-all ${hourlyRowBgClass}`}
                                 >
-                                    <span className="text-sm font-bold text-m3-on-surface min-w-[64px]">
+                                    <span className={`text-sm font-bold min-w-[64px] ${onSurfaceTextClass}`}>
                                         {forecast.time.toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})}
                                     </span>
                                     <div className="flex justify-center" aria-hidden="true">
-                                        <div className="h-1 w-4 bg-white/10 rounded-full overflow-hidden">
+                                        <div className={`h-1 w-4 rounded-full overflow-hidden ${isRealNight ? 'bg-white/20' : 'bg-white/10'}`}>
                                             <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
                                         </div>
                                     </div>
@@ -16010,7 +16016,7 @@ export default function WeatherApp() {
                <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
            </div>
            <h2 className="text-2xl font-bold mb-6 text-slate-800 text-center">{t('precipRadar')}</h2>
-            <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} radarNowcast={shortTermData?.radar_nowcast} currentData={shortTermData?.current} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} />
+            <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} radarNowcast={shortTermData?.radar_nowcast} currentData={shortTermData?.current} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} isRealNight={isRealNight} />
        </div>
     );
  }
@@ -17086,7 +17092,7 @@ export default function WeatherApp() {
 
           {activeTab === 'precipitation' && (
             <div className="space-y-4">
-              <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} radarNowcast={shortTermData?.radar_nowcast} currentData={shortTermData?.current} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} />
+              <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} radarNowcast={shortTermData?.radar_nowcast} currentData={shortTermData?.current} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} isRealNight={isRealNight} />
             </div>
           )}
 
