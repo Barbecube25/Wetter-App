@@ -10677,7 +10677,7 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
         {/* Header */}
         <div className={`p-4 border-b ${isRealNight ? 'border-m3-outline-variant/70 bg-m3-dark-surface-container-high/50' : 'border-slate-100 bg-slate-50/50'} flex justify-between items-center sticky top-0`}>
           <h3 className={`font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'} flex items-center gap-2`}>
-            <CloudRain size={18} className="text-blue-500"/> 
+            <CloudRain size={18} className="text-blue-500 dark:text-blue-300"/> 
             {t.precipitationDetails}
           </h3>
           <button 
@@ -10689,10 +10689,10 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
         </div>
         
         {/* Summary */}
-        <div className={`p-4 ${isRealNight ? 'bg-blue-900/20 border-b border-blue-700/30' : 'bg-blue-50/50 border-b border-blue-100'}`}>
+        <div className={`p-4 ${isRealNight ? 'bg-blue-950/40 border-b border-blue-500/30' : 'bg-blue-50/50 border-b border-blue-100'}`}>
           <div className="flex justify-between items-center">
-            <span className={`text-sm font-medium ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-600'}`}>{t.precip24h}</span>
-            <span className={`text-lg font-bold ${isRealNight ? 'text-blue-400' : 'text-blue-600'}`}>
+            <span className={`text-sm font-medium ${isRealNight ? 'text-blue-100' : 'text-slate-600'}`}>{t.precip24h}</span>
+            <span className={`text-lg font-bold ${isRealNight ? 'text-blue-300' : 'text-blue-600'}`}>
               {formatPrecip ? formatPrecip(totalAmount) : totalAmount.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
             </span>
           </div>
@@ -10710,18 +10710,18 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
                 className={`flex justify-between items-center p-3 rounded-xl transition-colors ${
                   hour.hasPrecip 
                     ? (isRealNight ? 'bg-blue-900/30 border border-blue-700/40' : 'bg-blue-50 border border-blue-100')
-                    : (isRealNight ? 'bg-m3-dark-surface-container-high/40' : 'bg-slate-50/50')
+                    : (isRealNight ? 'bg-m3-dark-surface-container-high/60 border border-m3-outline-variant/40' : 'bg-slate-50/50')
                 }`}
               >
                 <div className="flex items-center gap-3">
                   {hour.hasPrecip ? (
                     hour.hasSnow ? (
-                      <Snowflake size={18} className="text-cyan-500" />
+                      <Snowflake size={18} className={isRealNight ? 'text-cyan-300' : 'text-cyan-500'} />
                     ) : (
-                      <CloudRain size={18} className="text-blue-500" />
+                      <CloudRain size={18} className={isRealNight ? 'text-blue-300' : 'text-blue-500'} />
                     )
                   ) : (
-                    <Sun size={18} className={isRealNight ? 'text-slate-600' : 'text-slate-300'} />
+                     <Sun size={18} className={isRealNight ? 'text-slate-400' : 'text-slate-300'} />
                   )}
                   <span className={`font-medium ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-700'}`}>
                     {hour.displayTime}
@@ -10734,7 +10734,7 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
                         {formatPrecip ? formatPrecip(hour.amount) : hour.amount.toFixed(1)} {getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                       </div>
                       {hour.hasRain && hour.hasSnow && (
-                        <div className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'}`}>
+                        <div className={`text-xs ${isRealNight ? 'text-blue-200' : 'text-slate-500'}`}>
                           <CloudRain className="inline w-3 h-3" /> {formatPrecip ? formatPrecip(hour.rain) : hour.rain.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
                           {' '}
                           <Snowflake className="inline w-3 h-3" /> {formatPrecip ? formatPrecip(hour.snow) : hour.snow.toFixed(1)}{getPrecipUnitLabel ? getPrecipUnitLabel() : 'mm'}
@@ -10742,18 +10742,18 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
                       )}
                     </>
                   ) : (
-                    <span className={`text-sm ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'}`}>{t.noRain}</span>
+                     <span className={`text-sm ${isRealNight ? 'text-slate-300' : 'text-slate-400'}`}>{t.noRain}</span>
                   )}
                 </div>
               </div>
               {isLastPast && (
                 <div className="flex items-center gap-2 py-1">
-                  <div className="flex-1 h-px bg-violet-400/60"></div>
-                  <span className="flex items-center gap-1 text-xs font-bold text-violet-600">
-                    <span className="w-2 h-2 rounded-full bg-violet-500 inline-block" aria-hidden="true"></span>
+                  <div className="flex-1 h-px bg-violet-400/60 dark:bg-violet-300/60"></div>
+                  <span className="flex items-center gap-1 text-xs font-bold text-violet-600 dark:text-violet-200">
+                    <span className="w-2 h-2 rounded-full bg-violet-500 dark:bg-violet-300 inline-block" aria-hidden="true"></span>
                     {t.now}
                   </span>
-                  <div className="flex-1 h-px bg-violet-400/60"></div>
+                  <div className="flex-1 h-px bg-violet-400/60 dark:bg-violet-300/60"></div>
                 </div>
               )}
             </React.Fragment>
