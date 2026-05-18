@@ -12827,7 +12827,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                                     {['de', 'en', 'fr', 'es', 'it', 'tr', 'pl', 'nl', 'hr', 'el', 'da', 'ru'].map(l => (
                                         <button
                                             key={l}
-                                            onClick={() => setSettings({ ...settings, language: l })}
+                                            onClick={() => setSettings(prev => ({ ...prev, language: l }))}
                                             className={`py-2 px-2 rounded-m3-sm text-xs font-bold transition flex items-center justify-center gap-1 ${
                                                 settings.language === l
                                                     ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container'
@@ -12854,7 +12854,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                                     ].map(({ key, label }) => (
                                         <button
                                             key={key}
-                                            onClick={() => setSettings({ ...settings, theme: key })}
+                                            onClick={() => setSettings(prev => ({ ...prev, theme: key }))}
                                             className={`flex-1 py-2 rounded-m3-sm text-xs font-bold transition ${settings.theme === key ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                                         >
                                             {label}
@@ -12876,7 +12876,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                                     ].map(({ key, label }) => (
                                         <button
                                             key={key}
-                                            onClick={() => setSettings({ ...settings, unit: key })}
+                                            onClick={() => setSettings(prev => ({ ...prev, unit: key }))}
                                             className={`py-2 rounded-m3-sm text-xs font-bold transition ${settings.unit === key ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                                         >
                                             {label}
@@ -12899,7 +12899,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                                     ].map(({ key, label }) => (
                                         <button
                                             key={key}
-                                            onClick={() => setSettings({ ...settings, windUnit: key })}
+                                            onClick={() => setSettings(prev => ({ ...prev, windUnit: key }))}
                                             className={`py-2 rounded-m3-sm text-xs font-bold transition ${settings.windUnit === key ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                                         >
                                             {label}
@@ -12920,7 +12920,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                                     ].map(({ key, label }) => (
                                         <button
                                             key={key}
-                                            onClick={() => setSettings({ ...settings, precipUnit: key })}
+                                            onClick={() => setSettings(prev => ({ ...prev, precipUnit: key }))}
                                             className={`py-2 rounded-m3-sm text-xs font-bold transition ${settings.precipUnit === key ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                                         >
                                             {label}
@@ -12957,10 +12957,14 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                                             <button
                                                 key={key}
                                                 onClick={() => {
-                                                    const updated = isActive
-                                                        ? filter.filter(k => k !== key)
-                                                        : [...filter, key];
-                                                    setSettings({ ...settings, pollenFilter: updated });
+                                                    setSettings(prev => {
+                                                        const prevFilter = prev.pollenFilter || [];
+                                                        const nextIsActive = prevFilter.includes(key);
+                                                        const updated = nextIsActive
+                                                            ? prevFilter.filter(k => k !== key)
+                                                            : [...prevFilter, key];
+                                                        return { ...prev, pollenFilter: updated };
+                                                    });
                                                 }}
                                                 className={`py-2 px-2 rounded-m3-sm text-xs font-bold transition flex items-center justify-between gap-1 ${isActive ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                                             >
@@ -12986,10 +12990,14 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                                             <button
                                                 key={key}
                                                 onClick={() => {
-                                                    const updated = isActive
-                                                        ? filter.filter(k => k !== key)
-                                                        : [...filter, key];
-                                                    setSettings({ ...settings, activityFilter: updated });
+                                                    setSettings(prev => {
+                                                        const prevFilter = prev.activityFilter || DEFAULT_ACTIVITY_FILTER;
+                                                        const nextIsActive = prevFilter.includes(key);
+                                                        const updated = nextIsActive
+                                                            ? prevFilter.filter(k => k !== key)
+                                                            : [...prevFilter, key];
+                                                        return { ...prev, activityFilter: updated };
+                                                    });
                                                 }}
                                                 className={`py-2 px-2 rounded-m3-sm text-xs font-bold transition flex items-center justify-between gap-1 ${isActive ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                                             >
