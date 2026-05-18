@@ -8637,7 +8637,7 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
 };
 
 // --- NEU: PRECIPITATION TILE (Wann, Wie lang, Wie viel) ---
-const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang='de', formatPrecip, getPrecipUnitLabel, setActiveTab, setShowPrecipModal, isRealNight = false }) => {
+const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang='de', formatPrecip, getPrecipUnitLabel, setActiveTab, setShowPrecipModal, isRealNight }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
   // Analyse der nächsten 24h
   const analysis = useMemo(() => {
@@ -9452,7 +9452,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                                     </span>
                                     <div className="flex justify-center" aria-hidden="true">
                                         <div className={`h-1 w-4 rounded-full overflow-hidden ${isRealNight ? 'bg-white/20' : 'bg-white/10'}`}>
-                                            <div className="h-full bg-gradient-to-r from-blue-400 to-red-400 opacity-60" />
+                                            <div className={`h-full bg-gradient-to-r ${isRealNight ? 'from-blue-300 to-red-300 opacity-90' : 'from-blue-400 to-red-400 opacity-60'}`} />
                                         </div>
                                     </div>
                                     {hasMixedInHour ? (
