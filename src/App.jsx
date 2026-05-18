@@ -12333,6 +12333,7 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
     const [showStationSetupTutorial, setShowStationSetupTutorial] = useState(false);
     
     const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+    const activityDefinitions = useMemo(() => getActivityDefinitions(settings.customActivities), [settings.customActivities]);
     
     // Hide status bar on mount, restore on unmount
     useEffect(() => {
@@ -12803,67 +12804,209 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                     {currentStep.content === 'settings' && (
                         <div className="space-y-4">
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <Home size={20} className="text-m3-tertiary" />
-                                    <span className="font-bold text-m3-on-surface">{t.homeLoc}</span>
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <Home size={20} className="text-m3-tertiary" />
+                                        <span className="font-bold text-m3-on-surface">{t.homeLoc}</span>
+                                    </div>
+                                    <button
+                                        onClick={() => setStep(2)}
+                                        className="text-xs px-3 py-1 rounded-m3-sm bg-m3-primary-container text-m3-on-primary-container font-bold"
+                                    >
+                                        {t.changeHome}
+                                    </button>
                                 </div>
-                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.changeHome}</p>
                             </div>
                             
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
-                                <div className="flex items-center gap-3 mb-2">
+                                <div className="flex items-center gap-3 mb-3">
                                     <Globe size={20} className="text-m3-primary" />
                                     <span className="font-bold text-m3-on-surface">{t.language}</span>
                                 </div>
-                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.tutorialLangDesc}</p>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {['de', 'en', 'fr', 'es', 'it', 'tr', 'pl', 'nl', 'hr', 'el', 'da', 'ru'].map(l => (
+                                        <button
+                                            key={l}
+                                            onClick={() => setSettings(prev => ({ ...prev, language: l }))}
+                                            className={`py-2 px-2 rounded-m3-sm text-xs font-bold transition flex items-center justify-center gap-1 ${
+                                                settings.language === l
+                                                    ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container'
+                                                    : 'text-m3-on-surface-variant hover:text-m3-on-surface'
+                                            }`}
+                                        >
+                                            <span>{LANGUAGE_FLAGS[l]}</span>
+                                            {settings.language === l && <Check size={12} />}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                             
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
-                                <div className="flex items-center gap-3 mb-2">
+                                <div className="flex items-center gap-3 mb-3">
                                     <Palette size={20} className="text-m3-tertiary" />
                                     <span className="font-bold text-m3-on-surface">{t.theme}</span>
                                 </div>
-                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.themeLight} / {t.themeDark} / {t.themeAuto}</p>
+                                <div className="flex gap-2 bg-m3-surface p-1 rounded-m3-md">
+                                    {[
+                                        { key: 'auto', label: t.themeAuto },
+                                        { key: 'light', label: t.themeLight },
+                                        { key: 'dark', label: t.themeDark },
+                                    ].map(({ key, label }) => (
+                                        <button
+                                            key={key}
+                                            onClick={() => setSettings(prev => ({ ...prev, theme: key }))}
+                                            className={`flex-1 py-2 rounded-m3-sm text-xs font-bold transition ${settings.theme === key ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                                        >
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
-                                <div className="flex items-center gap-3 mb-2">
+                                <div className="flex items-center gap-3 mb-3">
                                     <Thermometer size={20} className="text-m3-error" />
                                     <span className="font-bold text-m3-on-surface">{t.units}</span>
                                 </div>
-                                <p className="text-xs text-m3-on-surface-variant ml-8">°C / °F / K</p>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                        { key: 'celsius', label: '°C' },
+                                        { key: 'fahrenheit', label: '°F' },
+                                        { key: 'kelvin', label: 'K' },
+                                    ].map(({ key, label }) => (
+                                        <button
+                                            key={key}
+                                            onClick={() => setSettings(prev => ({ ...prev, unit: key }))}
+                                            className={`py-2 rounded-m3-sm text-xs font-bold transition ${settings.unit === key ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                                        >
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                             
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
-                                <div className="flex items-center gap-3 mb-2">
+                                <div className="flex items-center gap-3 mb-3">
                                     <Wind size={20} className="text-cyan-600" />
                                     <span className="font-bold text-m3-on-surface">{t.wind}</span>
                                 </div>
-                                <p className="text-xs text-m3-on-surface-variant ml-8">km/h / m/s / mph / Beaufort</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {[
+                                        { key: 'kmh', label: 'km/h' },
+                                        { key: 'ms', label: 'm/s' },
+                                        { key: 'mph', label: 'mph' },
+                                        { key: 'beaufort', label: 'Bft' },
+                                    ].map(({ key, label }) => (
+                                        <button
+                                            key={key}
+                                            onClick={() => setSettings(prev => ({ ...prev, windUnit: key }))}
+                                            className={`py-2 rounded-m3-sm text-xs font-bold transition ${settings.windUnit === key ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                                        >
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
-                                <div className="flex items-center gap-3 mb-2">
+                                <div className="flex items-center gap-3 mb-3">
                                     <Droplets size={20} className="text-blue-500" />
                                     <span className="font-bold text-m3-on-surface">{t.precip}</span>
                                 </div>
-                                <p className="text-xs text-m3-on-surface-variant ml-8">mm / in</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {[
+                                        { key: 'mm', label: 'mm' },
+                                        { key: 'in', label: 'in' },
+                                    ].map(({ key, label }) => (
+                                        <button
+                                            key={key}
+                                            onClick={() => setSettings(prev => ({ ...prev, precipUnit: key }))}
+                                            className={`py-2 rounded-m3-sm text-xs font-bold transition ${settings.precipUnit === key ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                                        >
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
-                                <div className="flex items-center gap-3 mb-2">
+                                <div className="flex items-center gap-3 mb-3">
                                     <Sparkles size={20} className="text-yellow-500" />
                                     <span className="font-bold text-m3-on-surface">{t.pollen}</span>
                                 </div>
-                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.pollenFilter}</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {[
+                                        { key: 'hazel_pollen', label: t.pollenHazel },
+                                        { key: 'alder_pollen', label: t.pollenAlder },
+                                        { key: 'birch_pollen', label: t.pollenBirch },
+                                        { key: 'ash_pollen', label: t.pollenAsh },
+                                        { key: 'hornbeam_pollen', label: t.pollenHornbeam },
+                                        { key: 'oak_pollen', label: t.pollenOak },
+                                        { key: 'beech_pollen', label: t.pollenBeech },
+                                        { key: 'grass_pollen', label: t.pollenGrass },
+                                        { key: 'rye_pollen', label: t.pollenRye },
+                                        { key: 'mugwort_pollen', label: t.pollenMugwort },
+                                        { key: 'olive_pollen', label: t.pollenOlive },
+                                        { key: 'ragweed_pollen', label: t.pollenRagweed },
+                                        { key: 'plantain_pollen', label: t.pollenPlantain },
+                                        { key: 'sorrel_pollen', label: t.pollenSorrel },
+                                    ].map(({ key, label }) => {
+                                        const filter = settings.pollenFilter || [];
+                                        const isActive = filter.includes(key);
+                                        return (
+                                            <button
+                                                key={key}
+                                                onClick={() => {
+                                                    setSettings(prev => {
+                                                        const prevFilter = prev.pollenFilter || [];
+                                                        const nextIsActive = prevFilter.includes(key);
+                                                        const updated = nextIsActive
+                                                            ? prevFilter.filter(k => k !== key)
+                                                            : [...prevFilter, key];
+                                                        return { ...prev, pollenFilter: updated };
+                                                    });
+                                                }}
+                                                className={`py-2 px-2 rounded-m3-sm text-xs font-bold transition flex items-center justify-between gap-1 ${isActive ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                                            >
+                                                <span className="truncate">{label}</span>
+                                                {isActive && <Check size={12} className="shrink-0" />}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
 
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
-                                <div className="flex items-center gap-3 mb-2">
+                                <div className="flex items-center gap-3 mb-3">
                                     <Activity size={20} className="text-orange-500" />
                                     <span className="font-bold text-m3-on-surface">{t.activityFilterLabel}</span>
                                 </div>
-                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.activityParamsTitle}</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {activityDefinitions.map(({ key, emoji, label }) => {
+                                        const filter = settings.activityFilter || DEFAULT_ACTIVITY_FILTER;
+                                        const isActive = filter.includes(key);
+                                        const actLabel = getActivityLabel({ label, key }, settings.language);
+                                        return (
+                                            <button
+                                                key={key}
+                                                onClick={() => {
+                                                    setSettings(prev => {
+                                                        const prevFilter = prev.activityFilter || DEFAULT_ACTIVITY_FILTER;
+                                                        const nextIsActive = prevFilter.includes(key);
+                                                        const updated = nextIsActive
+                                                            ? prevFilter.filter(k => k !== key)
+                                                            : [...prevFilter, key];
+                                                        return { ...prev, activityFilter: updated };
+                                                    });
+                                                }}
+                                                className={`py-2 px-2 rounded-m3-sm text-xs font-bold transition flex items-center justify-between gap-1 ${isActive ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                                            >
+                                                <span className="truncate">{emoji} {actLabel}</span>
+                                                {isActive && <Check size={12} className="shrink-0" />}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
                     )}
