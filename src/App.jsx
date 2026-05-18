@@ -11232,7 +11232,7 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
       )
     : null;
   const isGood = !!rating && rating.score >= 6;
-  const dayLabels = translations[lang] || translations.en || translations.de;
+  const dayLabels = TRANSLATIONS[lang] || TRANSLATIONS.en || TRANSLATIONS.de;
   const getDayLabel = useCallback((offset) => (
     offset === TODAY_OFFSET
       ? (dayLabels.today || (isGerman ? 'Heute' : 'Today'))
