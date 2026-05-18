@@ -11186,17 +11186,21 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
 // --- ACTIVITY CHECK MODAL ---
 const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallScreen = false, activityFilter = null, activityParams = null, customActivities = [], isRealNight = false }) => {
   const isGerman = lang === 'de';
+  const TODAY_OFFSET = 0;
+  const TOMORROW_OFFSET = 1;
   const activeActivities = useMemo(() => {
     const filter = Array.isArray(activityFilter) ? activityFilter : DEFAULT_ACTIVITY_FILTER;
     return getActivityDefinitions(customActivities).filter(({ key }) => filter.includes(key));
   }, [activityFilter, customActivities]);
   const [selectedActivityKey, setSelectedActivityKey] = useState(activeActivities[0]?.key || 'walking');
   const [selectedHourIdx, setSelectedHourIdx] = useState(0);
+  const [showDayOutlook, setShowDayOutlook] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
     setSelectedActivityKey(activeActivities[0]?.key || 'walking');
     setSelectedHourIdx(0);
+    setShowDayOutlook(false);
   }, [isOpen, activeActivities]);
 
   if (!isOpen) return null;
@@ -11228,6 +11232,59 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
       )
     : null;
   const isGood = !!rating && rating.score >= 6;
+  const dayLabels = translations[lang] || translations.en || translations.de;
+  const getDayLabel = useCallback((offset) => (
+    offset === TODAY_OFFSET
+      ? (dayLabels.today || (isGerman ? 'Heute' : 'Today'))
+      : (dayLabels.tomorrow || (isGerman ? 'Morgen' : 'Tomorrow'))
+  ), [dayLabels, isGerman]);
+  const dailyOutlook = useMemo(() => {
+    if (!selectedActivity || !Array.isArray(hourlyData) || hourlyData.length === 0) return [];
+
+    const startDate = new Date(hourlyData[0].time);
+    startDate.setHours(0, 0, 0, 0);
+
+    return [TODAY_OFFSET, TOMORROW_OFFSET].map((offset) => {
+      const dayStart = new Date(startDate);
+      dayStart.setDate(dayStart.getDate() + offset);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setDate(dayEnd.getDate() + 1);
+
+      const dayHours = hourlyData.filter((hour) => hour.time >= dayStart && hour.time < dayEnd);
+      if (dayHours.length === 0) {
+        return {
+          key: offset,
+          label: getDayLabel(offset),
+          hasData: false,
+        };
+      }
+
+      const bestHour = dayHours.reduce((best, hour) => {
+        const currentRating = getActivityRating(
+          selectedActivity.key,
+          Math.round(hour.temp ?? 0),
+          Math.round((hour.windAvg ?? hour.wind) ?? 0),
+          hour.precip ?? 0,
+          hour.uvIndex ?? 0,
+          hour.code ?? 0,
+          effectiveActivityParams[selectedActivity.key]
+        );
+        if (!best || currentRating.score > best.score) {
+          return { score: currentRating.score, time: hour.time };
+        }
+        return best;
+      }, null);
+
+      return {
+        key: offset,
+        label: getDayLabel(offset),
+        hasData: !!bestHour,
+        isGood: !!bestHour && bestHour.score >= 6,
+        score: bestHour?.score ?? null,
+        bestTime: bestHour?.time?.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) || null,
+      };
+    });
+  }, [selectedActivity, hourlyData, effectiveActivityParams, getDayLabel, locale]);
 
   return (
     <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
@@ -11276,7 +11333,20 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
           </div>
 
           {rating && selectedActivity && selectedTime ? (
-            <div className={`rounded-2xl border p-4 ${isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/70' : 'bg-slate-50 border-slate-200'}`}>
+            <div
+              role="button"
+              tabIndex={0}
+              aria-expanded={showDayOutlook}
+              aria-label={isGerman ? 'Tagesausblick heute und morgen ein- oder ausblenden' : 'Toggle daily outlook for today and tomorrow'}
+              onClick={() => setShowDayOutlook((prev) => !prev)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setShowDayOutlook((prev) => !prev);
+                }
+              }}
+              className={`rounded-2xl border p-4 cursor-pointer active:scale-[0.99] transition-all ${isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/70' : 'bg-slate-50 border-slate-200'}`}
+            >
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-2xl">{selectedActivity.emoji}</span>
                 <span className={`text-sm font-semibold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'}`}>
@@ -11294,6 +11364,36 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
                   ? `Wetterwerte um ${selectedTime.label}: ${selectedTime.temp}°C, ${selectedTime.wind} km/h Wind, ${selectedTime.precip.toFixed(1)} mm Niederschlag.`
                   : `Weather at ${selectedTime.label}: ${selectedTime.temp}°C, ${selectedTime.wind} km/h wind, ${selectedTime.precip.toFixed(1)} mm precipitation.`}
               </div>
+              <div className={`text-[11px] mt-2 ${isRealNight ? 'text-m3-dark-on-surface-variant/80' : 'text-slate-500'}`}>
+                {isGerman ? 'Klicken oder drücken für Heute & Morgen.' : 'Click or press for today & tomorrow.'}
+              </div>
+              {showDayOutlook && (
+                <div className={`mt-3 pt-3 border-t space-y-2 ${isRealNight ? 'border-m3-outline-variant/70' : 'border-slate-200'}`}>
+                  {dailyOutlook.map((day) => (
+                    <div key={day.key} className={`rounded-xl border px-3 py-2 ${isRealNight ? 'border-m3-outline-variant/60 bg-m3-dark-surface-container' : 'border-slate-200 bg-white/80'}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`text-xs font-semibold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-700'}`}>{day.label}</span>
+                        {day.hasData ? (
+                          <span className={`text-xs font-bold ${day.isGood ? 'text-green-600' : 'text-red-500'}`}>
+                            {day.isGood ? (isGerman ? 'Gut' : 'Good') : (isGerman ? 'Schlecht' : 'Bad')}
+                          </span>
+                        ) : (
+                          <span className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'}`}>
+                            {isGerman ? 'Keine Daten' : 'No data'}
+                          </span>
+                        )}
+                      </div>
+                      {day.hasData && (
+                        <div className={`text-[11px] mt-1 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'}`}>
+                          {isGerman
+                            ? `Beste Uhrzeit: ${day.bestTime} · ${day.score}/10`
+                            : `Best time: ${day.bestTime} · ${day.score}/10`}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <div className={`rounded-xl p-3 text-sm ${isRealNight ? 'bg-m3-dark-surface-container-high text-m3-dark-on-surface-variant' : 'bg-slate-50 text-slate-500'}`}>
