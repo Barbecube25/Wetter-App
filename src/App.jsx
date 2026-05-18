@@ -11186,6 +11186,8 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
 // --- ACTIVITY CHECK MODAL ---
 const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallScreen = false, activityFilter = null, activityParams = null, customActivities = [], isRealNight = false }) => {
   const isGerman = lang === 'de';
+  const TODAY_OFFSET = 0;
+  const TOMORROW_OFFSET = 1;
   const activeActivities = useMemo(() => {
     const filter = Array.isArray(activityFilter) ? activityFilter : DEFAULT_ACTIVITY_FILTER;
     return getActivityDefinitions(customActivities).filter(({ key }) => filter.includes(key));
@@ -11232,17 +11234,17 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
   const isGood = !!rating && rating.score >= 6;
   const dayLabels = translations[lang] || translations.en || translations.de;
   const getDayLabel = useCallback((offset) => (
-    offset === 0
+    offset === TODAY_OFFSET
       ? (dayLabels.today || (isGerman ? 'Heute' : 'Today'))
       : (dayLabels.tomorrow || (isGerman ? 'Morgen' : 'Tomorrow'))
-  ), [dayLabels, isGerman]);
+  ), [dayLabels, isGerman, TODAY_OFFSET]);
   const dailyOutlook = useMemo(() => {
     if (!selectedActivity || !Array.isArray(hourlyData) || hourlyData.length === 0) return [];
 
     const startDate = new Date(hourlyData[0].time);
     startDate.setHours(0, 0, 0, 0);
 
-    return [0, 1].map((offset) => {
+    return [TODAY_OFFSET, TOMORROW_OFFSET].map((offset) => {
       const dayStart = new Date(startDate);
       dayStart.setDate(dayStart.getDate() + offset);
       const dayEnd = new Date(dayStart);
@@ -11335,6 +11337,7 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
               role="button"
               tabIndex={0}
               aria-expanded={showDayOutlook}
+              aria-label={isGerman ? 'Tagesausblick heute und morgen ein- oder ausblenden' : 'Toggle daily outlook for today and tomorrow'}
               onClick={() => setShowDayOutlook((prev) => !prev)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -11362,7 +11365,7 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
                   : `Weather at ${selectedTime.label}: ${selectedTime.temp}°C, ${selectedTime.wind} km/h wind, ${selectedTime.precip.toFixed(1)} mm precipitation.`}
               </div>
               <div className={`text-[11px] mt-2 ${isRealNight ? 'text-m3-dark-on-surface-variant/80' : 'text-slate-500'}`}>
-                {isGerman ? 'Kachel antippen für Heute & Morgen.' : 'Tap tile for today & tomorrow.'}
+                {isGerman ? 'Klicken oder drücken für Heute & Morgen.' : 'Click or press for today & tomorrow.'}
               </div>
               {showDayOutlook && (
                 <div className={`mt-3 pt-3 border-t space-y-2 ${isRealNight ? 'border-m3-outline-variant/70' : 'border-slate-200'}`}>
