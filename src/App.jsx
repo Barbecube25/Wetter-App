@@ -11231,6 +11231,11 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
     : null;
   const isGood = !!rating && rating.score >= 6;
   const dayLabels = translations[lang] || translations.en || translations.de;
+  const getDayLabel = useCallback((offset) => (
+    offset === 0
+      ? (dayLabels.today || (isGerman ? 'Heute' : 'Today'))
+      : (dayLabels.tomorrow || (isGerman ? 'Morgen' : 'Tomorrow'))
+  ), [dayLabels, isGerman]);
   const dailyOutlook = useMemo(() => {
     if (!selectedActivity || !Array.isArray(hourlyData) || hourlyData.length === 0) return [];
 
@@ -11247,7 +11252,7 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
       if (dayHours.length === 0) {
         return {
           key: offset,
-          label: offset === 0 ? (dayLabels.today || (isGerman ? 'Heute' : 'Today')) : (dayLabels.tomorrow || (isGerman ? 'Morgen' : 'Tomorrow')),
+          label: getDayLabel(offset),
           hasData: false,
         };
       }
@@ -11270,14 +11275,14 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
 
       return {
         key: offset,
-        label: offset === 0 ? (dayLabels.today || (isGerman ? 'Heute' : 'Today')) : (dayLabels.tomorrow || (isGerman ? 'Morgen' : 'Tomorrow')),
+        label: getDayLabel(offset),
         hasData: !!bestHour,
         isGood: !!bestHour && bestHour.score >= 6,
         score: bestHour?.score ?? null,
         bestTime: bestHour?.time?.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) || null,
       };
     });
-  }, [selectedActivity, hourlyData, effectiveActivityParams, dayLabels, locale, isGerman]);
+  }, [selectedActivity, hourlyData, effectiveActivityParams, getDayLabel, locale]);
 
   return (
     <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
@@ -11329,6 +11334,7 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
             <div
               role="button"
               tabIndex={0}
+              aria-expanded={showDayOutlook}
               onClick={() => setShowDayOutlook((prev) => !prev)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
