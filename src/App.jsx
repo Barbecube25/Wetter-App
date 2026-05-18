@@ -16616,7 +16616,7 @@ export default function WeatherApp() {
             tilesExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
-          {/* Weather Details Grid - First row (4 tiles) */}
+          {/* Weather Details Grid */}
           <div className={`grid ${weatherTileGridClass} ${weatherTileGapClass}`}>
           <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('uv')}>
             <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
@@ -16652,10 +16652,7 @@ export default function WeatherApp() {
             </div>
             <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{formatTemp(current.dewPoint)}{getTempUnitSymbol()}</div>
           </div>
-        </div>
-        
-        {/* Additional Weather Details Grid - Second row (4 tiles) */}
-        <div className={`grid ${weatherTileGridClass} ${weatherTileGapClass}`}>
+          
           {current.pressure !== null && current.pressure !== undefined && (
             <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('pressure')}>
               <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
