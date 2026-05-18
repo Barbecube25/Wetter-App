@@ -11237,7 +11237,7 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
     offset === TODAY_OFFSET
       ? (dayLabels.today || (isGerman ? 'Heute' : 'Today'))
       : (dayLabels.tomorrow || (isGerman ? 'Morgen' : 'Tomorrow'))
-  ), [dayLabels, isGerman, TODAY_OFFSET]);
+  ), [dayLabels, isGerman]);
   const dailyOutlook = useMemo(() => {
     if (!selectedActivity || !Array.isArray(hourlyData) || hourlyData.length === 0) return [];
 
