@@ -16731,7 +16731,20 @@ export default function WeatherApp() {
 
           {activeTab === 'longterm' && (
              <div className="space-y-3">
-               <AIReportBox report={longtermReport} dwdWarnings={[]} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} isFoldableScreen={isFoldableScreen} />
+               <AIReportBox
+                 report={longtermReport}
+                 dwdWarnings={[]}
+                 lang={lang}
+                 tempFunc={formatTemp}
+                 formatWind={formatWind}
+                 getWindUnitLabel={getWindUnitLabel}
+                 formatPrecip={formatPrecip}
+                 getPrecipUnitLabel={getPrecipUnitLabel}
+                 getTempUnitSymbol={getTempUnitSymbol}
+                 isRealNight={isRealNight}
+                 onOpenQuickViewDetail={handleOpenDailyQuickViewDetail}
+                 isFoldableScreen={isFoldableScreen}
+               />
                <h3 className="text-sm font-bold uppercase tracking-wide opacity-90 ml-2">{t('longtermList')}</h3>
                <div className={`overflow-y-auto ${isExpandedLayoutActive ? 'max-h-[600px]' : 'max-h-[520px]'} pr-1`}> 
                  <div className="flex flex-col gap-3">
