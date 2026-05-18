@@ -41,6 +41,21 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=temperature_2m,precipitation,rain,wind_speed_10m,weathercode&hourly=uv_index,precipitation_probability,cape,lifted_index&timezone=auto&forecast_days=1";
     private static final String AIR_QUALITY_API_URL_TEMPLATE =
         "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=%f&longitude=%f&current=alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&timezone=auto";
+    // WMO weather codes representing thunderstorm conditions.
+    private static final int[] THUNDERSTORM_WMO_CODES = {17, 95, 96, 99};
+    private static final double THUNDER_CAPE_MODERATE = 500;
+    private static final double THUNDER_CAPE_HIGH = 1000;
+    private static final double THUNDER_LIFTED_INDEX_MODERATE = -1;
+    private static final double THUNDER_LIFTED_INDEX_HIGH = -4;
+    private static final double THUNDER_PRECIP_PROB_MODERATE = 40;
+    private static final double THUNDER_PRECIP_PROB_HIGH = 70;
+    private static final double THUNDER_WIND_KMH_ELEVATED = 50;
+    private static final double THUNDER_SCORE_LOW = 1.0;
+    private static final double THUNDER_SCORE_MODERATE = 2.0;
+    private static final double THUNDER_SCORE_HIGH = 3.5;
+    private static final double POLLEN_THRESHOLD_MODERATE = 5;
+    private static final double POLLEN_THRESHOLD_HIGH = 20;
+    private static final double POLLEN_THRESHOLD_VERY_HIGH = 50;
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
@@ -256,30 +271,30 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     }
 
     private String classifyThunderRisk(Context context, int weatherCode, double cape, double liftedIndex, double precipProb, double windKmh) {
-        if (weatherCode == 17 || weatherCode == 95 || weatherCode == 96 || weatherCode == 99) {
+        if (isThunderstormCode(weatherCode)) {
             return context.getString(R.string.widget_thunder_high);
         }
 
         double score = 0.0;
         if (!Double.isNaN(cape)) {
-            if (cape >= 1000) score += 2.0;
-            else if (cape >= 500) score += 1.0;
+            if (cape >= THUNDER_CAPE_HIGH) score += 2.0;
+            else if (cape >= THUNDER_CAPE_MODERATE) score += 1.0;
         }
         if (!Double.isNaN(liftedIndex)) {
-            if (liftedIndex <= -4) score += 2.0;
-            else if (liftedIndex <= -1) score += 1.0;
+            if (liftedIndex <= THUNDER_LIFTED_INDEX_HIGH) score += 2.0;
+            else if (liftedIndex <= THUNDER_LIFTED_INDEX_MODERATE) score += 1.0;
         }
         if (!Double.isNaN(precipProb)) {
-            if (precipProb >= 70) score += 1.0;
-            else if (precipProb >= 40) score += 0.5;
+            if (precipProb >= THUNDER_PRECIP_PROB_HIGH) score += 1.0;
+            else if (precipProb >= THUNDER_PRECIP_PROB_MODERATE) score += 0.5;
         }
-        if (!Double.isNaN(windKmh) && windKmh >= 50) {
+        if (!Double.isNaN(windKmh) && windKmh >= THUNDER_WIND_KMH_ELEVATED) {
             score += 0.5;
         }
 
-        if (score >= 3.5) return context.getString(R.string.widget_thunder_high);
-        if (score >= 2.0) return context.getString(R.string.widget_thunder_moderate);
-        if (score >= 1.0) return context.getString(R.string.widget_thunder_low);
+        if (score >= THUNDER_SCORE_HIGH) return context.getString(R.string.widget_thunder_high);
+        if (score >= THUNDER_SCORE_MODERATE) return context.getString(R.string.widget_thunder_moderate);
+        if (score >= THUNDER_SCORE_LOW) return context.getString(R.string.widget_thunder_low);
         return null;
     }
 
@@ -287,10 +302,17 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         if (Double.isNaN(maxPollen) || maxPollen <= 0) {
             return context.getString(R.string.widget_metric_unavailable);
         }
-        if (maxPollen >= 50) return context.getString(R.string.widget_pollen_very_high);
-        if (maxPollen >= 20) return context.getString(R.string.widget_pollen_high);
-        if (maxPollen >= 5) return context.getString(R.string.widget_pollen_moderate);
+        if (maxPollen >= POLLEN_THRESHOLD_VERY_HIGH) return context.getString(R.string.widget_pollen_very_high);
+        if (maxPollen >= POLLEN_THRESHOLD_HIGH) return context.getString(R.string.widget_pollen_high);
+        if (maxPollen >= POLLEN_THRESHOLD_MODERATE) return context.getString(R.string.widget_pollen_moderate);
         return context.getString(R.string.widget_pollen_low);
+    }
+
+    private boolean isThunderstormCode(int weatherCode) {
+        for (int code : THUNDERSTORM_WMO_CODES) {
+            if (code == weatherCode) return true;
+        }
+        return false;
     }
 
     private int findTimeIndex(JSONObject hourly, String currentTime) {
