@@ -12861,9 +12861,9 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
                                 <div className="flex items-center gap-3 mb-2">
                                     <Activity size={20} className="text-orange-500" />
-                                    <span className="font-bold text-m3-on-surface">{t.activityFilterLabel || (lang === 'en' ? 'Activities' : 'Aktivitäten')}</span>
+                                    <span className="font-bold text-m3-on-surface">{t.activityFilterLabel}</span>
                                 </div>
-                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.activityParamsTitle || t.activityIndex}</p>
+                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.activityParamsTitle}</p>
                             </div>
                         </div>
                     )}
