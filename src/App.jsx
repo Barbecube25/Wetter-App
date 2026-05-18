@@ -9261,6 +9261,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
   const sectionBgClass = isRealNight ? 'bg-m3-dark-surface-container-high/70' : 'bg-m3-surface-container/50';
   const sectionHighBgClass = isRealNight ? 'bg-m3-dark-surface-container-high' : 'bg-m3-surface-container-high';
   const hourlyRowBgClass = isRealNight ? 'bg-m3-dark-surface-container/90 border border-m3-outline-variant/50' : 'bg-m3-surface-container/80 border border-m3-outline-variant/30';
+  const hourlySparklineGradientClass = isRealNight ? 'from-blue-300 to-red-300 opacity-90' : 'from-blue-400 to-red-400 opacity-60';
 
   return (
     <div className={`${isRealNight ? 'bg-m3-dark-surface-container-high/80' : bgClass} border ${isMixedPrecip ? 'border-m3-tertiary' : (isSnow ? 'border-m3-secondary' : 'border-m3-primary')} rounded-2xl p-4 shadow-sm mb-4 relative overflow-hidden`}>
@@ -9452,7 +9453,7 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                                     </span>
                                     <div className="flex justify-center" aria-hidden="true">
                                         <div className={`h-1 w-4 rounded-full overflow-hidden ${isRealNight ? 'bg-white/20' : 'bg-white/10'}`}>
-                                            <div className={`h-full bg-gradient-to-r ${isRealNight ? 'from-blue-300 to-red-300 opacity-90' : 'from-blue-400 to-red-400 opacity-60'}`} />
+                                            <div className={`h-full bg-gradient-to-r ${hourlySparklineGradientClass}`} />
                                         </div>
                                     </div>
                                     {hasMixedInHour ? (
@@ -10695,7 +10696,7 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
         </div>
         
         {/* Summary */}
-        <div className={`p-4 ${isRealNight ? 'bg-blue-950/40 border-b border-blue-500/30' : 'bg-blue-50/50 border-b border-blue-100'}`}>
+        <div className={`p-4 ${isRealNight ? 'bg-m3-dark-primary/20 border-b border-m3-dark-primary/40' : 'bg-blue-50/50 border-b border-blue-100'}`}>
           <div className="flex justify-between items-center">
             <span className={`text-sm font-medium ${isRealNight ? 'text-blue-100' : 'text-slate-600'}`}>{t.precip24h}</span>
             <span className={`text-lg font-bold ${isRealNight ? 'text-blue-300' : 'text-blue-600'}`}>
