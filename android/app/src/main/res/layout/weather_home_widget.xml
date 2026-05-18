@@ -14,36 +14,93 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/widget_title"
-        android:textColor="@android:color/white"
-        android:textSize="16sp"
+        android:textAllCaps="true"
+        android:textColor="#CCFFFFFF"
+        android:textSize="11sp"
         android:textStyle="bold" />
 
     <TextView
-        android:id="@+id/widget_description"
+        android:id="@+id/widget_temperature"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="@string/widget_temp_placeholder"
+        android:textColor="@android:color/white"
+        android:textSize="52sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:id="@+id/widget_metrics_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:text="@string/widget_description"
-        android:textColor="@android:color/white"
-        android:textSize="13sp" />
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/widget_updated_at"
+        <TextView
+            android:id="@+id/widget_metric_rain"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_metric_rain_placeholder"
+            android:textColor="#E6FFFFFF"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/widget_metric_uv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_metric_uv_placeholder"
+            android:textColor="#E6FFFFFF"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/widget_metric_wind"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_metric_wind_placeholder"
+            android:textColor="#E6FFFFFF"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/widget_metric_thunder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_metric_thunder_placeholder"
+            android:textColor="#E6FFFFFF"
+            android:textSize="12sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/widget_metric_pollen"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_metric_pollen_placeholder"
+            android:textColor="#E6FFFFFF"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="@string/widget_updated_placeholder"
-        android:textColor="#CCFFFFFF"
-        android:textSize="12sp" />
+        android:layout_marginTop="6dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-    <ImageButton
-        android:id="@+id/widget_refresh_button"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_gravity="end"
-        android:layout_marginTop="8dp"
-        android:background="@android:color/transparent"
-        android:contentDescription="@string/widget_refresh_content_description"
-        android:src="@android:drawable/ic_popup_sync" />
+        <TextView
+            android:id="@+id/widget_updated_at"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/widget_updated_placeholder"
+            android:textColor="#CCFFFFFF"
+            android:textSize="11sp" />
+
+        <ImageButton
+            android:id="@+id/widget_refresh_button"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/widget_refresh_content_description"
+            android:src="@android:drawable/ic_popup_sync" />
+    </LinearLayout>
 
 </LinearLayout>
