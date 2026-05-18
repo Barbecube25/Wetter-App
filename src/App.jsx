@@ -12464,52 +12464,60 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
             content: 'home'
         },
         {
-            title: t.tutorialOverviewTitle,
-            desc: t.tutorialOverviewDesc,
+            title: t.tutorialSettingsTitle,
+            desc: lang === 'en'
+                ? 'Here you can adjust location, language, design, units, wind, precipitation, pollen, and activities.'
+                : 'Hier kannst du Standort, Sprache, Design, Einheit, Wind, Niederschlag, Pollen und Aktivitäten einstellen.',
+            icon: Settings,
+            content: 'settings'
+        },
+        {
+            title: t.overview,
+            desc: lang === 'en'
+                ? 'The Overview tab gives you the quick weather flow for the day.'
+                : 'Im Reiter Verlauf bekommst du den schnellen Wetterüberblick für den Tag.',
             icon: List,
             content: 'tab'
         },
         {
-            title: t.tutorialWeatherTilesTitle,
-            desc: t.tutorialWeatherTilesDesc,
-            icon: TrendingUp,
-            content: 'weatherTiles'
-        },
-        {
-            title: t.tutorialPollenFilterTitle,
-            desc: t.tutorialPollenFilterDesc,
-            icon: Sparkles,
-            content: 'pollenFilter'
-        },
-        {
-            title: t.tutorialLongtermTitle,
-            desc: t.tutorialLongtermDesc,
+            title: t.longterm,
+            desc: lang === 'en'
+                ? 'Use 14 Days to plan ahead with the long-range forecast.'
+                : 'Im Reiter 14 Tage planst du mit der Langzeitvorhersage voraus.',
             icon: CalendarDays,
             content: 'tab'
         },
         {
-            title: t.tutorialRadarTitle,
-            desc: t.tutorialRadarDesc,
-            icon: MapIcon,
+            title: t.precip,
+            desc: lang === 'en'
+                ? 'The Precipitation tab shows rain and snow trends at a glance.'
+                : 'Der Reiter Niederschlag zeigt dir Regen- und Schneetrends auf einen Blick.',
+            icon: Droplets,
             content: 'tab'
         },
         {
-            title: t.tutorialChartTitle,
-            desc: t.tutorialChartDesc,
+            title: t.compare,
+            desc: lang === 'en'
+                ? 'In Compare you can quickly check differences between weather models.'
+                : 'Im Reiter Vergleich siehst du schnell Unterschiede zwischen Wettermodellen.',
             icon: BarChart2,
             content: 'tab'
         },
         {
-            title: t.tutorialTravelTitle,
-            desc: t.tutorialTravelDesc,
+            title: t.travel,
+            desc: lang === 'en'
+                ? 'Travel is especially important for planning trips with weather confidence.'
+                : 'Der Reiter Reise ist besonders wichtig, um Ausflüge und Urlaube sicher zu planen.',
             icon: Plane,
             content: 'tab'
         },
         {
-            title: t.tutorialSettingsTitle,
-            desc: t.tutorialSettingsDesc,
-            icon: Settings,
-            content: 'settings'
+            title: lang === 'en' ? 'Astronomy' : 'Astronomie',
+            desc: lang === 'en'
+                ? 'Astronomy shows relevant sun and moon times for your location.'
+                : 'Im Reiter Astronomie findest du wichtige Sonnen- und Mondzeiten für deinen Ort.',
+            icon: Star,
+            content: 'tab'
         }
     ];
     
@@ -12796,18 +12804,18 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
                         <div className="space-y-4">
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <Globe size={20} className="text-m3-primary" />
-                                    <span className="font-bold text-m3-on-surface">{t.language}</span>
+                                    <Home size={20} className="text-m3-tertiary" />
+                                    <span className="font-bold text-m3-on-surface">{t.homeLoc}</span>
                                 </div>
-                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.tutorialLangDesc}</p>
+                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.changeHome}</p>
                             </div>
                             
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <Thermometer size={20} className="text-m3-error" />
-                                    <span className="font-bold text-m3-on-surface">{t.units}</span>
+                                    <Globe size={20} className="text-m3-primary" />
+                                    <span className="font-bold text-m3-on-surface">{t.language}</span>
                                 </div>
-                                <p className="text-xs text-m3-on-surface-variant ml-8">°C / °F / K • km/h / m/s / mph / Beaufort • mm / in</p>
+                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.tutorialLangDesc}</p>
                             </div>
                             
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
@@ -12820,18 +12828,42 @@ const TutorialModal = ({ onComplete, onSkip, settings, setSettings, lang = 'de',
 
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
                                 <div className="flex items-center gap-3 mb-2">
+                                    <Thermometer size={20} className="text-m3-error" />
+                                    <span className="font-bold text-m3-on-surface">{t.units}</span>
+                                </div>
+                                <p className="text-xs text-m3-on-surface-variant ml-8">°C / °F / K</p>
+                            </div>
+                            
+                            <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <Wind size={20} className="text-cyan-600" />
+                                    <span className="font-bold text-m3-on-surface">{t.wind}</span>
+                                </div>
+                                <p className="text-xs text-m3-on-surface-variant ml-8">km/h / m/s / mph / Beaufort</p>
+                            </div>
+
+                            <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <Droplets size={20} className="text-blue-500" />
+                                    <span className="font-bold text-m3-on-surface">{t.precip}</span>
+                                </div>
+                                <p className="text-xs text-m3-on-surface-variant ml-8">mm / in</p>
+                            </div>
+
+                            <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
+                                <div className="flex items-center gap-3 mb-2">
                                     <Sparkles size={20} className="text-yellow-500" />
                                     <span className="font-bold text-m3-on-surface">{t.pollen}</span>
                                 </div>
                                 <p className="text-xs text-m3-on-surface-variant ml-8">{t.pollenFilter}</p>
                             </div>
-                            
+
                             <div className="bg-m3-surface-container rounded-m3-md p-4 border border-m3-outline-variant">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <Home size={20} className="text-m3-tertiary" />
-                                    <span className="font-bold text-m3-on-surface">{t.homeLoc}</span>
+                                    <Activity size={20} className="text-orange-500" />
+                                    <span className="font-bold text-m3-on-surface">{t.activityFilterLabel}</span>
                                 </div>
-                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.changeHome}</p>
+                                <p className="text-xs text-m3-on-surface-variant ml-8">{t.activityParamsTitle}</p>
                             </div>
                         </div>
                     )}
