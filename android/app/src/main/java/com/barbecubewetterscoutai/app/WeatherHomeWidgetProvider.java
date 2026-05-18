@@ -33,11 +33,14 @@ import android.content.pm.PackageManager;
 
 public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     public static final String ACTION_WIDGET_REFRESH = "com.barbecubewetterscoutai.app.ACTION_WIDGET_REFRESH";
-    private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
     private static final double DEFAULT_LAT = 50.7766;
     private static final double DEFAULT_LON = 6.0834;
     private static final int HTTP_TIMEOUT_MS = 12000;
     private static final String UNAVAILABLE = "--";
+    private static final String WEATHER_API_URL_TEMPLATE =
+        "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=temperature_2m,precipitation,rain,wind_speed_10m,weathercode&hourly=uv_index,precipitation_probability,cape,lifted_index&timezone=auto&forecast_days=1";
+    private static final String AIR_QUALITY_API_URL_TEMPLATE =
+        "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=%f&longitude=%f&current=alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&timezone=auto";
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
@@ -63,11 +66,16 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         RemoteViews loadingViews = createBaseViews(context, appWidgetId);
         appWidgetManager.updateAppWidget(appWidgetId, loadingViews);
 
-        EXECUTOR.execute(() -> {
-            RemoteViews views = createBaseViews(context, appWidgetId);
-            WidgetData data = fetchWidgetData(context);
-            applyWidgetData(context, views, data);
-            appWidgetManager.updateAppWidget(appWidgetId, views);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(() -> {
+            try {
+                RemoteViews views = createBaseViews(context, appWidgetId);
+                WidgetData data = fetchWidgetData(context);
+                applyWidgetData(context, views, data);
+                appWidgetManager.updateAppWidget(appWidgetId, views);
+            } finally {
+                executor.shutdown();
+            }
         });
     }
 
@@ -155,7 +163,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         try {
             String weatherUrl = String.format(
                 Locale.US,
-                "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=temperature_2m,precipitation,rain,wind_speed_10m,weathercode&hourly=uv_index,precipitation_probability,cape,lifted_index&timezone=auto&forecast_days=1",
+                WEATHER_API_URL_TEMPLATE,
                 lat,
                 lon
             );
@@ -190,7 +198,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         try {
             String pollenUrl = String.format(
                 Locale.US,
-                "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=%f&longitude=%f&current=alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&timezone=auto",
+                AIR_QUALITY_API_URL_TEMPLATE,
                 lat,
                 lon
             );
@@ -299,9 +307,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         if (hourly == null) return Double.NaN;
         JSONArray values = hourly.optJSONArray(field);
         if (values == null) return Double.NaN;
-        int safeIndex = index >= 0 ? index : 0;
-        if (safeIndex >= values.length()) return Double.NaN;
-        return values.optDouble(safeIndex, Double.NaN);
+        if (index < 0 || index >= values.length()) return Double.NaN;
+        return values.optDouble(index, Double.NaN);
     }
 
     private double readDouble(JSONObject object, String key) {
