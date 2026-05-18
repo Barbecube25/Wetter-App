@@ -10677,7 +10677,7 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
         {/* Header */}
         <div className={`p-4 border-b ${isRealNight ? 'border-m3-outline-variant/70 bg-m3-dark-surface-container-high/50' : 'border-slate-100 bg-slate-50/50'} flex justify-between items-center sticky top-0`}>
           <h3 className={`font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'} flex items-center gap-2`}>
-            <CloudRain size={18} className="text-blue-500 dark:text-blue-300"/> 
+            <CloudRain size={18} className={isRealNight ? 'text-blue-300' : 'text-blue-500'} /> 
             {t.precipitationDetails}
           </h3>
           <button 
@@ -10721,7 +10721,7 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
                       <CloudRain size={18} className={isRealNight ? 'text-blue-300' : 'text-blue-500'} />
                     )
                   ) : (
-                     <Sun size={18} className={isRealNight ? 'text-slate-400' : 'text-slate-300'} />
+                    <Sun size={18} className={isRealNight ? 'text-slate-400' : 'text-slate-300'} />
                   )}
                   <span className={`font-medium ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-700'}`}>
                     {hour.displayTime}
@@ -10742,7 +10742,7 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
                       )}
                     </>
                   ) : (
-                     <span className={`text-sm ${isRealNight ? 'text-slate-300' : 'text-slate-400'}`}>{t.noRain}</span>
+                    <span className={`text-sm ${isRealNight ? 'text-slate-300' : 'text-slate-400'}`}>{t.noRain}</span>
                   )}
                 </div>
               </div>
