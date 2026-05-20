@@ -16366,7 +16366,7 @@ export default function WeatherApp() {
                     setCardTransX(0);
                   }
                   setIsPulling(false);
-                  setPullDistance(0);
+                  updatePullDistance(0, true);
                   e.stopPropagation();
                 } else {
                   setCardTransition('transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease');
