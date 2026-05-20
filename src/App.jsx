@@ -9527,7 +9527,7 @@ const FeedbackModal = ({ onClose, currentTemp, lang='de', isSmallScreen = false 
         { id: 'fog', label: t.fog, icon: CloudFog, color: 'text-slate-400 bg-slate-50/50 border-slate-200' },
         { id: 'drizzle', label: t.drizzle, icon: CloudDrizzle, color: 'text-cyan-500 bg-cyan-50 border-cyan-200' },
         { id: 'rain', label: t.rain, icon: CloudRain, color: 'text-blue-500 bg-blue-50 border-blue-200' },
-        { id: 'storm', label: t.thunderstorm, icon: CloudLightning, color: 'text-blue-800 bg-blue-100 border-blue-300' }, // Neu
+        { id: 'storm', label: t.thunderstorm, icon: CloudLightning, color: 'text-blue-900 bg-blue-200 border-blue-400' }, // Neu
         { id: 'snow', label: t.snow, icon: CloudSnow, color: 'text-sky-300 bg-sky-50 border-sky-100' }, // Neu
         { id: 'hail', label: 'Hagel', icon: CloudHail, color: 'text-teal-600 bg-teal-50 border-teal-200' }, // Neu
         { id: 'wind', label: 'Wind', icon: Wind, color: 'text-slate-600 bg-slate-100 border-slate-300' }, // Neu
@@ -11729,7 +11729,7 @@ const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallSc
     { bg: isRealNight ? 'bg-red-900/20' : 'bg-red-50', text: isRealNight ? 'text-red-400' : 'text-red-700', border: isRealNight ? 'border-red-700/30' : 'border-red-200' },
     { bg: isRealNight ? 'bg-blue-900/30' : 'bg-blue-50', text: isRealNight ? 'text-blue-400' : 'text-blue-800', border: isRealNight ? 'border-blue-700/40' : 'border-blue-200' },
   ];
-  const riskEmojis = ['✅', '🟡', '🟠', '🔴', '⛈️'];
+  const riskEmojis = ['✅', '🟡', '🟠', '🔴', '🚨'];
   const riskColor = riskColors[peakRisk] || riskColors[0];
 
   const hourRiskColor = (risk) => {
@@ -16940,7 +16940,7 @@ export default function WeatherApp() {
                          </div>
                          <div className="space-y-2">
                            <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-blue-300 mt-1 flex-shrink-0"></span><span><b>ICON-D2:</b> {t('iconDesc')}</span></div>
-                           <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-blue-400 mt-1 flex-shrink-0"></span><span><b>GFS:</b> {t('gfsDesc')}</span></div>
+                           <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-blue-700 mt-1 flex-shrink-0"></span><span><b>GFS:</b> {t('gfsDesc')}</span></div>
                            <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-green-300 mt-1 flex-shrink-0"></span><span><b>AROME:</b> {t('aromeDesc')}</span></div>
                            <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-orange-400 mt-1 flex-shrink-0"></span><span><b>GEM:</b> {t('gemDesc')}</span></div>
                          </div>
@@ -16966,7 +16966,7 @@ export default function WeatherApp() {
                             <ReferenceLine xAxisId="idx" x={0} stroke="#005AC1" strokeWidth={2} strokeDasharray="4 3" strokeOpacity={0.8} label={{ value: t('now'), position: 'insideTopRight', fontSize: 10, fill: '#005AC1', fontWeight: 'bold' }} />
                           )}
                           <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={2} dot={false} name="ICON" />
-                          <Line type="monotone" dataKey="temp_gfs" stroke="#60a5fa" strokeWidth={2} dot={false} name="GFS" />
+                          <Line type="monotone" dataKey="temp_gfs" stroke="#1d4ed8" strokeWidth={2} dot={false} name="GFS" />
                           <Line type="monotone" dataKey="temp_arome" stroke="#86efac" strokeWidth={2} dot={false} name="AROME" />
                           {/* GEM (Canadian model) displayed in orange */}
                           <Line type="monotone" dataKey="temp_gem" stroke="#fb923c" strokeWidth={2} dot={false} name="GEM" />
@@ -16983,7 +16983,7 @@ export default function WeatherApp() {
                             <ReferenceLine xAxisId="idx" x={0} stroke="#005AC1" strokeWidth={2} strokeDasharray="4 3" strokeOpacity={0.8} label={{ value: t('today'), position: 'insideTopRight', fontSize: 10, fill: '#005AC1', fontWeight: 'bold' }} />
                           )}
                           <Line type="monotone" dataKey="max_icon" stroke="#93c5fd" strokeWidth={3} dot={{r:3}} name="ICON Max" />
-                          <Line type="monotone" dataKey="max_gfs" stroke="#60a5fa" strokeWidth={3} dot={{r:3}} name="GFS Max" />
+                          <Line type="monotone" dataKey="max_gfs" stroke="#1d4ed8" strokeWidth={3} dot={{r:3}} name="GFS Max" />
                           <Line type="monotone" dataKey="max_gem" stroke="#fca5a5" strokeWidth={3} dot={{r:3}} name="GEM Max" />
                           <Line type="monotone" dataKey="max_arome" stroke="#86efac" strokeWidth={3} dot={{r:3}} name="AROME Max" connectNulls={false} />
                         </LineChart>
@@ -16994,7 +16994,7 @@ export default function WeatherApp() {
                   {chartView === 'hourly' ? (
                     <>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-400"></div> GFS</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-700"></div> GFS</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400"></div> GEM</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div> Ø</span>
@@ -17002,7 +17002,7 @@ export default function WeatherApp() {
                   ) : (
                     <>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-400"></div> GFS</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-700"></div> GFS</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-300"></div> GEM</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
                     </>
