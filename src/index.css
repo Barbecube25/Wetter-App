@@ -127,7 +127,7 @@ textarea {
 .m3-expressive-root::before,
 .m3-expressive-root::after {
   content: '';
-  position: fixed;
+  position: absolute;
   width: 34vw;
   min-width: 220px;
   aspect-ratio: 1 / 1;
@@ -161,7 +161,7 @@ textarea {
 .m3-expressive-root .bg-m3-secondary-container,
 .m3-expressive-root .bg-m3-tertiary-container,
 .m3-expressive-root .bg-m3-dark-surface-container {
-  background-color: var(--m3x-glass-bg) !important;
+  background-color: var(--m3x-glass-bg);
   border: 1px solid color-mix(in srgb, var(--m3x-glass-border) 86%, transparent);
   box-shadow: var(--m3x-glass-shadow);
   backdrop-filter: blur(18px) saturate(1.2);
@@ -196,7 +196,7 @@ textarea {
 
 .m3-expressive-root .fixed .bg-m3-surface-container,
 .m3-expressive-root .fixed .bg-m3-dark-surface-container {
-  background-color: var(--m3x-glass-bg-soft) !important;
+  background-color: var(--m3x-glass-bg-soft);
 }
 
 @keyframes m3x-fade-slide-in {
