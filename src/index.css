@@ -128,7 +128,6 @@ textarea {
 .m3-expressive-root::after {
   content: '';
   position: fixed;
-  inset: auto;
   width: 34vw;
   min-width: 220px;
   aspect-ratio: 1 / 1;
@@ -242,6 +241,6 @@ textarea {
   .m3-expressive-root *,
   .m3-expressive-root *::before,
   .m3-expressive-root *::after {
-    transition-duration: 0.01ms !important;
+    transition: none !important;
   }
 }
