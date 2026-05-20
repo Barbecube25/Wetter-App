@@ -24,6 +24,12 @@ body {
   --m3-expressive-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --m3-expressive-fast: 180ms;
   --m3-expressive-medium: 320ms;
+  --m3-expressive-slow: 460ms;
+  --m3-expressive-gradient-top-left: rgba(103, 80, 164, 0.08);
+  --m3-expressive-gradient-top-right: rgba(125, 82, 96, 0.08);
+  --m3-expressive-gradient-top-left-size: 520px;
+  --m3-expressive-gradient-top-right-size: 440px;
+  --m3-expressive-gradient-stop: 48%;
 }
 
 button,
@@ -112,8 +118,8 @@ textarea {
 /* Google Material 3 Expressive enhancement layer */
 body.m3-expressive {
   background:
-    radial-gradient(1200px circle at 0% 0%, rgba(103, 80, 164, 0.08), transparent 45%),
-    radial-gradient(900px circle at 100% 15%, rgba(125, 82, 96, 0.08), transparent 45%),
+    radial-gradient(var(--m3-expressive-gradient-top-left-size) circle at 0% 0%, var(--m3-expressive-gradient-top-left), transparent var(--m3-expressive-gradient-stop)),
+    radial-gradient(var(--m3-expressive-gradient-top-right-size) circle at 100% 15%, var(--m3-expressive-gradient-top-right), transparent var(--m3-expressive-gradient-stop)),
     #fef7ff;
 }
 
@@ -125,7 +131,7 @@ body.m3-expressive .bg-m3-surface-container-low,
 body.m3-expressive .bg-m3-primary-container,
 body.m3-expressive .bg-m3-secondary-container,
 body.m3-expressive .bg-m3-tertiary-container {
-  backdrop-filter: saturate(1.08);
+  background-image: linear-gradient(155deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0));
 }
 
 body.m3-expressive .shadow-m3-1,
@@ -163,12 +169,8 @@ body.m3-expressive [role="button"]:active {
 body.m3-expressive .rounded-m3-xl,
 body.m3-expressive .rounded-m3-2xl,
 body.m3-expressive .rounded-m3-3xl {
-  animation: m3ExpressiveEnter 460ms var(--m3-expressive-ease);
+  animation: m3ExpressiveEnter var(--m3-expressive-slow) var(--m3-expressive-ease);
   transform-origin: center;
-}
-
-body.m3-expressive .nav-scroll button {
-  animation: m3ExpressiveSlideUp 400ms var(--m3-expressive-ease);
 }
 
 @keyframes m3ExpressiveEnter {
@@ -179,17 +181,6 @@ body.m3-expressive .nav-scroll button {
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes m3ExpressiveSlideUp {
-  0% {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 
