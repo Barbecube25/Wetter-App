@@ -9527,7 +9527,7 @@ const FeedbackModal = ({ onClose, currentTemp, lang='de', isSmallScreen = false 
         { id: 'fog', label: t.fog, icon: CloudFog, color: 'text-slate-400 bg-slate-50/50 border-slate-200' },
         { id: 'drizzle', label: t.drizzle, icon: CloudDrizzle, color: 'text-cyan-500 bg-cyan-50 border-cyan-200' },
         { id: 'rain', label: t.rain, icon: CloudRain, color: 'text-blue-500 bg-blue-50 border-blue-200' },
-        { id: 'storm', label: t.thunderstorm, icon: CloudLightning, color: 'text-blue-700 bg-blue-50 border-blue-200' }, // Neu
+        { id: 'storm', label: t.thunderstorm, icon: CloudLightning, color: 'text-blue-800 bg-blue-100 border-blue-300' }, // Neu
         { id: 'snow', label: t.snow, icon: CloudSnow, color: 'text-sky-300 bg-sky-50 border-sky-100' }, // Neu
         { id: 'hail', label: 'Hagel', icon: CloudHail, color: 'text-teal-600 bg-teal-50 border-teal-200' }, // Neu
         { id: 'wind', label: 'Wind', icon: Wind, color: 'text-slate-600 bg-slate-100 border-slate-300' }, // Neu
@@ -11729,7 +11729,7 @@ const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallSc
     { bg: isRealNight ? 'bg-red-900/20' : 'bg-red-50', text: isRealNight ? 'text-red-400' : 'text-red-700', border: isRealNight ? 'border-red-700/30' : 'border-red-200' },
     { bg: isRealNight ? 'bg-blue-900/30' : 'bg-blue-50', text: isRealNight ? 'text-blue-400' : 'text-blue-800', border: isRealNight ? 'border-blue-700/40' : 'border-blue-200' },
   ];
-  const riskEmojis = ['✅', '🟡', '🟠', '🔴', '🔵'];
+  const riskEmojis = ['✅', '🟡', '🟠', '🔴', '⛈️'];
   const riskColor = riskColors[peakRisk] || riskColors[0];
 
   const hourRiskColor = (risk) => {
