@@ -11729,7 +11729,7 @@ const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallSc
     { bg: isRealNight ? 'bg-red-900/20' : 'bg-red-50', text: isRealNight ? 'text-red-400' : 'text-red-700', border: isRealNight ? 'border-red-700/30' : 'border-red-200' },
     { bg: isRealNight ? 'bg-blue-900/30' : 'bg-blue-50', text: isRealNight ? 'text-blue-400' : 'text-blue-800', border: isRealNight ? 'border-blue-700/40' : 'border-blue-200' },
   ];
-  const riskEmojis = ['✅', '🟡', '🟠', '🔴', '🟣'];
+  const riskEmojis = ['✅', '🟡', '🟠', '🔴', '🔵'];
   const riskColor = riskColors[peakRisk] || riskColors[0];
 
   const hourRiskColor = (risk) => {
