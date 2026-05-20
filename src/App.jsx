@@ -16940,7 +16940,7 @@ export default function WeatherApp() {
                          </div>
                          <div className="space-y-2">
                            <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-blue-300 mt-1 flex-shrink-0"></span><span><b>ICON-D2:</b> {t('iconDesc')}</span></div>
-                           <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-blue-300 mt-1 flex-shrink-0"></span><span><b>GFS:</b> {t('gfsDesc')}</span></div>
+                           <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-blue-400 mt-1 flex-shrink-0"></span><span><b>GFS:</b> {t('gfsDesc')}</span></div>
                            <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-green-300 mt-1 flex-shrink-0"></span><span><b>AROME:</b> {t('aromeDesc')}</span></div>
                            <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-orange-400 mt-1 flex-shrink-0"></span><span><b>GEM:</b> {t('gemDesc')}</span></div>
                          </div>
@@ -16994,7 +16994,7 @@ export default function WeatherApp() {
                   {chartView === 'hourly' ? (
                     <>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> GFS</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-400"></div> GFS</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400"></div> GEM</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div> Ø</span>
@@ -17002,7 +17002,7 @@ export default function WeatherApp() {
                   ) : (
                     <>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> GFS</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-400"></div> GFS</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-300"></div> GEM</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
                     </>
