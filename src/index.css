@@ -167,7 +167,6 @@ textarea {
   box-shadow: var(--m3x-glass-shadow);
   backdrop-filter: blur(18px) saturate(1.2);
   -webkit-backdrop-filter: blur(18px) saturate(1.2);
-  contain: paint style;
   transition: transform var(--m3x-motion-fast), box-shadow var(--m3x-motion-medium), opacity var(--m3x-motion-fast);
 }
 
@@ -240,9 +239,20 @@ textarea {
     animation: none !important;
   }
 
-  .m3-expressive-root *,
-  .m3-expressive-root *::before,
-  .m3-expressive-root *::after {
+  .m3-expressive-root .bg-m3-surface,
+  .m3-expressive-root .bg-m3-surface-container,
+  .m3-expressive-root .bg-m3-surface-container-low,
+  .m3-expressive-root .bg-m3-surface-container-high,
+  .m3-expressive-root .bg-m3-surface-container-highest,
+  .m3-expressive-root .bg-m3-primary-container,
+  .m3-expressive-root .bg-m3-secondary-container,
+  .m3-expressive-root .bg-m3-tertiary-container,
+  .m3-expressive-root .bg-m3-dark-surface-container,
+  .m3-expressive-root button,
+  .m3-expressive-root [role='button'],
+  .m3-expressive-root input,
+  .m3-expressive-root select,
+  .m3-expressive-root textarea {
     transition: none !important;
   }
 }
