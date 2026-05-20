@@ -14,22 +14,22 @@ export default {
         // Material 3 Color System
         'm3': {
           // Primary colors
-          'primary': '#6750A4',
+          'primary': '#005AC1',
           'on-primary': '#FFFFFF',
-          'primary-container': '#EADDFF',
-          'on-primary-container': '#21005D',
+          'primary-container': '#D8E2FF',
+          'on-primary-container': '#001A41',
           
           // Secondary colors
-          'secondary': '#625B71',
+          'secondary': '#535F70',
           'on-secondary': '#FFFFFF',
-          'secondary-container': '#E8DEF8',
-          'on-secondary-container': '#1D192B',
+          'secondary-container': '#D7E3F8',
+          'on-secondary-container': '#101C2B',
           
           // Tertiary colors
-          'tertiary': '#7D5260',
+          'tertiary': '#006877',
           'on-tertiary': '#FFFFFF',
-          'tertiary-container': '#FFD8E4',
-          'on-tertiary-container': '#31111D',
+          'tertiary-container': '#A6EEFF',
+          'on-tertiary-container': '#001F26',
           
           // Error colors
           'error': '#B3261E',
@@ -38,34 +38,34 @@ export default {
           'on-error-container': '#410E0B',
           
           // Surface colors
-          'surface': '#FEF7FF',
-          'on-surface': '#1D1B20',
-          'surface-variant': '#E7E0EC',
-          'on-surface-variant': '#49454F',
+          'surface': '#F9F9FF',
+          'on-surface': '#1A1C1E',
+          'surface-variant': '#DEE3EB',
+          'on-surface-variant': '#42474E',
           'surface-container-lowest': '#FFFFFF',
-          'surface-container-low': '#F7F2FA',
-          'surface-container': '#F3EDF7',
-          'surface-container-high': '#ECE6F0',
-          'surface-container-highest': '#E6E0E9',
+          'surface-container-low': '#F3F4FA',
+          'surface-container': '#ECEEF4',
+          'surface-container-high': '#E6E8EE',
+          'surface-container-highest': '#E0E2E8',
           
           // Outline colors
-          'outline': '#79747E',
-          'outline-variant': '#CAC4D0',
+          'outline': '#72777F',
+          'outline-variant': '#C2C7CF',
           
           // Inverse colors - Optimized for dark mode readability
-          'inverse-surface': '#2d2d2d',
-          'inverse-on-surface': '#F5EFF7',
-          'inverse-primary': '#D0BCFF',
+          'inverse-surface': '#2F3033',
+          'inverse-on-surface': '#F1F0F4',
+          'inverse-primary': '#AAC7FF',
           
           // Dark mode specific surface colors
-          'dark-surface': '#2d2d2d',
-          'dark-surface-container': '#3a3a3a',
-          'dark-surface-container-high': '#454545',
-          'dark-surface-container-highest': '#505050',
-          'dark-on-surface': '#E6E1E5',
-          'dark-on-surface-variant': '#CAC4D0',
-          'dark-primary': '#D0BCFF',
-          'dark-outline-variant': '#49454F',
+          'dark-surface': '#111418',
+          'dark-surface-container': '#1D2024',
+          'dark-surface-container-high': '#282B2F',
+          'dark-surface-container-highest': '#33363A',
+          'dark-on-surface': '#E2E2E6',
+          'dark-on-surface-variant': '#C2C7CF',
+          'dark-primary': '#AAC7FF',
+          'dark-outline-variant': '#42474E',
         }
       },
       borderRadius: {

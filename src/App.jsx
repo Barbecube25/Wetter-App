@@ -9527,7 +9527,7 @@ const FeedbackModal = ({ onClose, currentTemp, lang='de', isSmallScreen = false 
         { id: 'fog', label: t.fog, icon: CloudFog, color: 'text-slate-400 bg-slate-50/50 border-slate-200' },
         { id: 'drizzle', label: t.drizzle, icon: CloudDrizzle, color: 'text-cyan-500 bg-cyan-50 border-cyan-200' },
         { id: 'rain', label: t.rain, icon: CloudRain, color: 'text-blue-500 bg-blue-50 border-blue-200' },
-        { id: 'storm', label: t.thunderstorm, icon: CloudLightning, color: 'text-purple-600 bg-purple-50 border-purple-200' }, // Neu
+        { id: 'storm', label: t.thunderstorm, icon: CloudLightning, color: 'text-blue-700 bg-blue-50 border-blue-200' }, // Neu
         { id: 'snow', label: t.snow, icon: CloudSnow, color: 'text-sky-300 bg-sky-50 border-sky-100' }, // Neu
         { id: 'hail', label: 'Hagel', icon: CloudHail, color: 'text-teal-600 bg-teal-50 border-teal-200' }, // Neu
         { id: 'wind', label: 'Wind', icon: Wind, color: 'text-slate-600 bg-slate-100 border-slate-300' }, // Neu
@@ -9830,7 +9830,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                 {report.type === 'daily' && visualData && (() => {
                   const tempUnit = getTempUnitSymbol ? getTempUnitSymbol() : '°';
                   const tsChipClass = (wl) => wl >= 4
-                    ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-400/40'
+                    ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-400/40'
                     : wl >= 3 ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-red-500/20 text-red-600 dark:text-red-400 border-red-400/40'
                     : wl >= 2 ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-orange-400/20 text-orange-600 dark:text-orange-400 border-orange-400/40'
                     : 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-yellow-300/20 text-yellow-700 dark:text-yellow-400 border-yellow-400/40';
@@ -10288,7 +10288,7 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
       label: t('pressure'),
       unit: 'hPa',
       color: '#8b5cf6',
-      icon: <Gauge size={18} className="text-purple-500" />,
+      icon: <Gauge size={18} className="text-blue-500" />,
       format: (v) => (v != null ? Math.round(v) : '-'),
       yDomain: ['auto', 'auto'],
     },
@@ -10413,8 +10413,8 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
             <>
               <div className={`flex items-center gap-4 text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} mb-2 justify-between`}>
                 {nowIndex > 0 ? <span>← 12h</span> : <span />}
-                {nowLabel && <span className="font-bold text-violet-600 flex items-center gap-1">
-                  <span className="inline-block w-2 h-2 rounded-full bg-violet-600" aria-hidden="true"></span>
+                {nowLabel && <span className="font-bold text-blue-700 flex items-center gap-1">
+                  <span className="inline-block w-2 h-2 rounded-full bg-blue-700" aria-hidden="true"></span>
                   {t('now')} {nowLabel}
                 </span>}
                 <span>24h →</span>
@@ -10432,7 +10432,7 @@ const WeatherDetailModal = ({ isOpen, onClose, metric, historyData, forecastData
                   )}
                   {/* Current time marker using numeric axis */}
                   {nowLabel && nowIndex < chartData.length && (
-                    <ReferenceLine xAxisId="idx" x={nowIndex} stroke="#6750A4" strokeWidth={2} strokeDasharray="4 3" strokeOpacity={0.8} label={{ value: `${t('now')} ${nowLabel}`, position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
+                    <ReferenceLine xAxisId="idx" x={nowIndex} stroke="#005AC1" strokeWidth={2} strokeDasharray="4 3" strokeOpacity={0.8} label={{ value: `${t('now')} ${nowLabel}`, position: 'insideTopRight', fontSize: 10, fill: '#005AC1', fontWeight: 'bold' }} />
                   )}
                   <Line type="monotone" dataKey="value" stroke={config.color} strokeWidth={2} dot={false} name={config.label} connectNulls />
                   {config.extraKey && (
@@ -10755,12 +10755,12 @@ const PrecipitationDetailsModal = ({ isOpen, onClose, hourlyData, lang='de', for
               </div>
               {isLastPast && (
                 <div className="flex items-center gap-2 py-1">
-                  <div className={`flex-1 h-px ${isRealNight ? 'bg-violet-300/60' : 'bg-violet-400/60'}`}></div>
-                  <span className={`flex items-center gap-1 text-xs font-bold ${isRealNight ? 'text-violet-200' : 'text-violet-600'}`}>
-                    <span className={`w-2 h-2 rounded-full inline-block ${isRealNight ? 'bg-violet-300' : 'bg-violet-500'}`} aria-hidden="true"></span>
+                  <div className={`flex-1 h-px ${isRealNight ? 'bg-blue-300/60' : 'bg-blue-400/60'}`}></div>
+                  <span className={`flex items-center gap-1 text-xs font-bold ${isRealNight ? 'text-blue-200' : 'text-blue-700'}`}>
+                    <span className={`w-2 h-2 rounded-full inline-block ${isRealNight ? 'bg-blue-300' : 'bg-blue-500'}`} aria-hidden="true"></span>
                     {t.now}
                   </span>
-                  <div className={`flex-1 h-px ${isRealNight ? 'bg-violet-300/60' : 'bg-violet-400/60'}`}></div>
+                  <div className={`flex-1 h-px ${isRealNight ? 'bg-blue-300/60' : 'bg-blue-400/60'}`}></div>
                 </div>
               )}
             </React.Fragment>
@@ -11142,7 +11142,7 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
                     <ReferenceArea y1={0} y2={4} fill="#f87171" fillOpacity={0.25} ifOverflow="hidden" />
                     {/* Current hour marker */}
                     {chartData[currentHour] && (
-                      <ReferenceLine x={chartData[currentHour].displayTime} stroke={isRealNight ? '#a78bfa' : '#6750A4'} strokeWidth={1.5} strokeDasharray="4 3" />
+                      <ReferenceLine x={chartData[currentHour].displayTime} stroke={isRealNight ? '#AAC7FF' : '#005AC1'} strokeWidth={1.5} strokeDasharray="4 3" />
                     )}
                     <CartesianGrid strokeDasharray="3 3" stroke={isRealNight ? '#334155' : '#f1f5f9'} vertical={false} />
                     <XAxis
@@ -11727,7 +11727,7 @@ const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallSc
     { bg: isRealNight ? 'bg-yellow-900/20' : 'bg-yellow-50', text: isRealNight ? 'text-yellow-400' : 'text-yellow-700', border: isRealNight ? 'border-yellow-700/30' : 'border-yellow-200' },
     { bg: isRealNight ? 'bg-orange-900/20' : 'bg-orange-50', text: isRealNight ? 'text-orange-400' : 'text-orange-700', border: isRealNight ? 'border-orange-700/30' : 'border-orange-200' },
     { bg: isRealNight ? 'bg-red-900/20' : 'bg-red-50', text: isRealNight ? 'text-red-400' : 'text-red-700', border: isRealNight ? 'border-red-700/30' : 'border-red-200' },
-    { bg: isRealNight ? 'bg-purple-900/30' : 'bg-purple-50', text: isRealNight ? 'text-purple-400' : 'text-purple-800', border: isRealNight ? 'border-purple-700/40' : 'border-purple-200' },
+    { bg: isRealNight ? 'bg-blue-900/30' : 'bg-blue-50', text: isRealNight ? 'text-blue-400' : 'text-blue-800', border: isRealNight ? 'border-blue-700/40' : 'border-blue-200' },
   ];
   const riskEmojis = ['✅', '🟡', '🟠', '🔴', '🟣'];
   const riskColor = riskColors[peakRisk] || riskColors[0];
@@ -13769,7 +13769,7 @@ export default function WeatherApp() {
       moderate: 'text-yellow-600',
       unhealthy: 'text-orange-600',
       veryUnhealthy: 'text-red-600',
-      hazardous: 'text-purple-700'
+      hazardous: 'text-blue-700'
     };
     return colors[level];
   };
@@ -15724,7 +15724,7 @@ export default function WeatherApp() {
                   <button onClick={() => setDemoWeather(demoWeather === 'cloudy' ? null : 'cloudy')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoWeather === 'cloudy' ? 'bg-gray-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>⛅ Wolken</button>
                   <button onClick={() => setDemoWeather(demoWeather === 'medium_rain' ? null : 'medium_rain')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoWeather === 'medium_rain' ? 'bg-blue-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>🌧️ Regen</button>
                   <button onClick={() => setDemoWeather(demoWeather === 'medium_snow' ? null : 'medium_snow')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoWeather === 'medium_snow' ? 'bg-blue-300 text-gray-800' : 'bg-white/10 text-white hover:bg-white/20'}`}>❄️ Schnee</button>
-                  <button onClick={() => setDemoWeather(demoWeather === 'thunderstorm' ? null : 'thunderstorm')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoWeather === 'thunderstorm' ? 'bg-purple-600 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>⛈️ Gewitter</button>
+                  <button onClick={() => setDemoWeather(demoWeather === 'thunderstorm' ? null : 'thunderstorm')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoWeather === 'thunderstorm' ? 'bg-blue-600 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>⛈️ Gewitter</button>
                   <button onClick={() => setDemoWeather(demoWeather === 'fog' ? null : 'fog')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${demoWeather === 'fog' ? 'bg-gray-400 text-gray-800' : 'bg-white/10 text-white hover:bg-white/20'}`}>🌫️ Nebel</button>
                   
                   <div className="w-px h-8 bg-white/20 mx-1"></div>
@@ -16808,7 +16808,7 @@ export default function WeatherApp() {
               (isRealNight ? 'text-yellow-400' : 'text-yellow-700'),
               (isRealNight ? 'text-orange-400' : 'text-orange-700'),
               (isRealNight ? 'text-red-400' : 'text-red-600'),
-              (isRealNight ? 'text-purple-400' : 'text-purple-800'),
+              (isRealNight ? 'text-blue-400' : 'text-blue-800'),
             ][peakRisk];
             const tileBgThunder = peakRisk >= 3
               ? (isRealNight ? 'bg-red-950/40 border-red-900/40' : 'bg-red-50 border-red-200')
@@ -16940,7 +16940,7 @@ export default function WeatherApp() {
                          </div>
                          <div className="space-y-2">
                            <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-blue-300 mt-1 flex-shrink-0"></span><span><b>ICON-D2:</b> {t('iconDesc')}</span></div>
-                           <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-purple-300 mt-1 flex-shrink-0"></span><span><b>GFS:</b> {t('gfsDesc')}</span></div>
+                           <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-blue-300 mt-1 flex-shrink-0"></span><span><b>GFS:</b> {t('gfsDesc')}</span></div>
                            <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-green-300 mt-1 flex-shrink-0"></span><span><b>AROME:</b> {t('aromeDesc')}</span></div>
                            <div className="flex gap-2"><span className="w-2 h-2 rounded-full bg-orange-400 mt-1 flex-shrink-0"></span><span><b>GEM:</b> {t('gemDesc')}</span></div>
                          </div>
@@ -16963,10 +16963,10 @@ export default function WeatherApp() {
                           <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
                           <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => formatTemp(value)} />
                           {processedShort[0]?.displayTime && (
-                            <ReferenceLine xAxisId="idx" x={0} stroke="#6750A4" strokeWidth={2} strokeDasharray="4 3" strokeOpacity={0.8} label={{ value: t('now'), position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
+                            <ReferenceLine xAxisId="idx" x={0} stroke="#005AC1" strokeWidth={2} strokeDasharray="4 3" strokeOpacity={0.8} label={{ value: t('now'), position: 'insideTopRight', fontSize: 10, fill: '#005AC1', fontWeight: 'bold' }} />
                           )}
                           <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={2} dot={false} name="ICON" />
-                          <Line type="monotone" dataKey="temp_gfs" stroke="#d8b4fe" strokeWidth={2} dot={false} name="GFS" />
+                          <Line type="monotone" dataKey="temp_gfs" stroke="#60a5fa" strokeWidth={2} dot={false} name="GFS" />
                           <Line type="monotone" dataKey="temp_arome" stroke="#86efac" strokeWidth={2} dot={false} name="AROME" />
                           {/* GEM (Canadian model) displayed in orange */}
                           <Line type="monotone" dataKey="temp_gem" stroke="#fb923c" strokeWidth={2} dot={false} name="GEM" />
@@ -16980,10 +16980,10 @@ export default function WeatherApp() {
                           <YAxis unit="°" tick={{fontSize:12, fill:'currentColor', opacity:0.7}} axisLine={false} tickLine={false} />
                           <Tooltip contentStyle={{borderRadius:'12px', border:'none', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', color:'#000'}} formatter={(value) => formatTemp(value)} />
                           {processedLong[0]?.dateShort && (
-                            <ReferenceLine xAxisId="idx" x={0} stroke="#6750A4" strokeWidth={2} strokeDasharray="4 3" strokeOpacity={0.8} label={{ value: t('today'), position: 'insideTopRight', fontSize: 10, fill: '#6750A4', fontWeight: 'bold' }} />
+                            <ReferenceLine xAxisId="idx" x={0} stroke="#005AC1" strokeWidth={2} strokeDasharray="4 3" strokeOpacity={0.8} label={{ value: t('today'), position: 'insideTopRight', fontSize: 10, fill: '#005AC1', fontWeight: 'bold' }} />
                           )}
                           <Line type="monotone" dataKey="max_icon" stroke="#93c5fd" strokeWidth={3} dot={{r:3}} name="ICON Max" />
-                          <Line type="monotone" dataKey="max_gfs" stroke="#d8b4fe" strokeWidth={3} dot={{r:3}} name="GFS Max" />
+                          <Line type="monotone" dataKey="max_gfs" stroke="#60a5fa" strokeWidth={3} dot={{r:3}} name="GFS Max" />
                           <Line type="monotone" dataKey="max_gem" stroke="#fca5a5" strokeWidth={3} dot={{r:3}} name="GEM Max" />
                           <Line type="monotone" dataKey="max_arome" stroke="#86efac" strokeWidth={3} dot={{r:3}} name="AROME Max" connectNulls={false} />
                         </LineChart>
@@ -16994,7 +16994,7 @@ export default function WeatherApp() {
                   {chartView === 'hourly' ? (
                     <>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> GFS</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400"></div> GEM</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div> Ø</span>
@@ -17002,7 +17002,7 @@ export default function WeatherApp() {
                   ) : (
                     <>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-300"></div> GFS</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> GFS</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-300"></div> GEM</span>
                         <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
                     </>
@@ -17571,7 +17571,7 @@ export default function WeatherApp() {
                <p className="flex items-center justify-center gap-2 mb-2"><Database size={14} /> {t('source')}</p>
                <div className="flex flex-wrap justify-center gap-4">
                  <span className="bg-blue-500/10 px-2 py-1 rounded text-blue-500 border border-blue-500/20">ICON-D2: {modelRuns.icon || '--:--'}</span>
-                 <span className="bg-purple-500/10 px-2 py-1 rounded text-purple-500 border border-purple-500/20">GFS: {modelRuns.gfs || '--:--'}</span>
+                 <span className="bg-blue-500/10 px-2 py-1 rounded text-blue-500 border border-blue-500/20">GFS: {modelRuns.gfs || '--:--'}</span>
                  <span className="bg-green-500/10 px-2 py-1 rounded text-green-500 border border-green-500/20">AROME: {modelRuns.arome || '--:--'}</span>
                  <span className="bg-orange-500/10 px-2 py-1 rounded text-orange-500 border border-orange-500/20">GEM: {modelRuns.gem || '--:--'}</span>
                </div>
