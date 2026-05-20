@@ -13511,6 +13511,14 @@ export default function WeatherApp() {
   // WICHTIG: Echtzeit-State für die Animation (NEU)
   const [now, setNow] = useState(new Date());
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.body.classList.add('m3-expressive');
+    return () => {
+      document.body.classList.remove('m3-expressive');
+    };
+  }, []);
+
   // Timer: Aktualisiere 'now' JEDE SEKUNDE, damit die Sonne wandert (NEU)
   useEffect(() => {
     const timer = setInterval(() => {
