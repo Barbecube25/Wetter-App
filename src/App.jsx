@@ -15677,7 +15677,7 @@ export default function WeatherApp() {
   if (viewMode === 'animation' || isLandscape) {
     if (isInitialLoading) return <div className="h-screen w-screen flex items-center justify-center bg-m3-dark-surface text-m3-dark-on-surface">{t('loading')}</div>;
     return (
-      <div className={`h-screen w-screen overflow-hidden relative bg-gradient-to-br ${bgGradient}${isRealNight ? ' dark' : ''}`}>
+      <div className={`m3-expressive-root h-screen w-screen overflow-hidden relative bg-gradient-to-br ${bgGradient}${isRealNight ? ' dark' : ''}`}>
         <style>{styles}</style>
         {/* Back button - only show in non-landscape or when explicitly in animation view mode */}
         {(viewMode === 'animation' && !isLandscape) && (
@@ -16094,7 +16094,7 @@ export default function WeatherApp() {
 
   return (
     <div 
-      className={`min-h-screen transition-all duration-1000 bg-gradient-to-br ${bgGradient} font-sans pb-20 overflow-x-hidden relative${isRealNight ? ' dark' : ''}`}
+      className={`m3-expressive-root min-h-screen transition-all duration-1000 bg-gradient-to-br ${bgGradient} font-sans pb-20 overflow-x-hidden relative${isRealNight ? ' dark' : ''}`}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
