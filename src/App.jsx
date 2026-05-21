@@ -23,6 +23,8 @@ const NAV_BAR_HEIGHT = '92px';
 const FIXED_ELEMENTS_GAP = '8px'; 
 const DEFAULT_CONTENT_MAX_WIDTH_CLASS = 'max-w-4xl';
 const TABLET_CONTENT_MAX_WIDTH_CLASS = 'max-w-6xl';
+const PULL_TO_REFRESH_ACTIVATION_THRESHOLD_PX = 120;
+const MAX_PULL_DISTANCE_PX = 100;
 
 // Time and precipitation thresholds
 const EVENING_START_HOUR = 16;
@@ -14451,7 +14453,7 @@ export default function WeatherApp() {
     }
 
     // Only activate pull-to-refresh close to the top edge to avoid blocking regular scroll
-    if (window.scrollY === 0 && !isRefreshing && !swipeInScrollable.current && touch.clientY <= 120) {
+    if (window.scrollY === 0 && !isRefreshing && !swipeInScrollable.current && touch.clientY <= PULL_TO_REFRESH_ACTIVATION_THRESHOLD_PX) {
       pullStartYRef.current = touch.clientY;
       setIsPulling(true);
     }
@@ -14472,7 +14474,7 @@ export default function WeatherApp() {
 
     // Only allow pulling down (positive distance) and limit to max 100px
     if (distanceY > 0 && window.scrollY === 0) {
-      updatePullDistance(Math.min(distanceY, 100));
+      updatePullDistance(Math.min(distanceY, MAX_PULL_DISTANCE_PX));
     } else {
       updatePullDistance(0);
     }
