@@ -23,6 +23,8 @@ const NAV_BAR_HEIGHT = '92px';
 const FIXED_ELEMENTS_GAP = '8px'; 
 const DEFAULT_CONTENT_MAX_WIDTH_CLASS = 'max-w-4xl';
 const TABLET_CONTENT_MAX_WIDTH_CLASS = 'max-w-6xl';
+const PULL_TO_REFRESH_ACTIVATION_THRESHOLD_PX = 120;
+const MAX_PULL_DISTANCE_PX = 100;
 
 // Time and precipitation thresholds
 const EVENING_START_HOUR = 16;
@@ -13465,15 +13467,17 @@ export default function WeatherApp() {
   const [demoTerrain, setDemoTerrain] = useState(null); // Terrain type override for demo mode
 
   // Pull-to-refresh state
-  const [pullStartY, setPullStartY] = useState(0);
   const [pullDistance, setPullDistance] = useState(0);
   const [isPulling, setIsPulling] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showPullHint, setShowPullHint] = useState(false);
+  const pullStartYRef = useRef(0);
+  const pullDistanceRef = useRef(0);
+  const pullDistanceFrameRef = useRef(null);
 
   // Swipe gesture state
-  const [swipeStartX, setSwipeStartX] = useState(0);
-  const [swipeStartY, setSwipeStartY] = useState(0);
+  const swipeStartXRef = useRef(0);
+  const swipeStartYRef = useRef(0);
   const cardSwipeStartX = useRef(0);
   const cardSwipeStartYRef = useRef(0);
   const isCardDragging = useRef(false);
@@ -14411,14 +14415,31 @@ export default function WeatherApp() {
     }
   }, [loading, lastUpdated, isRefreshing]);
 
+  useEffect(() => () => {
+    if (pullDistanceFrameRef.current) {
+      cancelAnimationFrame(pullDistanceFrameRef.current);
+    }
+  }, []);
+
+  const updatePullDistance = useCallback((nextDistance) => {
+    pullDistanceRef.current = nextDistance;
+    if (pullDistanceFrameRef.current) return;
+
+    pullDistanceFrameRef.current = requestAnimationFrame(() => {
+      pullDistanceFrameRef.current = null;
+      setPullDistance(pullDistanceRef.current);
+    });
+  }, []);
+
   // --- PULL-TO-REFRESH & SWIPE GESTURE HANDLERS ---
   const isAnyModalOpen = showFeedback || !!activeDetailModal || showPrecipModal || showActivityModal || showActivityCheckModal || showThunderstormModal || showSettingsModal || showLocationModal || showPollenModal || showMoonModal || !!selectedTripForPopup || showNewTripModal;
 
   const handleTouchStart = (e) => {
     // Do not activate gestures when a modal/overlay is open
     if (isAnyModalOpen) return;
-    setSwipeStartX(e.touches[0].clientX);
-    setSwipeStartY(e.touches[0].clientY);
+    const touch = e.touches[0];
+    swipeStartXRef.current = touch.clientX;
+    swipeStartYRef.current = touch.clientY;
     // Detect if touch started inside a horizontally scrollable element
     let node = e.target;
     swipeInScrollable.current = false;
@@ -14430,22 +14451,35 @@ export default function WeatherApp() {
       }
       node = node.parentElement;
     }
-    // Only activate pull-to-refresh if we're at the top of the page
-    if (window.scrollY === 0 && !isRefreshing) {
-      setPullStartY(e.touches[0].clientY);
+
+    // Only activate pull-to-refresh close to the top edge to avoid blocking regular scroll
+    const touchOffsetFromScrollableTop = touch.clientY - e.currentTarget.getBoundingClientRect().top;
+    if (window.scrollY === 0 && !isRefreshing && !swipeInScrollable.current && touchOffsetFromScrollableTop <= PULL_TO_REFRESH_ACTIVATION_THRESHOLD_PX) {
+      pullStartYRef.current = touch.clientY;
       setIsPulling(true);
     }
   };
 
   const handleTouchMove = (e) => {
     if (isAnyModalOpen || !isPulling || isRefreshing) return;
-    
-    const currentY = e.touches[0].clientY;
-    const distance = currentY - pullStartY;
-    
+
+    const touch = e.touches[0];
+    const distanceY = touch.clientY - pullStartYRef.current;
+    const distanceX = touch.clientX - swipeStartXRef.current;
+
+    // Keep vertical page scrolling responsive and ignore mostly horizontal gestures
+    if (Math.abs(distanceX) > Math.abs(distanceY)) {
+      pullStartYRef.current = 0;
+      setIsPulling(false);
+      updatePullDistance(0);
+      return;
+    }
+
     // Only allow pulling down (positive distance) and limit to max 100px
-    if (distance > 0 && window.scrollY === 0) {
-      setPullDistance(Math.min(distance, 100));
+    if (distanceY > 0 && window.scrollY === 0) {
+      updatePullDistance(Math.min(distanceY, MAX_PULL_DISTANCE_PX));
+    } else {
+      updatePullDistance(0);
     }
   };
 
@@ -14457,8 +14491,8 @@ export default function WeatherApp() {
     // Detect horizontal swipe for tab navigation
     const touch = e.changedTouches?.[0];
     if (touch) {
-      const dx = touch.clientX - swipeStartX;
-      const dy = touch.clientY - swipeStartY;
+      const dx = touch.clientX - swipeStartXRef.current;
+      const dy = touch.clientY - swipeStartYRef.current;
       if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > SWIPE_THRESHOLD_PX) {
         if (!swipeInScrollable.current) {
           const currentIdx = TAB_ORDER.indexOf(activeTab);
@@ -14469,7 +14503,7 @@ export default function WeatherApp() {
           }
         }
         setIsPulling(false);
-        setPullDistance(0);
+        updatePullDistance(0);
         return;
       }
     }
@@ -14490,12 +14524,14 @@ export default function WeatherApp() {
         const remainingTime = Math.max(0, minDisplayTime - elapsed);
         
         setTimeout(() => {
+          pullStartYRef.current = 0;
           setIsRefreshing(false);
-          setPullDistance(0);
+          updatePullDistance(0);
         }, remainingTime);
       });
     } else {
-      setPullDistance(0);
+      pullStartYRef.current = 0;
+      updatePullDistance(0);
     }
   };
 
