@@ -14453,7 +14453,8 @@ export default function WeatherApp() {
     }
 
     // Only activate pull-to-refresh close to the top edge to avoid blocking regular scroll
-    if (window.scrollY === 0 && !isRefreshing && !swipeInScrollable.current && touch.clientY <= PULL_TO_REFRESH_ACTIVATION_THRESHOLD_PX) {
+    const touchOffsetFromScrollableTop = touch.clientY - e.currentTarget.getBoundingClientRect().top;
+    if (window.scrollY === 0 && !isRefreshing && !swipeInScrollable.current && touchOffsetFromScrollableTop <= PULL_TO_REFRESH_ACTIVATION_THRESHOLD_PX) {
       pullStartYRef.current = touch.clientY;
       setIsPulling(true);
     }
@@ -14468,6 +14469,7 @@ export default function WeatherApp() {
 
     // Keep vertical page scrolling responsive and ignore mostly horizontal gestures
     if (Math.abs(distanceX) > Math.abs(distanceY)) {
+      pullStartYRef.current = 0;
       setIsPulling(false);
       updatePullDistance(0);
       return;
@@ -14522,11 +14524,13 @@ export default function WeatherApp() {
         const remainingTime = Math.max(0, minDisplayTime - elapsed);
         
         setTimeout(() => {
+          pullStartYRef.current = 0;
           setIsRefreshing(false);
           updatePullDistance(0);
         }, remainingTime);
       });
     } else {
+      pullStartYRef.current = 0;
       updatePullDistance(0);
     }
   };
