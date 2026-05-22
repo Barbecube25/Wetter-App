@@ -12,6 +12,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.text.format.DateFormat;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.RemoteViews;
 
@@ -137,6 +138,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.weather_home_widget);
 
         views.setTextViewText(R.id.widget_temperature, context.getString(R.string.widget_temp_placeholder));
+        views.setTextViewText(R.id.widget_weather_icon, context.getString(R.string.widget_weather_icon_placeholder));
         views.setTextViewText(R.id.widget_condition, context.getString(R.string.widget_condition_placeholder));
         views.setTextViewText(R.id.widget_temp_range, context.getString(R.string.widget_temp_range_placeholder));
         views.setTextViewText(R.id.widget_feels_like, context.getString(R.string.widget_feels_like_placeholder));
@@ -216,6 +218,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             ? context.getString(R.string.widget_forecast_label)
             : context.getString(R.string.widget_feels_like_format, formatTemperature(data.feelsLikeC));
         double displayTemperature = showTomorrow ? data.tomorrowMaxTemperatureC : data.temperatureC;
+        int displayWeatherCode = showTomorrow ? data.tomorrowWeatherCode : data.weatherCode;
         double rangeMax = showTomorrow ? data.tomorrowMaxTemperatureC : data.maxTemperatureC;
         double rangeMin = showTomorrow ? data.tomorrowMinTemperatureC : data.minTemperatureC;
         double rainRate = showTomorrow ? data.tomorrowRainRate : data.rainRate;
@@ -227,6 +230,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             : data.pollenLabel;
 
         views.setTextViewText(R.id.widget_temperature, formatTemperature(displayTemperature));
+        views.setTextViewText(R.id.widget_weather_icon, mapWeatherCodeToSymbol(displayWeatherCode));
         views.setTextViewText(R.id.widget_condition, conditionLabel);
         views.setTextViewText(
             R.id.widget_temp_range,
@@ -286,23 +290,75 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
     private void applyResponsiveLayout(RemoteViews views, Bundle widgetOptions) {
         if (widgetOptions == null) {
-            views.setViewVisibility(R.id.widget_daily_overview, View.VISIBLE);
-            views.setViewVisibility(R.id.widget_metrics_panel, View.VISIBLE);
-            views.setViewVisibility(R.id.widget_metrics_row_secondary, View.VISIBLE);
-            views.setViewVisibility(R.id.widget_updated_at, View.VISIBLE);
+            applyLayoutProfile(views, WidgetLayoutProfile.defaultProfile());
             return;
         }
 
         int minWidthDp = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0);
         int minHeightDp = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0);
-        boolean compactHeight = minHeightDp > 0 && minHeightDp < 165;
-        boolean compactWidth = minWidthDp > 0 && minWidthDp < 210;
-        boolean veryCompact = compactHeight && compactWidth;
+        int maxWidthDp = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, minWidthDp);
+        int maxHeightDp = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, minHeightDp);
+        int widthCells = clamp(estimateCellSpan(minWidthDp, maxWidthDp), 1, 6);
+        int heightCells = clamp(estimateCellSpan(minHeightDp, maxHeightDp), 2, 5);
 
-        views.setViewVisibility(R.id.widget_daily_overview, compactWidth ? View.GONE : View.VISIBLE);
-        views.setViewVisibility(R.id.widget_metrics_panel, veryCompact ? View.GONE : View.VISIBLE);
-        views.setViewVisibility(R.id.widget_metrics_row_secondary, compactHeight ? View.GONE : View.VISIBLE);
-        views.setViewVisibility(R.id.widget_updated_at, compactHeight ? View.GONE : View.VISIBLE);
+        applyLayoutProfile(views, WidgetLayoutProfile.fromCells(widthCells, heightCells));
+    }
+
+    private void applyLayoutProfile(RemoteViews views, WidgetLayoutProfile profile) {
+        views.setViewVisibility(R.id.widget_day_switcher, profile.showDaySwitcher ? View.VISIBLE : View.GONE);
+        views.setViewVisibility(R.id.widget_daily_overview, profile.showDailyOverview ? View.VISIBLE : View.GONE);
+        views.setViewVisibility(R.id.widget_metrics_panel, profile.showMetricsPanel ? View.VISIBLE : View.GONE);
+        views.setViewVisibility(R.id.widget_metrics_row_secondary, profile.showSecondaryMetrics ? View.VISIBLE : View.GONE);
+        views.setViewVisibility(R.id.widget_updated_at, profile.showUpdatedAt ? View.VISIBLE : View.GONE);
+
+        views.setTextViewTextSize(R.id.widget_title, TypedValue.COMPLEX_UNIT_SP, profile.titleTextSp);
+        views.setTextViewTextSize(R.id.widget_day_today, TypedValue.COMPLEX_UNIT_SP, profile.toggleTextSp);
+        views.setTextViewTextSize(R.id.widget_day_tomorrow, TypedValue.COMPLEX_UNIT_SP, profile.toggleTextSp);
+        views.setTextViewTextSize(R.id.widget_temperature, TypedValue.COMPLEX_UNIT_SP, profile.temperatureTextSp);
+        views.setTextViewTextSize(R.id.widget_weather_icon, TypedValue.COMPLEX_UNIT_SP, profile.weatherIconTextSp);
+        views.setTextViewTextSize(R.id.widget_condition, TypedValue.COMPLEX_UNIT_SP, profile.conditionTextSp);
+        views.setTextViewTextSize(R.id.widget_temp_range, TypedValue.COMPLEX_UNIT_SP, profile.cardTitleTextSp);
+        views.setTextViewTextSize(R.id.widget_feels_like, TypedValue.COMPLEX_UNIT_SP, profile.cardBodyTextSp);
+        views.setTextViewTextSize(R.id.widget_metric_rain, TypedValue.COMPLEX_UNIT_SP, profile.metricTextSp);
+        views.setTextViewTextSize(R.id.widget_metric_uv, TypedValue.COMPLEX_UNIT_SP, profile.metricTextSp);
+        views.setTextViewTextSize(R.id.widget_metric_wind, TypedValue.COMPLEX_UNIT_SP, profile.metricTextSp);
+        views.setTextViewTextSize(R.id.widget_metric_thunder, TypedValue.COMPLEX_UNIT_SP, profile.metricTextSp);
+        views.setTextViewTextSize(R.id.widget_metric_pollen, TypedValue.COMPLEX_UNIT_SP, profile.metricTextSp);
+        views.setTextViewTextSize(R.id.widget_updated_at, TypedValue.COMPLEX_UNIT_SP, profile.updatedTextSp);
+
+        views.setViewPadding(
+            R.id.widget_root,
+            profile.rootPaddingDp,
+            profile.rootPaddingDp,
+            profile.rootPaddingDp,
+            profile.rootPaddingDp
+        );
+        views.setViewPadding(
+            R.id.widget_metrics_panel,
+            profile.panelPaddingDp,
+            profile.panelPaddingDp,
+            profile.panelPaddingDp,
+            profile.panelPaddingDp
+        );
+        views.setViewPadding(
+            R.id.widget_daily_overview,
+            profile.panelPaddingDp,
+            profile.panelPaddingDp,
+            profile.panelPaddingDp,
+            profile.panelPaddingDp
+        );
+    }
+
+    private int estimateCellSpan(int minDp, int maxDp) {
+        int referenceDp = Math.max(minDp, maxDp);
+        if (referenceDp <= 0) return 1;
+        return Math.max(1, (referenceDp + 30) / 70);
+    }
+
+    private int clamp(int value, int min, int max) {
+        if (value < min) return min;
+        if (value > max) return max;
+        return value;
     }
 
     private String getSelectedDay(Context context, int appWidgetId) {
@@ -347,6 +403,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
                 String currentTime = current.optString("time", null);
                 int weatherCode = current.optInt("weathercode", -1);
+                data.weatherCode = weatherCode;
                 data.weatherLabel = mapWeatherCodeToLabel(context, weatherCode);
                 int hourlyIndex = findTimeIndex(hourly, currentTime);
                 double uv = readHourlyValue(hourly, "uv_index", hourlyIndex);
@@ -365,6 +422,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
                 data.tomorrowUvIndex = readDailyValueAtIndex(daily, "uv_index_max", 1);
                 data.tomorrowWindKmh = readDailyValueAtIndex(daily, "wind_speed_10m_max", 1);
                 int tomorrowCode = readDailyIntAtIndex(daily, "weathercode", 1);
+                data.tomorrowWeatherCode = tomorrowCode;
                 data.tomorrowWeatherLabel = mapWeatherCodeToLabel(context, tomorrowCode);
                 double tomorrowPrecipProb = readDailyValueAtIndex(daily, "precipitation_probability_max", 1);
                 data.tomorrowThunderRiskLabel = classifyThunderRisk(context, tomorrowCode, Double.NaN, Double.NaN, tomorrowPrecipProb, data.tomorrowWindKmh);
@@ -569,6 +627,40 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         }
     }
 
+    private String mapWeatherCodeToSymbol(int weatherCode) {
+        switch (weatherCode) {
+            case 0: return "☀";
+            case 1:
+            case 2: return "⛅";
+            case 3: return "☁";
+            case 45:
+            case 48: return "🌫";
+            case 51:
+            case 53:
+            case 55:
+            case 56:
+            case 57: return "🌦";
+            case 61:
+            case 63:
+            case 65:
+            case 66:
+            case 67:
+            case 80:
+            case 81:
+            case 82: return "🌧";
+            case 71:
+            case 73:
+            case 75:
+            case 77:
+            case 85:
+            case 86: return "🌨";
+            case 95:
+            case 96:
+            case 99: return "⛈";
+            default: return "⛅";
+        }
+    }
+
     private String formatMetricNumber(double value) {
         if (Double.isNaN(value)) return UNAVAILABLE;
         if (Math.abs(value - Math.rint(value)) < 0.05) {
@@ -618,6 +710,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         double tomorrowRainRate;
         double tomorrowUvIndex;
         double tomorrowWindKmh;
+        int weatherCode;
+        int tomorrowWeatherCode;
         String weatherLabel;
         String tomorrowWeatherLabel;
         String thunderRiskLabel;
@@ -638,12 +732,120 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             data.tomorrowRainRate = Double.NaN;
             data.tomorrowUvIndex = Double.NaN;
             data.tomorrowWindKmh = Double.NaN;
+            data.weatherCode = -1;
+            data.tomorrowWeatherCode = -1;
             data.weatherLabel = context.getString(R.string.widget_condition_placeholder);
             data.tomorrowWeatherLabel = UNAVAILABLE;
             data.thunderRiskLabel = null;
             data.tomorrowThunderRiskLabel = null;
             data.pollenLabel = context.getString(R.string.widget_metric_unavailable);
             return data;
+        }
+    }
+
+    private static class WidgetLayoutProfile {
+        final boolean showDaySwitcher;
+        final boolean showDailyOverview;
+        final boolean showMetricsPanel;
+        final boolean showSecondaryMetrics;
+        final boolean showUpdatedAt;
+        final int rootPaddingDp;
+        final int panelPaddingDp;
+        final float titleTextSp;
+        final float toggleTextSp;
+        final float temperatureTextSp;
+        final float weatherIconTextSp;
+        final float conditionTextSp;
+        final float cardTitleTextSp;
+        final float cardBodyTextSp;
+        final float metricTextSp;
+        final float updatedTextSp;
+
+        private WidgetLayoutProfile(
+            boolean showDaySwitcher,
+            boolean showDailyOverview,
+            boolean showMetricsPanel,
+            boolean showSecondaryMetrics,
+            boolean showUpdatedAt,
+            int rootPaddingDp,
+            int panelPaddingDp,
+            float titleTextSp,
+            float toggleTextSp,
+            float temperatureTextSp,
+            float weatherIconTextSp,
+            float conditionTextSp,
+            float cardTitleTextSp,
+            float cardBodyTextSp,
+            float metricTextSp,
+            float updatedTextSp
+        ) {
+            this.showDaySwitcher = showDaySwitcher;
+            this.showDailyOverview = showDailyOverview;
+            this.showMetricsPanel = showMetricsPanel;
+            this.showSecondaryMetrics = showSecondaryMetrics;
+            this.showUpdatedAt = showUpdatedAt;
+            this.rootPaddingDp = rootPaddingDp;
+            this.panelPaddingDp = panelPaddingDp;
+            this.titleTextSp = titleTextSp;
+            this.toggleTextSp = toggleTextSp;
+            this.temperatureTextSp = temperatureTextSp;
+            this.weatherIconTextSp = weatherIconTextSp;
+            this.conditionTextSp = conditionTextSp;
+            this.cardTitleTextSp = cardTitleTextSp;
+            this.cardBodyTextSp = cardBodyTextSp;
+            this.metricTextSp = metricTextSp;
+            this.updatedTextSp = updatedTextSp;
+        }
+
+        static WidgetLayoutProfile defaultProfile() {
+            return fromCells(3, 2);
+        }
+
+        static WidgetLayoutProfile fromCells(int widthCells, int heightCells) {
+            float widthProgress = (widthCells - 1) / 5f;
+            float heightProgress = (heightCells - 2) / 3f;
+            float sizeProgress = (widthProgress + heightProgress) / 2f;
+
+            boolean showDaySwitcher = widthCells >= 2 && heightCells >= 3;
+            boolean showDailyOverview = widthCells >= 3;
+            boolean showMetricsPanel = heightCells >= 3;
+            boolean showSecondaryMetrics = widthCells >= 3 && heightCells >= 4;
+            boolean showUpdatedAt = heightCells >= 4;
+
+            int rootPadding = Math.round(lerp(6f, 12f, sizeProgress));
+            int panelPadding = Math.round(lerp(6f, 10f, sizeProgress));
+            float titleText = lerp(10f, 12f, sizeProgress);
+            float toggleText = lerp(9f, 12f, sizeProgress);
+            float temperatureText = lerp(24f, 52f, sizeProgress);
+            float weatherIconText = lerp(12f, 22f, sizeProgress);
+            float conditionText = lerp(10f, 14f, sizeProgress);
+            float cardTitleText = lerp(10f, 13f, sizeProgress);
+            float cardBodyText = lerp(9f, 12f, sizeProgress);
+            float metricText = lerp(9f, 12f, sizeProgress);
+            float updatedText = lerp(8f, 11f, sizeProgress);
+
+            return new WidgetLayoutProfile(
+                showDaySwitcher,
+                showDailyOverview,
+                showMetricsPanel,
+                showSecondaryMetrics,
+                showUpdatedAt,
+                rootPadding,
+                panelPadding,
+                titleText,
+                toggleText,
+                temperatureText,
+                weatherIconText,
+                conditionText,
+                cardTitleText,
+                cardBodyText,
+                metricText,
+                updatedText
+            );
+        }
+
+        private static float lerp(float start, float end, float t) {
+            return start + (end - start) * t;
         }
     }
 }
