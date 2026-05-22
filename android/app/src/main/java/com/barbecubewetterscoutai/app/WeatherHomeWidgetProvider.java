@@ -199,7 +199,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_day_tomorrow, tomorrowPendingIntent);
 
         applyDayToggleStyle(views, DAY_TOMORROW.equals(selectedDay));
-        applyResponsiveLayout(views, widgetOptions);
+        applyResponsiveLayout(context, views, widgetOptions);
         return views;
     }
 
@@ -288,9 +288,9 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setInt(R.id.widget_day_tomorrow, "setTextColor", showTomorrow ? activeTextColor : inactiveTextColor);
     }
 
-    private void applyResponsiveLayout(RemoteViews views, Bundle widgetOptions) {
+    private void applyResponsiveLayout(Context context, RemoteViews views, Bundle widgetOptions) {
         if (widgetOptions == null) {
-            applyLayoutProfile(views, WidgetLayoutProfile.defaultProfile());
+            applyLayoutProfile(context, views, WidgetLayoutProfile.defaultProfile());
             return;
         }
 
@@ -301,10 +301,10 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         int widthCells = clamp(estimateCellSpan(minWidthDp, maxWidthDp), 1, 6);
         int heightCells = clamp(estimateCellSpan(minHeightDp, maxHeightDp), 2, 5);
 
-        applyLayoutProfile(views, WidgetLayoutProfile.fromCells(widthCells, heightCells));
+        applyLayoutProfile(context, views, WidgetLayoutProfile.fromCells(widthCells, heightCells));
     }
 
-    private void applyLayoutProfile(RemoteViews views, WidgetLayoutProfile profile) {
+    private void applyLayoutProfile(Context context, RemoteViews views, WidgetLayoutProfile profile) {
         views.setViewVisibility(R.id.widget_day_switcher, profile.showDaySwitcher ? View.VISIBLE : View.GONE);
         views.setViewVisibility(R.id.widget_daily_overview, profile.showDailyOverview ? View.VISIBLE : View.GONE);
         views.setViewVisibility(R.id.widget_metrics_panel, profile.showMetricsPanel ? View.VISIBLE : View.GONE);
@@ -326,26 +326,28 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setTextViewTextSize(R.id.widget_metric_pollen, TypedValue.COMPLEX_UNIT_SP, profile.metricTextSp);
         views.setTextViewTextSize(R.id.widget_updated_at, TypedValue.COMPLEX_UNIT_SP, profile.updatedTextSp);
 
+        int rootPaddingPx = dpToPx(context, profile.rootPaddingDp);
+        int panelPaddingPx = dpToPx(context, profile.panelPaddingDp);
         views.setViewPadding(
             R.id.widget_root,
-            profile.rootPaddingDp,
-            profile.rootPaddingDp,
-            profile.rootPaddingDp,
-            profile.rootPaddingDp
+            rootPaddingPx,
+            rootPaddingPx,
+            rootPaddingPx,
+            rootPaddingPx
         );
         views.setViewPadding(
             R.id.widget_metrics_panel,
-            profile.panelPaddingDp,
-            profile.panelPaddingDp,
-            profile.panelPaddingDp,
-            profile.panelPaddingDp
+            panelPaddingPx,
+            panelPaddingPx,
+            panelPaddingPx,
+            panelPaddingPx
         );
         views.setViewPadding(
             R.id.widget_daily_overview,
-            profile.panelPaddingDp,
-            profile.panelPaddingDp,
-            profile.panelPaddingDp,
-            profile.panelPaddingDp
+            panelPaddingPx,
+            panelPaddingPx,
+            panelPaddingPx,
+            panelPaddingPx
         );
     }
 
@@ -359,6 +361,14 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         if (value < min) return min;
         if (value > max) return max;
         return value;
+    }
+
+    private int dpToPx(Context context, int dp) {
+        return Math.round(TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            dp,
+            context.getResources().getDisplayMetrics()
+        ));
     }
 
     private String getSelectedDay(Context context, int appWidgetId) {

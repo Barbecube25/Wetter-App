@@ -113,7 +113,7 @@
                     android:id="@+id/widget_weather_icon"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
+                    android:layout_marginStart="@dimen/widget_weather_icon_margin_start"
                     android:text="@string/widget_weather_icon_placeholder"
                     android:textColor="#F2FFFFFF"
                     android:textSize="18sp" />
