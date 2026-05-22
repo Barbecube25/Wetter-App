@@ -6,8 +6,11 @@ import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.RemoteViews;
@@ -33,12 +36,18 @@ import android.content.pm.PackageManager;
 
 public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     public static final String ACTION_WIDGET_REFRESH = "com.barbecubewetterscoutai.app.ACTION_WIDGET_REFRESH";
+    public static final String ACTION_WIDGET_SHOW_TODAY = "com.barbecubewetterscoutai.app.ACTION_WIDGET_SHOW_TODAY";
+    public static final String ACTION_WIDGET_SHOW_TOMORROW = "com.barbecubewetterscoutai.app.ACTION_WIDGET_SHOW_TOMORROW";
+    private static final String PREFS_NAME = "weather_widget_prefs";
+    private static final String PREF_DAY_PREFIX = "widget_selected_day_";
+    private static final String DAY_TODAY = "today";
+    private static final String DAY_TOMORROW = "tomorrow";
     private static final double DEFAULT_LAT = 50.7766;
     private static final double DEFAULT_LON = 6.0834;
     private static final int HTTP_TIMEOUT_MS = 12000;
     private static final String UNAVAILABLE = "--";
     private static final String WEATHER_API_URL_TEMPLATE =
-        "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=temperature_2m,apparent_temperature,precipitation,rain,wind_speed_10m,weathercode&daily=temperature_2m_max,temperature_2m_min&hourly=uv_index,precipitation_probability,cape,lifted_index&timezone=auto&forecast_days=1";
+        "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=temperature_2m,apparent_temperature,precipitation,rain,wind_speed_10m,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max,weathercode&hourly=uv_index,precipitation_probability,cape,lifted_index,wind_speed_10m&timezone=auto&forecast_days=2";
     private static final String AIR_QUALITY_API_URL_TEMPLATE =
         "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=%f&longitude=%f&current=alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&timezone=auto";
     // WMO weather codes representing thunderstorm conditions.
@@ -67,7 +76,18 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     @Override
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
-        if (intent != null && ACTION_WIDGET_REFRESH.equals(intent.getAction())) {
+        if (intent == null) return;
+        String action = intent.getAction();
+        if (ACTION_WIDGET_SHOW_TODAY.equals(action) || ACTION_WIDGET_SHOW_TOMORROW.equals(action)) {
+            int appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+            if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                saveSelectedDay(context, appWidgetId, ACTION_WIDGET_SHOW_TOMORROW.equals(action) ? DAY_TOMORROW : DAY_TODAY);
+                AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+                updateWidgetAsync(context, appWidgetManager, appWidgetId);
+            }
+            return;
+        }
+        if (ACTION_WIDGET_REFRESH.equals(action)) {
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
             ComponentName provider = new ComponentName(context, WeatherHomeWidgetProvider.class);
             int[] appWidgetIds = appWidgetManager.getAppWidgetIds(provider);
@@ -77,16 +97,35 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         }
     }
 
+    @Override
+    public void onAppWidgetOptionsChanged(Context context, AppWidgetManager appWidgetManager, int appWidgetId, Bundle newOptions) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions);
+        updateWidgetAsync(context, appWidgetManager, appWidgetId);
+    }
+
+    @Override
+    public void onDeleted(Context context, int[] appWidgetIds) {
+        super.onDeleted(context, appWidgetIds);
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        for (int appWidgetId : appWidgetIds) {
+            editor.remove(PREF_DAY_PREFIX + appWidgetId);
+        }
+        editor.apply();
+    }
+
     private void updateWidgetAsync(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
-        RemoteViews loadingViews = createBaseViews(context, appWidgetId);
+        Bundle widgetOptions = appWidgetManager.getAppWidgetOptions(appWidgetId);
+        String selectedDay = getSelectedDay(context, appWidgetId);
+        RemoteViews loadingViews = createBaseViews(context, appWidgetId, widgetOptions, selectedDay);
         appWidgetManager.updateAppWidget(appWidgetId, loadingViews);
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             try {
-                RemoteViews views = createBaseViews(context, appWidgetId);
+                RemoteViews views = createBaseViews(context, appWidgetId, widgetOptions, selectedDay);
                 WidgetData data = fetchWidgetData(context);
-                applyWidgetData(context, views, data);
+                applyWidgetData(context, views, data, selectedDay);
                 appWidgetManager.updateAppWidget(appWidgetId, views);
             } finally {
                 executor.shutdown();
@@ -94,7 +133,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         });
     }
 
-    private RemoteViews createBaseViews(Context context, int appWidgetId) {
+    private RemoteViews createBaseViews(Context context, int appWidgetId, Bundle widgetOptions, String selectedDay) {
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.weather_home_widget);
 
         views.setTextViewText(R.id.widget_temperature, context.getString(R.string.widget_temp_placeholder));
@@ -106,7 +145,10 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setTextViewText(R.id.widget_metric_wind, context.getString(R.string.widget_metric_wind_placeholder));
         views.setTextViewText(R.id.widget_metric_pollen, context.getString(R.string.widget_metric_pollen_placeholder));
         views.setViewVisibility(R.id.widget_metric_thunder, View.GONE);
+        views.setViewVisibility(R.id.widget_metrics_row_secondary, View.VISIBLE);
         views.setTextViewText(R.id.widget_updated_at, context.getString(R.string.widget_updated_placeholder));
+        views.setTextViewText(R.id.widget_day_today, context.getString(R.string.widget_day_today));
+        views.setTextViewText(R.id.widget_day_tomorrow, context.getString(R.string.widget_day_tomorrow));
 
         Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         if (launchIntent == null) {
@@ -132,42 +174,87 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         );
         views.setOnClickPendingIntent(R.id.widget_refresh_button, refreshPendingIntent);
 
+        Intent todayIntent = new Intent(context, WeatherHomeWidgetProvider.class);
+        todayIntent.setAction(ACTION_WIDGET_SHOW_TODAY);
+        todayIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+        PendingIntent todayPendingIntent = PendingIntent.getBroadcast(
+            context,
+            appWidgetId * 10 + 1,
+            todayIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+        views.setOnClickPendingIntent(R.id.widget_day_today, todayPendingIntent);
+
+        Intent tomorrowIntent = new Intent(context, WeatherHomeWidgetProvider.class);
+        tomorrowIntent.setAction(ACTION_WIDGET_SHOW_TOMORROW);
+        tomorrowIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+        PendingIntent tomorrowPendingIntent = PendingIntent.getBroadcast(
+            context,
+            appWidgetId * 10 + 2,
+            tomorrowIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+        views.setOnClickPendingIntent(R.id.widget_day_tomorrow, tomorrowPendingIntent);
+
+        applyDayToggleStyle(views, DAY_TOMORROW.equals(selectedDay));
+        applyResponsiveLayout(views, widgetOptions);
         return views;
     }
 
-    private void applyWidgetData(Context context, RemoteViews views, WidgetData data) {
-        views.setTextViewText(R.id.widget_temperature, formatTemperature(data.temperatureC));
-        views.setTextViewText(R.id.widget_condition, data.weatherLabel);
+    private void applyWidgetData(Context context, RemoteViews views, WidgetData data, String selectedDay) {
+        boolean showTomorrow = DAY_TOMORROW.equals(selectedDay);
+        applyDayToggleStyle(views, showTomorrow);
+        String conditionLabel;
+        if (showTomorrow) {
+            conditionLabel = (data.tomorrowWeatherLabel == null || UNAVAILABLE.equals(data.tomorrowWeatherLabel))
+                ? context.getString(R.string.widget_condition_tomorrow_placeholder)
+                : context.getString(R.string.widget_condition_tomorrow_format, data.tomorrowWeatherLabel);
+        } else {
+            conditionLabel = data.weatherLabel;
+        }
+        String feelsLikeLabel = showTomorrow
+            ? context.getString(R.string.widget_forecast_label)
+            : context.getString(R.string.widget_feels_like_format, formatTemperature(data.feelsLikeC));
+        double displayTemperature = showTomorrow ? data.tomorrowMaxTemperatureC : data.temperatureC;
+        double rangeMax = showTomorrow ? data.tomorrowMaxTemperatureC : data.maxTemperatureC;
+        double rangeMin = showTomorrow ? data.tomorrowMinTemperatureC : data.minTemperatureC;
+        double rainRate = showTomorrow ? data.tomorrowRainRate : data.rainRate;
+        double uvIndex = showTomorrow ? data.tomorrowUvIndex : data.uvIndex;
+        double windKmh = showTomorrow ? data.tomorrowWindKmh : data.windKmh;
+        String thunderRisk = showTomorrow ? data.tomorrowThunderRiskLabel : data.thunderRiskLabel;
+        String pollenLabel = showTomorrow
+            ? context.getString(R.string.widget_metric_unavailable)
+            : data.pollenLabel;
+
+        views.setTextViewText(R.id.widget_temperature, formatTemperature(displayTemperature));
+        views.setTextViewText(R.id.widget_condition, conditionLabel);
         views.setTextViewText(
             R.id.widget_temp_range,
             context.getString(
                 R.string.widget_temp_range_format,
-                formatTemperature(data.maxTemperatureC),
-                formatTemperature(data.minTemperatureC)
+                formatTemperature(rangeMax),
+                formatTemperature(rangeMin)
             )
         );
-        views.setTextViewText(
-            R.id.widget_feels_like,
-            context.getString(R.string.widget_feels_like_format, formatTemperature(data.feelsLikeC))
-        );
+        views.setTextViewText(R.id.widget_feels_like, feelsLikeLabel);
         views.setTextViewText(
             R.id.widget_metric_rain,
-            context.getString(R.string.widget_metric_rain_format, formatMetricNumber(data.rainRate))
+            context.getString(R.string.widget_metric_rain_format, formatMetricNumber(rainRate))
         );
         views.setTextViewText(
             R.id.widget_metric_uv,
-            context.getString(R.string.widget_metric_uv_format, formatMetricNumber(data.uvIndex))
+            context.getString(R.string.widget_metric_uv_format, formatMetricNumber(uvIndex))
         );
         views.setTextViewText(
             R.id.widget_metric_wind,
-            context.getString(R.string.widget_metric_wind_format, formatMetricNumber(data.windKmh))
+            context.getString(R.string.widget_metric_wind_format, formatMetricNumber(windKmh))
         );
 
-        if (data.thunderRiskLabel != null) {
+        if (thunderRisk != null) {
             views.setViewVisibility(R.id.widget_metric_thunder, View.VISIBLE);
             views.setTextViewText(
                 R.id.widget_metric_thunder,
-                context.getString(R.string.widget_metric_thunder_format, data.thunderRiskLabel)
+                context.getString(R.string.widget_metric_thunder_format, thunderRisk)
             );
         } else {
             views.setViewVisibility(R.id.widget_metric_thunder, View.GONE);
@@ -175,7 +262,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
         views.setTextViewText(
             R.id.widget_metric_pollen,
-            context.getString(R.string.widget_metric_pollen_format, data.pollenLabel)
+            context.getString(R.string.widget_metric_pollen_format, pollenLabel)
         );
 
         String formattedTime = DateFormat.getTimeFormat(context).format(new Date());
@@ -183,6 +270,50 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             R.id.widget_updated_at,
             context.getString(R.string.widget_updated_format, formattedTime)
         );
+    }
+
+    private void applyDayToggleStyle(RemoteViews views, boolean showTomorrow) {
+        int activeBackground = R.drawable.weather_widget_toggle_active;
+        int inactiveBackground = R.drawable.weather_widget_toggle_inactive;
+        int activeTextColor = Color.WHITE;
+        int inactiveTextColor = Color.parseColor("#CCFFFFFF");
+
+        views.setInt(R.id.widget_day_today, "setBackgroundResource", showTomorrow ? inactiveBackground : activeBackground);
+        views.setInt(R.id.widget_day_tomorrow, "setBackgroundResource", showTomorrow ? activeBackground : inactiveBackground);
+        views.setInt(R.id.widget_day_today, "setTextColor", showTomorrow ? inactiveTextColor : activeTextColor);
+        views.setInt(R.id.widget_day_tomorrow, "setTextColor", showTomorrow ? activeTextColor : inactiveTextColor);
+    }
+
+    private void applyResponsiveLayout(RemoteViews views, Bundle widgetOptions) {
+        if (widgetOptions == null) {
+            views.setViewVisibility(R.id.widget_daily_overview, View.VISIBLE);
+            views.setViewVisibility(R.id.widget_metrics_panel, View.VISIBLE);
+            views.setViewVisibility(R.id.widget_metrics_row_secondary, View.VISIBLE);
+            views.setViewVisibility(R.id.widget_updated_at, View.VISIBLE);
+            return;
+        }
+
+        int minWidthDp = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0);
+        int minHeightDp = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0);
+        boolean compactHeight = minHeightDp > 0 && minHeightDp < 165;
+        boolean compactWidth = minWidthDp > 0 && minWidthDp < 210;
+        boolean veryCompact = compactHeight && compactWidth;
+
+        views.setViewVisibility(R.id.widget_daily_overview, compactWidth ? View.GONE : View.VISIBLE);
+        views.setViewVisibility(R.id.widget_metrics_panel, veryCompact ? View.GONE : View.VISIBLE);
+        views.setViewVisibility(R.id.widget_metrics_row_secondary, compactHeight ? View.GONE : View.VISIBLE);
+        views.setViewVisibility(R.id.widget_updated_at, compactHeight ? View.GONE : View.VISIBLE);
+    }
+
+    private String getSelectedDay(Context context, int appWidgetId) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String value = prefs.getString(PREF_DAY_PREFIX + appWidgetId, DAY_TODAY);
+        return DAY_TOMORROW.equals(value) ? DAY_TOMORROW : DAY_TODAY;
+    }
+
+    private void saveSelectedDay(Context context, int appWidgetId, String day) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        prefs.edit().putString(PREF_DAY_PREFIX + appWidgetId, day).apply();
     }
 
     private WidgetData fetchWidgetData(Context context) {
@@ -228,6 +359,15 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             if (daily != null) {
                 data.maxTemperatureC = readDailyValue(daily, "temperature_2m_max");
                 data.minTemperatureC = readDailyValue(daily, "temperature_2m_min");
+                data.tomorrowMaxTemperatureC = readDailyValueAtIndex(daily, "temperature_2m_max", 1);
+                data.tomorrowMinTemperatureC = readDailyValueAtIndex(daily, "temperature_2m_min", 1);
+                data.tomorrowRainRate = readDailyValueAtIndex(daily, "precipitation_sum", 1);
+                data.tomorrowUvIndex = readDailyValueAtIndex(daily, "uv_index_max", 1);
+                data.tomorrowWindKmh = readDailyValueAtIndex(daily, "wind_speed_10m_max", 1);
+                int tomorrowCode = readDailyIntAtIndex(daily, "weathercode", 1);
+                data.tomorrowWeatherLabel = mapWeatherCodeToLabel(context, tomorrowCode);
+                double tomorrowPrecipProb = readDailyValueAtIndex(daily, "precipitation_probability_max", 1);
+                data.tomorrowThunderRiskLabel = classifyThunderRisk(context, tomorrowCode, Double.NaN, Double.NaN, tomorrowPrecipProb, data.tomorrowWindKmh);
             }
         } catch (Exception ignored) {
             // Keep placeholder values for unavailable network data
@@ -362,10 +502,21 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     }
 
     private double readDailyValue(JSONObject daily, String field) {
+        return readDailyValueAtIndex(daily, field, 0);
+    }
+
+    private double readDailyValueAtIndex(JSONObject daily, String field, int index) {
         if (daily == null) return Double.NaN;
         JSONArray values = daily.optJSONArray(field);
-        if (values == null || values.length() == 0) return Double.NaN;
-        return values.optDouble(0, Double.NaN);
+        if (values == null || values.length() <= index || index < 0) return Double.NaN;
+        return values.optDouble(index, Double.NaN);
+    }
+
+    private int readDailyIntAtIndex(JSONObject daily, String field, int index) {
+        if (daily == null) return -1;
+        JSONArray values = daily.optJSONArray(field);
+        if (values == null || values.length() <= index || index < 0) return -1;
+        return values.optInt(index, -1);
     }
 
     private double maxOf(double... values) {
@@ -462,8 +613,15 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         double rainRate;
         double uvIndex;
         double windKmh;
+        double tomorrowMaxTemperatureC;
+        double tomorrowMinTemperatureC;
+        double tomorrowRainRate;
+        double tomorrowUvIndex;
+        double tomorrowWindKmh;
         String weatherLabel;
+        String tomorrowWeatherLabel;
         String thunderRiskLabel;
+        String tomorrowThunderRiskLabel;
         String pollenLabel;
 
         static WidgetData empty(Context context) {
@@ -475,8 +633,15 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             data.rainRate = Double.NaN;
             data.uvIndex = Double.NaN;
             data.windKmh = Double.NaN;
+            data.tomorrowMaxTemperatureC = Double.NaN;
+            data.tomorrowMinTemperatureC = Double.NaN;
+            data.tomorrowRainRate = Double.NaN;
+            data.tomorrowUvIndex = Double.NaN;
+            data.tomorrowWindKmh = Double.NaN;
             data.weatherLabel = context.getString(R.string.widget_condition_placeholder);
+            data.tomorrowWeatherLabel = UNAVAILABLE;
             data.thunderRiskLabel = null;
+            data.tomorrowThunderRiskLabel = null;
             data.pollenLabel = context.getString(R.string.widget_metric_unavailable);
             return data;
         }
