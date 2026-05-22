@@ -65,6 +65,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final double POLLEN_THRESHOLD_MODERATE = 5;
     private static final double POLLEN_THRESHOLD_HIGH = 20;
     private static final double POLLEN_THRESHOLD_VERY_HIGH = 50;
+    private static final int ONE_ROW_WIDGET_HEIGHT_THRESHOLD_DP = 110;
     private static final int COMPACT_WIDGET_HEIGHT_THRESHOLD_DP = 165;
     private static final int COMPACT_WIDGET_WIDTH_THRESHOLD_DP = 210;
 
@@ -148,6 +149,16 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setTextViewText(R.id.widget_metric_wind, context.getString(R.string.widget_metric_wind_placeholder));
         views.setTextViewText(R.id.widget_metric_pollen, context.getString(R.string.widget_metric_pollen_placeholder));
         views.setViewVisibility(R.id.widget_metric_thunder, View.GONE);
+        views.setTextViewText(
+            R.id.widget_compact_metric_temperature,
+            context.getString(
+                R.string.widget_compact_metric_temperature_format,
+                context.getString(R.string.widget_temp_placeholder),
+                context.getString(R.string.widget_weather_icon_placeholder)
+            )
+        );
+        views.setTextViewText(R.id.widget_compact_metric_uv, context.getString(R.string.widget_compact_metric_uv_placeholder));
+        views.setTextViewText(R.id.widget_compact_metric_thunder, context.getString(R.string.widget_compact_metric_thunder_placeholder));
         views.setViewVisibility(R.id.widget_metrics_row_secondary, View.VISIBLE);
         views.setTextViewText(R.id.widget_updated_at, context.getString(R.string.widget_updated_placeholder));
         views.setTextViewText(R.id.widget_day_today, context.getString(R.string.widget_day_today));
@@ -269,6 +280,25 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             R.id.widget_metric_pollen,
             context.getString(R.string.widget_metric_pollen_format, pollenLabel)
         );
+        views.setTextViewText(
+            R.id.widget_compact_metric_temperature,
+            context.getString(
+                R.string.widget_compact_metric_temperature_format,
+                formatTemperature(displayTemperature),
+                mapWeatherCodeToSymbol(displayWeatherCode)
+            )
+        );
+        views.setTextViewText(
+            R.id.widget_compact_metric_uv,
+            context.getString(R.string.widget_compact_metric_uv_format, formatMetricNumber(uvIndex))
+        );
+        views.setTextViewText(
+            R.id.widget_compact_metric_thunder,
+            context.getString(
+                R.string.widget_compact_metric_thunder_format,
+                thunderRisk == null ? context.getString(R.string.widget_metric_unavailable) : thunderRisk
+            )
+        );
 
         String formattedTime = DateFormat.getTimeFormat(context).format(new Date());
         views.setTextViewText(
@@ -291,7 +321,10 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
     private void applyResponsiveLayout(RemoteViews views, Bundle widgetOptions) {
         if (widgetOptions == null) {
+            views.setViewVisibility(R.id.widget_compact_row, View.GONE);
+            views.setViewVisibility(R.id.widget_header_row, View.VISIBLE);
             views.setViewVisibility(R.id.widget_day_switcher, View.VISIBLE);
+            views.setViewVisibility(R.id.widget_main_row, View.VISIBLE);
             views.setViewVisibility(R.id.widget_daily_overview, View.VISIBLE);
             views.setViewVisibility(R.id.widget_metrics_panel, View.VISIBLE);
             views.setViewVisibility(R.id.widget_metrics_row_secondary, View.VISIBLE);
@@ -301,11 +334,27 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
         int minWidthDp = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0);
         int minHeightDp = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0);
+        boolean oneRowHeight = minHeightDp > 0 && minHeightDp <= ONE_ROW_WIDGET_HEIGHT_THRESHOLD_DP;
         boolean compactHeight = minHeightDp > 0 && minHeightDp < COMPACT_WIDGET_HEIGHT_THRESHOLD_DP;
         boolean compactWidth = minWidthDp > 0 && minWidthDp < COMPACT_WIDGET_WIDTH_THRESHOLD_DP;
         boolean veryCompact = compactHeight && compactWidth;
 
+        if (oneRowHeight) {
+            views.setViewVisibility(R.id.widget_compact_row, View.VISIBLE);
+            views.setViewVisibility(R.id.widget_header_row, View.GONE);
+            views.setViewVisibility(R.id.widget_day_switcher, View.GONE);
+            views.setViewVisibility(R.id.widget_main_row, View.GONE);
+            views.setViewVisibility(R.id.widget_daily_overview, View.GONE);
+            views.setViewVisibility(R.id.widget_metrics_panel, View.GONE);
+            views.setViewVisibility(R.id.widget_metrics_row_secondary, View.GONE);
+            views.setViewVisibility(R.id.widget_updated_at, View.GONE);
+            return;
+        }
+
+        views.setViewVisibility(R.id.widget_compact_row, View.GONE);
+        views.setViewVisibility(R.id.widget_header_row, View.VISIBLE);
         views.setViewVisibility(R.id.widget_day_switcher, compactHeight ? View.GONE : View.VISIBLE);
+        views.setViewVisibility(R.id.widget_main_row, View.VISIBLE);
         views.setViewVisibility(R.id.widget_daily_overview, compactWidth ? View.GONE : View.VISIBLE);
         views.setViewVisibility(R.id.widget_metrics_panel, veryCompact ? View.GONE : View.VISIBLE);
         views.setViewVisibility(R.id.widget_metrics_row_secondary, compactHeight ? View.GONE : View.VISIBLE);

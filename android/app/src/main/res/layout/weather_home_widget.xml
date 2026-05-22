@@ -9,6 +9,60 @@
     android:padding="10dp">
 
     <LinearLayout
+        android:id="@+id/widget_compact_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:background="@drawable/weather_widget_glass_panel"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="6dp"
+        android:visibility="gone"
+        android:weightSum="3">
+
+        <TextView
+            android:id="@+id/widget_compact_metric_temperature"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/widget_compact_metric_temperature_placeholder"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_compact_metric_uv"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:gravity="center_horizontal"
+            android:maxLines="1"
+            android:text="@string/widget_compact_metric_uv_placeholder"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_compact_metric_thunder"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:gravity="end"
+            android:maxLines="1"
+            android:text="@string/widget_compact_metric_thunder_placeholder"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
         android:id="@+id/widget_header_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -190,7 +244,8 @@
                 android:maxLines="1"
                 android:text="@string/widget_metric_rain_placeholder"
                 android:textColor="#F2FFFFFF"
-                android:textSize="11sp" />
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/widget_metric_uv"
@@ -202,7 +257,8 @@
                 android:maxLines="1"
                 android:text="@string/widget_metric_uv_placeholder"
                 android:textColor="#F2FFFFFF"
-                android:textSize="11sp" />
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/widget_metric_wind"
@@ -214,7 +270,8 @@
                 android:maxLines="1"
                 android:text="@string/widget_metric_wind_placeholder"
                 android:textColor="#F2FFFFFF"
-                android:textSize="11sp" />
+                android:textSize="12sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
@@ -234,7 +291,8 @@
                 android:maxLines="1"
                 android:text="@string/widget_metric_thunder_placeholder"
                 android:textColor="#F2FFFFFF"
-                android:textSize="11sp"
+                android:textSize="12sp"
+                android:textStyle="bold"
                 android:visibility="gone" />
 
             <TextView
@@ -247,7 +305,8 @@
                 android:maxLines="1"
                 android:text="@string/widget_metric_pollen_placeholder"
                 android:textColor="#F2FFFFFF"
-                android:textSize="11sp" />
+                android:textSize="12sp"
+                android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
 
