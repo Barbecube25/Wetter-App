@@ -210,9 +210,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         String feelsLikeLabel = showTomorrow
             ? context.getString(R.string.widget_forecast_label)
             : context.getString(R.string.widget_feels_like_format, formatTemperature(data.feelsLikeC));
-        double displayTemperature = showTomorrow
-            ? (Double.isNaN(data.tomorrowMaxTemperatureC) ? data.temperatureC : data.tomorrowMaxTemperatureC)
-            : data.temperatureC;
+        double displayTemperature = showTomorrow ? data.tomorrowMaxTemperatureC : data.temperatureC;
         double rangeMax = showTomorrow ? data.tomorrowMaxTemperatureC : data.maxTemperatureC;
         double rangeMin = showTomorrow ? data.tomorrowMinTemperatureC : data.minTemperatureC;
         double rainRate = showTomorrow ? data.tomorrowRainRate : data.rainRate;
@@ -388,7 +386,6 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
                     readDouble(current, "ragweed_pollen")
                 );
                 data.pollenLabel = classifyPollen(context, maxPollen);
-                data.tomorrowPollenLabel = data.pollenLabel;
             }
         } catch (Exception ignored) {
             // Keep fallback pollen value
