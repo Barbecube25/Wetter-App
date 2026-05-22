@@ -65,6 +65,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final double POLLEN_THRESHOLD_MODERATE = 5;
     private static final double POLLEN_THRESHOLD_HIGH = 20;
     private static final double POLLEN_THRESHOLD_VERY_HIGH = 50;
+    private static final int COMPACT_WIDGET_HEIGHT_THRESHOLD_DP = 165;
+    private static final int COMPACT_WIDGET_WIDTH_THRESHOLD_DP = 210;
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
@@ -299,8 +301,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
         int minWidthDp = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0);
         int minHeightDp = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0);
-        boolean compactHeight = minHeightDp > 0 && minHeightDp < 165;
-        boolean compactWidth = minWidthDp > 0 && minWidthDp < 210;
+        boolean compactHeight = minHeightDp > 0 && minHeightDp < COMPACT_WIDGET_HEIGHT_THRESHOLD_DP;
+        boolean compactWidth = minWidthDp > 0 && minWidthDp < COMPACT_WIDGET_WIDTH_THRESHOLD_DP;
         boolean veryCompact = compactHeight && compactWidth;
 
         views.setViewVisibility(R.id.widget_day_switcher, compactHeight ? View.GONE : View.VISIBLE);
