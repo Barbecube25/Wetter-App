@@ -33,10 +33,10 @@
     <string name="widget_metric_pollen_format">Pollen: %1$s</string>
     <string name="widget_compact_metric_temperature_placeholder">--° --</string>
     <string name="widget_compact_metric_uv_placeholder">UV --</string>
-    <string name="widget_compact_metric_thunder_placeholder">Gew. --</string>
+    <string name="widget_compact_metric_thunder_placeholder">Gewitt. --</string>
     <string name="widget_compact_metric_temperature_format">%1$s %2$s</string>
     <string name="widget_compact_metric_uv_format">UV %1$s</string>
-    <string name="widget_compact_metric_thunder_format">Gew. %1$s</string>
+    <string name="widget_compact_metric_thunder_format">Gewitt. %1$s</string>
     <string name="widget_weather_clear">Klar</string>
     <string name="widget_weather_partly_cloudy">Leicht bewölkt</string>
     <string name="widget_weather_cloudy">Bedeckt</string>
