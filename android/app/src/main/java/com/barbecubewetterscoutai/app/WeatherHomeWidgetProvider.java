@@ -12,7 +12,6 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.text.format.DateFormat;
-import android.util.TypedValue;
 import android.view.View;
 import android.widget.RemoteViews;
 
@@ -66,12 +65,6 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final double POLLEN_THRESHOLD_MODERATE = 5;
     private static final double POLLEN_THRESHOLD_HIGH = 20;
     private static final double POLLEN_THRESHOLD_VERY_HIGH = 50;
-    private static final int MIN_WIDGET_WIDTH_CELLS = 1;
-    private static final int MAX_WIDGET_WIDTH_CELLS = 6;
-    private static final int MIN_WIDGET_HEIGHT_CELLS = 2;
-    private static final int MAX_WIDGET_HEIGHT_CELLS = 5;
-    private static final int CELL_ESTIMATION_OFFSET_DP = 30;
-    private static final int CELL_SIZE_DP = 70;
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
@@ -205,7 +198,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_day_tomorrow, tomorrowPendingIntent);
 
         applyDayToggleStyle(views, DAY_TOMORROW.equals(selectedDay));
-        applyResponsiveLayout(context, views, widgetOptions);
+        applyResponsiveLayout(views, widgetOptions);
         return views;
     }
 
@@ -294,95 +287,27 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setInt(R.id.widget_day_tomorrow, "setTextColor", showTomorrow ? activeTextColor : inactiveTextColor);
     }
 
-    private void applyResponsiveLayout(Context context, RemoteViews views, Bundle widgetOptions) {
+    private void applyResponsiveLayout(RemoteViews views, Bundle widgetOptions) {
         if (widgetOptions == null) {
-            applyLayoutProfile(context, views, WidgetLayoutProfile.defaultProfile());
+            views.setViewVisibility(R.id.widget_day_switcher, View.VISIBLE);
+            views.setViewVisibility(R.id.widget_daily_overview, View.VISIBLE);
+            views.setViewVisibility(R.id.widget_metrics_panel, View.VISIBLE);
+            views.setViewVisibility(R.id.widget_metrics_row_secondary, View.VISIBLE);
+            views.setViewVisibility(R.id.widget_updated_at, View.VISIBLE);
             return;
         }
 
         int minWidthDp = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0);
         int minHeightDp = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0);
-        int maxWidthDp = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, minWidthDp);
-        int maxHeightDp = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, minHeightDp);
-        int widthCells = clamp(
-            estimateCellSpan(minWidthDp, maxWidthDp),
-            MIN_WIDGET_WIDTH_CELLS,
-            MAX_WIDGET_WIDTH_CELLS
-        );
-        int heightCells = clamp(
-            estimateCellSpan(minHeightDp, maxHeightDp),
-            MIN_WIDGET_HEIGHT_CELLS,
-            MAX_WIDGET_HEIGHT_CELLS
-        );
+        boolean compactHeight = minHeightDp > 0 && minHeightDp < 165;
+        boolean compactWidth = minWidthDp > 0 && minWidthDp < 210;
+        boolean veryCompact = compactHeight && compactWidth;
 
-        applyLayoutProfile(context, views, WidgetLayoutProfile.fromCells(widthCells, heightCells));
-    }
-
-    private void applyLayoutProfile(Context context, RemoteViews views, WidgetLayoutProfile profile) {
-        views.setViewVisibility(R.id.widget_day_switcher, profile.showDaySwitcher ? View.VISIBLE : View.GONE);
-        views.setViewVisibility(R.id.widget_daily_overview, profile.showDailyOverview ? View.VISIBLE : View.GONE);
-        views.setViewVisibility(R.id.widget_metrics_panel, profile.showMetricsPanel ? View.VISIBLE : View.GONE);
-        views.setViewVisibility(R.id.widget_metrics_row_secondary, profile.showSecondaryMetrics ? View.VISIBLE : View.GONE);
-        views.setViewVisibility(R.id.widget_updated_at, profile.showUpdatedAt ? View.VISIBLE : View.GONE);
-
-        views.setTextViewTextSize(R.id.widget_title, TypedValue.COMPLEX_UNIT_SP, profile.titleTextSp);
-        views.setTextViewTextSize(R.id.widget_day_today, TypedValue.COMPLEX_UNIT_SP, profile.toggleTextSp);
-        views.setTextViewTextSize(R.id.widget_day_tomorrow, TypedValue.COMPLEX_UNIT_SP, profile.toggleTextSp);
-        views.setTextViewTextSize(R.id.widget_temperature, TypedValue.COMPLEX_UNIT_SP, profile.temperatureTextSp);
-        views.setTextViewTextSize(R.id.widget_weather_icon, TypedValue.COMPLEX_UNIT_SP, profile.weatherIconTextSp);
-        views.setTextViewTextSize(R.id.widget_condition, TypedValue.COMPLEX_UNIT_SP, profile.conditionTextSp);
-        views.setTextViewTextSize(R.id.widget_temp_range, TypedValue.COMPLEX_UNIT_SP, profile.cardTitleTextSp);
-        views.setTextViewTextSize(R.id.widget_feels_like, TypedValue.COMPLEX_UNIT_SP, profile.cardBodyTextSp);
-        views.setTextViewTextSize(R.id.widget_metric_rain, TypedValue.COMPLEX_UNIT_SP, profile.metricTextSp);
-        views.setTextViewTextSize(R.id.widget_metric_uv, TypedValue.COMPLEX_UNIT_SP, profile.metricTextSp);
-        views.setTextViewTextSize(R.id.widget_metric_wind, TypedValue.COMPLEX_UNIT_SP, profile.metricTextSp);
-        views.setTextViewTextSize(R.id.widget_metric_thunder, TypedValue.COMPLEX_UNIT_SP, profile.metricTextSp);
-        views.setTextViewTextSize(R.id.widget_metric_pollen, TypedValue.COMPLEX_UNIT_SP, profile.metricTextSp);
-        views.setTextViewTextSize(R.id.widget_updated_at, TypedValue.COMPLEX_UNIT_SP, profile.updatedTextSp);
-
-        int rootPaddingPx = dpToPx(context, profile.rootPaddingDp);
-        int panelPaddingPx = dpToPx(context, profile.panelPaddingDp);
-        views.setViewPadding(
-            R.id.widget_root,
-            rootPaddingPx,
-            rootPaddingPx,
-            rootPaddingPx,
-            rootPaddingPx
-        );
-        views.setViewPadding(
-            R.id.widget_metrics_panel,
-            panelPaddingPx,
-            panelPaddingPx,
-            panelPaddingPx,
-            panelPaddingPx
-        );
-        views.setViewPadding(
-            R.id.widget_daily_overview,
-            panelPaddingPx,
-            panelPaddingPx,
-            panelPaddingPx,
-            panelPaddingPx
-        );
-    }
-
-    private int estimateCellSpan(int minDp, int maxDp) {
-        int referenceDp = Math.max(minDp, maxDp);
-        if (referenceDp <= 0) return MIN_WIDGET_WIDTH_CELLS;
-        return Math.max(MIN_WIDGET_WIDTH_CELLS, (referenceDp + CELL_ESTIMATION_OFFSET_DP) / CELL_SIZE_DP);
-    }
-
-    private int clamp(int value, int min, int max) {
-        if (value < min) return min;
-        if (value > max) return max;
-        return value;
-    }
-
-    private int dpToPx(Context context, int dp) {
-        return Math.round(TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            dp,
-            context.getResources().getDisplayMetrics()
-        ));
+        views.setViewVisibility(R.id.widget_day_switcher, compactHeight ? View.GONE : View.VISIBLE);
+        views.setViewVisibility(R.id.widget_daily_overview, compactWidth ? View.GONE : View.VISIBLE);
+        views.setViewVisibility(R.id.widget_metrics_panel, veryCompact ? View.GONE : View.VISIBLE);
+        views.setViewVisibility(R.id.widget_metrics_row_secondary, compactHeight ? View.GONE : View.VISIBLE);
+        views.setViewVisibility(R.id.widget_updated_at, compactHeight ? View.GONE : View.VISIBLE);
     }
 
     private String getSelectedDay(Context context, int appWidgetId) {
@@ -767,134 +692,4 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         }
     }
 
-    private static class WidgetLayoutProfile {
-        private static final float MIN_ROOT_PADDING_DP = 6f;
-        private static final float MAX_ROOT_PADDING_DP = 12f;
-        private static final float MIN_PANEL_PADDING_DP = 6f;
-        private static final float MAX_PANEL_PADDING_DP = 10f;
-        private static final float MIN_TITLE_TEXT_SP = 10f;
-        private static final float MAX_TITLE_TEXT_SP = 12f;
-        private static final float MIN_TOGGLE_TEXT_SP = 9f;
-        private static final float MAX_TOGGLE_TEXT_SP = 12f;
-        private static final float MIN_TEMPERATURE_TEXT_SP = 24f;
-        private static final float MAX_TEMPERATURE_TEXT_SP = 52f;
-        private static final float MIN_WEATHER_ICON_TEXT_SP = 12f;
-        private static final float MAX_WEATHER_ICON_TEXT_SP = 22f;
-        private static final float MIN_CONDITION_TEXT_SP = 10f;
-        private static final float MAX_CONDITION_TEXT_SP = 14f;
-        private static final float MIN_CARD_TITLE_TEXT_SP = 10f;
-        private static final float MAX_CARD_TITLE_TEXT_SP = 13f;
-        private static final float MIN_CARD_BODY_TEXT_SP = 9f;
-        private static final float MAX_CARD_BODY_TEXT_SP = 12f;
-        private static final float MIN_METRIC_TEXT_SP = 9f;
-        private static final float MAX_METRIC_TEXT_SP = 12f;
-        private static final float MIN_UPDATED_TEXT_SP = 8f;
-        private static final float MAX_UPDATED_TEXT_SP = 11f;
-
-        final boolean showDaySwitcher;
-        final boolean showDailyOverview;
-        final boolean showMetricsPanel;
-        final boolean showSecondaryMetrics;
-        final boolean showUpdatedAt;
-        final int rootPaddingDp;
-        final int panelPaddingDp;
-        final float titleTextSp;
-        final float toggleTextSp;
-        final float temperatureTextSp;
-        final float weatherIconTextSp;
-        final float conditionTextSp;
-        final float cardTitleTextSp;
-        final float cardBodyTextSp;
-        final float metricTextSp;
-        final float updatedTextSp;
-
-        private WidgetLayoutProfile(
-            boolean showDaySwitcher,
-            boolean showDailyOverview,
-            boolean showMetricsPanel,
-            boolean showSecondaryMetrics,
-            boolean showUpdatedAt,
-            int rootPaddingDp,
-            int panelPaddingDp,
-            float titleTextSp,
-            float toggleTextSp,
-            float temperatureTextSp,
-            float weatherIconTextSp,
-            float conditionTextSp,
-            float cardTitleTextSp,
-            float cardBodyTextSp,
-            float metricTextSp,
-            float updatedTextSp
-        ) {
-            this.showDaySwitcher = showDaySwitcher;
-            this.showDailyOverview = showDailyOverview;
-            this.showMetricsPanel = showMetricsPanel;
-            this.showSecondaryMetrics = showSecondaryMetrics;
-            this.showUpdatedAt = showUpdatedAt;
-            this.rootPaddingDp = rootPaddingDp;
-            this.panelPaddingDp = panelPaddingDp;
-            this.titleTextSp = titleTextSp;
-            this.toggleTextSp = toggleTextSp;
-            this.temperatureTextSp = temperatureTextSp;
-            this.weatherIconTextSp = weatherIconTextSp;
-            this.conditionTextSp = conditionTextSp;
-            this.cardTitleTextSp = cardTitleTextSp;
-            this.cardBodyTextSp = cardBodyTextSp;
-            this.metricTextSp = metricTextSp;
-            this.updatedTextSp = updatedTextSp;
-        }
-
-        static WidgetLayoutProfile defaultProfile() {
-            return fromCells(3, MIN_WIDGET_HEIGHT_CELLS);
-        }
-
-        static WidgetLayoutProfile fromCells(int widthCells, int heightCells) {
-            float widthProgress = (widthCells - MIN_WIDGET_WIDTH_CELLS)
-                / (float) (MAX_WIDGET_WIDTH_CELLS - MIN_WIDGET_WIDTH_CELLS);
-            float heightProgress = (heightCells - MIN_WIDGET_HEIGHT_CELLS)
-                / (float) (MAX_WIDGET_HEIGHT_CELLS - MIN_WIDGET_HEIGHT_CELLS);
-            float sizeProgress = (widthProgress + heightProgress) / 2f;
-
-            boolean showDaySwitcher = widthCells >= 2 && heightCells >= 3;
-            boolean showDailyOverview = widthCells >= 3;
-            boolean showMetricsPanel = heightCells >= 3;
-            boolean showSecondaryMetrics = widthCells >= 3 && heightCells >= 4;
-            boolean showUpdatedAt = heightCells >= 4;
-
-            int rootPadding = Math.round(lerp(MIN_ROOT_PADDING_DP, MAX_ROOT_PADDING_DP, sizeProgress));
-            int panelPadding = Math.round(lerp(MIN_PANEL_PADDING_DP, MAX_PANEL_PADDING_DP, sizeProgress));
-            float titleText = lerp(MIN_TITLE_TEXT_SP, MAX_TITLE_TEXT_SP, sizeProgress);
-            float toggleText = lerp(MIN_TOGGLE_TEXT_SP, MAX_TOGGLE_TEXT_SP, sizeProgress);
-            float temperatureText = lerp(MIN_TEMPERATURE_TEXT_SP, MAX_TEMPERATURE_TEXT_SP, sizeProgress);
-            float weatherIconText = lerp(MIN_WEATHER_ICON_TEXT_SP, MAX_WEATHER_ICON_TEXT_SP, sizeProgress);
-            float conditionText = lerp(MIN_CONDITION_TEXT_SP, MAX_CONDITION_TEXT_SP, sizeProgress);
-            float cardTitleText = lerp(MIN_CARD_TITLE_TEXT_SP, MAX_CARD_TITLE_TEXT_SP, sizeProgress);
-            float cardBodyText = lerp(MIN_CARD_BODY_TEXT_SP, MAX_CARD_BODY_TEXT_SP, sizeProgress);
-            float metricText = lerp(MIN_METRIC_TEXT_SP, MAX_METRIC_TEXT_SP, sizeProgress);
-            float updatedText = lerp(MIN_UPDATED_TEXT_SP, MAX_UPDATED_TEXT_SP, sizeProgress);
-
-            return new WidgetLayoutProfile(
-                showDaySwitcher,
-                showDailyOverview,
-                showMetricsPanel,
-                showSecondaryMetrics,
-                showUpdatedAt,
-                rootPadding,
-                panelPadding,
-                titleText,
-                toggleText,
-                temperatureText,
-                weatherIconText,
-                conditionText,
-                cardTitleText,
-                cardBodyText,
-                metricText,
-                updatedText
-            );
-        }
-
-        private static float lerp(float start, float end, float t) {
-            return start + (end - start) * t;
-        }
-    }
 }
