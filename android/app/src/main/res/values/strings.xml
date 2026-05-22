@@ -6,13 +6,17 @@
     <string name="custom_url_scheme">com.barbecubewetterscoutai.app</string>
     <string name="widget_title">Tagesbericht</string>
     <string name="widget_description">Aktuelle Wetterlage im Tagesbericht-Stil</string>
+    <string name="widget_day_today">Heute</string>
+    <string name="widget_day_tomorrow">Morgen</string>
     <string name="widget_updated_placeholder">Zuletzt aktualisiert: --:--</string>
     <string name="widget_updated_format">Zuletzt aktualisiert: %1$s</string>
     <string name="widget_refresh_content_description">Widget aktualisieren</string>
     <string name="widget_temp_placeholder">--°</string>
     <string name="widget_condition_placeholder">Wetterlage: --</string>
+    <string name="widget_condition_tomorrow_format">Morgen: %1$s</string>
     <string name="widget_temp_range_placeholder">H: --° • T: --°</string>
     <string name="widget_feels_like_placeholder">Gefühlt: --°</string>
+    <string name="widget_forecast_label">Vorhersage</string>
     <string name="widget_metric_rain_placeholder">Regenrate: -- mm/h</string>
     <string name="widget_metric_uv_placeholder">UV-Index: --</string>
     <string name="widget_metric_wind_placeholder">Windstärke: -- km/h</string>
