@@ -38,7 +38,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final int HTTP_TIMEOUT_MS = 12000;
     private static final String UNAVAILABLE = "--";
     private static final String WEATHER_API_URL_TEMPLATE =
-        "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=temperature_2m,precipitation,rain,wind_speed_10m,weathercode&hourly=uv_index,precipitation_probability,cape,lifted_index&timezone=auto&forecast_days=1";
+        "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=temperature_2m,apparent_temperature,precipitation,rain,wind_speed_10m,weathercode&daily=temperature_2m_max,temperature_2m_min&hourly=uv_index,precipitation_probability,cape,lifted_index&timezone=auto&forecast_days=1";
     private static final String AIR_QUALITY_API_URL_TEMPLATE =
         "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=%f&longitude=%f&current=alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&timezone=auto";
     // WMO weather codes representing thunderstorm conditions.
@@ -98,6 +98,9 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.weather_home_widget);
 
         views.setTextViewText(R.id.widget_temperature, context.getString(R.string.widget_temp_placeholder));
+        views.setTextViewText(R.id.widget_condition, context.getString(R.string.widget_condition_placeholder));
+        views.setTextViewText(R.id.widget_temp_range, context.getString(R.string.widget_temp_range_placeholder));
+        views.setTextViewText(R.id.widget_feels_like, context.getString(R.string.widget_feels_like_placeholder));
         views.setTextViewText(R.id.widget_metric_rain, context.getString(R.string.widget_metric_rain_placeholder));
         views.setTextViewText(R.id.widget_metric_uv, context.getString(R.string.widget_metric_uv_placeholder));
         views.setTextViewText(R.id.widget_metric_wind, context.getString(R.string.widget_metric_wind_placeholder));
@@ -134,6 +137,19 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
     private void applyWidgetData(Context context, RemoteViews views, WidgetData data) {
         views.setTextViewText(R.id.widget_temperature, formatTemperature(data.temperatureC));
+        views.setTextViewText(R.id.widget_condition, data.weatherLabel);
+        views.setTextViewText(
+            R.id.widget_temp_range,
+            context.getString(
+                R.string.widget_temp_range_format,
+                formatTemperature(data.maxTemperatureC),
+                formatTemperature(data.minTemperatureC)
+            )
+        );
+        views.setTextViewText(
+            R.id.widget_feels_like,
+            context.getString(R.string.widget_feels_like_format, formatTemperature(data.feelsLikeC))
+        );
         views.setTextViewText(
             R.id.widget_metric_rain,
             context.getString(R.string.widget_metric_rain_format, formatMetricNumber(data.rainRate))
@@ -186,9 +202,11 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             JSONObject weatherJson = new JSONObject(weatherResponse);
             JSONObject current = weatherJson.optJSONObject("current");
             JSONObject hourly = weatherJson.optJSONObject("hourly");
+            JSONObject daily = weatherJson.optJSONObject("daily");
 
             if (current != null) {
                 data.temperatureC = readDouble(current, "temperature_2m");
+                data.feelsLikeC = readDouble(current, "apparent_temperature");
                 double rain = readDouble(current, "rain");
                 if (Double.isNaN(rain)) {
                     rain = readDouble(current, "precipitation");
@@ -198,6 +216,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
                 String currentTime = current.optString("time", null);
                 int weatherCode = current.optInt("weathercode", -1);
+                data.weatherLabel = mapWeatherCodeToLabel(context, weatherCode);
                 int hourlyIndex = findTimeIndex(hourly, currentTime);
                 double uv = readHourlyValue(hourly, "uv_index", hourlyIndex);
                 double precipProb = readHourlyValue(hourly, "precipitation_probability", hourlyIndex);
@@ -205,6 +224,10 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
                 double liftedIndex = readHourlyValue(hourly, "lifted_index", hourlyIndex);
                 data.uvIndex = uv;
                 data.thunderRiskLabel = classifyThunderRisk(context, weatherCode, cape, liftedIndex, precipProb, data.windKmh);
+            }
+            if (daily != null) {
+                data.maxTemperatureC = readDailyValue(daily, "temperature_2m_max");
+                data.minTemperatureC = readDailyValue(daily, "temperature_2m_min");
             }
         } catch (Exception ignored) {
             // Keep placeholder values for unavailable network data
@@ -338,6 +361,13 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         return object.optDouble(key, Double.NaN);
     }
 
+    private double readDailyValue(JSONObject daily, String field) {
+        if (daily == null) return Double.NaN;
+        JSONArray values = daily.optJSONArray(field);
+        if (values == null || values.length() == 0) return Double.NaN;
+        return values.optDouble(0, Double.NaN);
+    }
+
     private double maxOf(double... values) {
         double max = Double.NaN;
         for (double value : values) {
@@ -352,6 +382,40 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private String formatTemperature(double temperatureC) {
         if (Double.isNaN(temperatureC)) return "--°";
         return Math.round(temperatureC) + "°";
+    }
+
+    private String mapWeatherCodeToLabel(Context context, int weatherCode) {
+        switch (weatherCode) {
+            case 0: return context.getString(R.string.widget_weather_clear);
+            case 1:
+            case 2: return context.getString(R.string.widget_weather_partly_cloudy);
+            case 3: return context.getString(R.string.widget_weather_cloudy);
+            case 45:
+            case 48: return context.getString(R.string.widget_weather_fog);
+            case 51:
+            case 53:
+            case 55:
+            case 56:
+            case 57: return context.getString(R.string.widget_weather_drizzle);
+            case 61:
+            case 63:
+            case 65:
+            case 80:
+            case 81:
+            case 82: return context.getString(R.string.widget_weather_rain);
+            case 66:
+            case 67: return context.getString(R.string.widget_weather_freezing_rain);
+            case 71:
+            case 73:
+            case 75:
+            case 77:
+            case 85:
+            case 86: return context.getString(R.string.widget_weather_snow);
+            case 95:
+            case 96:
+            case 99: return context.getString(R.string.widget_weather_thunderstorm);
+            default: return context.getString(R.string.widget_weather_unknown);
+        }
     }
 
     private String formatMetricNumber(double value) {
@@ -392,18 +456,26 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
     private static class WidgetData {
         double temperatureC;
+        double feelsLikeC;
+        double maxTemperatureC;
+        double minTemperatureC;
         double rainRate;
         double uvIndex;
         double windKmh;
+        String weatherLabel;
         String thunderRiskLabel;
         String pollenLabel;
 
         static WidgetData empty(Context context) {
             WidgetData data = new WidgetData();
             data.temperatureC = Double.NaN;
+            data.feelsLikeC = Double.NaN;
+            data.maxTemperatureC = Double.NaN;
+            data.minTemperatureC = Double.NaN;
             data.rainRate = Double.NaN;
             data.uvIndex = Double.NaN;
             data.windKmh = Double.NaN;
+            data.weatherLabel = context.getString(R.string.widget_condition_placeholder);
             data.thunderRiskLabel = null;
             data.pollenLabel = context.getString(R.string.widget_metric_unavailable);
             return data;
