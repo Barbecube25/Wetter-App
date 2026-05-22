@@ -9917,7 +9917,7 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                     );
                   };
                   const renderQuickDayChips = (day) => (
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {renderQuickTile({
                         key: `${day.key}-temps`,
                         label: lang === 'en' ? 'Temperature' : 'Temperatur',
