@@ -66,6 +66,12 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final double POLLEN_THRESHOLD_MODERATE = 5;
     private static final double POLLEN_THRESHOLD_HIGH = 20;
     private static final double POLLEN_THRESHOLD_VERY_HIGH = 50;
+    private static final int MIN_WIDGET_WIDTH_CELLS = 1;
+    private static final int MAX_WIDGET_WIDTH_CELLS = 6;
+    private static final int MIN_WIDGET_HEIGHT_CELLS = 2;
+    private static final int MAX_WIDGET_HEIGHT_CELLS = 5;
+    private static final int CELL_ESTIMATION_OFFSET_DP = 30;
+    private static final int CELL_SIZE_DP = 70;
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
@@ -298,8 +304,16 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         int minHeightDp = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0);
         int maxWidthDp = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, minWidthDp);
         int maxHeightDp = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, minHeightDp);
-        int widthCells = clamp(estimateCellSpan(minWidthDp, maxWidthDp), 1, 6);
-        int heightCells = clamp(estimateCellSpan(minHeightDp, maxHeightDp), 2, 5);
+        int widthCells = clamp(
+            estimateCellSpan(minWidthDp, maxWidthDp),
+            MIN_WIDGET_WIDTH_CELLS,
+            MAX_WIDGET_WIDTH_CELLS
+        );
+        int heightCells = clamp(
+            estimateCellSpan(minHeightDp, maxHeightDp),
+            MIN_WIDGET_HEIGHT_CELLS,
+            MAX_WIDGET_HEIGHT_CELLS
+        );
 
         applyLayoutProfile(context, views, WidgetLayoutProfile.fromCells(widthCells, heightCells));
     }
@@ -353,8 +367,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
     private int estimateCellSpan(int minDp, int maxDp) {
         int referenceDp = Math.max(minDp, maxDp);
-        if (referenceDp <= 0) return 1;
-        return Math.max(1, (referenceDp + 30) / 70);
+        if (referenceDp <= 0) return MIN_WIDGET_WIDTH_CELLS;
+        return Math.max(MIN_WIDGET_WIDTH_CELLS, (referenceDp + CELL_ESTIMATION_OFFSET_DP) / CELL_SIZE_DP);
     }
 
     private int clamp(int value, int min, int max) {
@@ -754,6 +768,29 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     }
 
     private static class WidgetLayoutProfile {
+        private static final float MIN_ROOT_PADDING_DP = 6f;
+        private static final float MAX_ROOT_PADDING_DP = 12f;
+        private static final float MIN_PANEL_PADDING_DP = 6f;
+        private static final float MAX_PANEL_PADDING_DP = 10f;
+        private static final float MIN_TITLE_TEXT_SP = 10f;
+        private static final float MAX_TITLE_TEXT_SP = 12f;
+        private static final float MIN_TOGGLE_TEXT_SP = 9f;
+        private static final float MAX_TOGGLE_TEXT_SP = 12f;
+        private static final float MIN_TEMPERATURE_TEXT_SP = 24f;
+        private static final float MAX_TEMPERATURE_TEXT_SP = 52f;
+        private static final float MIN_WEATHER_ICON_TEXT_SP = 12f;
+        private static final float MAX_WEATHER_ICON_TEXT_SP = 22f;
+        private static final float MIN_CONDITION_TEXT_SP = 10f;
+        private static final float MAX_CONDITION_TEXT_SP = 14f;
+        private static final float MIN_CARD_TITLE_TEXT_SP = 10f;
+        private static final float MAX_CARD_TITLE_TEXT_SP = 13f;
+        private static final float MIN_CARD_BODY_TEXT_SP = 9f;
+        private static final float MAX_CARD_BODY_TEXT_SP = 12f;
+        private static final float MIN_METRIC_TEXT_SP = 9f;
+        private static final float MAX_METRIC_TEXT_SP = 12f;
+        private static final float MIN_UPDATED_TEXT_SP = 8f;
+        private static final float MAX_UPDATED_TEXT_SP = 11f;
+
         final boolean showDaySwitcher;
         final boolean showDailyOverview;
         final boolean showMetricsPanel;
@@ -808,12 +845,14 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         }
 
         static WidgetLayoutProfile defaultProfile() {
-            return fromCells(3, 2);
+            return fromCells(3, MIN_WIDGET_HEIGHT_CELLS);
         }
 
         static WidgetLayoutProfile fromCells(int widthCells, int heightCells) {
-            float widthProgress = (widthCells - 1) / 5f;
-            float heightProgress = (heightCells - 2) / 3f;
+            float widthProgress = (widthCells - MIN_WIDGET_WIDTH_CELLS)
+                / (float) (MAX_WIDGET_WIDTH_CELLS - MIN_WIDGET_WIDTH_CELLS);
+            float heightProgress = (heightCells - MIN_WIDGET_HEIGHT_CELLS)
+                / (float) (MAX_WIDGET_HEIGHT_CELLS - MIN_WIDGET_HEIGHT_CELLS);
             float sizeProgress = (widthProgress + heightProgress) / 2f;
 
             boolean showDaySwitcher = widthCells >= 2 && heightCells >= 3;
@@ -822,17 +861,17 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             boolean showSecondaryMetrics = widthCells >= 3 && heightCells >= 4;
             boolean showUpdatedAt = heightCells >= 4;
 
-            int rootPadding = Math.round(lerp(6f, 12f, sizeProgress));
-            int panelPadding = Math.round(lerp(6f, 10f, sizeProgress));
-            float titleText = lerp(10f, 12f, sizeProgress);
-            float toggleText = lerp(9f, 12f, sizeProgress);
-            float temperatureText = lerp(24f, 52f, sizeProgress);
-            float weatherIconText = lerp(12f, 22f, sizeProgress);
-            float conditionText = lerp(10f, 14f, sizeProgress);
-            float cardTitleText = lerp(10f, 13f, sizeProgress);
-            float cardBodyText = lerp(9f, 12f, sizeProgress);
-            float metricText = lerp(9f, 12f, sizeProgress);
-            float updatedText = lerp(8f, 11f, sizeProgress);
+            int rootPadding = Math.round(lerp(MIN_ROOT_PADDING_DP, MAX_ROOT_PADDING_DP, sizeProgress));
+            int panelPadding = Math.round(lerp(MIN_PANEL_PADDING_DP, MAX_PANEL_PADDING_DP, sizeProgress));
+            float titleText = lerp(MIN_TITLE_TEXT_SP, MAX_TITLE_TEXT_SP, sizeProgress);
+            float toggleText = lerp(MIN_TOGGLE_TEXT_SP, MAX_TOGGLE_TEXT_SP, sizeProgress);
+            float temperatureText = lerp(MIN_TEMPERATURE_TEXT_SP, MAX_TEMPERATURE_TEXT_SP, sizeProgress);
+            float weatherIconText = lerp(MIN_WEATHER_ICON_TEXT_SP, MAX_WEATHER_ICON_TEXT_SP, sizeProgress);
+            float conditionText = lerp(MIN_CONDITION_TEXT_SP, MAX_CONDITION_TEXT_SP, sizeProgress);
+            float cardTitleText = lerp(MIN_CARD_TITLE_TEXT_SP, MAX_CARD_TITLE_TEXT_SP, sizeProgress);
+            float cardBodyText = lerp(MIN_CARD_BODY_TEXT_SP, MAX_CARD_BODY_TEXT_SP, sizeProgress);
+            float metricText = lerp(MIN_METRIC_TEXT_SP, MAX_METRIC_TEXT_SP, sizeProgress);
+            float updatedText = lerp(MIN_UPDATED_TEXT_SP, MAX_UPDATED_TEXT_SP, sizeProgress);
 
             return new WidgetLayoutProfile(
                 showDaySwitcher,
