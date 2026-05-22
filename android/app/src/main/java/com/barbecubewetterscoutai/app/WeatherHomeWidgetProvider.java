@@ -204,9 +204,14 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private void applyWidgetData(Context context, RemoteViews views, WidgetData data, String selectedDay) {
         boolean showTomorrow = DAY_TOMORROW.equals(selectedDay);
         applyDayToggleStyle(views, showTomorrow);
-        String conditionLabel = showTomorrow
-            ? context.getString(R.string.widget_condition_tomorrow_format, data.tomorrowWeatherLabel)
-            : data.weatherLabel;
+        String conditionLabel;
+        if (showTomorrow) {
+            conditionLabel = (data.tomorrowWeatherLabel == null || UNAVAILABLE.equals(data.tomorrowWeatherLabel))
+                ? context.getString(R.string.widget_condition_tomorrow_placeholder)
+                : context.getString(R.string.widget_condition_tomorrow_format, data.tomorrowWeatherLabel);
+        } else {
+            conditionLabel = data.weatherLabel;
+        }
         String feelsLikeLabel = showTomorrow
             ? context.getString(R.string.widget_forecast_label)
             : context.getString(R.string.widget_feels_like_format, formatTemperature(data.feelsLikeC));
@@ -217,7 +222,9 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         double uvIndex = showTomorrow ? data.tomorrowUvIndex : data.uvIndex;
         double windKmh = showTomorrow ? data.tomorrowWindKmh : data.windKmh;
         String thunderRisk = showTomorrow ? data.tomorrowThunderRiskLabel : data.thunderRiskLabel;
-        String pollenLabel = showTomorrow ? data.tomorrowPollenLabel : data.pollenLabel;
+        String pollenLabel = showTomorrow
+            ? context.getString(R.string.widget_metric_unavailable)
+            : data.pollenLabel;
 
         views.setTextViewText(R.id.widget_temperature, formatTemperature(displayTemperature));
         views.setTextViewText(R.id.widget_condition, conditionLabel);
@@ -616,7 +623,6 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         String thunderRiskLabel;
         String tomorrowThunderRiskLabel;
         String pollenLabel;
-        String tomorrowPollenLabel;
 
         static WidgetData empty(Context context) {
             WidgetData data = new WidgetData();
@@ -633,11 +639,10 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             data.tomorrowUvIndex = Double.NaN;
             data.tomorrowWindKmh = Double.NaN;
             data.weatherLabel = context.getString(R.string.widget_condition_placeholder);
-            data.tomorrowWeatherLabel = context.getString(R.string.widget_metric_unavailable);
+            data.tomorrowWeatherLabel = UNAVAILABLE;
             data.thunderRiskLabel = null;
             data.tomorrowThunderRiskLabel = null;
             data.pollenLabel = context.getString(R.string.widget_metric_unavailable);
-            data.tomorrowPollenLabel = context.getString(R.string.widget_metric_unavailable);
             return data;
         }
     }
