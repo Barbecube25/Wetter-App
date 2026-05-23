@@ -15502,15 +15502,6 @@ export default function WeatherApp() {
     }
     const currentPermission = Notification.permission;
     setNotificationPermission(currentPermission);
-    if (initialNotificationPromptAttemptedRef.current) {
-      return currentPermission;
-    }
-
-    if (currentPermission !== 'default') {
-      initialNotificationPromptAttemptedRef.current = true;
-      return currentPermission;
-    }
-
     let alreadyPrompted = false;
     try {
       alreadyPrompted = localStorage.getItem(WEATHER_NOTIFICATION_PERMISSION_PROMPTED_KEY) === 'true';
@@ -15521,10 +15512,17 @@ export default function WeatherApp() {
       initialNotificationPromptAttemptedRef.current = true;
       return currentPermission;
     }
+    if (initialNotificationPromptAttemptedRef.current) {
+      return currentPermission;
+    }
+    if (currentPermission !== 'default') {
+      initialNotificationPromptAttemptedRef.current = true;
+      return currentPermission;
+    }
 
     try {
-      initialNotificationPromptAttemptedRef.current = true;
       const permission = await Notification.requestPermission();
+      initialNotificationPromptAttemptedRef.current = true;
       setNotificationPermission(permission);
       try {
         localStorage.setItem(WEATHER_NOTIFICATION_PERMISSION_PROMPTED_KEY, 'true');
@@ -15533,6 +15531,7 @@ export default function WeatherApp() {
       }
       return permission;
     } catch (e) {
+      initialNotificationPromptAttemptedRef.current = false;
       setNotificationPermission('denied');
       return 'denied';
     }
@@ -16427,7 +16426,7 @@ export default function WeatherApp() {
                       if (homeLocationFromTutorial) {
                           setHomeLoc(homeLocationFromTutorial);
                           setCurrentLoc(homeLocationFromTutorial);
-                          void requestInitialNotificationPermissionOnce();
+                          void requestInitialNotificationPermissionOnce().catch((err) => console.warn('Notification permission request failed', err));
                       } else if (!homeLoc) {
                           // If no home location, show home setup next
                           setShowHomeSetup(true);
@@ -16468,7 +16467,7 @@ export default function WeatherApp() {
                       setHomeLoc(loc);
                       setCurrentLoc(loc);
                       setShowHomeSetup(false);
-                      void requestInitialNotificationPermissionOnce();
+                      void requestInitialNotificationPermissionOnce().catch((err) => console.warn('Notification permission request failed', err));
                       if (loc.stationConfig) {
                           setSettings(prev => ({ ...prev, personalStation: loc.stationConfig }));
                       }
