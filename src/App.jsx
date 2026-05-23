@@ -7020,7 +7020,13 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                               {notificationPermission === 'granted'
                                   ? (isGerman ? 'Berechtigung erteilt.' : 'Permission granted.')
                                   : notificationPermission === 'denied'
-                                    ? (isGerman ? 'Berechtigung blockiert. Bitte im Browser/System freigeben.' : 'Permission blocked. Please enable it in browser/system settings.')
+                                    ? (notificationSettings.enabled
+                                        ? (isGerman
+                                            ? 'Benachrichtigungen sind aktiv, aber blockiert. Bitte im Browser/System freigeben.'
+                                            : 'Notifications are enabled, but blocked. Please enable permission in browser/system settings.')
+                                        : (isGerman
+                                            ? 'Berechtigung blockiert. Bitte im Browser/System freigeben.'
+                                            : 'Permission blocked. Please enable it in browser/system settings.'))
                                     : (isGerman ? 'Beim Aktivieren wirst du nach der Berechtigung gefragt.' : 'You will be asked for permission when enabling.')}
                           </p>
                           <div className={`mt-3 space-y-2 ${notificationSettings.enabled ? '' : 'opacity-60 pointer-events-none'}`}>
