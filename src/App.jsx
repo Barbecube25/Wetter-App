@@ -15499,24 +15499,26 @@ export default function WeatherApp() {
       setNotificationPermission('denied');
       return 'denied';
     }
-    try {
-      const alreadyPrompted = localStorage.getItem(WEATHER_NOTIFICATION_PERMISSION_PROMPTED_KEY) === 'true';
-      if (alreadyPrompted) {
-        setNotificationPermission(Notification.permission);
-        return Notification.permission;
-      }
-    } catch (e) {
-      // ignore storage read errors
-    }
+    const currentPermission = Notification.permission;
+    setNotificationPermission(currentPermission);
 
-    if (Notification.permission !== 'default') {
-      setNotificationPermission(Notification.permission);
+    if (currentPermission !== 'default') {
       try {
         localStorage.setItem(WEATHER_NOTIFICATION_PERMISSION_PROMPTED_KEY, 'true');
       } catch (e) {
         // ignore storage write errors
       }
-      return Notification.permission;
+      return currentPermission;
+    }
+
+    let alreadyPrompted = false;
+    try {
+      alreadyPrompted = localStorage.getItem(WEATHER_NOTIFICATION_PERMISSION_PROMPTED_KEY) === 'true';
+    } catch (e) {
+      // ignore storage read errors
+    }
+    if (alreadyPrompted) {
+      return currentPermission;
     }
 
     try {
