@@ -69,6 +69,7 @@ const MORNING_NOTIFICATION_HOUR = 7;
 const EVENING_NOTIFICATION_HOUR = 20;
 const WEATHER_NOTIFICATION_LEAD_OPTIONS = [5, 15, 30];
 const WEATHER_NOTIFICATION_RUNTIME_KEY = 'weather_notification_runtime_v1';
+const WEATHER_NOTIFICATION_PERMISSION_PROMPTED_KEY = 'weather_notification_permission_prompted_v1';
 const NOTIFICATION_TRIGGER_WINDOW_MINUTES = 15;
 const NOTIFICATION_CHECK_INTERVAL_MS = 60 * 1000;
 const DEFAULT_NOTIFICATION_SETTINGS = {
@@ -13561,6 +13562,7 @@ export default function WeatherApp() {
   const [viewMode, setViewMode] = useState(null);
   const [showFabMenu, setShowFabMenu] = useState(false); // FAB menu state
   const notificationRuntimeRef = useRef(null);
+  const initialNotificationPromptAttemptedRef = useRef(false);
 
   const handleOpenDailyQuickViewDetail = useCallback((detailKey) => {
     switch (detailKey) {
@@ -15493,6 +15495,48 @@ export default function WeatherApp() {
     }
   }, []);
 
+  const requestInitialNotificationPermissionOnce = useCallback(async () => {
+    if (typeof window === 'undefined' || typeof Notification === 'undefined') {
+      setNotificationPermission('denied');
+      return 'denied';
+    }
+    const currentPermission = Notification.permission;
+    setNotificationPermission(currentPermission);
+    let alreadyPrompted = false;
+    try {
+      alreadyPrompted = localStorage.getItem(WEATHER_NOTIFICATION_PERMISSION_PROMPTED_KEY) === 'true';
+    } catch (e) {
+      // ignore storage read errors
+    }
+    if (alreadyPrompted) {
+      initialNotificationPromptAttemptedRef.current = true;
+      return currentPermission;
+    }
+    if (initialNotificationPromptAttemptedRef.current) {
+      return currentPermission;
+    }
+    if (currentPermission !== 'default') {
+      initialNotificationPromptAttemptedRef.current = true;
+      return currentPermission;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      initialNotificationPromptAttemptedRef.current = true;
+      setNotificationPermission(permission);
+      try {
+        localStorage.setItem(WEATHER_NOTIFICATION_PERMISSION_PROMPTED_KEY, 'true');
+      } catch (e) {
+        // ignore storage write errors
+      }
+      return permission;
+    } catch (e) {
+      initialNotificationPromptAttemptedRef.current = false;
+      setNotificationPermission('denied');
+      return 'denied';
+    }
+  }, []);
+
   useEffect(() => {
     const notifications = normalizeNotificationSettings(settings.notifications);
     if (!notifications.enabled) return;
@@ -16382,6 +16426,7 @@ export default function WeatherApp() {
                       if (homeLocationFromTutorial) {
                           setHomeLoc(homeLocationFromTutorial);
                           setCurrentLoc(homeLocationFromTutorial);
+                          void requestInitialNotificationPermissionOnce().catch((err) => console.warn('Notification permission request failed', err));
                       } else if (!homeLoc) {
                           // If no home location, show home setup next
                           setShowHomeSetup(true);
@@ -16422,6 +16467,7 @@ export default function WeatherApp() {
                       setHomeLoc(loc);
                       setCurrentLoc(loc);
                       setShowHomeSetup(false);
+                      void requestInitialNotificationPermissionOnce().catch((err) => console.warn('Notification permission request failed', err));
                       if (loc.stationConfig) {
                           setSettings(prev => ({ ...prev, personalStation: loc.stationConfig }));
                       }
