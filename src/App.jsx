@@ -7000,7 +7000,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                   {/* WEATHER NOTIFICATIONS */}
                   <div className="mb-6">
                       <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
-                         <Bell size={16}/> {isGerman ? 'Wetterbenachrichtigungen' : 'Weather notifications'}
+                         <Bell size={16} /> {isGerman ? 'Wetterbenachrichtigungen' : 'Weather notifications'}
                       </label>
                       <div className="rounded-m3-md bg-m3-surface-container p-3">
                           <button
@@ -15522,24 +15522,29 @@ export default function WeatherApp() {
       const locationKey = currentLoc.id || `${currentLoc.lat},${currentLoc.lon}`;
       const minutes = nowDate.getMinutes();
 
-      if (notifications.morningReport && nowDate.getHours() === MORNING_NOTIFICATION_HOUR && minutes < NOTIFICATION_TRIGGER_WINDOW_MINUTES && runtime[`morning:${locationKey}`] !== dateKey) {
+      const isMorningWindow = nowDate.getHours() === MORNING_NOTIFICATION_HOUR && minutes < NOTIFICATION_TRIGGER_WINDOW_MINUTES;
+      const isEveningWindow = nowDate.getHours() === EVENING_NOTIFICATION_HOUR && minutes < NOTIFICATION_TRIGGER_WINDOW_MINUTES;
+      const morningSentKey = `morning:${locationKey}`;
+      const eveningSentKey = `evening:${locationKey}`;
+
+      if (notifications.morningReport && isMorningWindow && runtime[morningSentKey] !== dateKey) {
         const today = processedLong[0];
         const body = today
           ? `${isGerman ? 'Heute' : 'Today'}: ${Math.round(today.max)}°/${Math.round(today.min)}°, ${isGerman ? 'Regenrisiko' : 'Rain chance'} ${today.prob ?? 0}%`
           : (isGerman ? 'Dein Tageswetter steht bereit.' : 'Your daily forecast is ready.');
         if (notify(isGerman ? '🌤️ Wetterbericht am Morgen' : '🌤️ Morning weather report', body, `morning-${locationKey}-${dateKey}`)) {
-          runtime[`morning:${locationKey}`] = dateKey;
+          runtime[morningSentKey] = dateKey;
           persistRuntime();
         }
       }
 
-      if (notifications.eveningReport && nowDate.getHours() === EVENING_NOTIFICATION_HOUR && minutes < NOTIFICATION_TRIGGER_WINDOW_MINUTES && runtime[`evening:${locationKey}`] !== dateKey) {
+      if (notifications.eveningReport && isEveningWindow && runtime[eveningSentKey] !== dateKey) {
         const tomorrow = processedLong[1];
         const body = tomorrow
           ? `${isGerman ? 'Nacht & morgen' : 'Tonight & tomorrow'}: ${Math.round(tomorrow.max)}°/${Math.round(tomorrow.min)}°, ${isGerman ? 'Regenrisiko' : 'Rain chance'} ${tomorrow.prob ?? 0}%`
           : (isGerman ? 'Abendausblick ist verfügbar.' : 'Evening outlook is available.');
         if (notify(isGerman ? '🌙 Wetterbericht am Abend' : '🌙 Evening weather report', body, `evening-${locationKey}-${dateKey}`)) {
-          runtime[`evening:${locationKey}`] = dateKey;
+          runtime[eveningSentKey] = dateKey;
           persistRuntime();
         }
       }
@@ -15572,7 +15577,8 @@ export default function WeatherApp() {
       if (notifications.rainStartLeads.length > 0) {
         const nowcast = shortTermData?.radar_nowcast;
         if (Array.isArray(nowcast?.time) && Array.isArray(nowcast?.precipitation)) {
-          const intervalMinutes = Number(nowcast.intervalMinutes) > 0 ? Number(nowcast.intervalMinutes) : MINUTELY_SLOT_DURATION_MINUTES;
+          const nowcastInterval = Number(nowcast.intervalMinutes);
+          const intervalMinutes = Number.isFinite(nowcastInterval) && nowcastInterval > 0 ? nowcastInterval : MINUTELY_SLOT_DURATION_MINUTES;
           let startInfo = null;
           for (let i = 0; i < nowcast.time.length; i++) {
             const slotStart = parseLocalTime(nowcast.time[i]);
