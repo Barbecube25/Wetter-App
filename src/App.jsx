@@ -13739,6 +13739,7 @@ export default function WeatherApp() {
   // --- Helpers for Display ---
   const t = (key) => TRANSLATIONS[settings.language]?.[key] || TRANSLATIONS['de'][key] || key;
   const lang = settings.language;
+  const isGerman = lang === 'de';
   
   const getTempUnitSymbol = useCallback(() => {
       if (settings.unit === 'kelvin') return 'K';
