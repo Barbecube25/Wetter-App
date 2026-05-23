@@ -13562,6 +13562,7 @@ export default function WeatherApp() {
   const [viewMode, setViewMode] = useState(null);
   const [showFabMenu, setShowFabMenu] = useState(false); // FAB menu state
   const notificationRuntimeRef = useRef(null);
+  const initialNotificationPromptAttemptedRef = useRef(false);
 
   const handleOpenDailyQuickViewDetail = useCallback((detailKey) => {
     switch (detailKey) {
@@ -15501,13 +15502,12 @@ export default function WeatherApp() {
     }
     const currentPermission = Notification.permission;
     setNotificationPermission(currentPermission);
+    if (initialNotificationPromptAttemptedRef.current) {
+      return currentPermission;
+    }
 
     if (currentPermission !== 'default') {
-      try {
-        localStorage.setItem(WEATHER_NOTIFICATION_PERMISSION_PROMPTED_KEY, 'true');
-      } catch (e) {
-        // ignore storage write errors
-      }
+      initialNotificationPromptAttemptedRef.current = true;
       return currentPermission;
     }
 
@@ -15518,10 +15518,12 @@ export default function WeatherApp() {
       // ignore storage read errors
     }
     if (alreadyPrompted) {
+      initialNotificationPromptAttemptedRef.current = true;
       return currentPermission;
     }
 
     try {
+      initialNotificationPromptAttemptedRef.current = true;
       const permission = await Notification.requestPermission();
       setNotificationPermission(permission);
       try {
