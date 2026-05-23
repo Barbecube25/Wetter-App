@@ -15490,6 +15490,11 @@ export default function WeatherApp() {
   useEffect(() => {
     const notifications = normalizeNotificationSettings(settings.notifications);
     if (!notifications.enabled) return;
+    const hasAnyNotificationTrigger = notifications.morningReport
+      || notifications.eveningReport
+      || notifications.thunderstormLevel4
+      || notifications.rainStartLeads.length > 0;
+    if (!hasAnyNotificationTrigger) return;
     if (notificationPermission !== 'granted') return;
     if (typeof window === 'undefined' || typeof Notification === 'undefined') return;
     if (!currentLoc) return;
@@ -15560,7 +15565,7 @@ export default function WeatherApp() {
             return level >= 4;
           });
         if (severeHour) {
-          const severeKey = `${locationKey}:${severeHour.time.toISOString().slice(0, 13)}`;
+          const severeKey = `${locationKey}:${severeHour.time.toISOString().slice(0, 16)}`;
           if (runtime[`thunder:${severeKey}`] !== 'sent') {
             const whenText = severeHour.time.toLocaleTimeString(isGerman ? 'de-DE' : 'en-US', { hour: '2-digit', minute: '2-digit' });
             const body = isGerman
@@ -15604,9 +15609,12 @@ export default function WeatherApp() {
               if (minutesUntil > lead) return;
               const rainKey = `${locationKey}:${lead}:${startInfo.start.toISOString().slice(0, 16)}`;
               if (runtime[`rain:${rainKey}`] === 'sent') return;
+              const leadText = minutesUntil <= 0
+                ? (isGerman ? 'jetzt' : 'now')
+                : `${minutesUntil} ${isGerman ? 'Min.' : 'min'}`;
               const body = isGerman
-                ? `Regen beginnt voraussichtlich in ${minutesUntil} Min. Stärke: ${intensityLabel}.`
-                : `Rain is expected in about ${minutesUntil} min. Intensity: ${intensityLabel}.`;
+                ? `Regen beginnt voraussichtlich ${leadText}. Stärke: ${intensityLabel}.`
+                : `Rain is expected ${leadText}. Intensity: ${intensityLabel}.`;
               if (notify(isGerman ? `🌧️ Regen in ${lead} Minuten` : `🌧️ Rain in ${lead} minutes`, body, `rain-${rainKey}`)) {
                 runtime[`rain:${rainKey}`] = 'sent';
                 persistRuntime();
