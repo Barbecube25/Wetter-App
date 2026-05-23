@@ -7007,8 +7007,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                               onClick={async () => {
                                   const nextEnabled = !notificationSettings.enabled;
                                   if (nextEnabled && notificationPermission !== 'granted') {
-                                      const permission = await onRequestNotificationPermission?.();
-                                      if (permission !== 'granted') return;
+                                      await onRequestNotificationPermission?.();
                                   }
                                   updateNotifications({ enabled: nextEnabled });
                               }}
