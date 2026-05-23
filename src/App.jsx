@@ -69,6 +69,8 @@ const MORNING_NOTIFICATION_HOUR = 7;
 const EVENING_NOTIFICATION_HOUR = 20;
 const WEATHER_NOTIFICATION_LEAD_OPTIONS = [5, 15, 30];
 const WEATHER_NOTIFICATION_RUNTIME_KEY = 'weather_notification_runtime_v1';
+const NOTIFICATION_TRIGGER_WINDOW_MINUTES = 15;
+const NOTIFICATION_CHECK_INTERVAL_MS = 60 * 1000;
 const DEFAULT_NOTIFICATION_SETTINGS = {
   enabled: false,
   morningReport: true,
@@ -15520,7 +15522,7 @@ export default function WeatherApp() {
       const locationKey = currentLoc.id || `${currentLoc.lat},${currentLoc.lon}`;
       const minutes = nowDate.getMinutes();
 
-      if (notifications.morningReport && nowDate.getHours() === MORNING_NOTIFICATION_HOUR && minutes < 15 && runtime[`morning:${locationKey}`] !== dateKey) {
+      if (notifications.morningReport && nowDate.getHours() === MORNING_NOTIFICATION_HOUR && minutes < NOTIFICATION_TRIGGER_WINDOW_MINUTES && runtime[`morning:${locationKey}`] !== dateKey) {
         const today = processedLong[0];
         const body = today
           ? `${isGerman ? 'Heute' : 'Today'}: ${Math.round(today.max)}°/${Math.round(today.min)}°, ${isGerman ? 'Regenrisiko' : 'Rain chance'} ${today.prob ?? 0}%`
@@ -15531,7 +15533,7 @@ export default function WeatherApp() {
         }
       }
 
-      if (notifications.eveningReport && nowDate.getHours() === EVENING_NOTIFICATION_HOUR && minutes < 15 && runtime[`evening:${locationKey}`] !== dateKey) {
+      if (notifications.eveningReport && nowDate.getHours() === EVENING_NOTIFICATION_HOUR && minutes < NOTIFICATION_TRIGGER_WINDOW_MINUTES && runtime[`evening:${locationKey}`] !== dateKey) {
         const tomorrow = processedLong[1];
         const body = tomorrow
           ? `${isGerman ? 'Nacht & morgen' : 'Tonight & tomorrow'}: ${Math.round(tomorrow.max)}°/${Math.round(tomorrow.min)}°, ${isGerman ? 'Regenrisiko' : 'Rain chance'} ${tomorrow.prob ?? 0}%`
@@ -15570,7 +15572,7 @@ export default function WeatherApp() {
       if (notifications.rainStartLeads.length > 0) {
         const nowcast = shortTermData?.radar_nowcast;
         if (Array.isArray(nowcast?.time) && Array.isArray(nowcast?.precipitation)) {
-          const intervalMinutes = Number(nowcast.intervalMinutes) > 0 ? Number(nowcast.intervalMinutes) : 15;
+          const intervalMinutes = Number(nowcast.intervalMinutes) > 0 ? Number(nowcast.intervalMinutes) : MINUTELY_SLOT_DURATION_MINUTES;
           let startInfo = null;
           for (let i = 0; i < nowcast.time.length; i++) {
             const slotStart = parseLocalTime(nowcast.time[i]);
@@ -15610,7 +15612,7 @@ export default function WeatherApp() {
     };
 
     checkNotifications();
-    const timer = window.setInterval(checkNotifications, 60000);
+    const timer = window.setInterval(checkNotifications, NOTIFICATION_CHECK_INTERVAL_MS);
     return () => window.clearInterval(timer);
   }, [settings.notifications, notificationPermission, currentLoc, processedLong, processedShort, shortTermData, isGerman]);
   
