@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Clock3, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, ArrowUp, ArrowDown, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Eye, Activity, Leaf } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Clock3, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, ArrowUp, ArrowDown, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Eye, Activity, Leaf, Bell } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
 import { StatusBar } from '@capacitor/status-bar';
 import packageJson from '../package.json';
@@ -65,6 +65,32 @@ const ASTRONOMY_MOON_MEDIUM_PENALTY = -5;
 const ASTRONOMY_REPORT_MIN_CHANCE_SCORE = 40; // Minimum chance score to show aurora/NLC hints in AI reports
 const ASTRONOMY_AURORA_LAT_MIN = 50; // Minimum latitude to show aurora hints in longterm report
 const MINUTELY_SLOT_DURATION_MINUTES = 15;
+const MORNING_NOTIFICATION_HOUR = 7;
+const EVENING_NOTIFICATION_HOUR = 20;
+const WEATHER_NOTIFICATION_LEAD_OPTIONS = [5, 15, 30];
+const WEATHER_NOTIFICATION_RUNTIME_KEY = 'weather_notification_runtime_v1';
+const DEFAULT_NOTIFICATION_SETTINGS = {
+  enabled: false,
+  morningReport: true,
+  eveningReport: true,
+  thunderstormLevel4: true,
+  rainStartLeads: [...WEATHER_NOTIFICATION_LEAD_OPTIONS],
+};
+
+const normalizeNotificationSettings = (value) => {
+  const source = value && typeof value === 'object' ? value : {};
+  const leads = Array.isArray(source.rainStartLeads)
+    ? WEATHER_NOTIFICATION_LEAD_OPTIONS.filter((lead) => source.rainStartLeads.includes(lead))
+    : [...DEFAULT_NOTIFICATION_SETTINGS.rainStartLeads];
+
+  return {
+    enabled: Boolean(source.enabled),
+    morningReport: source.morningReport !== undefined ? Boolean(source.morningReport) : DEFAULT_NOTIFICATION_SETTINGS.morningReport,
+    eveningReport: source.eveningReport !== undefined ? Boolean(source.eveningReport) : DEFAULT_NOTIFICATION_SETTINGS.eveningReport,
+    thunderstormLevel4: source.thunderstormLevel4 !== undefined ? Boolean(source.thunderstormLevel4) : DEFAULT_NOTIFICATION_SETTINGS.thunderstormLevel4,
+    rainStartLeads: leads,
+  };
+};
 
 // Curated list of notable comets with their photographically visible windows
 const KNOWN_COMETS = [
@@ -4346,7 +4372,8 @@ const getSavedSettings = () => {
             activityParams: DEFAULT_ACTIVITY_PARAMS,
             customActivities: defaultCustomActivities,
             homeTerrain: null,
-            personalStation: null
+            personalStation: null,
+            notifications: normalizeNotificationSettings()
         };
         if (!saved) return defaults;
         const parsed = JSON.parse(saved);
@@ -4367,6 +4394,7 @@ const getSavedSettings = () => {
         if (!Array.isArray(merged.pollenFilter)) {
             merged.pollenFilter = DEFAULT_POLLEN_FILTER;
         }
+        merged.notifications = normalizeNotificationSettings(merged.notifications);
         if (!Array.isArray(merged.activityFilter)) {
             merged.activityFilter = DEFAULT_ACTIVITY_FILTER;
         } else {
@@ -4396,7 +4424,8 @@ const getSavedSettings = () => {
             activityParams: DEFAULT_ACTIVITY_PARAMS,
             customActivities: [],
             homeTerrain: null,
-            personalStation: null
+            personalStation: null,
+            notifications: normalizeNotificationSettings()
         }; 
     }
 };
@@ -6639,7 +6668,7 @@ const ActivityParamsModal = ({ isOpen, onClose, activityFilter, activityParams, 
 };
 
 // --- SETTINGS MODAL (NEU) ---
-const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmallScreen = false }) => {
+const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmallScreen = false, notificationPermission = 'default', onRequestNotificationPermission }) => {
     const [localSettings, setLocalSettings] = useState(settings);
     const [showActivityParams, setShowActivityParams] = useState(false);
     const [showActivityEditor, setShowActivityEditor] = useState(false);
@@ -6648,6 +6677,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
     const isGerman = localSettings.language === 'de';
     const activityDefinitions = useMemo(() => getActivityDefinitions(localSettings.customActivities), [localSettings.customActivities]);
     const customActivities = useMemo(() => normalizeCustomActivities(localSettings.customActivities), [localSettings.customActivities]);
+    const notificationSettings = normalizeNotificationSettings(localSettings.notifications);
 
     useEffect(() => {
         setLocalSettings(settings);
@@ -6710,6 +6740,14 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
 
         updateCustomActivities(normalizedNextCustomActivities, { activateKey: savedKey });
         setEditingActivity(null);
+    };
+
+    const updateNotifications = (nextPartial) => {
+        const nextNotifications = normalizeNotificationSettings({
+            ...notificationSettings,
+            ...nextPartial,
+        });
+        setLocalSettings({ ...localSettings, notifications: nextNotifications });
     };
 
     return (
@@ -6954,6 +6992,83 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                           >
                               in
                           </button>
+                      </div>
+                  </div>
+
+                  {/* WEATHER NOTIFICATIONS */}
+                  <div className="mb-6">
+                      <label className="text-sm font-bold text-m3-on-surface-variant uppercase tracking-wide mb-3 flex items-center gap-2">
+                         <Bell size={16}/> {isGerman ? 'Wetterbenachrichtigungen' : 'Weather notifications'}
+                      </label>
+                      <div className="rounded-m3-md bg-m3-surface-container p-3">
+                          <button
+                              onClick={async () => {
+                                  const nextEnabled = !notificationSettings.enabled;
+                                  if (nextEnabled && notificationPermission !== 'granted') {
+                                      const permission = await onRequestNotificationPermission?.();
+                                      if (permission !== 'granted') return;
+                                  }
+                                  updateNotifications({ enabled: nextEnabled });
+                              }}
+                              className={`w-full py-2 px-3 rounded-m3-sm text-sm font-bold transition flex items-center justify-between gap-2 ${notificationSettings.enabled ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'bg-m3-surface-container-high text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                          >
+                              <span>{isGerman ? 'Benachrichtigungen aktivieren' : 'Enable notifications'}</span>
+                              {notificationSettings.enabled && <Check size={14} />}
+                          </button>
+                          <p className="mt-2 text-xs text-m3-on-surface-variant">
+                              {notificationPermission === 'granted'
+                                  ? (isGerman ? 'Berechtigung erteilt.' : 'Permission granted.')
+                                  : notificationPermission === 'denied'
+                                    ? (isGerman ? 'Berechtigung blockiert. Bitte im Browser/System freigeben.' : 'Permission blocked. Please enable it in browser/system settings.')
+                                    : (isGerman ? 'Beim Aktivieren wirst du nach der Berechtigung gefragt.' : 'You will be asked for permission when enabling.')}
+                          </p>
+                          <div className={`mt-3 space-y-2 ${notificationSettings.enabled ? '' : 'opacity-60 pointer-events-none'}`}>
+                              <button
+                                  onClick={() => updateNotifications({ morningReport: !notificationSettings.morningReport })}
+                                  className={`w-full py-2 px-3 rounded-m3-sm text-sm font-bold transition flex items-center justify-between gap-2 ${notificationSettings.morningReport ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'bg-m3-surface-container-high text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                              >
+                                  <span>{isGerman ? 'Wetterbericht morgens (Tag)' : 'Morning weather report (day)'}</span>
+                                  {notificationSettings.morningReport && <Check size={14} />}
+                              </button>
+                              <button
+                                  onClick={() => updateNotifications({ eveningReport: !notificationSettings.eveningReport })}
+                                  className={`w-full py-2 px-3 rounded-m3-sm text-sm font-bold transition flex items-center justify-between gap-2 ${notificationSettings.eveningReport ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'bg-m3-surface-container-high text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                              >
+                                  <span>{isGerman ? 'Wetterbericht abends (Nacht & morgen)' : 'Evening report (night & tomorrow)'}</span>
+                                  {notificationSettings.eveningReport && <Check size={14} />}
+                              </button>
+                              <button
+                                  onClick={() => updateNotifications({ thunderstormLevel4: !notificationSettings.thunderstormLevel4 })}
+                                  className={`w-full py-2 px-3 rounded-m3-sm text-sm font-bold transition flex items-center justify-between gap-2 ${notificationSettings.thunderstormLevel4 ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'bg-m3-surface-container-high text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                              >
+                                  <span>{isGerman ? 'Gewitter Warnstufe 4 in den nächsten 2 Stunden' : 'Thunderstorm warning level 4 within 2 hours'}</span>
+                                  {notificationSettings.thunderstormLevel4 && <Check size={14} />}
+                              </button>
+                              <div className="rounded-m3-sm bg-m3-surface-container-high p-2">
+                                  <div className="text-xs font-bold text-m3-on-surface-variant mb-2">
+                                      {isGerman ? 'Regenstart in:' : 'Rain starts in:'}
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-2">
+                                      {WEATHER_NOTIFICATION_LEAD_OPTIONS.map((lead) => {
+                                          const isLeadActive = notificationSettings.rainStartLeads.includes(lead);
+                                          return (
+                                              <button
+                                                  key={lead}
+                                                  onClick={() => {
+                                                      const nextLeads = isLeadActive
+                                                          ? notificationSettings.rainStartLeads.filter((item) => item !== lead)
+                                                          : [...notificationSettings.rainStartLeads, lead];
+                                                      updateNotifications({ rainStartLeads: nextLeads });
+                                                  }}
+                                                  className={`py-2 px-2 rounded-m3-sm text-xs font-bold transition ${isLeadActive ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'bg-m3-surface text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                                              >
+                                                  {lead} {isGerman ? 'Min' : 'min'}
+                                              </button>
+                                          );
+                                      })}
+                                  </div>
+                              </div>
+                          </div>
                       </div>
                   </div>
 
@@ -13401,6 +13516,10 @@ export default function WeatherApp() {
   const [currentLoc, setCurrentLoc] = useState(homeLoc); 
   const [showHomeSetup, setShowHomeSetup] = useState(false);
   const [settings, setSettings] = useState(() => getSavedSettings()); // NEU
+  const [notificationPermission, setNotificationPermission] = useState(() => {
+    if (typeof window === 'undefined' || typeof Notification === 'undefined') return 'denied';
+    return Notification.permission;
+  });
   const [showTutorial, setShowTutorial] = useState(() => !getTutorialCompleted()); // TUTORIAL STATE
 
   const [shortTermData, setShortTermData] = useState(null);
@@ -13434,6 +13553,7 @@ export default function WeatherApp() {
   const [activeDetailModal, setActiveDetailModal] = useState(null);
   const [viewMode, setViewMode] = useState(null);
   const [showFabMenu, setShowFabMenu] = useState(false); // FAB menu state
+  const notificationRuntimeRef = useRef(null);
 
   const handleOpenDailyQuickViewDetail = useCallback((detailKey) => {
     switch (detailKey) {
@@ -13577,6 +13697,28 @@ export default function WeatherApp() {
   useEffect(() => {
       localStorage.setItem('weather_settings', JSON.stringify(settings));
   }, [settings]);
+
+  useEffect(() => {
+      if (notificationRuntimeRef.current) return;
+      try {
+          const saved = localStorage.getItem(WEATHER_NOTIFICATION_RUNTIME_KEY);
+          notificationRuntimeRef.current = saved ? JSON.parse(saved) : {};
+      } catch (e) {
+          notificationRuntimeRef.current = {};
+      }
+  }, []);
+
+  useEffect(() => {
+      if (typeof window === 'undefined' || typeof Notification === 'undefined') return;
+      const syncPermission = () => setNotificationPermission(Notification.permission);
+      syncPermission();
+      window.addEventListener('focus', syncPermission);
+      document.addEventListener('visibilitychange', syncPermission);
+      return () => {
+          window.removeEventListener('focus', syncPermission);
+          document.removeEventListener('visibilitychange', syncPermission);
+      };
+  }, []);
 
   // All navigable locations (home + saved), used for swipe navigation
   const allLocations = useMemo(() => {
@@ -15323,6 +15465,154 @@ export default function WeatherApp() {
       };
     });
   }, [longTermData, lang]); // Add lang to deps to refresh names
+
+  const requestNotificationPermission = useCallback(async () => {
+    if (typeof window === 'undefined' || typeof Notification === 'undefined') {
+      setNotificationPermission('denied');
+      return 'denied';
+    }
+    if (Notification.permission === 'granted') {
+      setNotificationPermission('granted');
+      return 'granted';
+    }
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      return permission;
+    } catch (e) {
+      setNotificationPermission('denied');
+      return 'denied';
+    }
+  }, []);
+
+  useEffect(() => {
+    const notifications = normalizeNotificationSettings(settings.notifications);
+    if (!notifications.enabled) return;
+    if (notificationPermission !== 'granted') return;
+    if (typeof window === 'undefined' || typeof Notification === 'undefined') return;
+    if (!currentLoc) return;
+
+    const runtime = notificationRuntimeRef.current || {};
+    notificationRuntimeRef.current = runtime;
+
+    const persistRuntime = () => {
+      try {
+        localStorage.setItem(WEATHER_NOTIFICATION_RUNTIME_KEY, JSON.stringify(runtime));
+      } catch (e) {
+        // ignore storage write errors
+      }
+    };
+
+    const notify = (title, body, tag) => {
+      try {
+        new Notification(title, { body, tag, renotify: false });
+        return true;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    const toDateKey = (date) => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+
+    const checkNotifications = () => {
+      const nowDate = new Date();
+      const dateKey = toDateKey(nowDate);
+      const locationKey = currentLoc.id || `${currentLoc.lat},${currentLoc.lon}`;
+      const minutes = nowDate.getMinutes();
+
+      if (notifications.morningReport && nowDate.getHours() === MORNING_NOTIFICATION_HOUR && minutes < 15 && runtime[`morning:${locationKey}`] !== dateKey) {
+        const today = processedLong[0];
+        const body = today
+          ? `${isGerman ? 'Heute' : 'Today'}: ${Math.round(today.max)}°/${Math.round(today.min)}°, ${isGerman ? 'Regenrisiko' : 'Rain chance'} ${today.prob ?? 0}%`
+          : (isGerman ? 'Dein Tageswetter steht bereit.' : 'Your daily forecast is ready.');
+        if (notify(isGerman ? '🌤️ Wetterbericht am Morgen' : '🌤️ Morning weather report', body, `morning-${locationKey}-${dateKey}`)) {
+          runtime[`morning:${locationKey}`] = dateKey;
+          persistRuntime();
+        }
+      }
+
+      if (notifications.eveningReport && nowDate.getHours() === EVENING_NOTIFICATION_HOUR && minutes < 15 && runtime[`evening:${locationKey}`] !== dateKey) {
+        const tomorrow = processedLong[1];
+        const body = tomorrow
+          ? `${isGerman ? 'Nacht & morgen' : 'Tonight & tomorrow'}: ${Math.round(tomorrow.max)}°/${Math.round(tomorrow.min)}°, ${isGerman ? 'Regenrisiko' : 'Rain chance'} ${tomorrow.prob ?? 0}%`
+          : (isGerman ? 'Abendausblick ist verfügbar.' : 'Evening outlook is available.');
+        if (notify(isGerman ? '🌙 Wetterbericht am Abend' : '🌙 Evening weather report', body, `evening-${locationKey}-${dateKey}`)) {
+          runtime[`evening:${locationKey}`] = dateKey;
+          persistRuntime();
+        }
+      }
+
+      if (notifications.thunderstormLevel4) {
+        const severeHour = processedShort
+          .slice(0, THUNDERSTORM_FORECAST_HOURS)
+          .find((hour) => {
+            const diffMinutes = Math.round((hour.time.getTime() - nowDate.getTime()) / 60000);
+            if (diffMinutes < 0 || diffMinutes > 120) return false;
+            const risk = calcThunderstormRiskLevel(hour.cape ?? 0, hour.liftedIndex, hour.precipProb ?? 0, hour.code ?? 0, hour.gust ?? 0);
+            const level = getThunderstormWarningLevel(risk, hour.gust ?? 0);
+            return level >= 4;
+          });
+        if (severeHour) {
+          const severeKey = `${locationKey}:${severeHour.time.toISOString().slice(0, 13)}`;
+          if (runtime[`thunder:${severeKey}`] !== 'sent') {
+            const whenText = severeHour.time.toLocaleTimeString(isGerman ? 'de-DE' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+            const body = isGerman
+              ? `Warnstufe 4 erwartet gegen ${whenText} Uhr. Bitte Vorsicht.`
+              : `Warning level 4 expected around ${whenText}. Please stay alert.`;
+            if (notify(isGerman ? '⛈️ Gewitterwarnung Stufe 4' : '⛈️ Thunderstorm warning level 4', body, `thunder-${severeKey}`)) {
+              runtime[`thunder:${severeKey}`] = 'sent';
+              persistRuntime();
+            }
+          }
+        }
+      }
+
+      if (notifications.rainStartLeads.length > 0) {
+        const nowcast = shortTermData?.radar_nowcast;
+        if (Array.isArray(nowcast?.time) && Array.isArray(nowcast?.precipitation)) {
+          const intervalMinutes = Number(nowcast.intervalMinutes) > 0 ? Number(nowcast.intervalMinutes) : 15;
+          let startInfo = null;
+          for (let i = 0; i < nowcast.time.length; i++) {
+            const slotStart = parseLocalTime(nowcast.time[i]);
+            const slotEnd = new Date(slotStart.getTime() + intervalMinutes * 60000);
+            const slotPrecip = Number(nowcast.precipitation[i]) || 0;
+            if (slotEnd <= nowDate || slotPrecip <= LIGHT_PRECIP_THRESHOLD) continue;
+            startInfo = {
+              start: new Date(Math.max(slotStart.getTime(), nowDate.getTime())),
+              intensityRate: (slotPrecip * 60) / intervalMinutes,
+            };
+            break;
+          }
+          if (startInfo) {
+            const minutesUntil = Math.max(0, Math.round((startInfo.start.getTime() - nowDate.getTime()) / 60000));
+            const intensityLabel = startInfo.intensityRate >= VERY_HEAVY_PRECIP_RATE_THRESHOLD
+              ? (isGerman ? 'sehr stark' : 'very heavy')
+              : startInfo.intensityRate >= HEAVY_PRECIP_RATE_THRESHOLD
+                ? (isGerman ? 'stark' : 'heavy')
+                : startInfo.intensityRate >= MODERATE_PRECIP_RATE_THRESHOLD
+                  ? (isGerman ? 'mäßig' : 'moderate')
+                  : (isGerman ? 'leicht' : 'light');
+            notifications.rainStartLeads.forEach((lead) => {
+              if (minutesUntil > lead) return;
+              const rainKey = `${locationKey}:${lead}:${startInfo.start.toISOString().slice(0, 16)}`;
+              if (runtime[`rain:${rainKey}`] === 'sent') return;
+              const body = isGerman
+                ? `Regen beginnt voraussichtlich in ${minutesUntil} Min. Stärke: ${intensityLabel}.`
+                : `Rain is expected in about ${minutesUntil} min. Intensity: ${intensityLabel}.`;
+              if (notify(isGerman ? `🌧️ Regen in ${lead} Minuten` : `🌧️ Rain in ${lead} minutes`, body, `rain-${rainKey}`)) {
+                runtime[`rain:${rainKey}`] = 'sent';
+                persistRuntime();
+              }
+            });
+          }
+        }
+      }
+    };
+
+    checkNotifications();
+    const timer = window.setInterval(checkNotifications, 60000);
+    return () => window.clearInterval(timer);
+  }, [settings.notifications, notificationPermission, currentLoc, processedLong, processedShort, shortTermData, isGerman]);
   
   // LIVE oder DEMO Daten?
   const liveCurrent = useMemo(() => {
@@ -16265,6 +16555,8 @@ export default function WeatherApp() {
              onSave={setSettings}
              onChangeHome={() => setShowHomeSetup(true)} // NEU: Trigger für Setup Modal
              isSmallScreen={isSmallScreen}
+            notificationPermission={notificationPermission}
+            onRequestNotificationPermission={requestNotificationPermission}
           />
       )}
       {showLocationModal && (
