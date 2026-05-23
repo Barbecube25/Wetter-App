@@ -9831,16 +9831,6 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                 {/* Visual Metric Chips – daily report only */}
                 {report.type === 'daily' && visualData && (() => {
                   const tempUnit = getTempUnitSymbol ? getTempUnitSymbol() : '°';
-                  const tsChipClass = (wl) => wl >= 4
-                    ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-400/40'
-                    : wl >= 3 ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-red-500/20 text-red-600 dark:text-red-400 border-red-400/40'
-                    : wl >= 2 ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-orange-400/20 text-orange-600 dark:text-orange-400 border-orange-400/40'
-                    : 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-yellow-300/20 text-yellow-700 dark:text-yellow-400 border-yellow-400/40';
-                  const pollenChipClass = (lvl) => lvl >= 4
-                    ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-red-500/15 text-red-600 dark:text-red-400 border-red-400/40'
-                    : lvl >= 3 ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-orange-400/15 text-orange-600 dark:text-orange-400 border-orange-400/40'
-                    : lvl >= 2 ? 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-yellow-300/15 text-yellow-700 dark:text-yellow-400 border-yellow-400/40'
-                    : 'flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border bg-green-500/15 text-green-700 dark:text-green-400 border-green-400/40';
                   const pollenLevelLabel = (lvl) => lvl >= 4 ? t.pollenVeryHigh : lvl >= 3 ? t.pollenHigh : lvl >= 2 ? t.pollenModerate : t.pollenLow;
                   const quickDays = [
                     {
@@ -9889,10 +9879,24 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                   }
 
                   const activeQuickDayIndex = Math.max(0, quickDays.findIndex((day) => day.key === activeQuickDay));
-                  const renderQuickChip = ({ key, onClick, ariaLabel, className, children }) => {
+                  const renderQuickTile = ({ key, onClick, ariaLabel, className, label, icon, value, subValue }) => {
                     const interactiveClass = onClick
-                      ? 'cursor-pointer active:scale-95 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-m3-primary/40 transition-all'
+                      ? 'cursor-pointer active:scale-[0.99] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-m3-primary/40 transition-all'
                       : '';
+                    const content = (
+                      <>
+                        <div className="flex items-center gap-1.5 text-m3-label-small font-semibold text-m3-on-surface-variant">
+                          {icon}
+                          <span>{label}</span>
+                        </div>
+                        <div className="mt-1">
+                          <div className={`text-m3-title-medium font-bold leading-tight ${className || ''}`}>{value}</div>
+                          {subValue ? (
+                            <div className="text-xs text-m3-on-surface-variant mt-0.5">{subValue}</div>
+                          ) : null}
+                        </div>
+                      </>
+                    );
                     if (onClick) {
                       return (
                         <button
@@ -9900,134 +9904,123 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
                           type="button"
                           onClick={onClick}
                           aria-label={ariaLabel}
-                          className={`${className} ${interactiveClass}`}
+                          className={`rounded-xl border border-m3-outline-variant/60 bg-m3-surface-container-high/80 p-3 shadow-sm text-left min-h-[88px] flex flex-col justify-between ${interactiveClass}`}
                         >
-                          {children}
+                          {content}
                         </button>
                       );
                     }
                     return (
-                      <div key={key} className={className}>
-                        {children}
+                      <div key={key} className="rounded-xl border border-m3-outline-variant/60 bg-m3-surface-container-high/80 p-3 shadow-sm min-h-[88px] flex flex-col justify-between">
+                        {content}
                       </div>
                     );
                   };
                   const renderQuickDayChips = (day) => (
-                    <div className="flex flex-wrap gap-2">
-                      {renderQuickChip({
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {renderQuickTile({
                         key: `${day.key}-temps`,
-                        className: 'flex items-center gap-2.5 bg-m3-surface-container-high rounded-full px-3 py-2 font-extrabold border border-m3-outline-variant shadow-sm',
-                        children: (
-                          <>
-                            <Thermometer size={16} className="text-m3-on-surface-variant shrink-0"/>
-                            <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-1">
-                                <ArrowDown size={14} className="text-blue-400 shrink-0" />
-                                <span className="text-blue-400 text-base leading-none">{tempFunc ? tempFunc(day.minTemp) : day.minTemp}{tempUnit}</span>
-                              </div>
-                              <div className="h-5 w-px bg-m3-outline-variant/70" />
-                              <div className="flex items-center gap-1">
-                                <ArrowUp size={14} className="text-red-400 shrink-0" />
-                                <span className="text-red-400 text-base leading-none">{tempFunc ? tempFunc(day.maxTemp) : day.maxTemp}{tempUnit}</span>
-                              </div>
-                            </div>
-                          </>
+                        label: lang === 'en' ? 'Temperature' : 'Temperatur',
+                        icon: <Thermometer size={14} className="shrink-0" />,
+                        value: (
+                          <span className="flex items-center gap-2">
+                            <span className="flex items-center gap-1 text-blue-400">
+                              <ArrowDown size={14} className="shrink-0" />
+                              <span>{tempFunc ? tempFunc(day.minTemp) : day.minTemp}{tempUnit}</span>
+                            </span>
+                            <span className="text-m3-on-surface-variant/60">/</span>
+                            <span className="flex items-center gap-1 text-red-400">
+                              <ArrowUp size={14} className="shrink-0" />
+                              <span>{tempFunc ? tempFunc(day.maxTemp) : day.maxTemp}{tempUnit}</span>
+                            </span>
+                          </span>
                         ),
+                        subValue: day.feelsLike !== null
+                          ? `${t.feelsLike}: ${tempFunc ? tempFunc(day.feelsLike) : day.feelsLike}${tempUnit}`
+                          : undefined,
                       })}
                       {day.rainSum > 0.1 && (
-                        renderQuickChip({
+                        renderQuickTile({
                           key: `${day.key}-rain-sum`,
                           onClick: onOpenQuickViewDetail ? () => onOpenQuickViewDetail('precip') : undefined,
                           ariaLabel: t.precipitationDetails,
-                          className: 'flex items-center gap-1 bg-blue-500/10 rounded-full px-3 py-1.5 text-base font-bold text-blue-500 border border-blue-400/30',
-                          children: (
-                            <>
-                              <Droplets size={14} className="shrink-0"/>
-                              <span>{formatPrecipSafe(day.rainSum)}{getPrecipUnitLabelSafe()}</span>
-                            </>
-                          ),
+                          label: t.precip,
+                          icon: <Droplets size={14} className="shrink-0 text-blue-500" />,
+                          className: 'text-blue-500',
+                          value: `${formatPrecipSafe(day.rainSum)}${getPrecipUnitLabelSafe()}`,
                         })
                       )}
                       {day.rainProb >= 15 && (
-                        renderQuickChip({
+                        renderQuickTile({
                           key: `${day.key}-rain-prob`,
                           onClick: onOpenQuickViewDetail ? () => onOpenQuickViewDetail('precip') : undefined,
                           ariaLabel: t.precipitationDetails,
-                          className: `flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border ${day.rainProb >= 60 ? 'bg-blue-600/20 text-blue-600 dark:text-blue-400 border-blue-500/30' : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant'}`,
-                          children: (
-                            <>
-                              <Umbrella size={14} className="shrink-0"/>
-                              <span>{Math.round(day.rainProb)}%</span>
-                            </>
-                          ),
+                          label: t.probability,
+                          icon: <Umbrella size={14} className={`shrink-0 ${day.rainProb >= 60 ? 'text-blue-600 dark:text-blue-400' : 'text-m3-on-surface-variant'}`} />,
+                          className: day.rainProb >= 60 ? 'text-blue-600 dark:text-blue-400' : 'text-m3-on-surface',
+                          value: `${Math.round(day.rainProb)}%`,
                         })
                       )}
                       {day.maxWind >= 20 && (
-                        renderQuickChip({
+                        renderQuickTile({
                           key: `${day.key}-wind`,
                           onClick: onOpenQuickViewDetail ? () => onOpenQuickViewDetail('wind') : undefined,
                           ariaLabel: t.wind,
-                          className: `flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border border-m3-outline-variant bg-m3-surface-container-high ${getWindColorClass(day.maxWind, false)}`,
-                          children: (
-                            <>
-                              <Wind size={14} className="shrink-0"/>
-                              <span>{formatWindSafe(day.maxWind)} {getWindUnitLabelSafe()}</span>
-                            </>
-                          ),
+                          label: t.wind,
+                          icon: <Wind size={14} className="shrink-0" />,
+                          className: getWindColorClass(day.maxWind, false),
+                          value: `${formatWindSafe(day.maxWind)} ${getWindUnitLabelSafe()}`,
                         })
                       )}
                       {day.maxUV >= 3 && (
-                        renderQuickChip({
+                        renderQuickTile({
                           key: `${day.key}-uv`,
                           onClick: onOpenQuickViewDetail ? () => onOpenQuickViewDetail('uv') : undefined,
                           ariaLabel: t.uv,
-                          className: `flex items-center gap-1 rounded-full px-3 py-1.5 text-base font-bold border ${day.maxUV >= 8 ? 'bg-red-500/20 text-red-500 dark:text-red-400 border-red-400/30' : day.maxUV >= 6 ? 'bg-orange-400/20 text-orange-500 dark:text-orange-400 border-orange-400/30' : 'bg-yellow-300/20 text-yellow-600 dark:text-yellow-400 border-yellow-400/30'}`,
-                          children: (
-                            <>
-                              <Sun size={14} className="shrink-0"/>
-                              <span>UV {day.maxUV}</span>
-                            </>
-                          ),
-                        })
-                      )}
-                      {day.feelsLike !== null && (
-                        renderQuickChip({
-                          key: `${day.key}-feels-like`,
-                          className: 'flex items-center gap-1 bg-m3-surface-container-high rounded-full px-3 py-1.5 text-base font-bold border border-m3-outline-variant text-m3-on-surface-variant',
-                          children: (
-                            <>
-                              <Activity size={14} className="shrink-0"/>
-                              <span>{tempFunc ? tempFunc(day.feelsLike) : day.feelsLike}{tempUnit}</span>
-                            </>
-                          ),
+                          label: t.uv,
+                          icon: <Sun size={14} className="shrink-0" />,
+                          className: day.maxUV >= 8
+                            ? 'text-red-500 dark:text-red-400'
+                            : day.maxUV >= 6
+                              ? 'text-orange-500 dark:text-orange-400'
+                              : 'text-yellow-600 dark:text-yellow-400',
+                          value: `UV ${day.maxUV}`,
                         })
                       )}
                       {day.thunderstormRisk > 0 && (
-                        renderQuickChip({
+                        renderQuickTile({
                           key: `${day.key}-thunderstorm`,
                           onClick: onOpenQuickViewDetail ? () => onOpenQuickViewDetail('thunderstorm') : undefined,
                           ariaLabel: t.thunderstormRiskDetails,
-                          className: tsChipClass(day.thunderstormWarnLevel),
-                          children: (
-                            <>
-                              <CloudLightning size={14} className="shrink-0"/>
-                              <span>{t.thunderstormWarningLevel} {day.thunderstormWarnLevel}</span>
-                            </>
-                          ),
+                          label: t.thunderstormRisk,
+                          icon: <CloudLightning size={14} className="shrink-0" />,
+                          className: day.thunderstormWarnLevel >= 4
+                            ? 'text-blue-700 dark:text-blue-300'
+                            : day.thunderstormWarnLevel >= 3
+                              ? 'text-red-600 dark:text-red-400'
+                              : day.thunderstormWarnLevel >= 2
+                                ? 'text-orange-600 dark:text-orange-400'
+                                : 'text-yellow-700 dark:text-yellow-400',
+                          value: `${t.thunderstormWarningLevel} ${day.thunderstormWarnLevel}`,
+                          subValue: `${Math.round(day.thunderstormRisk)}%`,
                         })
                       )}
                       {day.pollenLevel > 0 && (
-                        renderQuickChip({
+                        renderQuickTile({
                           key: `${day.key}-pollen`,
                           onClick: onOpenQuickViewDetail ? () => onOpenQuickViewDetail('pollen') : undefined,
                           ariaLabel: t.pollenDetails,
-                          className: pollenChipClass(day.pollenLevel),
-                          children: (
-                            <>
-                              <Leaf size={14} className="shrink-0"/>
-                              <span>{day.pollenTopLabel ? `${day.pollenTopLabel} · ` : ''}{pollenLevelLabel(day.pollenLevel)}</span>
-                            </>
-                          ),
+                          label: t.pollen,
+                          icon: <Leaf size={14} className="shrink-0" />,
+                          className: day.pollenLevel >= 4
+                            ? 'text-red-600 dark:text-red-400'
+                            : day.pollenLevel >= 3
+                              ? 'text-orange-600 dark:text-orange-400'
+                              : day.pollenLevel >= 2
+                                ? 'text-yellow-700 dark:text-yellow-400'
+                                : 'text-green-700 dark:text-green-400',
+                          value: pollenLevelLabel(day.pollenLevel),
+                          subValue: day.pollenTopLabel || undefined,
                         })
                       )}
                     </div>
