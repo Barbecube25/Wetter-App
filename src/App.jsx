@@ -69,6 +69,7 @@ const MORNING_NOTIFICATION_HOUR = 7;
 const EVENING_NOTIFICATION_HOUR = 20;
 const WEATHER_NOTIFICATION_LEAD_OPTIONS = [5, 15, 30];
 const WEATHER_NOTIFICATION_RUNTIME_KEY = 'weather_notification_runtime_v1';
+const WEATHER_NOTIFICATION_PERMISSION_PROMPTED_KEY = 'weather_notification_permission_prompted_v1';
 const NOTIFICATION_TRIGGER_WINDOW_MINUTES = 15;
 const NOTIFICATION_CHECK_INTERVAL_MS = 60 * 1000;
 const DEFAULT_NOTIFICATION_SETTINGS = {
@@ -15493,6 +15494,46 @@ export default function WeatherApp() {
     }
   }, []);
 
+  const requestInitialNotificationPermissionOnce = useCallback(async () => {
+    if (typeof window === 'undefined' || typeof Notification === 'undefined') {
+      setNotificationPermission('denied');
+      return 'denied';
+    }
+    try {
+      const alreadyPrompted = localStorage.getItem(WEATHER_NOTIFICATION_PERMISSION_PROMPTED_KEY) === 'true';
+      if (alreadyPrompted) {
+        setNotificationPermission(Notification.permission);
+        return Notification.permission;
+      }
+    } catch (e) {
+      // ignore storage read errors
+    }
+
+    if (Notification.permission !== 'default') {
+      setNotificationPermission(Notification.permission);
+      try {
+        localStorage.setItem(WEATHER_NOTIFICATION_PERMISSION_PROMPTED_KEY, 'true');
+      } catch (e) {
+        // ignore storage write errors
+      }
+      return Notification.permission;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      try {
+        localStorage.setItem(WEATHER_NOTIFICATION_PERMISSION_PROMPTED_KEY, 'true');
+      } catch (e) {
+        // ignore storage write errors
+      }
+      return permission;
+    } catch (e) {
+      setNotificationPermission('denied');
+      return 'denied';
+    }
+  }, []);
+
   useEffect(() => {
     const notifications = normalizeNotificationSettings(settings.notifications);
     if (!notifications.enabled) return;
@@ -16382,6 +16423,7 @@ export default function WeatherApp() {
                       if (homeLocationFromTutorial) {
                           setHomeLoc(homeLocationFromTutorial);
                           setCurrentLoc(homeLocationFromTutorial);
+                          void requestInitialNotificationPermissionOnce();
                       } else if (!homeLoc) {
                           // If no home location, show home setup next
                           setShowHomeSetup(true);
@@ -16422,6 +16464,7 @@ export default function WeatherApp() {
                       setHomeLoc(loc);
                       setCurrentLoc(loc);
                       setShowHomeSetup(false);
+                      void requestInitialNotificationPermissionOnce();
                       if (loc.stationConfig) {
                           setSettings(prev => ({ ...prev, personalStation: loc.stationConfig }));
                       }
