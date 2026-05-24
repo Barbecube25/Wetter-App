@@ -144,7 +144,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setTextViewText(R.id.widget_condition, context.getString(R.string.widget_condition_placeholder));
         views.setTextViewText(R.id.widget_temp_range, context.getString(R.string.widget_temp_range_placeholder));
         views.setTextViewText(R.id.widget_feels_like, context.getString(R.string.widget_feels_like_placeholder));
-        views.setTextViewText(R.id.widget_metric_rain, context.getString(R.string.widget_metric_rain_placeholder));
+        views.setTextViewText(R.id.widget_metric_rain, context.getString(R.string.widget_metric_minmax_placeholder));
         views.setTextViewText(R.id.widget_metric_uv, context.getString(R.string.widget_metric_uv_placeholder));
         views.setTextViewText(R.id.widget_metric_wind, context.getString(R.string.widget_metric_wind_placeholder));
         views.setTextViewText(R.id.widget_metric_pollen, context.getString(R.string.widget_metric_pollen_placeholder));
@@ -253,33 +253,43 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             )
         );
         views.setTextViewText(R.id.widget_feels_like, feelsLikeLabel);
+
+        // Min/Max chip (repurposed widget_metric_rain view)
         views.setTextViewText(
             R.id.widget_metric_rain,
-            context.getString(R.string.widget_metric_rain_format, formatMetricNumber(rainRate))
+            context.getString(
+                R.string.widget_metric_minmax_format,
+                formatTemperature(rangeMin),
+                formatTemperature(rangeMax)
+            )
         );
-        views.setTextViewText(
-            R.id.widget_metric_uv,
-            context.getString(R.string.widget_metric_uv_format, formatMetricNumber(uvIndex))
-        );
+        views.setInt(R.id.widget_metric_rain, "setBackgroundResource", R.drawable.weather_widget_chip_minmax);
+        views.setInt(R.id.widget_metric_rain, "setTextColor", Color.parseColor("#1C1B1F"));
+
+        // Wind chip (always blue-tinted)
         views.setTextViewText(
             R.id.widget_metric_wind,
             context.getString(R.string.widget_metric_wind_format, formatMetricNumber(windKmh))
         );
+        views.setInt(R.id.widget_metric_wind, "setBackgroundResource", R.drawable.weather_widget_chip_wind);
+        views.setInt(R.id.widget_metric_wind, "setTextColor", Color.parseColor("#1D4ED8"));
 
-        if (thunderRisk != null) {
-            views.setViewVisibility(R.id.widget_metric_thunder, View.VISIBLE);
-            views.setTextViewText(
-                R.id.widget_metric_thunder,
-                context.getString(R.string.widget_metric_thunder_format, thunderRisk)
-            );
-        } else {
-            views.setViewVisibility(R.id.widget_metric_thunder, View.GONE);
-        }
+        // UV chip – color-coded by level
+        views.setTextViewText(
+            R.id.widget_metric_uv,
+            context.getString(R.string.widget_metric_uv_format, formatMetricNumber(uvIndex))
+        );
+        applyUvChipStyle(views, uvIndex);
 
+        // Thunder always hidden in full-size widget
+        views.setViewVisibility(R.id.widget_metric_thunder, View.GONE);
+
+        // Pollen chip – color-coded by level
         views.setTextViewText(
             R.id.widget_metric_pollen,
             context.getString(R.string.widget_metric_pollen_format, pollenLabel)
         );
+        applyPollenChipStyle(context, views, pollenLabel);
         views.setTextViewText(
             R.id.widget_compact_metric_temperature,
             context.getString(
@@ -311,12 +321,49 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         int activeBackground = R.drawable.weather_widget_toggle_active;
         int inactiveBackground = R.drawable.weather_widget_toggle_inactive;
         int activeTextColor = Color.WHITE;
-        int inactiveTextColor = Color.parseColor("#CCFFFFFF");
+        int inactiveTextColor = Color.parseColor("#757575");
 
         views.setInt(R.id.widget_day_today, "setBackgroundResource", showTomorrow ? inactiveBackground : activeBackground);
         views.setInt(R.id.widget_day_tomorrow, "setBackgroundResource", showTomorrow ? activeBackground : inactiveBackground);
         views.setInt(R.id.widget_day_today, "setTextColor", showTomorrow ? inactiveTextColor : activeTextColor);
         views.setInt(R.id.widget_day_tomorrow, "setTextColor", showTomorrow ? activeTextColor : inactiveTextColor);
+    }
+
+    private void applyUvChipStyle(RemoteViews views, double uvIndex) {
+        int bgRes;
+        int textColor;
+        if (!Double.isNaN(uvIndex) && uvIndex >= 8) {
+            bgRes = R.drawable.weather_widget_chip_uv_high;
+            textColor = Color.parseColor("#991B1B");
+        } else if (!Double.isNaN(uvIndex) && uvIndex >= 6) {
+            bgRes = R.drawable.weather_widget_chip_uv_mid;
+            textColor = Color.parseColor("#9A3412");
+        } else {
+            bgRes = R.drawable.weather_widget_chip_uv_low;
+            textColor = Color.parseColor("#854D0E");
+        }
+        views.setInt(R.id.widget_metric_uv, "setBackgroundResource", bgRes);
+        views.setInt(R.id.widget_metric_uv, "setTextColor", textColor);
+    }
+
+    private void applyPollenChipStyle(Context context, RemoteViews views, String pollenLabel) {
+        int bgRes;
+        int textColor;
+        if (context.getString(R.string.widget_pollen_very_high).equals(pollenLabel)) {
+            bgRes = R.drawable.weather_widget_chip_pollen_very_high;
+            textColor = Color.parseColor("#991B1B");
+        } else if (context.getString(R.string.widget_pollen_high).equals(pollenLabel)) {
+            bgRes = R.drawable.weather_widget_chip_pollen_high;
+            textColor = Color.parseColor("#9A3412");
+        } else if (context.getString(R.string.widget_pollen_moderate).equals(pollenLabel)) {
+            bgRes = R.drawable.weather_widget_chip_pollen_mid;
+            textColor = Color.parseColor("#854D0E");
+        } else {
+            bgRes = R.drawable.weather_widget_chip_pollen_low;
+            textColor = Color.parseColor("#166534");
+        }
+        views.setInt(R.id.widget_metric_pollen, "setBackgroundResource", bgRes);
+        views.setInt(R.id.widget_metric_pollen, "setTextColor", textColor);
     }
 
     private void applyResponsiveLayout(RemoteViews views, Bundle widgetOptions) {
@@ -325,7 +372,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             views.setViewVisibility(R.id.widget_header_row, View.VISIBLE);
             views.setViewVisibility(R.id.widget_day_switcher, View.VISIBLE);
             views.setViewVisibility(R.id.widget_main_row, View.VISIBLE);
-            views.setViewVisibility(R.id.widget_daily_overview, View.VISIBLE);
+            views.setViewVisibility(R.id.widget_daily_overview, View.GONE);
             views.setViewVisibility(R.id.widget_metrics_panel, View.VISIBLE);
             views.setViewVisibility(R.id.widget_metrics_row_secondary, View.VISIBLE);
             views.setViewVisibility(R.id.widget_updated_at, View.VISIBLE);
@@ -355,7 +402,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setViewVisibility(R.id.widget_header_row, View.VISIBLE);
         views.setViewVisibility(R.id.widget_day_switcher, compactHeight ? View.GONE : View.VISIBLE);
         views.setViewVisibility(R.id.widget_main_row, View.VISIBLE);
-        views.setViewVisibility(R.id.widget_daily_overview, compactWidth ? View.GONE : View.VISIBLE);
+        views.setViewVisibility(R.id.widget_daily_overview, View.GONE);
         views.setViewVisibility(R.id.widget_metrics_panel, veryCompact ? View.GONE : View.VISIBLE);
         views.setViewVisibility(R.id.widget_metrics_row_secondary, compactHeight ? View.GONE : View.VISIBLE);
         views.setViewVisibility(R.id.widget_updated_at, compactHeight ? View.GONE : View.VISIBLE);

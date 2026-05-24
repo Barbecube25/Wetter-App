@@ -31,7 +31,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:text="@string/widget_compact_metric_temperature_placeholder"
-            android:textColor="@android:color/white"
+            android:textColor="#1C1B1F"
             android:textSize="12sp"
             android:textStyle="bold" />
 
@@ -44,7 +44,7 @@
             android:gravity="center_horizontal"
             android:maxLines="1"
             android:text="@string/widget_compact_metric_uv_placeholder"
-            android:textColor="@android:color/white"
+            android:textColor="#1C1B1F"
             android:textSize="12sp"
             android:textStyle="bold" />
 
@@ -57,7 +57,7 @@
             android:gravity="end"
             android:maxLines="1"
             android:text="@string/widget_compact_metric_thunder_placeholder"
-            android:textColor="@android:color/white"
+            android:textColor="#1C1B1F"
             android:textSize="12sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -76,7 +76,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/widget_title"
-            android:textColor="#CCFFFFFF"
+            android:textColor="#49454F"
             android:textSize="11sp"
             android:textStyle="bold" />
 
@@ -87,7 +87,7 @@
             android:background="@android:color/transparent"
             android:contentDescription="@string/widget_refresh_content_description"
             android:src="@android:drawable/ic_popup_sync"
-            android:tint="#F2FFFFFF" />
+            android:tint="#49454F" />
     </LinearLayout>
 
     <LinearLayout
@@ -125,7 +125,7 @@
             android:paddingTop="6dp"
             android:paddingBottom="6dp"
             android:text="@string/widget_day_tomorrow"
-            android:textColor="#CCFFFFFF"
+            android:textColor="#757575"
             android:textSize="11sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -137,14 +137,12 @@
         android:layout_below="@id/widget_day_switcher"
         android:layout_marginTop="8dp"
         android:gravity="top"
-        android:orientation="horizontal"
-        android:weightSum="2">
+        android:orientation="horizontal">
 
         <LinearLayout
             android:id="@+id/widget_main_left"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:orientation="vertical">
 
             <LinearLayout
@@ -159,7 +157,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/widget_temp_placeholder"
-                    android:textColor="@android:color/white"
+                    android:textColor="#1C1B1F"
                     android:textSize="42sp"
                     android:textStyle="bold" />
 
@@ -169,7 +167,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/widget_weather_icon_margin_start"
                     android:text="@string/widget_weather_icon_placeholder"
-                    android:textColor="#F2FFFFFF"
+                    android:textColor="#49454F"
                     android:textSize="18sp" />
             </LinearLayout>
 
@@ -179,29 +177,25 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="-5dp"
                 android:text="@string/widget_condition_placeholder"
-                android:textColor="#F2FFFFFF"
+                android:textColor="#49454F"
                 android:textSize="13sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
+        <!-- Invisible placeholder: keeps daily_overview referenced in Java without affecting layout -->
         <LinearLayout
             android:id="@+id/widget_daily_overview"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_weight="1"
-            android:background="@drawable/weather_widget_glass_chip"
-            android:gravity="center_vertical"
-            android:minHeight="72dp"
-            android:orientation="vertical"
-            android:padding="8dp">
+            android:layout_height="0dp"
+            android:visibility="gone"
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/widget_temp_range"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/widget_temp_range_placeholder"
-                android:textColor="@android:color/white"
+                android:textColor="#1C1B1F"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
@@ -209,9 +203,8 @@
                 android:id="@+id/widget_feels_like"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
                 android:text="@string/widget_feels_like_placeholder"
-                android:textColor="#E6FFFFFF"
+                android:textColor="#757575"
                 android:textSize="11sp" />
         </LinearLayout>
     </LinearLayout>
@@ -224,39 +217,32 @@
         android:layout_above="@id/widget_updated_at"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="6dp"
-        android:background="@drawable/weather_widget_glass_panel"
-        android:orientation="vertical"
-        android:padding="8dp">
+        android:orientation="vertical">
 
+        <!-- Row 1: Min/Max chip | Wind chip -->
         <LinearLayout
             android:id="@+id/widget_metrics_row_primary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:weightSum="3">
+            android:weightSum="2">
 
             <TextView
                 android:id="@+id/widget_metric_rain"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/weather_widget_chip_minmax"
                 android:ellipsize="end"
+                android:gravity="center"
                 android:maxLines="1"
-                android:text="@string/widget_metric_rain_placeholder"
-                android:textColor="#F2FFFFFF"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/widget_metric_uv"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:ellipsize="end"
-                android:gravity="center_horizontal"
-                android:maxLines="1"
-                android:text="@string/widget_metric_uv_placeholder"
-                android:textColor="#F2FFFFFF"
+                android:paddingStart="8dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="6dp"
+                android:text="@string/widget_metric_minmax_placeholder"
+                android:textColor="#1C1B1F"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
@@ -265,49 +251,77 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:background="@drawable/weather_widget_chip_wind"
                 android:ellipsize="end"
-                android:gravity="end"
+                android:gravity="center"
                 android:maxLines="1"
+                android:paddingStart="8dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="6dp"
                 android:text="@string/widget_metric_wind_placeholder"
-                android:textColor="#F2FFFFFF"
+                android:textColor="#1D4ED8"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
+        <!-- Row 2: UV chip | Pollen chip -->
         <LinearLayout
             android:id="@+id/widget_metrics_row_secondary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="6dp"
             android:orientation="horizontal"
             android:weightSum="2">
 
             <TextView
-                android:id="@+id/widget_metric_thunder"
+                android:id="@+id/widget_metric_uv"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/weather_widget_chip_uv_low"
                 android:ellipsize="end"
+                android:gravity="center"
                 android:maxLines="1"
-                android:text="@string/widget_metric_thunder_placeholder"
-                android:textColor="#F2FFFFFF"
+                android:paddingStart="8dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="6dp"
+                android:text="@string/widget_metric_uv_placeholder"
+                android:textColor="#854D0E"
                 android:textSize="12sp"
-                android:textStyle="bold"
-                android:visibility="gone" />
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/widget_metric_pollen"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:background="@drawable/weather_widget_chip_pollen_low"
                 android:ellipsize="end"
-                android:gravity="end"
+                android:gravity="center"
                 android:maxLines="1"
+                android:paddingStart="8dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="6dp"
                 android:text="@string/widget_metric_pollen_placeholder"
-                android:textColor="#F2FFFFFF"
+                android:textColor="#166534"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
+
+        <!-- Thunder: kept for Java compatibility, always hidden -->
+        <TextView
+            android:id="@+id/widget_metric_thunder"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            android:text="@string/widget_metric_thunder_placeholder"
+            android:textSize="12sp" />
     </LinearLayout>
 
     <TextView
@@ -316,7 +330,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:text="@string/widget_updated_placeholder"
-        android:textColor="#CCFFFFFF"
+        android:textColor="#9E9E9E"
         android:textSize="10sp" />
 
 </RelativeLayout>
