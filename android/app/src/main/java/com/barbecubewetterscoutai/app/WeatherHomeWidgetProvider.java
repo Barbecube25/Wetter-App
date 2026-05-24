@@ -9,8 +9,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.format.DateFormat;
+import android.util.SizeF;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.RemoteViews;
@@ -27,8 +29,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -102,6 +106,14 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final int COMPACT_ROW_PADDING_HORIZONTAL_COMPACT_DP = 6;
     private static final int COMPACT_ROW_PADDING_VERTICAL_DP = 6;
     private static final int COMPACT_ROW_PADDING_VERTICAL_COMPACT_DP = 5;
+    private static final float MAP_SIZE_COMPACT_WIDTH_DP = 170f;
+    private static final float MAP_SIZE_COMPACT_HEIGHT_DP = 100f;
+    private static final float MAP_SIZE_MEDIUM_WIDTH_DP = 220f;
+    private static final float MAP_SIZE_MEDIUM_HEIGHT_DP = 180f;
+    private static final float MAP_SIZE_LARGE_WIDTH_DP = 260f;
+    private static final float MAP_SIZE_LARGE_HEIGHT_DP = 240f;
+    private static final float MAP_SIZE_EXPANDED_WIDTH_DP = 300f;
+    private static final float MAP_SIZE_EXPANDED_HEIGHT_DP = 320f;
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
@@ -154,20 +166,62 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private void updateWidgetAsync(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
         Bundle widgetOptions = appWidgetManager.getAppWidgetOptions(appWidgetId);
         String selectedDay = getSelectedDay(context, appWidgetId);
-        RemoteViews loadingViews = createBaseViews(context, appWidgetId, widgetOptions, selectedDay);
+        RemoteViews loadingViews = createWidgetViews(context, appWidgetId, widgetOptions, selectedDay, null);
         appWidgetManager.updateAppWidget(appWidgetId, loadingViews);
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             try {
-                RemoteViews views = createBaseViews(context, appWidgetId, widgetOptions, selectedDay);
                 WidgetData data = fetchWidgetData(context);
-                applyWidgetData(context, views, data, selectedDay);
+                RemoteViews views = createWidgetViews(context, appWidgetId, widgetOptions, selectedDay, data);
                 appWidgetManager.updateAppWidget(appWidgetId, views);
             } finally {
                 executor.shutdown();
             }
         });
+    }
+
+    private RemoteViews createWidgetViews(Context context, int appWidgetId, Bundle widgetOptions, String selectedDay, WidgetData data) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            return createApi31SizeMappedViews(context, appWidgetId, selectedDay, data);
+        }
+        RemoteViews views = createBaseViews(context, appWidgetId, widgetOptions, selectedDay);
+        if (data != null) {
+            applyWidgetData(context, views, data, selectedDay);
+        }
+        return views;
+    }
+
+    private RemoteViews createApi31SizeMappedViews(Context context, int appWidgetId, String selectedDay, WidgetData data) {
+        Map<SizeF, RemoteViews> viewMap = new LinkedHashMap<>();
+        viewMap.put(
+            new SizeF(MAP_SIZE_COMPACT_WIDTH_DP, MAP_SIZE_COMPACT_HEIGHT_DP),
+            createBandView(context, appWidgetId, selectedDay, data, (int) MAP_SIZE_COMPACT_WIDTH_DP, (int) MAP_SIZE_COMPACT_HEIGHT_DP)
+        );
+        viewMap.put(
+            new SizeF(MAP_SIZE_MEDIUM_WIDTH_DP, MAP_SIZE_MEDIUM_HEIGHT_DP),
+            createBandView(context, appWidgetId, selectedDay, data, (int) MAP_SIZE_MEDIUM_WIDTH_DP, (int) MAP_SIZE_MEDIUM_HEIGHT_DP)
+        );
+        viewMap.put(
+            new SizeF(MAP_SIZE_LARGE_WIDTH_DP, MAP_SIZE_LARGE_HEIGHT_DP),
+            createBandView(context, appWidgetId, selectedDay, data, (int) MAP_SIZE_LARGE_WIDTH_DP, (int) MAP_SIZE_LARGE_HEIGHT_DP)
+        );
+        viewMap.put(
+            new SizeF(MAP_SIZE_EXPANDED_WIDTH_DP, MAP_SIZE_EXPANDED_HEIGHT_DP),
+            createBandView(context, appWidgetId, selectedDay, data, (int) MAP_SIZE_EXPANDED_WIDTH_DP, (int) MAP_SIZE_EXPANDED_HEIGHT_DP)
+        );
+        return new RemoteViews(viewMap);
+    }
+
+    private RemoteViews createBandView(Context context, int appWidgetId, String selectedDay, WidgetData data, int minWidthDp, int minHeightDp) {
+        Bundle bandOptions = new Bundle();
+        bandOptions.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, minWidthDp);
+        bandOptions.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, minHeightDp);
+        RemoteViews views = createBaseViews(context, appWidgetId, bandOptions, selectedDay);
+        if (data != null) {
+            applyWidgetData(context, views, data, selectedDay);
+        }
+        return views;
     }
 
     private RemoteViews createBaseViews(Context context, int appWidgetId, Bundle widgetOptions, String selectedDay) {
@@ -275,9 +329,16 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         double uvIndex = showTomorrow ? data.tomorrowUvIndex : data.uvIndex;
         double windKmh = showTomorrow ? data.tomorrowWindKmh : data.windKmh;
         String thunderRisk = showTomorrow ? data.tomorrowThunderRiskLabel : data.thunderRiskLabel;
+        String unavailableLabel = context.getString(R.string.widget_metric_unavailable);
         String pollenLabel = showTomorrow
-            ? context.getString(R.string.widget_metric_unavailable)
+            ? unavailableLabel
             : data.pollenLabel;
+        boolean hasWind = !Double.isNaN(windKmh);
+        boolean hasUv = !Double.isNaN(uvIndex);
+        boolean hasPollen = !showTomorrow && pollenLabel != null && !unavailableLabel.equals(pollenLabel);
+        boolean hasThunder = thunderRisk != null
+            && !thunderRisk.trim().isEmpty()
+            && !unavailableLabel.equals(thunderRisk);
 
         views.setTextViewText(R.id.widget_temperature, formatTemperature(displayTemperature));
         views.setTextViewText(R.id.widget_weather_icon, mapWeatherCodeToSymbol(displayWeatherCode));
@@ -304,30 +365,48 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setInt(R.id.widget_metric_minmax, "setBackgroundResource", R.drawable.weather_widget_chip_minmax);
         views.setInt(R.id.widget_metric_minmax, "setTextColor", ContextCompat.getColor(context, R.color.widget_text_primary));
 
-        // Wind chip (always blue-tinted)
-        views.setTextViewText(
-            R.id.widget_metric_wind,
-            context.getString(R.string.widget_metric_wind_format, formatMetricNumber(windKmh))
-        );
-        views.setInt(R.id.widget_metric_wind, "setBackgroundResource", R.drawable.weather_widget_chip_wind);
-        views.setInt(R.id.widget_metric_wind, "setTextColor", ContextCompat.getColor(context, R.color.widget_text_accent));
+        if (hasWind) {
+            // Wind chip (always blue-tinted)
+            views.setTextViewText(
+                R.id.widget_metric_wind,
+                context.getString(R.string.widget_metric_wind_format, formatMetricNumber(windKmh))
+            );
+            views.setInt(R.id.widget_metric_wind, "setBackgroundResource", R.drawable.weather_widget_chip_wind);
+            views.setInt(R.id.widget_metric_wind, "setTextColor", ContextCompat.getColor(context, R.color.widget_text_accent));
+            views.setViewVisibility(R.id.widget_metric_wind, View.VISIBLE);
+        } else {
+            views.setViewVisibility(R.id.widget_metric_wind, View.GONE);
+        }
 
-        // UV chip – color-coded by level
-        views.setTextViewText(
-            R.id.widget_metric_uv,
-            context.getString(R.string.widget_metric_uv_format, formatMetricNumber(uvIndex))
-        );
-        applyUvChipStyle(context, views, uvIndex);
+        if (hasUv) {
+            // UV chip – color-coded by level
+            views.setTextViewText(
+                R.id.widget_metric_uv,
+                context.getString(R.string.widget_metric_uv_format, formatMetricNumber(uvIndex))
+            );
+            applyUvChipStyle(context, views, uvIndex);
+            views.setViewVisibility(R.id.widget_metric_uv, View.VISIBLE);
+        } else {
+            views.setViewVisibility(R.id.widget_metric_uv, View.GONE);
+        }
 
         // Thunder always hidden in full-size widget
         views.setViewVisibility(R.id.widget_metric_thunder, View.GONE);
 
-        // Pollen chip – color-coded by level
-        views.setTextViewText(
-            R.id.widget_metric_pollen,
-            context.getString(R.string.widget_metric_pollen_format, pollenLabel)
-        );
-        applyPollenChipStyle(context, views, pollenLabel);
+        if (hasPollen) {
+            // Pollen chip – color-coded by level
+            views.setTextViewText(
+                R.id.widget_metric_pollen,
+                context.getString(R.string.widget_metric_pollen_format, pollenLabel)
+            );
+            applyPollenChipStyle(context, views, pollenLabel);
+            views.setViewVisibility(R.id.widget_metric_pollen, View.VISIBLE);
+        } else {
+            views.setViewVisibility(R.id.widget_metric_pollen, View.GONE);
+        }
+        if (!hasUv && !hasPollen) {
+            views.setViewVisibility(R.id.widget_metrics_row_secondary, View.GONE);
+        }
         views.setTextViewText(
             R.id.widget_compact_metric_temperature,
             context.getString(
@@ -340,6 +419,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             R.id.widget_compact_metric_uv,
             context.getString(R.string.widget_compact_metric_uv_format, formatMetricNumber(uvIndex))
         );
+        views.setViewVisibility(R.id.widget_compact_metric_uv, hasUv ? View.VISIBLE : View.GONE);
         views.setTextViewText(
             R.id.widget_compact_metric_thunder,
             context.getString(
@@ -347,6 +427,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
                 thunderRisk == null ? context.getString(R.string.widget_metric_unavailable) : thunderRisk
             )
         );
+        views.setViewVisibility(R.id.widget_compact_metric_thunder, hasThunder ? View.VISIBLE : View.GONE);
 
         String formattedTime = DateFormat.getTimeFormat(context).format(new Date());
         views.setTextViewText(
