@@ -214,7 +214,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/widget_main_row"
-        android:layout_above="@id/widget_updated_at"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="6dp"
         android:orientation="vertical">
@@ -322,6 +321,206 @@
             android:visibility="gone"
             android:text="@string/widget_metric_thunder_placeholder"
             android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Hourly forecast panel: 4 slots, visible only in large-widget mode -->
+    <LinearLayout
+        android:id="@+id/widget_hourly_panel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/widget_metrics_panel"
+        android:layout_above="@id/widget_updated_at"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        android:weightSum="4">
+
+        <!-- Slot 1 -->
+        <LinearLayout
+            android:id="@+id/widget_hourly_slot_1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="3dp"
+            android:background="@drawable/weather_widget_glass_chip"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp">
+
+            <TextView
+                android:id="@+id/widget_hourly_time_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--:--"
+                android:textColor="#49454F"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/widget_hourly_icon_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⛅"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/widget_hourly_temp_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--°"
+                android:textColor="#1C1B1F"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_hourly_precip_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--%"
+                android:textColor="#1D4ED8"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <!-- Slot 2 -->
+        <LinearLayout
+            android:id="@+id/widget_hourly_slot_2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="3dp"
+            android:layout_marginEnd="3dp"
+            android:background="@drawable/weather_widget_glass_chip"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp">
+
+            <TextView
+                android:id="@+id/widget_hourly_time_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--:--"
+                android:textColor="#49454F"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/widget_hourly_icon_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⛅"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/widget_hourly_temp_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--°"
+                android:textColor="#1C1B1F"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_hourly_precip_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--%"
+                android:textColor="#1D4ED8"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <!-- Slot 3 -->
+        <LinearLayout
+            android:id="@+id/widget_hourly_slot_3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="3dp"
+            android:layout_marginEnd="3dp"
+            android:background="@drawable/weather_widget_glass_chip"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp">
+
+            <TextView
+                android:id="@+id/widget_hourly_time_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--:--"
+                android:textColor="#49454F"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/widget_hourly_icon_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⛅"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/widget_hourly_temp_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--°"
+                android:textColor="#1C1B1F"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_hourly_precip_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--%"
+                android:textColor="#1D4ED8"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <!-- Slot 4 -->
+        <LinearLayout
+            android:id="@+id/widget_hourly_slot_4"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="3dp"
+            android:background="@drawable/weather_widget_glass_chip"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp">
+
+            <TextView
+                android:id="@+id/widget_hourly_time_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--:--"
+                android:textColor="#49454F"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/widget_hourly_icon_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⛅"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/widget_hourly_temp_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--°"
+                android:textColor="#1C1B1F"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_hourly_precip_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--%"
+                android:textColor="#1D4ED8"
+                android:textSize="10sp" />
+        </LinearLayout>
     </LinearLayout>
 
     <TextView

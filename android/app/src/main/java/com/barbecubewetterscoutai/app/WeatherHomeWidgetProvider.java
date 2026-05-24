@@ -12,6 +12,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.text.format.DateFormat;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.RemoteViews;
 
@@ -47,7 +48,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final int HTTP_TIMEOUT_MS = 12000;
     private static final String UNAVAILABLE = "--";
     private static final String WEATHER_API_URL_TEMPLATE =
-        "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=temperature_2m,apparent_temperature,precipitation,rain,wind_speed_10m,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max,weathercode&hourly=uv_index,precipitation_probability,cape,lifted_index,wind_speed_10m&timezone=auto&forecast_days=2";
+        "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=temperature_2m,apparent_temperature,precipitation,rain,wind_speed_10m,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max,weathercode&hourly=temperature_2m,weathercode,uv_index,precipitation_probability,cape,lifted_index,wind_speed_10m&timezone=auto&forecast_days=2";
     private static final String AIR_QUALITY_API_URL_TEMPLATE =
         "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=%f&longitude=%f&current=alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&timezone=auto";
     // WMO weather codes representing thunderstorm conditions.
@@ -67,6 +68,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final double POLLEN_THRESHOLD_VERY_HIGH = 50;
     private static final int ONE_ROW_WIDGET_HEIGHT_THRESHOLD_DP = 110;
     private static final int COMPACT_WIDGET_HEIGHT_THRESHOLD_DP = 165;
+    private static final int LARGE_WIDGET_HEIGHT_THRESHOLD_DP = 230;
     private static final int COMPACT_WIDGET_WIDTH_THRESHOLD_DP = 210;
 
     @Override
@@ -163,6 +165,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setTextViewText(R.id.widget_updated_at, context.getString(R.string.widget_updated_placeholder));
         views.setTextViewText(R.id.widget_day_today, context.getString(R.string.widget_day_today));
         views.setTextViewText(R.id.widget_day_tomorrow, context.getString(R.string.widget_day_tomorrow));
+        initHourlySlotPlaceholders(views);
 
         Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         if (launchIntent == null) {
@@ -211,7 +214,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_day_tomorrow, tomorrowPendingIntent);
 
         applyDayToggleStyle(views, DAY_TOMORROW.equals(selectedDay));
-        applyResponsiveLayout(views, widgetOptions);
+        applyResponsiveLayout(views, widgetOptions, DAY_TOMORROW.equals(selectedDay));
         return views;
     }
 
@@ -315,6 +318,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             R.id.widget_updated_at,
             context.getString(R.string.widget_updated_format, formattedTime)
         );
+
+        applyHourlySlots(views, data);
     }
 
     private void applyDayToggleStyle(RemoteViews views, boolean showTomorrow) {
@@ -366,7 +371,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setInt(R.id.widget_metric_pollen, "setTextColor", textColor);
     }
 
-    private void applyResponsiveLayout(RemoteViews views, Bundle widgetOptions) {
+    private void applyResponsiveLayout(RemoteViews views, Bundle widgetOptions, boolean showTomorrow) {
         if (widgetOptions == null) {
             views.setViewVisibility(R.id.widget_compact_row, View.GONE);
             views.setViewVisibility(R.id.widget_header_row, View.VISIBLE);
@@ -375,7 +380,9 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             views.setViewVisibility(R.id.widget_daily_overview, View.GONE);
             views.setViewVisibility(R.id.widget_metrics_panel, View.VISIBLE);
             views.setViewVisibility(R.id.widget_metrics_row_secondary, View.VISIBLE);
+            views.setViewVisibility(R.id.widget_hourly_panel, View.GONE);
             views.setViewVisibility(R.id.widget_updated_at, View.VISIBLE);
+            views.setTextViewTextSize(R.id.widget_temperature, TypedValue.COMPLEX_UNIT_SP, 42f);
             return;
         }
 
@@ -383,6 +390,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         int minHeightDp = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0);
         boolean oneRowHeight = minHeightDp > 0 && minHeightDp <= ONE_ROW_WIDGET_HEIGHT_THRESHOLD_DP;
         boolean compactHeight = minHeightDp > 0 && minHeightDp < COMPACT_WIDGET_HEIGHT_THRESHOLD_DP;
+        boolean largeHeight = minHeightDp >= LARGE_WIDGET_HEIGHT_THRESHOLD_DP;
         boolean compactWidth = minWidthDp > 0 && minWidthDp < COMPACT_WIDGET_WIDTH_THRESHOLD_DP;
         boolean veryCompact = compactHeight && compactWidth;
 
@@ -394,6 +402,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             views.setViewVisibility(R.id.widget_daily_overview, View.GONE);
             views.setViewVisibility(R.id.widget_metrics_panel, View.GONE);
             views.setViewVisibility(R.id.widget_metrics_row_secondary, View.GONE);
+            views.setViewVisibility(R.id.widget_hourly_panel, View.GONE);
             views.setViewVisibility(R.id.widget_updated_at, View.GONE);
             return;
         }
@@ -405,7 +414,62 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setViewVisibility(R.id.widget_daily_overview, View.GONE);
         views.setViewVisibility(R.id.widget_metrics_panel, veryCompact ? View.GONE : View.VISIBLE);
         views.setViewVisibility(R.id.widget_metrics_row_secondary, compactHeight ? View.GONE : View.VISIBLE);
+        boolean showHourly = largeHeight && !showTomorrow;
+        views.setViewVisibility(R.id.widget_hourly_panel, showHourly ? View.VISIBLE : View.GONE);
         views.setViewVisibility(R.id.widget_updated_at, compactHeight ? View.GONE : View.VISIBLE);
+
+        // Scale temperature font proportionally in large mode for better readability
+        float tempSizeSp = largeHeight ? 50f : 42f;
+        views.setTextViewTextSize(R.id.widget_temperature, TypedValue.COMPLEX_UNIT_SP, tempSizeSp);
+    }
+
+    private void initHourlySlotPlaceholders(RemoteViews views) {
+        int[] timeIds = {R.id.widget_hourly_time_1, R.id.widget_hourly_time_2, R.id.widget_hourly_time_3, R.id.widget_hourly_time_4};
+        int[] iconIds = {R.id.widget_hourly_icon_1, R.id.widget_hourly_icon_2, R.id.widget_hourly_icon_3, R.id.widget_hourly_icon_4};
+        int[] tempIds = {R.id.widget_hourly_temp_1, R.id.widget_hourly_temp_2, R.id.widget_hourly_temp_3, R.id.widget_hourly_temp_4};
+        int[] precipIds = {R.id.widget_hourly_precip_1, R.id.widget_hourly_precip_2, R.id.widget_hourly_precip_3, R.id.widget_hourly_precip_4};
+        for (int i = 0; i < 4; i++) {
+            views.setTextViewText(timeIds[i], "--:--");
+            views.setTextViewText(iconIds[i], "⛅");
+            views.setTextViewText(tempIds[i], "--°");
+            views.setTextViewText(precipIds[i], "--%");
+        }
+    }
+
+    private void applyHourlySlots(RemoteViews views, WidgetData data) {
+        int[] timeIds = {R.id.widget_hourly_time_1, R.id.widget_hourly_time_2, R.id.widget_hourly_time_3, R.id.widget_hourly_time_4};
+        int[] iconIds = {R.id.widget_hourly_icon_1, R.id.widget_hourly_icon_2, R.id.widget_hourly_icon_3, R.id.widget_hourly_icon_4};
+        int[] tempIds = {R.id.widget_hourly_temp_1, R.id.widget_hourly_temp_2, R.id.widget_hourly_temp_3, R.id.widget_hourly_temp_4};
+        int[] precipIds = {R.id.widget_hourly_precip_1, R.id.widget_hourly_precip_2, R.id.widget_hourly_precip_3, R.id.widget_hourly_precip_4};
+        for (int i = 0; i < 4; i++) {
+            if (data.hourlyTimes[i] != null) {
+                views.setTextViewText(timeIds[i], data.hourlyTimes[i]);
+            }
+            views.setTextViewText(iconIds[i], mapWeatherCodeToSymbol(data.hourlyCodes[i]));
+            views.setTextViewText(tempIds[i], formatTemperature(data.hourlyTemps[i]));
+            String precipText = Double.isNaN(data.hourlyPrecipProbs[i])
+                ? "--%"
+                : String.format(Locale.GERMANY, "%.0f%%", data.hourlyPrecipProbs[i]);
+            views.setTextViewText(precipIds[i], precipText);
+        }
+    }
+
+    private void fillHourlyForecast(WidgetData data, JSONObject hourly, int currentHourIndex) {
+        if (hourly == null || currentHourIndex < 0) return;
+        JSONArray times = hourly.optJSONArray("time");
+        for (int i = 0; i < 4; i++) {
+            int idx = currentHourIndex + 1 + i;
+            data.hourlyTemps[i] = readHourlyValue(hourly, "temperature_2m", idx);
+            data.hourlyCodes[i] = readHourlyIntValue(hourly, "weathercode", idx);
+            data.hourlyPrecipProbs[i] = readHourlyValue(hourly, "precipitation_probability", idx);
+            if (times != null && idx < times.length()) {
+                String raw = times.optString(idx, null);
+                if (raw != null) {
+                    int tPos = raw.lastIndexOf('T');
+                    data.hourlyTimes[i] = (tPos >= 0 && tPos + 1 < raw.length()) ? raw.substring(tPos + 1) : null;
+                }
+            }
+        }
     }
 
     private String getSelectedDay(Context context, int appWidgetId) {
@@ -459,6 +523,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
                 double liftedIndex = readHourlyValue(hourly, "lifted_index", hourlyIndex);
                 data.uvIndex = uv;
                 data.thunderRiskLabel = classifyThunderRisk(context, weatherCode, cape, liftedIndex, precipProb, data.windKmh);
+                fillHourlyForecast(data, hourly, hourlyIndex);
             }
             if (daily != null) {
                 data.maxTemperatureC = readDailyValue(daily, "temperature_2m_max");
@@ -599,6 +664,13 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         if (values == null) return Double.NaN;
         if (index < 0 || index >= values.length()) return Double.NaN;
         return values.optDouble(index, Double.NaN);
+    }
+
+    private int readHourlyIntValue(JSONObject hourly, String field, int index) {
+        if (hourly == null) return -1;
+        JSONArray values = hourly.optJSONArray(field);
+        if (values == null || index < 0 || index >= values.length()) return -1;
+        return values.optInt(index, -1);
     }
 
     private double readDouble(JSONObject object, String key) {
@@ -764,6 +836,10 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         String thunderRiskLabel;
         String tomorrowThunderRiskLabel;
         String pollenLabel;
+        double[] hourlyTemps = new double[4];
+        int[] hourlyCodes = new int[4];
+        double[] hourlyPrecipProbs = new double[4];
+        String[] hourlyTimes = new String[4];
 
         static WidgetData empty(Context context) {
             WidgetData data = new WidgetData();
@@ -786,6 +862,10 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             data.thunderRiskLabel = null;
             data.tomorrowThunderRiskLabel = null;
             data.pollenLabel = context.getString(R.string.widget_metric_unavailable);
+            java.util.Arrays.fill(data.hourlyTemps, Double.NaN);
+            java.util.Arrays.fill(data.hourlyCodes, -1);
+            java.util.Arrays.fill(data.hourlyPrecipProbs, Double.NaN);
+            java.util.Arrays.fill(data.hourlyTimes, null);
             return data;
         }
     }
