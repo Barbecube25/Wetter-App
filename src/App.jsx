@@ -4547,6 +4547,7 @@ const styles = `
   }
   
   /* --- BÄUME & STURM --- */
+  /* transform-box keeps SVG rotations bound to each element's own box instead of the scene origin */
   @keyframes windmill-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   @keyframes tree-shake-gentle { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(1deg); } }
   @keyframes tree-shake-windy { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(4deg); } }
@@ -4626,9 +4627,9 @@ const styles = `
   .anim-lightning { animation: lightning-flash 5s infinite; }
   .anim-glow { animation: sunrise-glow 4s ease-in-out infinite; }
   
-  .anim-tree-gentle { animation: tree-shake-gentle 4s ease-in-out infinite; }
-  .anim-tree-windy { animation: tree-shake-windy 1s ease-in-out infinite; }
-  .anim-tree-storm { animation: tree-shake-storm 0.8s ease-in-out infinite; }
+  .anim-tree-gentle { animation: tree-shake-gentle 4s ease-in-out infinite; transform-origin: bottom center; transform-box: fill-box; }
+  .anim-tree-windy { animation: tree-shake-windy 1s ease-in-out infinite; transform-origin: bottom center; transform-box: fill-box; }
+  .anim-tree-storm { animation: tree-shake-storm 0.8s ease-in-out infinite; transform-origin: bottom center; transform-box: fill-box; }
   .anim-windmill-calm { animation: windmill-spin 8s linear infinite; transform-origin: center; transform-box: fill-box; }
   .anim-windmill-windy { animation: windmill-spin 4s linear infinite; transform-origin: center; transform-box: fill-box; }
   .anim-windmill-storm { animation: windmill-spin 2.6s linear infinite; transform-origin: center; transform-box: fill-box; }
@@ -7753,6 +7754,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
 
   const TREE_ANCHOR_X = 10;
   const TREE_ANCHOR_Y = 20;
+  const STORM_PRECIP_TILT_DEGREES = 20;
   const STORM_PRECIP_ROTATION_CENTER_X = 180;
   const STORM_PRECIP_ROTATION_CENTER_Y = 80;
   const WINDMILL_X = 274;
@@ -7767,9 +7769,12 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   const WINDMILL_BASE_HEIGHT = 4;
   const WINDMILL_BLADE_LENGTH = 23;
   const windmillSpinClass = isStormyWind ? "anim-windmill-storm" : isWindy ? "anim-windmill-windy" : "anim-windmill-calm";
-  const rainRotation = isStormyWind ? `rotate(20 ${STORM_PRECIP_ROTATION_CENTER_X} ${STORM_PRECIP_ROTATION_CENTER_Y})` : undefined;
+  const rainRotation = isStormyWind ? `rotate(${STORM_PRECIP_TILT_DEGREES} ${STORM_PRECIP_ROTATION_CENTER_X} ${STORM_PRECIP_ROTATION_CENTER_Y})` : undefined;
   const treeAnchorStyle = { transformOrigin: `${TREE_ANCHOR_X}px ${TREE_ANCHOR_Y}px`, transformBox: 'fill-box' };
-  const buildTreeTransform = ({ x, y, scale = 1 }) => `translate(${x}, ${y})${scale !== 1 ? ` scale(${scale})` : ''}`;
+  const buildTreeTransform = ({ x, y, scale = 1 }) => [
+    `translate(${x}, ${y})`,
+    scale !== 1 ? `scale(${scale})` : null
+  ].filter(Boolean).join(' ');
   const defaultTreeSnow = {
     deciduous: [{ x: 5, y: 1, rx: 4, ry: 2 }],
     pine: [{ x: 2, y: 10, rx: 4, ry: 2 }],
@@ -8354,7 +8359,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       )}
 
       {/* --- BÄUME --- */}
-      {!['city', 'desert', 'forest'].includes(terrainType) && terrainType !== 'lakeside' && (
+      {!['city', 'desert', 'forest', 'lakeside'].includes(terrainType) && (
         <>
           {mainSceneTrees.map(renderTreeInstance)}
         </>
