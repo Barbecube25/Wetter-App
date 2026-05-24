@@ -16,6 +16,9 @@ const config: CapacitorConfig = {
       style: 'dark',
       backgroundColor: '#000000',
       overlaysWebView: true
+    },
+    LocalNotifications: {
+      iconColor: '#488AFF'
     }
   }
 };
