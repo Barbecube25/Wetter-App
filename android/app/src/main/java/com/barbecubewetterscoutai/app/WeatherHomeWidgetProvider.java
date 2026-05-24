@@ -69,6 +69,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final int ONE_ROW_WIDGET_HEIGHT_THRESHOLD_DP = 110;
     private static final int COMPACT_WIDGET_HEIGHT_THRESHOLD_DP = 165;
     private static final int LARGE_WIDGET_HEIGHT_THRESHOLD_DP = 230;
+    private static final int EXPANDED_WIDGET_HEIGHT_THRESHOLD_DP = 300;
     private static final int COMPACT_WIDGET_WIDTH_THRESHOLD_DP = 210;
 
     @Override
@@ -162,6 +163,9 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setTextViewText(R.id.widget_compact_metric_uv, context.getString(R.string.widget_compact_metric_uv_placeholder));
         views.setTextViewText(R.id.widget_compact_metric_thunder, context.getString(R.string.widget_compact_metric_thunder_placeholder));
         views.setViewVisibility(R.id.widget_metrics_row_secondary, View.VISIBLE);
+        views.setTextViewText(R.id.widget_detail_title, context.getString(R.string.widget_summary_title_today));
+        views.setTextViewText(R.id.widget_detail_primary, context.getString(R.string.widget_summary_placeholder));
+        views.setTextViewText(R.id.widget_detail_secondary, context.getString(R.string.widget_summary_placeholder));
         views.setTextViewText(R.id.widget_updated_at, context.getString(R.string.widget_updated_placeholder));
         views.setTextViewText(R.id.widget_day_today, context.getString(R.string.widget_day_today));
         views.setTextViewText(R.id.widget_day_tomorrow, context.getString(R.string.widget_day_tomorrow));
@@ -320,6 +324,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         );
 
         applyHourlySlots(views, data);
+        applySummaryPanelText(context, views, data, showTomorrow);
     }
 
     private void applyDayToggleStyle(RemoteViews views, boolean showTomorrow) {
@@ -381,8 +386,10 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             views.setViewVisibility(R.id.widget_metrics_panel, View.VISIBLE);
             views.setViewVisibility(R.id.widget_metrics_row_secondary, View.VISIBLE);
             views.setViewVisibility(R.id.widget_hourly_panel, View.GONE);
+            views.setViewVisibility(R.id.widget_hourly_row_secondary, View.GONE);
+            views.setViewVisibility(R.id.widget_detail_panel, View.GONE);
             views.setViewVisibility(R.id.widget_updated_at, View.VISIBLE);
-            views.setTextViewTextSize(R.id.widget_temperature, TypedValue.COMPLEX_UNIT_SP, 42f);
+            applyResponsiveTypography(views, false, false, false);
             return;
         }
 
@@ -391,6 +398,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         boolean oneRowHeight = minHeightDp > 0 && minHeightDp <= ONE_ROW_WIDGET_HEIGHT_THRESHOLD_DP;
         boolean compactHeight = minHeightDp > 0 && minHeightDp < COMPACT_WIDGET_HEIGHT_THRESHOLD_DP;
         boolean largeHeight = minHeightDp >= LARGE_WIDGET_HEIGHT_THRESHOLD_DP;
+        boolean expandedHeight = minHeightDp >= EXPANDED_WIDGET_HEIGHT_THRESHOLD_DP;
         boolean compactWidth = minWidthDp > 0 && minWidthDp < COMPACT_WIDGET_WIDTH_THRESHOLD_DP;
         boolean veryCompact = compactHeight && compactWidth;
 
@@ -403,6 +411,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             views.setViewVisibility(R.id.widget_metrics_panel, View.GONE);
             views.setViewVisibility(R.id.widget_metrics_row_secondary, View.GONE);
             views.setViewVisibility(R.id.widget_hourly_panel, View.GONE);
+            views.setViewVisibility(R.id.widget_hourly_row_secondary, View.GONE);
+            views.setViewVisibility(R.id.widget_detail_panel, View.GONE);
             views.setViewVisibility(R.id.widget_updated_at, View.GONE);
             return;
         }
@@ -415,20 +425,69 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setViewVisibility(R.id.widget_metrics_panel, veryCompact ? View.GONE : View.VISIBLE);
         views.setViewVisibility(R.id.widget_metrics_row_secondary, compactHeight ? View.GONE : View.VISIBLE);
         boolean showHourly = largeHeight && !showTomorrow;
+        boolean showExpandedHourly = showHourly && expandedHeight;
         views.setViewVisibility(R.id.widget_hourly_panel, showHourly ? View.VISIBLE : View.GONE);
+        views.setViewVisibility(R.id.widget_hourly_row_secondary, showExpandedHourly ? View.VISIBLE : View.GONE);
+        views.setViewVisibility(R.id.widget_detail_panel, largeHeight ? View.VISIBLE : View.GONE);
         views.setViewVisibility(R.id.widget_updated_at, compactHeight ? View.GONE : View.VISIBLE);
+        applyResponsiveTypography(views, compactHeight, largeHeight, expandedHeight);
+    }
 
-        // Scale temperature font proportionally in large mode for better readability
-        float tempSizeSp = largeHeight ? 50f : 42f;
-        views.setTextViewTextSize(R.id.widget_temperature, TypedValue.COMPLEX_UNIT_SP, tempSizeSp);
+    private void applyResponsiveTypography(RemoteViews views, boolean compactHeight, boolean largeHeight, boolean expandedHeight) {
+        float temperatureSize = expandedHeight ? 52f : (largeHeight ? 48f : (compactHeight ? 38f : 42f));
+        float conditionSize = largeHeight ? 14f : 13f;
+        float chipSize = largeHeight ? 13f : 12f;
+        float headerSize = largeHeight ? 12f : 11f;
+        float daySize = largeHeight ? 12f : 11f;
+        float detailTitleSize = largeHeight ? 12f : 11f;
+        float detailPrimarySize = largeHeight ? 12f : 11f;
+        float detailSecondarySize = largeHeight ? 11f : 10f;
+        float hourlyTimeSize = expandedHeight ? 11f : 10f;
+        float hourlyIconSize = expandedHeight ? 18f : 16f;
+        float hourlyTempSize = expandedHeight ? 13f : 12f;
+        float hourlyPrecipSize = expandedHeight ? 11f : 10f;
+        int rootPadding = largeHeight ? 12 : (compactHeight ? 8 : 10);
+        int compactRowHorizontal = compactHeight ? 6 : 8;
+        int compactRowVertical = compactHeight ? 5 : 6;
+
+        views.setViewPadding(R.id.widget_root, rootPadding, rootPadding, rootPadding, rootPadding);
+        views.setViewPadding(R.id.widget_compact_row, compactRowHorizontal, compactRowVertical, compactRowHorizontal, compactRowVertical);
+        views.setTextViewTextSize(R.id.widget_temperature, TypedValue.COMPLEX_UNIT_SP, temperatureSize);
+        views.setTextViewTextSize(R.id.widget_weather_icon, TypedValue.COMPLEX_UNIT_SP, largeHeight ? 20f : 18f);
+        views.setTextViewTextSize(R.id.widget_condition, TypedValue.COMPLEX_UNIT_SP, conditionSize);
+        views.setTextViewTextSize(R.id.widget_title, TypedValue.COMPLEX_UNIT_SP, headerSize);
+        views.setTextViewTextSize(R.id.widget_day_today, TypedValue.COMPLEX_UNIT_SP, daySize);
+        views.setTextViewTextSize(R.id.widget_day_tomorrow, TypedValue.COMPLEX_UNIT_SP, daySize);
+        views.setTextViewTextSize(R.id.widget_metric_minmax, TypedValue.COMPLEX_UNIT_SP, chipSize);
+        views.setTextViewTextSize(R.id.widget_metric_wind, TypedValue.COMPLEX_UNIT_SP, chipSize);
+        views.setTextViewTextSize(R.id.widget_metric_uv, TypedValue.COMPLEX_UNIT_SP, chipSize);
+        views.setTextViewTextSize(R.id.widget_metric_pollen, TypedValue.COMPLEX_UNIT_SP, chipSize);
+        views.setTextViewTextSize(R.id.widget_updated_at, TypedValue.COMPLEX_UNIT_SP, largeHeight ? 11f : 10f);
+        views.setTextViewTextSize(R.id.widget_compact_metric_temperature, TypedValue.COMPLEX_UNIT_SP, compactHeight ? 11f : 12f);
+        views.setTextViewTextSize(R.id.widget_compact_metric_uv, TypedValue.COMPLEX_UNIT_SP, compactHeight ? 11f : 12f);
+        views.setTextViewTextSize(R.id.widget_compact_metric_thunder, TypedValue.COMPLEX_UNIT_SP, compactHeight ? 11f : 12f);
+        views.setTextViewTextSize(R.id.widget_detail_title, TypedValue.COMPLEX_UNIT_SP, detailTitleSize);
+        views.setTextViewTextSize(R.id.widget_detail_primary, TypedValue.COMPLEX_UNIT_SP, detailPrimarySize);
+        views.setTextViewTextSize(R.id.widget_detail_secondary, TypedValue.COMPLEX_UNIT_SP, detailSecondarySize);
+
+        int[] timeIds = {R.id.widget_hourly_time_1, R.id.widget_hourly_time_2, R.id.widget_hourly_time_3, R.id.widget_hourly_time_4, R.id.widget_hourly_time_5, R.id.widget_hourly_time_6};
+        int[] iconIds = {R.id.widget_hourly_icon_1, R.id.widget_hourly_icon_2, R.id.widget_hourly_icon_3, R.id.widget_hourly_icon_4, R.id.widget_hourly_icon_5, R.id.widget_hourly_icon_6};
+        int[] tempIds = {R.id.widget_hourly_temp_1, R.id.widget_hourly_temp_2, R.id.widget_hourly_temp_3, R.id.widget_hourly_temp_4, R.id.widget_hourly_temp_5, R.id.widget_hourly_temp_6};
+        int[] precipIds = {R.id.widget_hourly_precip_1, R.id.widget_hourly_precip_2, R.id.widget_hourly_precip_3, R.id.widget_hourly_precip_4, R.id.widget_hourly_precip_5, R.id.widget_hourly_precip_6};
+        for (int i = 0; i < timeIds.length; i++) {
+            views.setTextViewTextSize(timeIds[i], TypedValue.COMPLEX_UNIT_SP, hourlyTimeSize);
+            views.setTextViewTextSize(iconIds[i], TypedValue.COMPLEX_UNIT_SP, hourlyIconSize);
+            views.setTextViewTextSize(tempIds[i], TypedValue.COMPLEX_UNIT_SP, hourlyTempSize);
+            views.setTextViewTextSize(precipIds[i], TypedValue.COMPLEX_UNIT_SP, hourlyPrecipSize);
+        }
     }
 
     private void initHourlySlotPlaceholders(RemoteViews views) {
-        int[] timeIds = {R.id.widget_hourly_time_1, R.id.widget_hourly_time_2, R.id.widget_hourly_time_3, R.id.widget_hourly_time_4};
-        int[] iconIds = {R.id.widget_hourly_icon_1, R.id.widget_hourly_icon_2, R.id.widget_hourly_icon_3, R.id.widget_hourly_icon_4};
-        int[] tempIds = {R.id.widget_hourly_temp_1, R.id.widget_hourly_temp_2, R.id.widget_hourly_temp_3, R.id.widget_hourly_temp_4};
-        int[] precipIds = {R.id.widget_hourly_precip_1, R.id.widget_hourly_precip_2, R.id.widget_hourly_precip_3, R.id.widget_hourly_precip_4};
-        for (int i = 0; i < 4; i++) {
+        int[] timeIds = {R.id.widget_hourly_time_1, R.id.widget_hourly_time_2, R.id.widget_hourly_time_3, R.id.widget_hourly_time_4, R.id.widget_hourly_time_5, R.id.widget_hourly_time_6};
+        int[] iconIds = {R.id.widget_hourly_icon_1, R.id.widget_hourly_icon_2, R.id.widget_hourly_icon_3, R.id.widget_hourly_icon_4, R.id.widget_hourly_icon_5, R.id.widget_hourly_icon_6};
+        int[] tempIds = {R.id.widget_hourly_temp_1, R.id.widget_hourly_temp_2, R.id.widget_hourly_temp_3, R.id.widget_hourly_temp_4, R.id.widget_hourly_temp_5, R.id.widget_hourly_temp_6};
+        int[] precipIds = {R.id.widget_hourly_precip_1, R.id.widget_hourly_precip_2, R.id.widget_hourly_precip_3, R.id.widget_hourly_precip_4, R.id.widget_hourly_precip_5, R.id.widget_hourly_precip_6};
+        for (int i = 0; i < timeIds.length; i++) {
             views.setTextViewText(timeIds[i], "--:--");
             views.setTextViewText(iconIds[i], "⛅");
             views.setTextViewText(tempIds[i], "--°");
@@ -437,11 +496,11 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     }
 
     private void applyHourlySlots(RemoteViews views, WidgetData data) {
-        int[] timeIds = {R.id.widget_hourly_time_1, R.id.widget_hourly_time_2, R.id.widget_hourly_time_3, R.id.widget_hourly_time_4};
-        int[] iconIds = {R.id.widget_hourly_icon_1, R.id.widget_hourly_icon_2, R.id.widget_hourly_icon_3, R.id.widget_hourly_icon_4};
-        int[] tempIds = {R.id.widget_hourly_temp_1, R.id.widget_hourly_temp_2, R.id.widget_hourly_temp_3, R.id.widget_hourly_temp_4};
-        int[] precipIds = {R.id.widget_hourly_precip_1, R.id.widget_hourly_precip_2, R.id.widget_hourly_precip_3, R.id.widget_hourly_precip_4};
-        for (int i = 0; i < 4; i++) {
+        int[] timeIds = {R.id.widget_hourly_time_1, R.id.widget_hourly_time_2, R.id.widget_hourly_time_3, R.id.widget_hourly_time_4, R.id.widget_hourly_time_5, R.id.widget_hourly_time_6};
+        int[] iconIds = {R.id.widget_hourly_icon_1, R.id.widget_hourly_icon_2, R.id.widget_hourly_icon_3, R.id.widget_hourly_icon_4, R.id.widget_hourly_icon_5, R.id.widget_hourly_icon_6};
+        int[] tempIds = {R.id.widget_hourly_temp_1, R.id.widget_hourly_temp_2, R.id.widget_hourly_temp_3, R.id.widget_hourly_temp_4, R.id.widget_hourly_temp_5, R.id.widget_hourly_temp_6};
+        int[] precipIds = {R.id.widget_hourly_precip_1, R.id.widget_hourly_precip_2, R.id.widget_hourly_precip_3, R.id.widget_hourly_precip_4, R.id.widget_hourly_precip_5, R.id.widget_hourly_precip_6};
+        for (int i = 0; i < timeIds.length; i++) {
             if (data.hourlyTimes[i] != null) {
                 views.setTextViewText(timeIds[i], data.hourlyTimes[i]);
             }
@@ -457,7 +516,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private void fillHourlyForecast(WidgetData data, JSONObject hourly, int currentHourIndex) {
         if (hourly == null || currentHourIndex < 0) return;
         JSONArray times = hourly.optJSONArray("time");
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < data.hourlyTemps.length; i++) {
             int idx = currentHourIndex + 1 + i;
             data.hourlyTemps[i] = readHourlyValue(hourly, "temperature_2m", idx);
             data.hourlyCodes[i] = readHourlyIntValue(hourly, "weathercode", idx);
@@ -470,6 +529,54 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
                 }
             }
         }
+    }
+
+    private void applySummaryPanelText(Context context, RemoteViews views, WidgetData data, boolean showTomorrow) {
+        if (showTomorrow) {
+            views.setTextViewText(R.id.widget_detail_title, context.getString(R.string.widget_summary_title_tomorrow));
+            views.setTextViewText(
+                R.id.widget_detail_primary,
+                context.getString(
+                    R.string.widget_summary_tomorrow_primary_format,
+                    safeText(data.tomorrowWeatherLabel),
+                    formatTemperature(data.tomorrowMinTemperatureC),
+                    formatTemperature(data.tomorrowMaxTemperatureC)
+                )
+            );
+            views.setTextViewText(
+                R.id.widget_detail_secondary,
+                context.getString(
+                    R.string.widget_summary_tomorrow_secondary_format,
+                    formatMetricNumber(data.tomorrowRainRate),
+                    formatMetricNumber(data.tomorrowWindKmh),
+                    formatMetricNumber(data.tomorrowUvIndex)
+                )
+            );
+            return;
+        }
+
+        String thunderRisk = data.thunderRiskLabel == null
+            ? context.getString(R.string.widget_metric_unavailable)
+            : data.thunderRiskLabel;
+        views.setTextViewText(R.id.widget_detail_title, context.getString(R.string.widget_summary_title_today));
+        views.setTextViewText(
+            R.id.widget_detail_primary,
+            context.getString(
+                R.string.widget_summary_today_primary_format,
+                safeText(data.weatherLabel),
+                formatTemperature(data.feelsLikeC),
+                safeText(data.pollenLabel)
+            )
+        );
+        views.setTextViewText(
+            R.id.widget_detail_secondary,
+            context.getString(
+                R.string.widget_summary_today_secondary_format,
+                formatMetricNumber(data.rainRate),
+                formatMetricNumber(data.windKmh),
+                thunderRisk
+            )
+        );
     }
 
     private String getSelectedDay(Context context, int appWidgetId) {
@@ -788,6 +895,13 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         return String.format(Locale.GERMANY, "%.1f", value);
     }
 
+    private String safeText(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return UNAVAILABLE;
+        }
+        return value;
+    }
+
     private String httpGet(String urlString) throws Exception {
         HttpURLConnection connection = null;
         BufferedReader reader = null;
@@ -836,10 +950,10 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         String thunderRiskLabel;
         String tomorrowThunderRiskLabel;
         String pollenLabel;
-        double[] hourlyTemps = new double[4];
-        int[] hourlyCodes = new int[4];
-        double[] hourlyPrecipProbs = new double[4];
-        String[] hourlyTimes = new String[4];
+        double[] hourlyTemps = new double[6];
+        int[] hourlyCodes = new int[6];
+        double[] hourlyPrecipProbs = new double[6];
+        String[] hourlyTimes = new String[6];
 
         static WidgetData empty(Context context) {
             WidgetData data = new WidgetData();

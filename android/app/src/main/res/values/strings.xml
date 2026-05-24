@@ -37,6 +37,13 @@
     <string name="widget_compact_metric_temperature_format">%1$s %2$s</string>
     <string name="widget_compact_metric_uv_format">UV %1$s</string>
     <string name="widget_compact_metric_thunder_format">⛈ %1$s</string>
+    <string name="widget_summary_title_today">Kurztrend</string>
+    <string name="widget_summary_title_tomorrow">Tagesausblick</string>
+    <string name="widget_summary_placeholder">--</string>
+    <string name="widget_summary_today_primary_format">%1$s • Gefühlt %2$s • Pollen %3$s</string>
+    <string name="widget_summary_today_secondary_format">Regen %1$s mm • Wind %2$s km/h • Gewitter %3$s</string>
+    <string name="widget_summary_tomorrow_primary_format">%1$s • ↓ %2$s / ↑ %3$s</string>
+    <string name="widget_summary_tomorrow_secondary_format">Regen %1$s mm • Wind %2$s km/h • UV %3$s</string>
     <string name="widget_weather_clear">Klar</string>
     <string name="widget_weather_partly_cloudy">Leicht bewölkt</string>
     <string name="widget_weather_cloudy">Bedeckt</string>
