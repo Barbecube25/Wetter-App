@@ -249,7 +249,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_day_tomorrow, tomorrowPendingIntent);
 
         applyDayToggleStyle(views, DAY_TOMORROW.equals(selectedDay));
-        applyResponsiveLayout(views, widgetOptions, DAY_TOMORROW.equals(selectedDay));
+        applyResponsiveLayout(context, views, widgetOptions, DAY_TOMORROW.equals(selectedDay));
         return views;
     }
 
@@ -407,7 +407,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setInt(R.id.widget_metric_pollen, "setTextColor", textColor);
     }
 
-    private void applyResponsiveLayout(RemoteViews views, Bundle widgetOptions, boolean showTomorrow) {
+    private void applyResponsiveLayout(Context context, RemoteViews views, Bundle widgetOptions, boolean showTomorrow) {
         if (widgetOptions == null) {
             views.setViewVisibility(R.id.widget_compact_row, View.GONE);
             views.setViewVisibility(R.id.widget_header_row, View.VISIBLE);
@@ -420,7 +420,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             views.setViewVisibility(R.id.widget_hourly_row_secondary, View.GONE);
             views.setViewVisibility(R.id.widget_detail_panel, View.GONE);
             views.setViewVisibility(R.id.widget_updated_at, View.VISIBLE);
-            applyResponsiveTypography(views, false, false, false);
+            applyResponsiveTypography(context, views, false, false, false);
             return;
         }
 
@@ -461,10 +461,10 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setViewVisibility(R.id.widget_hourly_row_secondary, showExpandedHourly ? View.VISIBLE : View.GONE);
         views.setViewVisibility(R.id.widget_detail_panel, largeHeight ? View.VISIBLE : View.GONE);
         views.setViewVisibility(R.id.widget_updated_at, compactHeight ? View.GONE : View.VISIBLE);
-        applyResponsiveTypography(views, compactHeight, largeHeight, expandedHeight);
+        applyResponsiveTypography(context, views, compactHeight, largeHeight, expandedHeight);
     }
 
-    private void applyResponsiveTypography(RemoteViews views, boolean compactHeight, boolean largeHeight, boolean expandedHeight) {
+    private void applyResponsiveTypography(Context context, RemoteViews views, boolean compactHeight, boolean largeHeight, boolean expandedHeight) {
         float temperatureSize = expandedHeight
             ? TEMPERATURE_SIZE_EXPANDED_SP
             : (largeHeight ? TEMPERATURE_SIZE_LARGE_SP : (compactHeight ? TEMPERATURE_SIZE_COMPACT_SP : TEMPERATURE_SIZE_DEFAULT_SP));
@@ -476,12 +476,12 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         float hourlyTimeSize = expandedHeight ? HOURLY_TIME_SIZE_EXPANDED_SP : HOURLY_TIME_SIZE_DEFAULT_SP;
         float hourlyIconSize = expandedHeight ? HOURLY_ICON_SIZE_EXPANDED_SP : HOURLY_ICON_SIZE_DEFAULT_SP;
         float hourlyTempSize = expandedHeight ? HOURLY_TEMP_SIZE_EXPANDED_SP : HOURLY_TEMP_SIZE_DEFAULT_SP;
-        int rootPadding = largeHeight ? ROOT_PADDING_LARGE_DP : (compactHeight ? ROOT_PADDING_COMPACT_DP : ROOT_PADDING_DEFAULT_DP);
-        int compactRowHorizontal = compactHeight ? COMPACT_ROW_PADDING_HORIZONTAL_COMPACT_DP : COMPACT_ROW_PADDING_HORIZONTAL_DP;
-        int compactRowVertical = compactHeight ? COMPACT_ROW_PADDING_VERTICAL_COMPACT_DP : COMPACT_ROW_PADDING_VERTICAL_DP;
+        int rootPaddingPx = dpToPx(context, largeHeight ? ROOT_PADDING_LARGE_DP : (compactHeight ? ROOT_PADDING_COMPACT_DP : ROOT_PADDING_DEFAULT_DP));
+        int compactRowHorizontalPx = dpToPx(context, compactHeight ? COMPACT_ROW_PADDING_HORIZONTAL_COMPACT_DP : COMPACT_ROW_PADDING_HORIZONTAL_DP);
+        int compactRowVerticalPx = dpToPx(context, compactHeight ? COMPACT_ROW_PADDING_VERTICAL_COMPACT_DP : COMPACT_ROW_PADDING_VERTICAL_DP);
 
-        views.setViewPadding(R.id.widget_root, rootPadding, rootPadding, rootPadding, rootPadding);
-        views.setViewPadding(R.id.widget_compact_row, compactRowHorizontal, compactRowVertical, compactRowHorizontal, compactRowVertical);
+        views.setViewPadding(R.id.widget_root, rootPaddingPx, rootPaddingPx, rootPaddingPx, rootPaddingPx);
+        views.setViewPadding(R.id.widget_compact_row, compactRowHorizontalPx, compactRowVerticalPx, compactRowHorizontalPx, compactRowVerticalPx);
         views.setTextViewTextSize(R.id.widget_temperature, TypedValue.COMPLEX_UNIT_SP, temperatureSize);
         views.setTextViewTextSize(R.id.widget_weather_icon, TypedValue.COMPLEX_UNIT_SP, largeHeight ? WEATHER_ICON_SIZE_LARGE_SP : WEATHER_ICON_SIZE_DEFAULT_SP);
         views.setTextViewTextSize(R.id.widget_condition, TypedValue.COMPLEX_UNIT_SP, conditionSize);
@@ -510,6 +510,10 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             views.setTextViewTextSize(tempIds[i], TypedValue.COMPLEX_UNIT_SP, hourlyTempSize);
             views.setTextViewTextSize(precipIds[i], TypedValue.COMPLEX_UNIT_SP, hourlyTimeSize);
         }
+    }
+
+    private int dpToPx(Context context, int dp) {
+        return Math.round(dp * context.getResources().getDisplayMetrics().density);
     }
 
     private void initHourlySlotPlaceholders(RemoteViews views) {
