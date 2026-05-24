@@ -7751,9 +7751,24 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   if (isStormyWind) treeAnim = "anim-tree-storm";
   else if (isWindy) treeAnim = "anim-tree-windy";
 
+  const TREE_ANCHOR_X = 10;
+  const TREE_ANCHOR_Y = 20;
+  const STORM_PRECIP_ROTATION_CENTER_X = 180;
+  const STORM_PRECIP_ROTATION_CENTER_Y = 80;
+  const WINDMILL_X = 274;
+  const WINDMILL_Y = 74;
+  const WINDMILL_HUB_X = 14;
+  const WINDMILL_HUB_Y = 22;
+  const WINDMILL_TOWER_LEFT_X = 8;
+  const WINDMILL_TOWER_RIGHT_X = 20;
+  const WINDMILL_TOWER_BASE_Y = 78;
+  const WINDMILL_BASE_X = 11.5;
+  const WINDMILL_BASE_WIDTH = 5;
+  const WINDMILL_BASE_HEIGHT = 4;
+  const WINDMILL_BLADE_LENGTH = 23;
   const windmillSpinClass = isStormyWind ? "anim-windmill-storm" : isWindy ? "anim-windmill-windy" : "anim-windmill-calm";
-  const rainRotation = isStormyWind ? "rotate(20 180 80)" : undefined;
-  const treeAnchorStyle = { transformOrigin: '10px 20px', transformBox: 'fill-box' };
+  const rainRotation = isStormyWind ? `rotate(20 ${STORM_PRECIP_ROTATION_CENTER_X} ${STORM_PRECIP_ROTATION_CENTER_Y})` : undefined;
+  const treeAnchorStyle = { transformOrigin: `${TREE_ANCHOR_X}px ${TREE_ANCHOR_Y}px`, transformBox: 'fill-box' };
   const buildTreeTransform = ({ x, y, scale = 1 }) => `translate(${x}, ${y})${scale !== 1 ? ` scale(${scale})` : ''}`;
   const defaultTreeSnow = {
     deciduous: [{ x: 5, y: 1, rx: 4, ry: 2 }],
@@ -8263,16 +8278,16 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
 
       {/* Flatland: Windmill */}
       {terrainType === 'flatland' && (
-        <g transform="translate(274, 74)">
+        <g transform={`translate(${WINDMILL_X}, ${WINDMILL_Y})`}>
           {/* Windmill tower */}
-          <path d="M14 22 L20 78 L8 78 Z" fill={isNight ? "#57534e" : "#78350f"} />
-          <rect x="11.5" y="78" width="5" height="4" fill={isNight ? "#44403c" : "#92400e"} />
+          <path d={`M${WINDMILL_HUB_X} ${WINDMILL_HUB_Y} L${WINDMILL_TOWER_RIGHT_X} ${WINDMILL_TOWER_BASE_Y} L${WINDMILL_TOWER_LEFT_X} ${WINDMILL_TOWER_BASE_Y} Z`} fill={isNight ? "#57534e" : "#78350f"} />
+          <rect x={WINDMILL_BASE_X} y={WINDMILL_TOWER_BASE_Y} width={WINDMILL_BASE_WIDTH} height={WINDMILL_BASE_HEIGHT} fill={isNight ? "#44403c" : "#92400e"} />
           {/* Windmill blades */}
-          <g transform="translate(14, 22)" className={windmillSpinClass}>
+          <g transform={`translate(${WINDMILL_HUB_X}, ${WINDMILL_HUB_Y})`} className={windmillSpinClass}>
             {[0, 90, 180, 270].map((rotation) => (
               <path
                 key={rotation}
-                d="M0 0 L3.5 -1.8 L23 0 L3.5 1.8 Z"
+                d={`M0 0 L3.5 -1.8 L${WINDMILL_BLADE_LENGTH} 0 L3.5 1.8 Z`}
                 fill={isNight ? "#e2e8f0" : "white"}
                 opacity="0.95"
                 transform={`rotate(${rotation})`}
@@ -8280,7 +8295,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
             ))}
           </g>
           {/* Windmill center */}
-          <circle cx="14" cy="22" r="2.4" fill={isNight ? "#57534e" : "#92400e"} />
+          <circle cx={WINDMILL_HUB_X} cy={WINDMILL_HUB_Y} r="2.4" fill={isNight ? "#57534e" : "#92400e"} />
         </g>
       )}
 
