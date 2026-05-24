@@ -4547,7 +4547,8 @@ const styles = `
   }
   
   /* --- BÄUME & STURM --- */
-  /* WICHTIG: transform-box: fill-box sorgt dafür, dass sich der Baum um sich selbst dreht */
+  /* transform-box keeps SVG rotations bound to each element's own box instead of the scene origin */
+  @keyframes windmill-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   @keyframes tree-shake-gentle { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(1deg); } }
   @keyframes tree-shake-windy { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(4deg); } }
   @keyframes tree-shake-storm { 0%, 100% { transform: rotate(-5deg); } 20% { transform: rotate(10deg); } 40% { transform: rotate(-8deg); } 60% { transform: rotate(5deg); } }
@@ -4629,6 +4630,9 @@ const styles = `
   .anim-tree-gentle { animation: tree-shake-gentle 4s ease-in-out infinite; transform-origin: bottom center; transform-box: fill-box; }
   .anim-tree-windy { animation: tree-shake-windy 1s ease-in-out infinite; transform-origin: bottom center; transform-box: fill-box; }
   .anim-tree-storm { animation: tree-shake-storm 0.8s ease-in-out infinite; transform-origin: bottom center; transform-box: fill-box; }
+  .anim-windmill-calm { animation: windmill-spin 8s linear infinite; transform-origin: center; transform-box: fill-box; }
+  .anim-windmill-windy { animation: windmill-spin 4s linear infinite; transform-origin: center; transform-box: fill-box; }
+  .anim-windmill-storm { animation: windmill-spin 2.6s linear infinite; transform-origin: center; transform-box: fill-box; }
   
   .anim-heat { animation: heat-shimmer 2s infinite linear; }
   .anim-sparkle { animation: ice-sparkle 3s infinite ease-in-out; }
@@ -7748,7 +7752,77 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   if (isStormyWind) treeAnim = "anim-tree-storm";
   else if (isWindy) treeAnim = "anim-tree-windy";
 
-  const rainRotation = isStormyWind ? "rotate(20)" : "rotate(0)";
+  const TREE_ANCHOR_X = 10;
+  const TREE_ANCHOR_Y = 20;
+  const STORM_PRECIP_TILT_DEGREES = 20;
+  const STORM_PRECIP_ROTATION_CENTER_X = 180;
+  const STORM_PRECIP_ROTATION_CENTER_Y = 80;
+  const WINDMILL_X = 274;
+  const WINDMILL_Y = 74;
+  const WINDMILL_HUB_X = 14;
+  const WINDMILL_HUB_Y = 22;
+  const WINDMILL_TOWER_LEFT_X = 8;
+  const WINDMILL_TOWER_RIGHT_X = 20;
+  const WINDMILL_TOWER_BASE_Y = 78;
+  const WINDMILL_BASE_X = 11.5;
+  const WINDMILL_BASE_WIDTH = 5;
+  const WINDMILL_BASE_HEIGHT = 4;
+  const WINDMILL_BLADE_LENGTH = 23;
+  const windmillSpinClass = isStormyWind ? "anim-windmill-storm" : isWindy ? "anim-windmill-windy" : "anim-windmill-calm";
+  const rainRotation = isStormyWind ? `rotate(${STORM_PRECIP_TILT_DEGREES} ${STORM_PRECIP_ROTATION_CENTER_X} ${STORM_PRECIP_ROTATION_CENTER_Y})` : undefined;
+  const treeAnchorStyle = { transformOrigin: `${TREE_ANCHOR_X}px ${TREE_ANCHOR_Y}px`, transformBox: 'fill-box' };
+  const buildTreeTransform = ({ x, y, scale = 1 }) => [
+    `translate(${x}, ${y})`,
+    scale !== 1 ? `scale(${scale})` : null
+  ].filter(Boolean).join(' ');
+  const defaultTreeSnow = {
+    deciduous: [{ x: 5, y: 1, rx: 4, ry: 2 }],
+    pine: [{ x: 2, y: 10, rx: 4, ry: 2 }],
+    cypress: [{ x: 6.2, y: 6, rx: 3, ry: 1.5 }]
+  };
+  const mainSceneTrees = [
+    { key: 'left-deciduous', x: 40, y: 125, species: 'deciduous', ornaments: [{ x: 2, y: -8, r: 2, fill: '#dc2626' }, { x: 8, y: -7, r: 2, fill: '#eab308' }] },
+    { key: 'right-pine', x: 280, y: 136, scale: 0.9, species: 'pine', delay: '0.5s', ornaments: [{ x: 3, y: 3, r: 2, fill: '#eab308' }, { x: 7.5, y: 1, r: 2, fill: '#dc2626' }] },
+    { key: 'right-cypress', x: 320, y: 136, scale: 0.8, species: 'cypress', delay: '0.7s' },
+    { key: 'mid-pine', x: 100, y: 132, scale: 0.7, species: 'pine', delay: '0.3s', ornaments: [{ x: 0.5, y: 3, r: 2, fill: '#dc2626' }, { x: 7.5, y: 2, r: 2, fill: '#3b82f6' }] },
+    { key: 'house-deciduous', x: 230, y: 131, scale: 0.75, species: 'deciduous', delay: '0.4s' },
+    { key: 'left-cypress', x: 70, y: 136, scale: 0.65, species: 'cypress', delay: '0.6s' }
+  ];
+  const lakesideTrees = [
+    { key: 'lake-pine', x: 40, y: 127, species: 'pine' },
+    { key: 'lake-deciduous', x: 90, y: 132, scale: 0.85, species: 'deciduous', delay: '0.4s' }
+  ];
+  const activeTreeInstances = terrainType === 'lakeside'
+    ? lakesideTrees
+    : !['city', 'desert', 'forest'].includes(terrainType)
+      ? mainSceneTrees
+      : [];
+  const renderTreeInstance = (tree) => (
+    <g key={tree.key} transform={buildTreeTransform(tree)}>
+      {renderTreeSpecies(tree.species, tree.delay)}
+    </g>
+  );
+  const renderTreeSnowOverlay = (tree) => {
+    const snowCaps = tree.snowCaps || defaultTreeSnow[tree.species];
+    if (!snowCaps?.length) return null;
+    return (
+      <g key={`${tree.key}-snow`} transform={buildTreeTransform(tree)}>
+        {snowCaps.map((cap, index) => (
+          <ellipse key={index} cx={cap.x} cy={cap.y} rx={cap.rx} ry={cap.ry} fill="white" opacity="0.8" />
+        ))}
+      </g>
+    );
+  };
+  const renderTreeOrnaments = (tree) => {
+    if (!tree.ornaments?.length) return null;
+    return (
+      <g key={`${tree.key}-ornaments`} transform={buildTreeTransform(tree)}>
+        {tree.ornaments.map((ornament, index) => (
+          <circle key={index} cx={ornament.x} cy={ornament.y} r={ornament.r} fill={ornament.fill} />
+        ))}
+      </g>
+    );
+  };
 
   // Reusable bare branches element for winter deciduous trees
   const bareBranches = (
@@ -7763,7 +7837,7 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
   );
 
   const renderTreeSpecies = (species = 'deciduous', animationDelay) => {
-    const animStyle = animationDelay ? { animationDelay } : undefined;
+    const animStyle = animationDelay ? { ...treeAnchorStyle, animationDelay } : treeAnchorStyle;
 
     if (species === 'pine') {
       return (
@@ -8209,18 +8283,24 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
 
       {/* Flatland: Windmill */}
       {terrainType === 'flatland' && (
-        <g transform="translate(300, 80)">
+        <g transform={`translate(${WINDMILL_X}, ${WINDMILL_Y})`}>
           {/* Windmill tower */}
-          <path d="M15 20 L18 80 L12 80 Z" fill={isNight ? "#57534e" : "#78350f"} />
+          <path d={`M${WINDMILL_HUB_X} ${WINDMILL_HUB_Y} L${WINDMILL_TOWER_RIGHT_X} ${WINDMILL_TOWER_BASE_Y} L${WINDMILL_TOWER_LEFT_X} ${WINDMILL_TOWER_BASE_Y} Z`} fill={isNight ? "#57534e" : "#78350f"} />
+          <rect x={WINDMILL_BASE_X} y={WINDMILL_TOWER_BASE_Y} width={WINDMILL_BASE_WIDTH} height={WINDMILL_BASE_HEIGHT} fill={isNight ? "#44403c" : "#92400e"} />
           {/* Windmill blades */}
-          <g transform="translate(15, 20)" className={isWindy ? "animate-spin" : "animate-spin-slow"}>
-            <rect x="-1" y="-15" width="2" height="15" fill={isNight ? "#e2e8f0" : "white"} />
-            <rect x="-1" y="0" width="2" height="15" fill={isNight ? "#e2e8f0" : "white"} />
-            <rect x="-15" y="-1" width="15" height="2" fill={isNight ? "#e2e8f0" : "white"} />
-            <rect x="0" y="-1" width="15" height="2" fill={isNight ? "#e2e8f0" : "white"} />
+          <g transform={`translate(${WINDMILL_HUB_X}, ${WINDMILL_HUB_Y})`} className={windmillSpinClass}>
+            {[0, 90, 180, 270].map((rotation) => (
+              <path
+                key={rotation}
+                d={`M0 0 L3.5 -1.8 L${WINDMILL_BLADE_LENGTH} 0 L3.5 1.8 Z`}
+                fill={isNight ? "#e2e8f0" : "white"}
+                opacity="0.95"
+                transform={`rotate(${rotation})`}
+              />
+            ))}
           </g>
           {/* Windmill center */}
-          <circle cx="15" cy="20" r="2" fill={isNight ? "#57534e" : "#92400e"} />
+          <circle cx={WINDMILL_HUB_X} cy={WINDMILL_HUB_Y} r="2.4" fill={isNight ? "#57534e" : "#92400e"} />
         </g>
       )}
 
@@ -8279,54 +8359,16 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       )}
 
       {/* --- BÄUME --- */}
-      {/* Show trees for most terrains, but not for city, desert, or lakeside */}
-      {!['city', 'desert', 'lakeside', 'forest'].includes(terrainType) && (
+      {!['city', 'desert', 'forest', 'lakeside'].includes(terrainType) && (
         <>
-          {/* Baum Links - Rand (Laubbaum) */}
-          <g transform="translate(40, 120)">
-            {renderTreeSpecies('deciduous')}
-          </g>
-
-          {/* Baumgruppe Rechts (Nadelbaum) */}
-          <g transform="translate(280, 135) scale(0.9)">
-            {renderTreeSpecies('pine', '0.5s')}
-          </g>
-          
-          {/* Baum Rechts - Rand (Zypresse) */}
-          <g transform="translate(320, 134) scale(0.8)">
-            {renderTreeSpecies('cypress', '0.7s')}
-          </g>
-
-          {/* Zusätzliche Bäume auf der Wiese */}
-          
-          {/* Kleiner Baum zwischen Links und Haus (Nadelbaum) */}
-          <g transform="translate(100, 130) scale(0.7)">
-            {renderTreeSpecies('pine', '0.3s')}
-          </g>
-
-          {/* Kleiner Baum rechts vom Haus (Laubbaum) */}
-          <g transform="translate(230, 128) scale(0.75)">
-            {renderTreeSpecies('deciduous', '0.4s')}
-          </g>
-
-          {/* Zusätzlicher kleiner Baum links (Zypresse) */}
-          <g transform="translate(70, 135) scale(0.65)">
-            {renderTreeSpecies('cypress', '0.6s')}
-          </g>
+          {mainSceneTrees.map(renderTreeInstance)}
         </>
       )}
 
       {/* Lakeside: Just a few trees, not as many */}
       {terrainType === 'lakeside' && (
         <>
-          {/* Single tree on left (Nadelbaum) */}
-          <g transform="translate(40, 125)">
-            {renderTreeSpecies('pine')}
-          </g>
-          {/* Single tree on right (Laubbaum) */}
-          <g transform="translate(90, 130) scale(0.85)">
-            {renderTreeSpecies('deciduous', '0.4s')}
-          </g>
+          {lakesideTrees.map(renderTreeInstance)}
         </>
       )}
 
@@ -8604,24 +8646,14 @@ const WeatherLandscape = ({ code, isDay, date, temp, sunrise, sunset, windSpeed,
       {/* Winter - Bare deciduous trees (already handled by treeLeaf color) */}
       {season === 'winter' && (isSnow || isDeepFreeze) && (
          <g>
-            {/* Snow on tree branches */}
-            <ellipse cx="45" cy="120" rx="4" ry="2" fill="white" opacity="0.8" />
-            <ellipse cx="102" cy="129" rx="4" ry="2" fill="white" opacity="0.8" />
-            <ellipse cx="285" cy="134" rx="4" ry="2" fill="white" opacity="0.8" />
-            <ellipse cx="325" cy="126" rx="3" ry="1.5" fill="white" opacity="0.8" />
+            {activeTreeInstances.map(renderTreeSnowOverlay)}
          </g>
       )}
 
       {/* Christmas Decorations */}
       {event === 'christmas' && (
          <g>
-            {/* Ornaments on trees */}
-            <circle cx="42" cy="112" r="2" fill="#dc2626" />
-            <circle cx="48" cy="113" r="2" fill="#eab308" />
-            <circle cx="99" cy="125" r="2" fill="#dc2626" />
-            <circle cx="105" cy="124" r="2" fill="#3b82f6" />
-            <circle cx="283" cy="129" r="2" fill="#eab308" />
-            <circle cx="287" cy="127" r="2" fill="#dc2626" />
+            {activeTreeInstances.map(renderTreeOrnaments)}
          </g>
       )}
 
