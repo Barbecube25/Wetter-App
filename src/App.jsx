@@ -5276,17 +5276,16 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     
     let parts = [intro];
     if (stationCurrent?.hasAnyStationData) {
+      parts.push(
+        lang === 'en'
+          ? '🏠 Selected live metrics are taken directly from your personal weather station.'
+          : '🏠 Ausgewählte Live-Messwerte stammen direkt von deiner eigenen Wetterstation.'
+      );
       if (stationCurrent.hasTemperature && hasStationMetricValue(stationCurrent.temp)) {
         parts.push(
           lang === 'en'
             ? `🏠 Your personal weather station currently measures ${Math.round(stationCurrent.temp)}°.`
             : `🏠 Deine Station misst aktuell ${Math.round(stationCurrent.temp)}°.`
-        );
-      } else {
-        parts.push(
-          lang === 'en'
-            ? '🏠 Current live values are taken directly from your personal weather station.'
-            : '🏠 Aktuelle Live-Werte stammen direkt von deiner eigenen Wetterstation.'
         );
       }
     }
@@ -16144,7 +16143,7 @@ export default function WeatherApp() {
   const cardBg = isRealNight ? 'bg-m3-dark-surface-container/90 border-m3-outline-variant/70 text-m3-dark-on-surface' : 'bg-m3-surface-container/80 border-m3-outline-variant/40 text-m3-on-surface';
   const tileBg = isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/50 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant';
   const windColorClass = getWindColorClass(current.wind || 0, isRealNight);
-  const isStationMetricActive = (capabilityKey) => Boolean(stationLiveData && stationCapabilities?.[capabilityKey]);
+  const isStationCapabilityActive = (capabilityKey) => Boolean(stationLiveData && stationCapabilities?.[capabilityKey]);
   const renderStationBadge = (isActive) => isActive ? (
     <span
       className={`inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold border ${
@@ -16253,19 +16252,26 @@ export default function WeatherApp() {
   const effectiveTerrain = demoTerrain || (currentLocIdx === 0 ? settings.homeTerrain : null);
 
   // Create a 3-day forecast: rest of today, tomorrow, and day after tomorrow
-    const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, {
-      pollenData: airQualityData,
-      pollenFilter: settings.pollenFilter,
-      dwdPollenForecast,
-      astronomy: astronomyForecast,
-      stationCurrent: stationLiveData && settings?.personalStation?.provider
-        ? {
-            ...stationLiveData,
-            ...stationCapabilities,
-            hasAnyStationData: Object.values(stationCapabilities).some(Boolean),
-          }
-        : null,
-    }), [processedShort, lang, airQualityData, settings.pollenFilter, dwdPollenForecast, astronomyForecast, stationLiveData, stationCapabilities, settings?.personalStation?.provider]);
+  const hasAnyStationData = stationCapabilities.hasTemperature
+    || stationCapabilities.hasHumidity
+    || stationCapabilities.hasPressure
+    || stationCapabilities.hasWind
+    || stationCapabilities.hasRain
+    || stationCapabilities.hasUv;
+
+  const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, {
+    pollenData: airQualityData,
+    pollenFilter: settings.pollenFilter,
+    dwdPollenForecast,
+    astronomy: astronomyForecast,
+    stationCurrent: stationLiveData && settings?.personalStation?.provider
+      ? {
+          ...stationLiveData,
+          ...stationCapabilities,
+          hasAnyStationData,
+        }
+      : null,
+  }), [processedShort, lang, airQualityData, settings.pollenFilter, dwdPollenForecast, astronomyForecast, stationLiveData, stationCapabilities, hasAnyStationData, settings?.personalStation?.provider]);
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter, astronomy: astronomyForecast }), [processedLong, lang, airQualityData, settings.pollenFilter, astronomyForecast]);
 
@@ -16529,7 +16535,7 @@ export default function WeatherApp() {
           <div className="absolute bottom-8 left-0 right-0 text-center text-white pointer-events-none" style={{textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5)'}}>
               <div className="text-4xl font-bold flex items-center justify-center gap-2">
                 <span>{formatTemp(current.temp)}{getTempUnitSymbol()}</span>
-                {renderStationBadge(isStationMetricActive('hasTemperature'))}
+                {renderStationBadge(isStationCapabilityActive('hasTemperature'))}
               </div>
               <div className="text-sm opacity-70 mb-1">{t('dewPoint')}: {formatTemp(current.dewPoint)}{getTempUnitSymbol()}</div>
               <div className="text-xl mb-2">{weatherConf.text}</div>
@@ -17236,7 +17242,7 @@ export default function WeatherApp() {
             </div>
             <div className="flex items-center justify-center gap-1.5">
               <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{current.humidity}%</div>
-              {renderStationBadge(isStationMetricActive('hasHumidity'))}
+              {renderStationBadge(isStationCapabilityActive('hasHumidity'))}
             </div>
           </div>
           
@@ -17248,7 +17254,7 @@ export default function WeatherApp() {
               <div className={`text-m3-title-large font-bold ${windColorClass}`}>
                 {formatWind(current.wind)} <span className="text-m3-body-small">{getWindUnitLabel()}</span>
               </div>
-              {renderStationBadge(isStationMetricActive('hasWind'))}
+              {renderStationBadge(isStationCapabilityActive('hasWind'))}
             </div>
             {current.gust > current.wind && (
               <div className={`text-xs font-medium ${getWindColorClass(current.gust, isRealNight)} mt-1`}>
@@ -17276,7 +17282,7 @@ export default function WeatherApp() {
                 <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
                   {Math.round(current.pressure)} <span className="text-m3-body-small">hPa</span>
                 </div>
-                {renderStationBadge(isStationMetricActive('hasPressure'))}
+                {renderStationBadge(isStationCapabilityActive('hasPressure'))}
               </div>
             </div>
           )}
@@ -17335,18 +17341,22 @@ export default function WeatherApp() {
           )}
           
 
+          {(() => {
+            const hasLiveRainFromStation = isStationCapabilityActive('hasRain') && hasStationMetricValue(current.precip);
+            return (
+              <>
           {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) ? (
             <div 
               className={`bg-m3-tertiary-container rounded-m3-xl border border-m3-tertiary shadow-m3-1 relative overflow-hidden flex flex-col justify-center ${isFoldableInExpandedMode ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2'}`}
             >
               <div className={`flex items-center justify-center gap-2 text-m3-on-tertiary-container mb-1 ${isFoldableInExpandedMode ? 'text-[14px] leading-tight' : 'text-m3-label-small'}`}>
                 {next24HoursPrecip.snow > 0.1 ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
-                {renderStationBadge(isStationMetricActive('hasRain'))}
+                {renderStationBadge(hasLiveRainFromStation)}
               </div>
               <div className="text-m3-title-large font-bold text-m3-on-tertiary-container text-center mb-2">
                 {formatPrecip(next24HoursPrecip.total)} {getPrecipUnitLabel()}
               </div>
-              {isStationMetricActive('hasRain') && hasStationMetricValue(current.precip) && (
+              {hasLiveRainFromStation && (
                 <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-2">
                   Live: {formatPrecip(current.precip)} {getPrecipUnitLabel()}/h
                 </div>
@@ -17373,19 +17383,22 @@ export default function WeatherApp() {
             <div className={`${tileBg} rounded-m3-xl border shadow-m3-1 flex flex-col justify-center items-center text-center ${isFoldableInExpandedMode ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2'}`}>
               <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mb-1 ${isFoldableInExpandedMode ? 'text-[14px] leading-tight' : 'text-m3-label-small'}`}>
                 <CloudRain size={14}/> {t('precip24h')}
-                {renderStationBadge(isStationMetricActive('hasRain'))}
+                {renderStationBadge(hasLiveRainFromStation)}
               </div>
               <div className="flex items-center justify-center gap-1 mt-1">
                 <Sun size={16} className="text-green-500 flex-shrink-0" />
                 <span className={`text-m3-label-medium font-bold text-green-600 leading-tight`}>{t('noPrecipSight')}</span>
               </div>
-              {isStationMetricActive('hasRain') && hasStationMetricValue(current.precip) && (
+              {hasLiveRainFromStation && (
                 <div className={`text-xs mt-1 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
                   Live: {formatPrecip(current.precip)} {getPrecipUnitLabel()}/h
                 </div>
               )}
             </div>
           )}
+              </>
+            );
+          })()}
 
           {/* Activity Index tile */}
           {(() => {
