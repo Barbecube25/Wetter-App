@@ -144,7 +144,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setTextViewText(R.id.widget_condition, context.getString(R.string.widget_condition_placeholder));
         views.setTextViewText(R.id.widget_temp_range, context.getString(R.string.widget_temp_range_placeholder));
         views.setTextViewText(R.id.widget_feels_like, context.getString(R.string.widget_feels_like_placeholder));
-        views.setTextViewText(R.id.widget_metric_rain, context.getString(R.string.widget_metric_minmax_placeholder));
+        views.setTextViewText(R.id.widget_metric_minmax, context.getString(R.string.widget_metric_minmax_placeholder));
         views.setTextViewText(R.id.widget_metric_uv, context.getString(R.string.widget_metric_uv_placeholder));
         views.setTextViewText(R.id.widget_metric_wind, context.getString(R.string.widget_metric_wind_placeholder));
         views.setTextViewText(R.id.widget_metric_pollen, context.getString(R.string.widget_metric_pollen_placeholder));
@@ -254,17 +254,17 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         );
         views.setTextViewText(R.id.widget_feels_like, feelsLikeLabel);
 
-        // Min/Max chip (repurposed widget_metric_rain view)
+        // Min/Max chip
         views.setTextViewText(
-            R.id.widget_metric_rain,
+            R.id.widget_metric_minmax,
             context.getString(
                 R.string.widget_metric_minmax_format,
                 formatTemperature(rangeMin),
                 formatTemperature(rangeMax)
             )
         );
-        views.setInt(R.id.widget_metric_rain, "setBackgroundResource", R.drawable.weather_widget_chip_minmax);
-        views.setInt(R.id.widget_metric_rain, "setTextColor", Color.parseColor("#1C1B1F"));
+        views.setInt(R.id.widget_metric_minmax, "setBackgroundResource", R.drawable.weather_widget_chip_minmax);
+        views.setInt(R.id.widget_metric_minmax, "setTextColor", Color.parseColor("#1C1B1F"));
 
         // Wind chip (always blue-tinted)
         views.setTextViewText(
