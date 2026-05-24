@@ -459,23 +459,16 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         JSONArray times = hourly.optJSONArray("time");
         for (int i = 0; i < 4; i++) {
             int idx = currentHourIndex + 1 + i;
-            double temp = readHourlyValue(hourly, "temperature_2m", idx);
-            int code = -1;
-            if (hourly.optJSONArray("weathercode") != null) {
-                code = hourly.optJSONArray("weathercode").optInt(idx, -1);
-            }
-            double precip = readHourlyValue(hourly, "precipitation_probability", idx);
-            String timeLabel = null;
+            data.hourlyTemps[i] = readHourlyValue(hourly, "temperature_2m", idx);
+            data.hourlyCodes[i] = readHourlyIntValue(hourly, "weathercode", idx);
+            data.hourlyPrecipProbs[i] = readHourlyValue(hourly, "precipitation_probability", idx);
             if (times != null && idx < times.length()) {
                 String raw = times.optString(idx, null);
-                if (raw != null && raw.contains("T")) {
-                    timeLabel = raw.substring(raw.indexOf('T') + 1);
+                if (raw != null) {
+                    int tPos = raw.lastIndexOf('T');
+                    data.hourlyTimes[i] = (tPos >= 0 && tPos + 1 < raw.length()) ? raw.substring(tPos + 1) : null;
                 }
             }
-            data.hourlyTemps[i] = temp;
-            data.hourlyCodes[i] = code;
-            data.hourlyPrecipProbs[i] = precip;
-            data.hourlyTimes[i] = timeLabel;
         }
     }
 
@@ -673,6 +666,13 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         return values.optDouble(index, Double.NaN);
     }
 
+    private int readHourlyIntValue(JSONObject hourly, String field, int index) {
+        if (hourly == null) return -1;
+        JSONArray values = hourly.optJSONArray(field);
+        if (values == null || index < 0 || index >= values.length()) return -1;
+        return values.optInt(index, -1);
+    }
+
     private double readDouble(JSONObject object, String key) {
         if (object == null || !object.has(key) || object.isNull(key)) return Double.NaN;
         return object.optDouble(key, Double.NaN);
@@ -865,6 +865,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             java.util.Arrays.fill(data.hourlyTemps, Double.NaN);
             java.util.Arrays.fill(data.hourlyCodes, -1);
             java.util.Arrays.fill(data.hourlyPrecipProbs, Double.NaN);
+            java.util.Arrays.fill(data.hourlyTimes, null);
             return data;
         }
     }
