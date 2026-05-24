@@ -4987,6 +4987,23 @@ const SMART_ACTIVITY_FILTERS = [
     baseParams: { minTemp: 8, maxTemp: 30, maxWind: 30, rainOk: false, cloudOk: true },
   },
 ];
+const CHAT_RESPONSE_DELAY_MS = 650;
+const ACTIVITY_SWITCH_DELAY_MS = 450;
+const MAX_SHORT_QUESTION_WORDS = 3;
+
+const getSmartActivityChipClass = ({ isActive, isRealNight }) => {
+  if (isActive) return 'bg-m3-primary-container text-m3-on-primary-container border-m3-primary shadow-sm';
+  return isRealNight
+    ? 'bg-m3-dark-surface-container-high text-m3-dark-on-surface-variant border-m3-outline-variant/70'
+    : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant';
+};
+
+const getWeatherChatMessageClass = ({ role, isRealNight }) => {
+  if (role === 'user') return 'bg-m3-primary-container text-m3-on-primary-container ml-4';
+  return isRealNight
+    ? 'bg-m3-dark-surface-container-high text-m3-dark-on-surface mr-4'
+    : 'bg-m3-surface-container-high text-m3-on-surface mr-4';
+};
 
 const getSmartActivityLabel = (activity, lang = 'de') => activity?.labels?.[lang] || activity?.labels?.en || activity?.key || '';
 
@@ -4997,7 +5014,10 @@ const getSmartActivityRating = (activity, hour) => {
   const precip = Number(hour.precip ?? 0);
   const uvIndex = Number(hour.uvIndex ?? 0);
   const code = hour.code ?? 0;
-  const base = getActivityRating(activity.key === 'grill-outdoor' ? 'picnic' : (activity.key === 'diy-outdoor' ? 'walking' : activity.key), temp, wind, precip, uvIndex, code, activity.baseParams);
+  const baseActivityKey = activity.key === 'grill-outdoor'
+    ? 'picnic'
+    : (activity.key === 'diy-outdoor' ? 'walking' : activity.key);
+  const base = getActivityRating(baseActivityKey, temp, wind, precip, uvIndex, code, activity.baseParams);
   let score = base.score;
   if (activity.key === 'grill-outdoor' && uvIndex >= 8) score = Math.max(1, score - 2);
   if (activity.key === 'diy-outdoor' && uvIndex >= 7) score = Math.max(1, score - 1);
@@ -5049,17 +5069,18 @@ const getSmartActivityInsight = ({ activity, hourlyData = [], lang = 'de' }) => 
   const bestTime = window.best.hour?.time?.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) || '--:--';
   const windowStart = window.startHour.hour?.time?.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) || '--:--';
   const windowEnd = window.endHour.hour?.time?.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) || '--:--';
-  const recommendation = window.best.score >= 8
-    ? (lang === 'en'
+  let recommendation = lang === 'en'
+    ? `Rather unsuitable today. Only short usable windows.`
+    : `Eher ungeeignet heute. Nur kurze nutzbare Zeitfenster.`;
+  if (window.best.score >= 8) {
+    recommendation = lang === 'en'
       ? `Very suitable. Best start around ${bestTime}.`
-      : `Sehr gut geeignet. Bester Start gegen ${bestTime} Uhr.`)
-    : window.best.score >= 6
-      ? (lang === 'en'
-        ? `Conditionally suitable. Best time around ${bestTime}.`
-        : `Bedingt geeignet. Bestes Zeitfenster um ${bestTime} Uhr.`)
-      : (lang === 'en'
-        ? `Rather unsuitable today. Only short usable windows.`
-        : `Eher ungeeignet heute. Nur kurze nutzbare Zeitfenster.`);
+      : `Sehr gut geeignet. Bester Start gegen ${bestTime} Uhr.`;
+  } else if (window.best.score >= 6) {
+    recommendation = lang === 'en'
+      ? `Conditionally suitable. Best time around ${bestTime}.`
+      : `Bedingt geeignet. Bestes Zeitfenster um ${bestTime} Uhr.`;
+  }
   return {
     recommendation,
     promptExtension: activity.prompt?.[lang] || activity.prompt?.en || '',
@@ -5093,7 +5114,7 @@ const generateWeatherChatReply = ({ question, lang = 'de', hourlyData = [], sele
   const maxWindHour = relevantHours.reduce((best, h) => (((h.windAvg ?? h.wind) ?? 0) > ((best?.windAvg ?? best?.wind) ?? -1) ? h : best), null);
   const current = relevantHours[0] || hours[0];
   const insight = getSmartActivityInsight({ activity: selectedActivity, hourlyData: relevantHours, lang });
-  const latestContextHint = context.length > 1 && !q
+  const latestContextHint = context.length > 1 && q.split(/\s+/).filter(Boolean).length <= MAX_SHORT_QUESTION_WORDS
     ? (isGerman ? 'Du beziehst dich auf die letzte Frage.' : 'You are referring to the last question.')
     : '';
 
@@ -10719,7 +10740,6 @@ const ContextualAIReportCard = ({ report, dwdWarnings, lang='de', tempFunc, form
   const [chatMessages, setChatMessages] = useState([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const switchTimerRef = useRef(null);
-  const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
   const selectedActivity = SMART_ACTIVITY_FILTERS.find(({ key }) => key === selectedActivityKey) || SMART_ACTIVITY_FILTERS[0];
   const activityInsight = useMemo(
     () => getSmartActivityInsight({ activity: selectedActivity, hourlyData, lang }),
@@ -10742,7 +10762,7 @@ const ContextualAIReportCard = ({ report, dwdWarnings, lang='de', tempFunc, form
     setIsSwitchingActivity(true);
     switchTimerRef.current = setTimeout(() => {
       setIsSwitchingActivity(false);
-    }, 450);
+    }, ACTIVITY_SWITCH_DELAY_MS);
   };
 
   const handleSendChat = (e) => {
@@ -10751,7 +10771,7 @@ const ContextualAIReportCard = ({ report, dwdWarnings, lang='de', tempFunc, form
     if (!question || isChatLoading) return;
     setChatInput('');
     const nextUserMessage = { id: `${Date.now()}-u`, role: 'user', text: question };
-    const historyWithoutPending = [...chatMessages];
+    const historySnapshot = [...chatMessages];
     setChatMessages((prev) => [...prev, nextUserMessage]);
     setIsChatLoading(true);
     setTimeout(() => {
@@ -10760,11 +10780,11 @@ const ContextualAIReportCard = ({ report, dwdWarnings, lang='de', tempFunc, form
         lang,
         hourlyData,
         selectedActivity,
-        chatHistory: historyWithoutPending,
+        chatHistory: historySnapshot,
       });
       setChatMessages((prev) => [...prev, { id: `${Date.now()}-a`, role: 'assistant', text: reply }]);
       setIsChatLoading(false);
-    }, 650);
+    }, CHAT_RESPONSE_DELAY_MS);
   };
 
   return (
@@ -10773,16 +10793,13 @@ const ContextualAIReportCard = ({ report, dwdWarnings, lang='de', tempFunc, form
         <div className="flex items-center gap-2 min-w-max pr-1">
           {SMART_ACTIVITY_FILTERS.map((activity) => {
             const isActive = activity.key === selectedActivityKey;
+            const chipClass = getSmartActivityChipClass({ isActive, isRealNight });
             return (
               <button
                 key={activity.key}
                 type="button"
                 onClick={() => handleSelectActivity(activity.key)}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold border transition ${
-                  isActive
-                    ? 'bg-m3-primary-container text-m3-on-primary-container border-m3-primary shadow-sm'
-                    : `${isRealNight ? 'bg-m3-dark-surface-container-high text-m3-dark-on-surface-variant border-m3-outline-variant/70' : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant'}`
-                }`}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold border transition ${chipClass}`}
                 aria-pressed={isActive}
               >
                 <span className="mr-1">{activity.emoji}</span>
@@ -10842,11 +10859,7 @@ const ContextualAIReportCard = ({ report, dwdWarnings, lang='de', tempFunc, form
         {chatMessages.length > 0 && (
           <div className="space-y-2 mb-3 max-h-56 overflow-y-auto pr-1">
             {chatMessages.map((message) => (
-              <div key={message.id} className={`rounded-lg px-3 py-2 text-sm leading-relaxed ${
-                message.role === 'user'
-                  ? 'bg-m3-primary-container text-m3-on-primary-container ml-4'
-                  : `${isRealNight ? 'bg-m3-dark-surface-container-high text-m3-dark-on-surface mr-4' : 'bg-m3-surface-container-high text-m3-on-surface mr-4'}`
-              }`}>
+              <div key={message.id} className={`rounded-lg px-3 py-2 text-sm leading-relaxed ${getWeatherChatMessageClass({ role: message.role, isRealNight })}`}>
                 {message.text}
               </div>
             ))}
