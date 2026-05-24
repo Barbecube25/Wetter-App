@@ -31,7 +31,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:text="@string/widget_compact_metric_temperature_placeholder"
-            android:textColor="#1C1B1F"
+            android:textColor="@color/widget_text_primary"
             android:textSize="12sp"
             android:textStyle="bold" />
 
@@ -44,7 +44,7 @@
             android:gravity="center_horizontal"
             android:maxLines="1"
             android:text="@string/widget_compact_metric_uv_placeholder"
-            android:textColor="#1C1B1F"
+            android:textColor="@color/widget_text_primary"
             android:textSize="12sp"
             android:textStyle="bold" />
 
@@ -57,7 +57,7 @@
             android:gravity="end"
             android:maxLines="1"
             android:text="@string/widget_compact_metric_thunder_placeholder"
-            android:textColor="#1C1B1F"
+            android:textColor="@color/widget_text_primary"
             android:textSize="12sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -76,7 +76,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/widget_title"
-            android:textColor="#49454F"
+            android:textColor="@color/widget_text_secondary"
             android:textSize="11sp"
             android:textStyle="bold" />
 
@@ -87,7 +87,7 @@
             android:background="@android:color/transparent"
             android:contentDescription="@string/widget_refresh_content_description"
             android:src="@android:drawable/ic_popup_sync"
-            android:tint="#49454F" />
+            android:tint="@color/widget_text_secondary" />
     </LinearLayout>
 
     <LinearLayout
@@ -125,7 +125,7 @@
             android:paddingTop="6dp"
             android:paddingBottom="6dp"
             android:text="@string/widget_day_tomorrow"
-            android:textColor="#757575"
+            android:textColor="@color/widget_text_tertiary"
             android:textSize="11sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -157,7 +157,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/widget_temp_placeholder"
-                    android:textColor="#1C1B1F"
+                    android:textColor="@color/widget_text_primary"
                     android:textSize="42sp"
                     android:textStyle="bold" />
 
@@ -167,7 +167,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/widget_weather_icon_margin_start"
                     android:text="@string/widget_weather_icon_placeholder"
-                    android:textColor="#49454F"
+                    android:textColor="@color/widget_text_secondary"
                     android:textSize="18sp" />
             </LinearLayout>
 
@@ -177,7 +177,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="-5dp"
                 android:text="@string/widget_condition_placeholder"
-                android:textColor="#49454F"
+                android:textColor="@color/widget_text_secondary"
                 android:textSize="13sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -195,7 +195,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/widget_temp_range_placeholder"
-                android:textColor="#1C1B1F"
+                android:textColor="@color/widget_text_primary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
@@ -204,7 +204,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/widget_feels_like_placeholder"
-                android:textColor="#757575"
+                android:textColor="@color/widget_text_tertiary"
                 android:textSize="11sp" />
         </LinearLayout>
     </LinearLayout>
@@ -241,7 +241,7 @@
                 android:paddingEnd="8dp"
                 android:paddingBottom="6dp"
                 android:text="@string/widget_metric_minmax_placeholder"
-                android:textColor="#1C1B1F"
+                android:textColor="@color/widget_text_primary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
@@ -260,7 +260,7 @@
                 android:paddingEnd="8dp"
                 android:paddingBottom="6dp"
                 android:text="@string/widget_metric_wind_placeholder"
-                android:textColor="#1D4ED8"
+                android:textColor="@color/widget_text_accent"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -289,7 +289,7 @@
                 android:paddingEnd="8dp"
                 android:paddingBottom="6dp"
                 android:text="@string/widget_metric_uv_placeholder"
-                android:textColor="#854D0E"
+                android:textColor="@color/widget_text_uv_low"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
@@ -308,7 +308,7 @@
                 android:paddingEnd="8dp"
                 android:paddingBottom="6dp"
                 android:text="@string/widget_metric_pollen_placeholder"
-                android:textColor="#166534"
+                android:textColor="@color/widget_text_pollen_low"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -361,7 +361,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--:--"
-                    android:textColor="#49454F"
+                    android:textColor="@color/widget_text_secondary"
                     android:textSize="10sp" />
 
                 <TextView
@@ -376,7 +376,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--°"
-                    android:textColor="#1C1B1F"
+                    android:textColor="@color/widget_text_primary"
                     android:textSize="12sp"
                     android:textStyle="bold" />
 
@@ -385,7 +385,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--%"
-                    android:textColor="#1D4ED8"
+                    android:textColor="@color/widget_text_accent"
                     android:textSize="10sp" />
             </LinearLayout>
 
@@ -408,7 +408,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--:--"
-                    android:textColor="#49454F"
+                    android:textColor="@color/widget_text_secondary"
                     android:textSize="10sp" />
 
                 <TextView
@@ -423,7 +423,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--°"
-                    android:textColor="#1C1B1F"
+                    android:textColor="@color/widget_text_primary"
                     android:textSize="12sp"
                     android:textStyle="bold" />
 
@@ -432,7 +432,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--%"
-                    android:textColor="#1D4ED8"
+                    android:textColor="@color/widget_text_accent"
                     android:textSize="10sp" />
             </LinearLayout>
 
@@ -455,7 +455,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--:--"
-                    android:textColor="#49454F"
+                    android:textColor="@color/widget_text_secondary"
                     android:textSize="10sp" />
 
                 <TextView
@@ -470,7 +470,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--°"
-                    android:textColor="#1C1B1F"
+                    android:textColor="@color/widget_text_primary"
                     android:textSize="12sp"
                     android:textStyle="bold" />
 
@@ -479,7 +479,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--%"
-                    android:textColor="#1D4ED8"
+                    android:textColor="@color/widget_text_accent"
                     android:textSize="10sp" />
             </LinearLayout>
 
@@ -501,7 +501,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--:--"
-                    android:textColor="#49454F"
+                    android:textColor="@color/widget_text_secondary"
                     android:textSize="10sp" />
 
                 <TextView
@@ -516,7 +516,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--°"
-                    android:textColor="#1C1B1F"
+                    android:textColor="@color/widget_text_primary"
                     android:textSize="12sp"
                     android:textStyle="bold" />
 
@@ -525,7 +525,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--%"
-                    android:textColor="#1D4ED8"
+                    android:textColor="@color/widget_text_accent"
                     android:textSize="10sp" />
             </LinearLayout>
         </LinearLayout>
@@ -557,7 +557,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--:--"
-                    android:textColor="#49454F"
+                    android:textColor="@color/widget_text_secondary"
                     android:textSize="10sp" />
 
                 <TextView
@@ -572,7 +572,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--°"
-                    android:textColor="#1C1B1F"
+                    android:textColor="@color/widget_text_primary"
                     android:textSize="12sp"
                     android:textStyle="bold" />
 
@@ -581,7 +581,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--%"
-                    android:textColor="#1D4ED8"
+                    android:textColor="@color/widget_text_accent"
                     android:textSize="10sp" />
             </LinearLayout>
 
@@ -602,7 +602,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--:--"
-                    android:textColor="#49454F"
+                    android:textColor="@color/widget_text_secondary"
                     android:textSize="10sp" />
 
                 <TextView
@@ -617,7 +617,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--°"
-                    android:textColor="#1C1B1F"
+                    android:textColor="@color/widget_text_primary"
                     android:textSize="12sp"
                     android:textStyle="bold" />
 
@@ -626,7 +626,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--%"
-                    android:textColor="#1D4ED8"
+                    android:textColor="@color/widget_text_accent"
                     android:textSize="10sp" />
             </LinearLayout>
         </LinearLayout>
@@ -652,7 +652,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/widget_summary_title_today"
-            android:textColor="#49454F"
+            android:textColor="@color/widget_text_secondary"
             android:textSize="11sp"
             android:textStyle="bold" />
 
@@ -662,7 +662,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:text="@string/widget_summary_placeholder"
-            android:textColor="#1C1B1F"
+            android:textColor="@color/widget_text_primary"
             android:textSize="11sp"
             android:textStyle="bold" />
 
@@ -672,7 +672,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:text="@string/widget_summary_placeholder"
-            android:textColor="#49454F"
+            android:textColor="@color/widget_text_secondary"
             android:textSize="10sp" />
     </LinearLayout>
 
@@ -682,7 +682,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:text="@string/widget_updated_placeholder"
-        android:textColor="#9E9E9E"
+        android:textColor="@color/widget_text_muted"
         android:textSize="10sp" />
 
 </RelativeLayout>

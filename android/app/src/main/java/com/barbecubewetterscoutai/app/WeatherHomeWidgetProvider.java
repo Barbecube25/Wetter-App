@@ -7,7 +7,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -17,6 +16,7 @@ import android.view.View;
 import android.widget.RemoteViews;
 
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -248,14 +248,14 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         );
         views.setOnClickPendingIntent(R.id.widget_day_tomorrow, tomorrowPendingIntent);
 
-        applyDayToggleStyle(views, DAY_TOMORROW.equals(selectedDay));
+        applyDayToggleStyle(context, views, DAY_TOMORROW.equals(selectedDay));
         applyResponsiveLayout(context, views, widgetOptions, DAY_TOMORROW.equals(selectedDay));
         return views;
     }
 
     private void applyWidgetData(Context context, RemoteViews views, WidgetData data, String selectedDay) {
         boolean showTomorrow = DAY_TOMORROW.equals(selectedDay);
-        applyDayToggleStyle(views, showTomorrow);
+        applyDayToggleStyle(context, views, showTomorrow);
         String conditionLabel;
         if (showTomorrow) {
             conditionLabel = (data.tomorrowWeatherLabel == null || UNAVAILABLE.equals(data.tomorrowWeatherLabel))
@@ -302,7 +302,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             )
         );
         views.setInt(R.id.widget_metric_minmax, "setBackgroundResource", R.drawable.weather_widget_chip_minmax);
-        views.setInt(R.id.widget_metric_minmax, "setTextColor", Color.parseColor("#1C1B1F"));
+        views.setInt(R.id.widget_metric_minmax, "setTextColor", ContextCompat.getColor(context, R.color.widget_text_primary));
 
         // Wind chip (always blue-tinted)
         views.setTextViewText(
@@ -310,14 +310,14 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             context.getString(R.string.widget_metric_wind_format, formatMetricNumber(windKmh))
         );
         views.setInt(R.id.widget_metric_wind, "setBackgroundResource", R.drawable.weather_widget_chip_wind);
-        views.setInt(R.id.widget_metric_wind, "setTextColor", Color.parseColor("#1D4ED8"));
+        views.setInt(R.id.widget_metric_wind, "setTextColor", ContextCompat.getColor(context, R.color.widget_text_accent));
 
         // UV chip – color-coded by level
         views.setTextViewText(
             R.id.widget_metric_uv,
             context.getString(R.string.widget_metric_uv_format, formatMetricNumber(uvIndex))
         );
-        applyUvChipStyle(views, uvIndex);
+        applyUvChipStyle(context, views, uvIndex);
 
         // Thunder always hidden in full-size widget
         views.setViewVisibility(R.id.widget_metric_thunder, View.GONE);
@@ -358,11 +358,11 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         applySummaryPanelText(context, views, data, showTomorrow);
     }
 
-    private void applyDayToggleStyle(RemoteViews views, boolean showTomorrow) {
+    private void applyDayToggleStyle(Context context, RemoteViews views, boolean showTomorrow) {
         int activeBackground = R.drawable.weather_widget_toggle_active;
         int inactiveBackground = R.drawable.weather_widget_toggle_inactive;
-        int activeTextColor = Color.WHITE;
-        int inactiveTextColor = Color.parseColor("#757575");
+        int activeTextColor = ContextCompat.getColor(context, R.color.widget_text_on_active);
+        int inactiveTextColor = ContextCompat.getColor(context, R.color.widget_text_tertiary);
 
         views.setInt(R.id.widget_day_today, "setBackgroundResource", showTomorrow ? inactiveBackground : activeBackground);
         views.setInt(R.id.widget_day_tomorrow, "setBackgroundResource", showTomorrow ? activeBackground : inactiveBackground);
@@ -370,18 +370,18 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setInt(R.id.widget_day_tomorrow, "setTextColor", showTomorrow ? activeTextColor : inactiveTextColor);
     }
 
-    private void applyUvChipStyle(RemoteViews views, double uvIndex) {
+    private void applyUvChipStyle(Context context, RemoteViews views, double uvIndex) {
         int bgRes;
         int textColor;
         if (!Double.isNaN(uvIndex) && uvIndex >= 8) {
             bgRes = R.drawable.weather_widget_chip_uv_high;
-            textColor = Color.parseColor("#991B1B");
+            textColor = ContextCompat.getColor(context, R.color.widget_text_uv_high);
         } else if (!Double.isNaN(uvIndex) && uvIndex >= 6) {
             bgRes = R.drawable.weather_widget_chip_uv_mid;
-            textColor = Color.parseColor("#9A3412");
+            textColor = ContextCompat.getColor(context, R.color.widget_text_uv_mid);
         } else {
             bgRes = R.drawable.weather_widget_chip_uv_low;
-            textColor = Color.parseColor("#854D0E");
+            textColor = ContextCompat.getColor(context, R.color.widget_text_uv_low);
         }
         views.setInt(R.id.widget_metric_uv, "setBackgroundResource", bgRes);
         views.setInt(R.id.widget_metric_uv, "setTextColor", textColor);
@@ -392,16 +392,16 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         int textColor;
         if (context.getString(R.string.widget_pollen_very_high).equals(pollenLabel)) {
             bgRes = R.drawable.weather_widget_chip_pollen_very_high;
-            textColor = Color.parseColor("#991B1B");
+            textColor = ContextCompat.getColor(context, R.color.widget_text_pollen_very_high);
         } else if (context.getString(R.string.widget_pollen_high).equals(pollenLabel)) {
             bgRes = R.drawable.weather_widget_chip_pollen_high;
-            textColor = Color.parseColor("#9A3412");
+            textColor = ContextCompat.getColor(context, R.color.widget_text_pollen_high);
         } else if (context.getString(R.string.widget_pollen_moderate).equals(pollenLabel)) {
             bgRes = R.drawable.weather_widget_chip_pollen_mid;
-            textColor = Color.parseColor("#854D0E");
+            textColor = ContextCompat.getColor(context, R.color.widget_text_pollen_mid);
         } else {
             bgRes = R.drawable.weather_widget_chip_pollen_low;
-            textColor = Color.parseColor("#166534");
+            textColor = ContextCompat.getColor(context, R.color.widget_text_pollen_low);
         }
         views.setInt(R.id.widget_metric_pollen, "setBackgroundResource", bgRes);
         views.setInt(R.id.widget_metric_pollen, "setTextColor", textColor);

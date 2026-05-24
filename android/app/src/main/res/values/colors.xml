@@ -4,4 +4,50 @@
     <color name="colorPrimary">#3B82F6</color>
     <color name="colorPrimaryDark">#1D4ED8</color>
     <color name="colorAccent">#60A5FA</color>
+
+    <!-- Widget colors (day mode) -->
+    <color name="widget_bg_root">#FFFFFF</color>
+    <color name="widget_bg_panel">#F5F5F5</color>
+    <color name="widget_bg_chip_glass">#EBEBEB</color>
+    <color name="widget_stroke_soft">#E0E0E0</color>
+    <color name="widget_stroke_chip_glass">#D6D6D6</color>
+
+    <color name="widget_text_primary">#1C1B1F</color>
+    <color name="widget_text_secondary">#49454F</color>
+    <color name="widget_text_tertiary">#757575</color>
+    <color name="widget_text_muted">#9E9E9E</color>
+    <color name="widget_text_on_active">#FFFFFF</color>
+    <color name="widget_text_accent">#1D4ED8</color>
+    <color name="widget_text_uv_low">#854D0E</color>
+    <color name="widget_text_uv_mid">#9A3412</color>
+    <color name="widget_text_uv_high">#991B1B</color>
+    <color name="widget_text_pollen_low">#166534</color>
+    <color name="widget_text_pollen_mid">#854D0E</color>
+    <color name="widget_text_pollen_high">#9A3412</color>
+    <color name="widget_text_pollen_very_high">#991B1B</color>
+
+    <color name="widget_toggle_active_bg">#3B82F6</color>
+    <color name="widget_toggle_inactive_bg">#E8E8E8</color>
+    <color name="widget_toggle_inactive_stroke">#D0D0D0</color>
+
+    <color name="widget_chip_minmax_bg">#F5F5F5</color>
+    <color name="widget_chip_minmax_stroke">#E0E0E0</color>
+    <color name="widget_chip_wind_bg">#EFF6FF</color>
+    <color name="widget_chip_wind_stroke">#BFDBFE</color>
+
+    <color name="widget_chip_uv_low_bg">#FEF9C3</color>
+    <color name="widget_chip_uv_low_stroke">#FDE68A</color>
+    <color name="widget_chip_uv_mid_bg">#FFEDD5</color>
+    <color name="widget_chip_uv_mid_stroke">#FED7AA</color>
+    <color name="widget_chip_uv_high_bg">#FEE2E2</color>
+    <color name="widget_chip_uv_high_stroke">#FECACA</color>
+
+    <color name="widget_chip_pollen_low_bg">#DCFCE7</color>
+    <color name="widget_chip_pollen_low_stroke">#BBF7D0</color>
+    <color name="widget_chip_pollen_mid_bg">#FEF9C3</color>
+    <color name="widget_chip_pollen_mid_stroke">#FDE68A</color>
+    <color name="widget_chip_pollen_high_bg">#FFEDD5</color>
+    <color name="widget_chip_pollen_high_stroke">#FED7AA</color>
+    <color name="widget_chip_pollen_very_high_bg">#FEE2E2</color>
+    <color name="widget_chip_pollen_very_high_stroke">#FECACA</color>
 </resources>
