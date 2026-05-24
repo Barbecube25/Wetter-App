@@ -71,6 +71,37 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final int LARGE_WIDGET_HEIGHT_THRESHOLD_DP = 230;
     private static final int EXPANDED_WIDGET_HEIGHT_THRESHOLD_DP = 300;
     private static final int COMPACT_WIDGET_WIDTH_THRESHOLD_DP = 210;
+    private static final float TEMPERATURE_SIZE_COMPACT_SP = 38f;
+    private static final float TEMPERATURE_SIZE_DEFAULT_SP = 42f;
+    private static final float TEMPERATURE_SIZE_LARGE_SP = 48f;
+    private static final float TEMPERATURE_SIZE_EXPANDED_SP = 52f;
+    private static final float WEATHER_ICON_SIZE_DEFAULT_SP = 18f;
+    private static final float WEATHER_ICON_SIZE_LARGE_SP = 20f;
+    private static final float CONDITION_SIZE_DEFAULT_SP = 13f;
+    private static final float CONDITION_SIZE_LARGE_SP = 14f;
+    private static final float HEADER_SIZE_DEFAULT_SP = 11f;
+    private static final float HEADER_SIZE_LARGE_SP = 12f;
+    private static final float CHIP_SIZE_DEFAULT_SP = 12f;
+    private static final float CHIP_SIZE_LARGE_SP = 13f;
+    private static final float UPDATED_SIZE_DEFAULT_SP = 10f;
+    private static final float UPDATED_SIZE_LARGE_SP = 11f;
+    private static final float HOURLY_TIME_SIZE_DEFAULT_SP = 10f;
+    private static final float HOURLY_TIME_SIZE_EXPANDED_SP = 11f;
+    private static final float HOURLY_ICON_SIZE_DEFAULT_SP = 16f;
+    private static final float HOURLY_ICON_SIZE_EXPANDED_SP = 18f;
+    private static final float HOURLY_TEMP_SIZE_DEFAULT_SP = 12f;
+    private static final float HOURLY_TEMP_SIZE_EXPANDED_SP = 13f;
+    private static final float DETAIL_TEXT_SIZE_DEFAULT_SP = 11f;
+    private static final float DETAIL_TEXT_SIZE_LARGE_SP = 12f;
+    private static final float DETAIL_SECONDARY_SIZE_DEFAULT_SP = 10f;
+    private static final float DETAIL_SECONDARY_SIZE_LARGE_SP = 11f;
+    private static final int ROOT_PADDING_COMPACT_DP = 8;
+    private static final int ROOT_PADDING_DEFAULT_DP = 10;
+    private static final int ROOT_PADDING_LARGE_DP = 12;
+    private static final int COMPACT_ROW_PADDING_HORIZONTAL_DP = 8;
+    private static final int COMPACT_ROW_PADDING_HORIZONTAL_COMPACT_DP = 6;
+    private static final int COMPACT_ROW_PADDING_VERTICAL_DP = 6;
+    private static final int COMPACT_ROW_PADDING_VERTICAL_COMPACT_DP = 5;
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
@@ -434,40 +465,39 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     }
 
     private void applyResponsiveTypography(RemoteViews views, boolean compactHeight, boolean largeHeight, boolean expandedHeight) {
-        float temperatureSize = expandedHeight ? 52f : (largeHeight ? 48f : (compactHeight ? 38f : 42f));
-        float conditionSize = largeHeight ? 14f : 13f;
-        float chipSize = largeHeight ? 13f : 12f;
-        float headerSize = largeHeight ? 12f : 11f;
-        float daySize = largeHeight ? 12f : 11f;
-        float detailTitleSize = largeHeight ? 12f : 11f;
-        float detailPrimarySize = largeHeight ? 12f : 11f;
-        float detailSecondarySize = largeHeight ? 11f : 10f;
-        float hourlyTimeSize = expandedHeight ? 11f : 10f;
-        float hourlyIconSize = expandedHeight ? 18f : 16f;
-        float hourlyTempSize = expandedHeight ? 13f : 12f;
-        float hourlyPrecipSize = expandedHeight ? 11f : 10f;
-        int rootPadding = largeHeight ? 12 : (compactHeight ? 8 : 10);
-        int compactRowHorizontal = compactHeight ? 6 : 8;
-        int compactRowVertical = compactHeight ? 5 : 6;
+        float temperatureSize = expandedHeight
+            ? TEMPERATURE_SIZE_EXPANDED_SP
+            : (largeHeight ? TEMPERATURE_SIZE_LARGE_SP : (compactHeight ? TEMPERATURE_SIZE_COMPACT_SP : TEMPERATURE_SIZE_DEFAULT_SP));
+        float conditionSize = largeHeight ? CONDITION_SIZE_LARGE_SP : CONDITION_SIZE_DEFAULT_SP;
+        float chipSize = largeHeight ? CHIP_SIZE_LARGE_SP : CHIP_SIZE_DEFAULT_SP;
+        float headerSize = largeHeight ? HEADER_SIZE_LARGE_SP : HEADER_SIZE_DEFAULT_SP;
+        float detailTextSize = largeHeight ? DETAIL_TEXT_SIZE_LARGE_SP : DETAIL_TEXT_SIZE_DEFAULT_SP;
+        float detailSecondarySize = largeHeight ? DETAIL_SECONDARY_SIZE_LARGE_SP : DETAIL_SECONDARY_SIZE_DEFAULT_SP;
+        float hourlyTimeSize = expandedHeight ? HOURLY_TIME_SIZE_EXPANDED_SP : HOURLY_TIME_SIZE_DEFAULT_SP;
+        float hourlyIconSize = expandedHeight ? HOURLY_ICON_SIZE_EXPANDED_SP : HOURLY_ICON_SIZE_DEFAULT_SP;
+        float hourlyTempSize = expandedHeight ? HOURLY_TEMP_SIZE_EXPANDED_SP : HOURLY_TEMP_SIZE_DEFAULT_SP;
+        int rootPadding = largeHeight ? ROOT_PADDING_LARGE_DP : (compactHeight ? ROOT_PADDING_COMPACT_DP : ROOT_PADDING_DEFAULT_DP);
+        int compactRowHorizontal = compactHeight ? COMPACT_ROW_PADDING_HORIZONTAL_COMPACT_DP : COMPACT_ROW_PADDING_HORIZONTAL_DP;
+        int compactRowVertical = compactHeight ? COMPACT_ROW_PADDING_VERTICAL_COMPACT_DP : COMPACT_ROW_PADDING_VERTICAL_DP;
 
         views.setViewPadding(R.id.widget_root, rootPadding, rootPadding, rootPadding, rootPadding);
         views.setViewPadding(R.id.widget_compact_row, compactRowHorizontal, compactRowVertical, compactRowHorizontal, compactRowVertical);
         views.setTextViewTextSize(R.id.widget_temperature, TypedValue.COMPLEX_UNIT_SP, temperatureSize);
-        views.setTextViewTextSize(R.id.widget_weather_icon, TypedValue.COMPLEX_UNIT_SP, largeHeight ? 20f : 18f);
+        views.setTextViewTextSize(R.id.widget_weather_icon, TypedValue.COMPLEX_UNIT_SP, largeHeight ? WEATHER_ICON_SIZE_LARGE_SP : WEATHER_ICON_SIZE_DEFAULT_SP);
         views.setTextViewTextSize(R.id.widget_condition, TypedValue.COMPLEX_UNIT_SP, conditionSize);
         views.setTextViewTextSize(R.id.widget_title, TypedValue.COMPLEX_UNIT_SP, headerSize);
-        views.setTextViewTextSize(R.id.widget_day_today, TypedValue.COMPLEX_UNIT_SP, daySize);
-        views.setTextViewTextSize(R.id.widget_day_tomorrow, TypedValue.COMPLEX_UNIT_SP, daySize);
+        views.setTextViewTextSize(R.id.widget_day_today, TypedValue.COMPLEX_UNIT_SP, headerSize);
+        views.setTextViewTextSize(R.id.widget_day_tomorrow, TypedValue.COMPLEX_UNIT_SP, headerSize);
         views.setTextViewTextSize(R.id.widget_metric_minmax, TypedValue.COMPLEX_UNIT_SP, chipSize);
         views.setTextViewTextSize(R.id.widget_metric_wind, TypedValue.COMPLEX_UNIT_SP, chipSize);
         views.setTextViewTextSize(R.id.widget_metric_uv, TypedValue.COMPLEX_UNIT_SP, chipSize);
         views.setTextViewTextSize(R.id.widget_metric_pollen, TypedValue.COMPLEX_UNIT_SP, chipSize);
-        views.setTextViewTextSize(R.id.widget_updated_at, TypedValue.COMPLEX_UNIT_SP, largeHeight ? 11f : 10f);
-        views.setTextViewTextSize(R.id.widget_compact_metric_temperature, TypedValue.COMPLEX_UNIT_SP, compactHeight ? 11f : 12f);
-        views.setTextViewTextSize(R.id.widget_compact_metric_uv, TypedValue.COMPLEX_UNIT_SP, compactHeight ? 11f : 12f);
-        views.setTextViewTextSize(R.id.widget_compact_metric_thunder, TypedValue.COMPLEX_UNIT_SP, compactHeight ? 11f : 12f);
-        views.setTextViewTextSize(R.id.widget_detail_title, TypedValue.COMPLEX_UNIT_SP, detailTitleSize);
-        views.setTextViewTextSize(R.id.widget_detail_primary, TypedValue.COMPLEX_UNIT_SP, detailPrimarySize);
+        views.setTextViewTextSize(R.id.widget_updated_at, TypedValue.COMPLEX_UNIT_SP, largeHeight ? UPDATED_SIZE_LARGE_SP : UPDATED_SIZE_DEFAULT_SP);
+        views.setTextViewTextSize(R.id.widget_compact_metric_temperature, TypedValue.COMPLEX_UNIT_SP, compactHeight ? HEADER_SIZE_DEFAULT_SP : CHIP_SIZE_DEFAULT_SP);
+        views.setTextViewTextSize(R.id.widget_compact_metric_uv, TypedValue.COMPLEX_UNIT_SP, compactHeight ? HEADER_SIZE_DEFAULT_SP : CHIP_SIZE_DEFAULT_SP);
+        views.setTextViewTextSize(R.id.widget_compact_metric_thunder, TypedValue.COMPLEX_UNIT_SP, compactHeight ? HEADER_SIZE_DEFAULT_SP : CHIP_SIZE_DEFAULT_SP);
+        views.setTextViewTextSize(R.id.widget_detail_title, TypedValue.COMPLEX_UNIT_SP, headerSize);
+        views.setTextViewTextSize(R.id.widget_detail_primary, TypedValue.COMPLEX_UNIT_SP, detailTextSize);
         views.setTextViewTextSize(R.id.widget_detail_secondary, TypedValue.COMPLEX_UNIT_SP, detailSecondarySize);
 
         int[] timeIds = {R.id.widget_hourly_time_1, R.id.widget_hourly_time_2, R.id.widget_hourly_time_3, R.id.widget_hourly_time_4, R.id.widget_hourly_time_5, R.id.widget_hourly_time_6};
@@ -478,7 +508,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             views.setTextViewTextSize(timeIds[i], TypedValue.COMPLEX_UNIT_SP, hourlyTimeSize);
             views.setTextViewTextSize(iconIds[i], TypedValue.COMPLEX_UNIT_SP, hourlyIconSize);
             views.setTextViewTextSize(tempIds[i], TypedValue.COMPLEX_UNIT_SP, hourlyTempSize);
-            views.setTextViewTextSize(precipIds[i], TypedValue.COMPLEX_UNIT_SP, hourlyPrecipSize);
+            views.setTextViewTextSize(precipIds[i], TypedValue.COMPLEX_UNIT_SP, hourlyTimeSize);
         }
     }
 
