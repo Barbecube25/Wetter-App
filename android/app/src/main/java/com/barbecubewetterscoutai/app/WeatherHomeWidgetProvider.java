@@ -333,8 +333,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         String pollenLabel = showTomorrow
             ? unavailableLabel
             : data.pollenLabel;
-        boolean hasWind = !Double.isNaN(windKmh) && windKmh > 0;
-        boolean hasUv = !Double.isNaN(uvIndex) && uvIndex > 0;
+        boolean hasWind = !Double.isNaN(windKmh);
+        boolean hasUv = !Double.isNaN(uvIndex);
         boolean hasPollen = !showTomorrow && pollenLabel != null && !unavailableLabel.equals(pollenLabel);
         boolean hasThunder = thunderRisk != null
             && !thunderRisk.trim().isEmpty()
