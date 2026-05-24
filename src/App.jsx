@@ -5024,7 +5024,7 @@ const getNextMoonDate = (refDate, targetFraction) => {
 };
 
 const MODEL_CONFIDENCE_TEMP_STDDEV_TO_SCORE = 20; // 1°C std dev lowers confidence by ~20 points
-const MODEL_CONFIDENCE_PRECIP_STDDEV_TO_SCORE = 1.5; // 10% precip-prob std dev lowers confidence by ~15 points
+const MODEL_CONFIDENCE_PRECIP_STDDEV_TO_SCORE = 1.5; // 1% precip-prob std dev lowers confidence by ~1.5 points
 const MODEL_CONFIDENCE_TEMP_WEIGHT = 0.65; // Temperature stability is weighted slightly higher for perceived forecast quality
 const MODEL_CONFIDENCE_PRECIP_WEIGHT = 0.35;
 
