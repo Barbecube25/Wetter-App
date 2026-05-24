@@ -17737,7 +17737,7 @@ export default function WeatherApp() {
                  </ResponsiveContainer>
                </div>
                <div className="flex justify-center gap-4 mt-6 text-xs font-medium opacity-80 flex-wrap">
-                 {modelDetailsVisible ? (
+                 {modelDetailsVisible && (
                    <>
                      <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
                      <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-700"></div> GFS</span>
