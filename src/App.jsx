@@ -5023,13 +5023,36 @@ const getNextMoonDate = (refDate, targetFraction) => {
   return new Date(new Date(refDate).getTime() + diff * LUNAR_CYCLE_MS);
 };
 
-const getModelStdDeviation = (values) => {
+const MODEL_CONFIDENCE_TEMP_STDDEV_TO_SCORE = 20; // 1°C std dev lowers confidence by ~20 points
+const MODEL_CONFIDENCE_PRECIP_STDDEV_TO_SCORE = 1.5; // 10% precip-prob std dev lowers confidence by ~15 points
+const MODEL_CONFIDENCE_TEMP_WEIGHT = 0.65; // Temperature stability is weighted slightly higher for perceived forecast quality
+const MODEL_CONFIDENCE_PRECIP_WEIGHT = 0.35;
+
+const getModelStdDeviationOrNull = (values) => {
   if (!Array.isArray(values) || values.length < 2) return null;
   const nums = values.filter((value) => typeof value === 'number' && Number.isFinite(value));
   if (nums.length < 2) return null;
   const mean = nums.reduce((sum, value) => sum + value, 0) / nums.length;
   const variance = nums.reduce((sum, value) => sum + ((value - mean) ** 2), 0) / nums.length;
   return Math.sqrt(variance);
+};
+
+const formatStdDeviation = (value) => (
+  typeof value === 'number' && Number.isFinite(value)
+    ? value.toFixed(1)
+    : '--'
+);
+
+const getModelConfidenceLabel = (category, lang = 'de') => {
+  if (category === 'high') return lang === 'en' ? 'High confidence' : 'Hohe Sicherheit';
+  if (category === 'medium') return lang === 'en' ? 'Moderate confidence' : 'Mäßige Sicherheit';
+  return lang === 'en' ? 'Low confidence' : 'Geringe Sicherheit';
+};
+
+const getModelConfidenceBadgeClass = (category) => {
+  if (category === 'high') return 'bg-m3-tertiary-container text-m3-on-tertiary-container border-m3-tertiary';
+  if (category === 'medium') return 'bg-m3-secondary-container text-m3-on-secondary-container border-m3-secondary';
+  return 'bg-m3-error-container text-m3-on-error-container border-m3-error';
 };
 
 const calculateModelConfidenceMetrics = (rows, { temperatureKeys = [], precipitationKeys = [] } = {}) => {
@@ -5044,8 +5067,8 @@ const calculateModelConfidenceMetrics = (rows, { temperatureKeys = [], precipita
     if (!row || typeof row !== 'object') return;
     const tempValues = temperatureKeys.map((key) => row[key]).filter((value) => typeof value === 'number' && Number.isFinite(value));
     const precipValues = precipitationKeys.map((key) => row[key]).filter((value) => typeof value === 'number' && Number.isFinite(value));
-    const tempStdDev = getModelStdDeviation(tempValues);
-    const precipStdDev = getModelStdDeviation(precipValues);
+    const tempStdDev = getModelStdDeviationOrNull(tempValues);
+    const precipStdDev = getModelStdDeviationOrNull(precipValues);
     if (tempStdDev !== null) tempStdDevs.push(tempStdDev);
     if (precipStdDev !== null) precipStdDevs.push(precipStdDev);
   });
@@ -5057,9 +5080,9 @@ const calculateModelConfidenceMetrics = (rows, { temperatureKeys = [], precipita
   const avgTempStdDev = tempStdDevs.length > 0 ? tempStdDevs.reduce((sum, value) => sum + value, 0) / tempStdDevs.length : 0;
   const avgPrecipStdDev = precipStdDevs.length > 0 ? precipStdDevs.reduce((sum, value) => sum + value, 0) / precipStdDevs.length : 0;
 
-  const tempScore = Math.max(0, Math.min(100, 100 - (avgTempStdDev * 20)));
-  const precipScore = Math.max(0, Math.min(100, 100 - (avgPrecipStdDev * 1.5)));
-  const score = Math.round((tempScore * 0.65) + (precipScore * 0.35));
+  const tempScore = Math.max(0, Math.min(100, 100 - (avgTempStdDev * MODEL_CONFIDENCE_TEMP_STDDEV_TO_SCORE)));
+  const precipScore = Math.max(0, Math.min(100, 100 - (avgPrecipStdDev * MODEL_CONFIDENCE_PRECIP_STDDEV_TO_SCORE)));
+  const score = Math.round((tempScore * MODEL_CONFIDENCE_TEMP_WEIGHT) + (precipScore * MODEL_CONFIDENCE_PRECIP_WEIGHT));
 
   let category = 'low';
   if (score >= 80) category = 'high';
@@ -6511,8 +6534,8 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
          : "Die Modell-Konfidenz ist aktuell nicht verfügbar.";
      }
 
-     const tempStd = metrics.avgTempStdDev !== null ? metrics.avgTempStdDev.toFixed(1) : '--';
-     const precipStd = metrics.avgPrecipStdDev !== null ? metrics.avgPrecipStdDev.toFixed(1) : '--';
+     const tempStd = formatStdDeviation(metrics.avgTempStdDev);
+     const precipStd = formatStdDeviation(metrics.avgPrecipStdDev);
      details = lang === 'en'
        ? `Std. deviation across ICON, GFS, AROME and GEM (48h): temperature ±${tempStd}°, precipitation probability ±${precipStd}%.`
        : `Standardabweichung über ICON, GFS, AROME und GEM (48h): Temperatur ±${tempStd}°, Niederschlagswahrscheinlichkeit ±${precipStd}%.`;
@@ -6546,8 +6569,8 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
         : "Die Langzeit-Modellkonfidenz ist aktuell nicht verfügbar.";
     }
 
-    const tempStd = metrics.avgTempStdDev !== null ? metrics.avgTempStdDev.toFixed(1) : '--';
-    const precipStd = metrics.avgPrecipStdDev !== null ? metrics.avgPrecipStdDev.toFixed(1) : '--';
+    const tempStd = formatStdDeviation(metrics.avgTempStdDev);
+    const precipStd = formatStdDeviation(metrics.avgPrecipStdDev);
     details = lang === 'en'
       ? `Std. deviation across ICON, GFS, AROME and GEM (6 days): max temp ±${tempStd}°, rain probability ±${precipStd}%.`
       : `Standardabweichung über ICON, GFS, AROME und GEM (6 Tage): Max-Temperatur ±${tempStd}°, Regenwahrscheinlichkeit ±${precipStd}%.`;
@@ -16347,6 +16370,8 @@ export default function WeatherApp() {
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter, astronomy: astronomyForecast }), [processedLong, lang, airQualityData, settings.pollenFilter, astronomyForecast]);
   const modelDetailsVisible = isExpertMode && showModelDetails;
+  const modelConfidenceBadgeClass = getModelConfidenceBadgeClass(modelReport?.confidenceCategory);
+  const modelConfidenceLabel = getModelConfidenceLabel(modelReport?.confidenceCategory, lang);
 
   useEffect(() => {
     if (!isExpertMode) setShowModelDetails(false);
@@ -17641,8 +17666,8 @@ export default function WeatherApp() {
                  <div className="flex items-center gap-2">
                    <h3 className="text-sm font-bold uppercase opacity-70">{t('modelCheck')}</h3>
                    {isExpertMode && modelReport?.confidence !== null && (
-                     <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold border ${modelReport.confidence > 80 ? 'bg-m3-tertiary-container text-m3-on-tertiary-container border-m3-tertiary' : modelReport.confidence > 55 ? 'bg-m3-secondary-container text-m3-on-secondary-container border-m3-secondary' : 'bg-m3-error-container text-m3-on-error-container border-m3-error'}`}>
-                      {modelReport.confidence}% · {modelReport.confidenceCategory === 'high' ? (lang === 'en' ? 'High confidence' : 'Hohe Sicherheit') : modelReport.confidenceCategory === 'medium' ? (lang === 'en' ? 'Moderate confidence' : 'Mäßige Sicherheit') : (lang === 'en' ? 'Low confidence' : 'Geringe Sicherheit')}
+                     <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold border ${modelConfidenceBadgeClass}`}>
+                      {modelReport.confidence}% · {modelConfidenceLabel}
                      </span>
                    )}
                    <div className="relative">
