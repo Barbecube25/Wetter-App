@@ -4945,6 +4945,194 @@ const getActivityRating = (key, temp, wind, precip, uvIndex, code, customParams 
   }
 };
 
+const SMART_ACTIVITY_FILTERS = [
+  {
+    key: 'grill-outdoor',
+    emoji: '🍖',
+    labels: { de: 'Grillen & Outdoor', en: 'Grilling & Outdoor' },
+    prompt: {
+      de: 'Analysiere die bereitgestellten Wetterdaten zusätzlich spezifisch auf die Eignung für Grillen & Outdoor. Gib eine klare Empfehlung und nenne ggf. das beste Zeitfenster.',
+      en: 'Analyze the provided weather data specifically for grilling & outdoor suitability. Give a clear recommendation and mention the best time window.',
+    },
+    baseParams: { minTemp: 17, maxTemp: 32, maxWind: 28, rainOk: false, cloudOk: true },
+  },
+  {
+    key: 'gardening',
+    emoji: '🌱',
+    labels: { de: 'Gartenarbeit', en: 'Gardening' },
+    prompt: {
+      de: 'Analysiere die bereitgestellten Wetterdaten zusätzlich spezifisch auf die Eignung für Gartenarbeit. Gib eine klare Empfehlung und nenne ggf. das beste Zeitfenster.',
+      en: 'Analyze the provided weather data specifically for gardening suitability. Give a clear recommendation and mention the best time window.',
+    },
+    baseParams: { minTemp: 10, maxTemp: 28, maxWind: 30, rainOk: false, cloudOk: true },
+  },
+  {
+    key: 'running',
+    emoji: '🏃',
+    labels: { de: 'Sport/Laufen', en: 'Sport/Running' },
+    prompt: {
+      de: 'Analysiere die bereitgestellten Wetterdaten zusätzlich spezifisch auf die Eignung für Sport/Laufen. Gib eine klare Empfehlung und nenne ggf. das beste Zeitfenster.',
+      en: 'Analyze the provided weather data specifically for running/sports suitability. Give a clear recommendation and mention the best time window.',
+    },
+    baseParams: { minTemp: 5, maxTemp: 22, maxWind: 35, rainOk: false, cloudOk: true },
+  },
+  {
+    key: 'diy-outdoor',
+    emoji: '🛠️',
+    labels: { de: 'Heimwerken (Außen)', en: 'DIY (Outdoor)' },
+    prompt: {
+      de: 'Analysiere die bereitgestellten Wetterdaten zusätzlich spezifisch auf die Eignung für Heimwerken im Außenbereich. Gib eine klare Empfehlung und nenne ggf. das beste Zeitfenster.',
+      en: 'Analyze the provided weather data specifically for outdoor DIY suitability. Give a clear recommendation and mention the best time window.',
+    },
+    baseParams: { minTemp: 8, maxTemp: 30, maxWind: 30, rainOk: false, cloudOk: true },
+  },
+];
+
+const getSmartActivityLabel = (activity, lang = 'de') => activity?.labels?.[lang] || activity?.labels?.en || activity?.key || '';
+
+const getSmartActivityRating = (activity, hour) => {
+  if (!activity || !hour) return { score: 0, color: 'text-m3-on-surface-variant' };
+  const wind = Math.round((hour.windAvg ?? hour.wind) ?? 0);
+  const temp = Math.round(hour.temp ?? 0);
+  const precip = Number(hour.precip ?? 0);
+  const uvIndex = Number(hour.uvIndex ?? 0);
+  const code = hour.code ?? 0;
+  const base = getActivityRating(activity.key === 'grill-outdoor' ? 'picnic' : (activity.key === 'diy-outdoor' ? 'walking' : activity.key), temp, wind, precip, uvIndex, code, activity.baseParams);
+  let score = base.score;
+  if (activity.key === 'grill-outdoor' && uvIndex >= 8) score = Math.max(1, score - 2);
+  if (activity.key === 'diy-outdoor' && uvIndex >= 7) score = Math.max(1, score - 1);
+  if (activity.key === 'running' && uvIndex >= 9) score = Math.max(1, score - 2);
+  if (activity.key === 'gardening' && precip > 0.2) score = Math.max(1, score - 2);
+  if (score >= 8) return { score, color: 'text-green-600' };
+  if (score >= 6) return { score, color: 'text-green-500' };
+  if (score >= 4) return { score, color: 'text-orange-500' };
+  return { score, color: 'text-red-500' };
+};
+
+const buildBestActivityWindow = (ratedHours) => {
+  if (!Array.isArray(ratedHours) || ratedHours.length === 0) return null;
+  const sorted = [...ratedHours].sort((a, b) => b.score - a.score);
+  const best = sorted[0];
+  if (!best) return null;
+  let start = best.idx;
+  let end = best.idx;
+  while (start > 0 && ratedHours[start - 1].score >= 6) start -= 1;
+  while (end < ratedHours.length - 1 && ratedHours[end + 1].score >= 6) end += 1;
+  return { best, startHour: ratedHours[start], endHour: ratedHours[end] };
+};
+
+const getSmartActivityInsight = ({ activity, hourlyData = [], lang = 'de' }) => {
+  const hours = Array.isArray(hourlyData) ? hourlyData.slice(0, 24) : [];
+  if (!activity || hours.length === 0) {
+    return {
+      recommendation: lang === 'en' ? 'No hourly forecast available yet.' : 'Noch keine Stundenprognose verfügbar.',
+      promptExtension: activity?.prompt?.[lang] || activity?.prompt?.en || '',
+      score: null,
+      bestWindowLabel: lang === 'en' ? 'No recommendation' : 'Keine Empfehlung',
+    };
+  }
+  const locale = LANG_LOCALE_MAP[lang] || 'de-DE';
+  const ratedHours = hours.map((hour, idx) => ({
+    idx,
+    hour,
+    ...getSmartActivityRating(activity, hour),
+  }));
+  const window = buildBestActivityWindow(ratedHours);
+  if (!window) {
+    return {
+      recommendation: lang === 'en' ? 'No recommendation possible right now.' : 'Aktuell keine Empfehlung möglich.',
+      promptExtension: activity.prompt?.[lang] || activity.prompt?.en || '',
+      score: null,
+      bestWindowLabel: lang === 'en' ? 'No recommendation' : 'Keine Empfehlung',
+    };
+  }
+  const bestTime = window.best.hour?.time?.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) || '--:--';
+  const windowStart = window.startHour.hour?.time?.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) || '--:--';
+  const windowEnd = window.endHour.hour?.time?.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) || '--:--';
+  const recommendation = window.best.score >= 8
+    ? (lang === 'en'
+      ? `Very suitable. Best start around ${bestTime}.`
+      : `Sehr gut geeignet. Bester Start gegen ${bestTime} Uhr.`)
+    : window.best.score >= 6
+      ? (lang === 'en'
+        ? `Conditionally suitable. Best time around ${bestTime}.`
+        : `Bedingt geeignet. Bestes Zeitfenster um ${bestTime} Uhr.`)
+      : (lang === 'en'
+        ? `Rather unsuitable today. Only short usable windows.`
+        : `Eher ungeeignet heute. Nur kurze nutzbare Zeitfenster.`);
+  return {
+    recommendation,
+    promptExtension: activity.prompt?.[lang] || activity.prompt?.en || '',
+    score: window.best.score,
+    scoreColor: window.best.color,
+    bestWindowLabel: `${windowStart}–${windowEnd}`,
+  };
+};
+
+const generateWeatherChatReply = ({ question, lang = 'de', hourlyData = [], selectedActivity, chatHistory = [] }) => {
+  const hours = Array.isArray(hourlyData) ? hourlyData.slice(0, 48) : [];
+  if (hours.length === 0) {
+    return lang === 'en' ? 'I do not have enough forecast data yet.' : 'Ich habe dafür aktuell noch nicht genug Wetterdaten.';
+  }
+  const isGerman = lang === 'de';
+  const q = String(question || '').trim().toLowerCase();
+  const context = [...chatHistory, { role: 'user', text: question }].slice(-6);
+  const wantsTomorrow = /(morgen|tomorrow)/.test(q);
+  const start = new Date(hours[0].time);
+  const tomorrowStart = new Date(start);
+  tomorrowStart.setHours(0, 0, 0, 0);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+  const tomorrowEnd = new Date(tomorrowStart);
+  tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
+  const relevantHours = wantsTomorrow
+    ? hours.filter((h) => h.time >= tomorrowStart && h.time < tomorrowEnd)
+    : hours.slice(0, 24);
+  const locale = LANG_LOCALE_MAP[lang] || 'de-DE';
+  const dryWindow = relevantHours.filter((h) => (h.precip ?? 0) < 0.1 && !RAIN_WEATHER_CODES.includes(h.code ?? 0));
+  const rainPeak = relevantHours.reduce((best, h) => ((h.precip ?? 0) > (best?.precip ?? -1) ? h : best), null);
+  const maxWindHour = relevantHours.reduce((best, h) => (((h.windAvg ?? h.wind) ?? 0) > ((best?.windAvg ?? best?.wind) ?? -1) ? h : best), null);
+  const current = relevantHours[0] || hours[0];
+  const insight = getSmartActivityInsight({ activity: selectedActivity, hourlyData: relevantHours, lang });
+  const latestContextHint = context.length > 1 && !q
+    ? (isGerman ? 'Du beziehst dich auf die letzte Frage.' : 'You are referring to the last question.')
+    : '';
+
+  if (/(wäsche|laundry|dry|aufhäng|aufhaeng)/.test(q)) {
+    if (dryWindow.length >= 2) {
+      const first = dryWindow[0].time.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+      const last = dryWindow[Math.min(dryWindow.length - 1, 5)].time.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+      return isGerman
+        ? `${latestContextHint} Ja, das sieht möglich aus. Trockenes Fenster voraussichtlich ${first}–${last} Uhr. Danach bitte Regenrisiko erneut prüfen.`
+        : `${latestContextHint} Yes, that looks possible. Expected dry window: ${first}–${last}. Please re-check rain risk afterwards.`;
+    }
+    return isGerman
+      ? `${latestContextHint} Eher nicht ideal – es gibt aktuell kaum ein stabiles trockenes Zeitfenster.`
+      : `${latestContextHint} Rather not ideal — there is currently no stable dry window.`;
+  }
+
+  if (/(regen|rain|schauer|precip)/.test(q)) {
+    const rainAt = rainPeak?.time?.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) || '--:--';
+    const rainAmount = Number(rainPeak?.precip ?? 0).toFixed(1);
+    return isGerman
+      ? `${latestContextHint} Höchstes Niederschlagsrisiko liegt etwa bei ${rainAt} Uhr (${rainAmount} mm/h). ${insight.recommendation}`
+      : `${latestContextHint} Peak precipitation risk is around ${rainAt} (${rainAmount} mm/h). ${insight.recommendation}`;
+  }
+
+  if (/(wind|sturm|gust)/.test(q)) {
+    const windAt = maxWindHour?.time?.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) || '--:--';
+    const windValue = Math.round((maxWindHour?.windAvg ?? maxWindHour?.wind) ?? 0);
+    return isGerman
+      ? `${latestContextHint} Kräftigster Wind liegt bei rund ${windValue} km/h um ${windAt} Uhr. ${insight.recommendation}`
+      : `${latestContextHint} Strongest wind is about ${windValue} km/h around ${windAt}. ${insight.recommendation}`;
+  }
+
+  const nowTemp = Math.round(current?.temp ?? 0);
+  const nowWind = Math.round((current?.windAvg ?? current?.wind) ?? 0);
+  return isGerman
+    ? `${latestContextHint} Aktuell etwa ${nowTemp}°C bei ${nowWind} km/h Wind. Für ${getSmartActivityLabel(selectedActivity, lang)}: ${insight.recommendation} (bestes Fenster ${insight.bestWindowLabel}).`
+    : `${latestContextHint} Currently around ${nowTemp}°C with ${nowWind} km/h wind. For ${getSmartActivityLabel(selectedActivity, lang)}: ${insight.recommendation} (best window ${insight.bestWindowLabel}).`;
+};
+
 
 const getWeatherConfig = (code, isDay = 1, lang = 'de') => {
   const isNight = isDay === 0;
@@ -10520,6 +10708,185 @@ const AIReportBox = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, get
         )}
       </div>
     </>
+  );
+};
+
+const ContextualAIReportCard = ({ report, dwdWarnings, lang='de', tempFunc, formatWind, getWindUnitLabel, formatPrecip, getPrecipUnitLabel, getTempUnitSymbol, isRealNight = false, onOpenQuickViewDetail, isFoldableScreen = false, hourlyData = [] }) => {
+  const isGerman = lang === 'de';
+  const [selectedActivityKey, setSelectedActivityKey] = useState(SMART_ACTIVITY_FILTERS[0].key);
+  const [isSwitchingActivity, setIsSwitchingActivity] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const switchTimerRef = useRef(null);
+  const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
+  const selectedActivity = SMART_ACTIVITY_FILTERS.find(({ key }) => key === selectedActivityKey) || SMART_ACTIVITY_FILTERS[0];
+  const activityInsight = useMemo(
+    () => getSmartActivityInsight({ activity: selectedActivity, hourlyData, lang }),
+    [selectedActivity, hourlyData, lang],
+  );
+
+  useEffect(() => {
+    setChatMessages([]);
+    setChatInput('');
+  }, [selectedActivityKey, lang]);
+
+  useEffect(() => () => {
+    if (switchTimerRef.current) clearTimeout(switchTimerRef.current);
+  }, []);
+
+  const handleSelectActivity = (nextKey) => {
+    if (!nextKey || nextKey === selectedActivityKey) return;
+    if (switchTimerRef.current) clearTimeout(switchTimerRef.current);
+    setSelectedActivityKey(nextKey);
+    setIsSwitchingActivity(true);
+    switchTimerRef.current = setTimeout(() => {
+      setIsSwitchingActivity(false);
+    }, 450);
+  };
+
+  const handleSendChat = (e) => {
+    e?.preventDefault?.();
+    const question = chatInput.trim();
+    if (!question || isChatLoading) return;
+    setChatInput('');
+    const nextUserMessage = { id: `${Date.now()}-u`, role: 'user', text: question };
+    const historyWithoutPending = [...chatMessages];
+    setChatMessages((prev) => [...prev, nextUserMessage]);
+    setIsChatLoading(true);
+    setTimeout(() => {
+      const reply = generateWeatherChatReply({
+        question,
+        lang,
+        hourlyData,
+        selectedActivity,
+        chatHistory: historyWithoutPending,
+      });
+      setChatMessages((prev) => [...prev, { id: `${Date.now()}-a`, role: 'assistant', text: reply }]);
+      setIsChatLoading(false);
+    }, 650);
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="overflow-x-auto pb-1">
+        <div className="flex items-center gap-2 min-w-max pr-1">
+          {SMART_ACTIVITY_FILTERS.map((activity) => {
+            const isActive = activity.key === selectedActivityKey;
+            return (
+              <button
+                key={activity.key}
+                type="button"
+                onClick={() => handleSelectActivity(activity.key)}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold border transition ${
+                  isActive
+                    ? 'bg-m3-primary-container text-m3-on-primary-container border-m3-primary shadow-sm'
+                    : `${isRealNight ? 'bg-m3-dark-surface-container-high text-m3-dark-on-surface-variant border-m3-outline-variant/70' : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant'}`
+                }`}
+                aria-pressed={isActive}
+              >
+                <span className="mr-1">{activity.emoji}</span>
+                {getSmartActivityLabel(activity, lang)}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <AIReportBox
+        report={report}
+        dwdWarnings={dwdWarnings}
+        lang={lang}
+        tempFunc={tempFunc}
+        formatWind={formatWind}
+        getWindUnitLabel={getWindUnitLabel}
+        formatPrecip={formatPrecip}
+        getPrecipUnitLabel={getPrecipUnitLabel}
+        getTempUnitSymbol={getTempUnitSymbol}
+        isRealNight={isRealNight}
+        onOpenQuickViewDetail={onOpenQuickViewDetail}
+        isFoldableScreen={isFoldableScreen}
+      />
+
+      <div className={`rounded-xl border px-3 py-3 ${isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant/70 text-m3-dark-on-surface' : 'bg-m3-surface-container-high border-m3-outline-variant text-m3-on-surface'}`}>
+        {isSwitchingActivity ? (
+          <div className="space-y-2 animate-pulse">
+            <div className="h-4 rounded bg-m3-surface-container w-2/3" />
+            <div className="h-3 rounded bg-m3-surface-container w-full" />
+            <div className="h-3 rounded bg-m3-surface-container w-4/5" />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-sm font-bold">
+                {selectedActivity.emoji} {getSmartActivityLabel(selectedActivity, lang)}
+              </div>
+              {activityInsight.score !== null && (
+                <span className={`text-xs font-bold rounded-full px-2 py-0.5 border ${activityInsight.score >= 6 ? 'bg-m3-tertiary-container text-m3-on-tertiary-container border-m3-tertiary' : 'bg-m3-error-container text-m3-on-error-container border-m3-error'}`}>
+                  {activityInsight.score}/10
+                </span>
+              )}
+            </div>
+            <p className={`text-sm leading-relaxed ${activityInsight.scoreColor || ''}`}>{activityInsight.recommendation}</p>
+            <p className="text-xs opacity-80">
+              {isGerman ? 'Bestes Zeitfenster' : 'Best time window'}: <span className="font-semibold">{activityInsight.bestWindowLabel}</span>
+            </p>
+            <p className="text-[11px] opacity-70">
+              {isGerman ? 'KI-Kontext' : 'AI context'}: {activityInsight.promptExtension}
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className={`rounded-xl border p-3 ${isRealNight ? 'bg-m3-dark-surface-container border-m3-outline-variant/70' : 'bg-m3-surface-container border-m3-outline-variant'}`}>
+        {chatMessages.length > 0 && (
+          <div className="space-y-2 mb-3 max-h-56 overflow-y-auto pr-1">
+            {chatMessages.map((message) => (
+              <div key={message.id} className={`rounded-lg px-3 py-2 text-sm leading-relaxed ${
+                message.role === 'user'
+                  ? 'bg-m3-primary-container text-m3-on-primary-container ml-4'
+                  : `${isRealNight ? 'bg-m3-dark-surface-container-high text-m3-dark-on-surface mr-4' : 'bg-m3-surface-container-high text-m3-on-surface mr-4'}`
+              }`}>
+                {message.text}
+              </div>
+            ))}
+            {isChatLoading && (
+              <div className={`rounded-lg px-3 py-2 mr-4 ${isRealNight ? 'bg-m3-dark-surface-container-high' : 'bg-m3-surface-container-high'}`}>
+                <div className="space-y-1.5 animate-pulse">
+                  <div className="h-3 rounded bg-m3-surface-container w-full" />
+                  <div className="h-3 rounded bg-m3-surface-container w-3/4" />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        <form onSubmit={handleSendChat} className="flex items-center gap-2">
+          <input
+            type="text"
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            placeholder={isGerman ? 'Frage zum Wetter stellen...' : 'Ask about today’s weather...'}
+            className={`flex-1 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-m3-primary/40 ${isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant text-m3-dark-on-surface placeholder:text-m3-dark-on-surface-variant' : 'bg-white border-m3-outline-variant text-m3-on-surface'}`}
+            disabled={isChatLoading}
+          />
+          <button
+            type="submit"
+            disabled={!chatInput.trim() || isChatLoading}
+            className="shrink-0 rounded-lg px-3 py-2 bg-m3-primary text-m3-on-primary disabled:opacity-40 disabled:cursor-not-allowed transition active:scale-95"
+            aria-label={isGerman ? 'Frage senden' : 'Send question'}
+          >
+            <ArrowRight size={16} />
+          </button>
+        </form>
+        {chatMessages.length === 0 && (
+          <p className={`mt-2 text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
+            {isGerman
+              ? `Beispiel: „Kann ich heute Nachmittag Wäsche draußen aufhängen?“`
+              : `Example: “Can I hang laundry outside this afternoon?”`}
+          </p>
+        )}
+      </div>
+    </div>
   );
 };
 
@@ -16708,7 +17075,7 @@ export default function WeatherApp() {
                 <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
             </div>
             <h2 className="text-2xl font-bold mb-4 text-slate-800">{t('dailyReport')}</h2>
-             <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} isFoldableScreen={isFoldableScreen} />
+             <ContextualAIReportCard report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} isFoldableScreen={isFoldableScreen} hourlyData={processedShort} />
             {processedShort.length > 0 && <HourlyTemperatureTiles data={processedShort} lang={lang} formatTemp={formatTemp} getTempUnitSymbol={getTempUnitSymbol} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} isRealNight={isRealNight} />}
             <div className="mt-8">
                  <h2 className="text-2xl font-bold mb-4 text-slate-800">{t('trend')}</h2>
@@ -17630,7 +17997,7 @@ export default function WeatherApp() {
           {activeTab === 'overview' && (
             <div className={isExpandedLayoutActive ? 'grid grid-cols-12 gap-5 items-start' : 'space-y-4'}>
               <div className={isExpandedLayoutActive ? 'col-span-5 space-y-4' : 'space-y-4'}>
-                <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} isFoldableScreen={isFoldableScreen} />
+                <ContextualAIReportCard report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} isFoldableScreen={isFoldableScreen} hourlyData={processedShort} />
                 
                 {/* Historical context: temperature anomaly vs. last year's monthly average */}
                 {climateNormals !== null && processedShort.length > 0 && (() => {
