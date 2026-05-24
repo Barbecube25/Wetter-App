@@ -3,6 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Clock3, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, ArrowUp, ArrowDown, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Eye, Activity, Leaf, Bell } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
 import { StatusBar } from '@capacitor/status-bar';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import packageJson from '../package.json';
 
 // --- 1. KONSTANTEN & CONFIG & ÜBERSETZUNGEN ---
@@ -72,6 +73,18 @@ const WEATHER_NOTIFICATION_RUNTIME_KEY = 'weather_notification_runtime_v1';
 const WEATHER_NOTIFICATION_PERMISSION_PROMPTED_KEY = 'weather_notification_permission_prompted_v1';
 const NOTIFICATION_TRIGGER_WINDOW_MINUTES = 15;
 const NOTIFICATION_CHECK_INTERVAL_MS = 60 * 1000;
+
+// Detect native Capacitor app (Android/iOS) vs. browser
+const isNativeApp = () => typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.() === true;
+
+// Stable numeric ID for a notification tag (djb2 hash)
+const tagToNotificationId = (tag) => {
+  let h = 0;
+  for (let i = 0; i < tag.length; i++) {
+    h = ((h << 5) - h + tag.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h) || 1;
+};
 const DEFAULT_NOTIFICATION_SETTINGS = {
   enabled: false,
   morningReport: true,
@@ -13525,6 +13538,7 @@ export default function WeatherApp() {
   const [showHomeSetup, setShowHomeSetup] = useState(false);
   const [settings, setSettings] = useState(() => getSavedSettings()); // NEU
   const [notificationPermission, setNotificationPermission] = useState(() => {
+    if (isNativeApp()) return 'default'; // will be synced async in useEffect
     if (typeof window === 'undefined' || typeof Notification === 'undefined') return 'denied';
     return Notification.permission;
   });
@@ -13718,6 +13732,20 @@ export default function WeatherApp() {
   }, []);
 
   useEffect(() => {
+      if (isNativeApp()) {
+          const syncNativePermission = async () => {
+              try {
+                  const { display } = await LocalNotifications.checkPermissions();
+                  setNotificationPermission(display === 'granted' ? 'granted' : display === 'denied' ? 'denied' : 'default');
+              } catch (e) {
+                  setNotificationPermission('denied');
+              }
+          };
+          syncNativePermission();
+          const onResume = () => syncNativePermission();
+          document.addEventListener('resume', onResume);
+          return () => document.removeEventListener('resume', onResume);
+      }
       if (typeof window === 'undefined' || typeof Notification === 'undefined') return;
       const syncPermission = () => setNotificationPermission(Notification.permission);
       syncPermission();
@@ -15477,6 +15505,17 @@ export default function WeatherApp() {
   }, [longTermData, lang]); // Add lang to deps to refresh names
 
   const requestNotificationPermission = useCallback(async () => {
+    if (isNativeApp()) {
+      try {
+        const { display } = await LocalNotifications.requestPermissions();
+        const mapped = display === 'granted' ? 'granted' : display === 'denied' ? 'denied' : 'default';
+        setNotificationPermission(mapped);
+        return mapped;
+      } catch (e) {
+        setNotificationPermission('denied');
+        return 'denied';
+      }
+    }
     if (typeof window === 'undefined' || typeof Notification === 'undefined') {
       setNotificationPermission('denied');
       return 'denied';
@@ -15496,6 +15535,30 @@ export default function WeatherApp() {
   }, []);
 
   const requestInitialNotificationPermissionOnce = useCallback(async () => {
+    if (isNativeApp()) {
+      try {
+        let { display } = await LocalNotifications.checkPermissions();
+        const mapped = display === 'granted' ? 'granted' : display === 'denied' ? 'denied' : 'default';
+        setNotificationPermission(mapped);
+        let alreadyPrompted = false;
+        try { alreadyPrompted = localStorage.getItem(WEATHER_NOTIFICATION_PERMISSION_PROMPTED_KEY) === 'true'; } catch (e) { /* ignore */ }
+        if (alreadyPrompted || initialNotificationPromptAttemptedRef.current || display === 'granted' || display === 'denied') {
+          initialNotificationPromptAttemptedRef.current = true;
+          return mapped;
+        }
+        initialNotificationPromptAttemptedRef.current = true;
+        const result = await LocalNotifications.requestPermissions();
+        display = result.display;
+        const mappedResult = display === 'granted' ? 'granted' : display === 'denied' ? 'denied' : 'default';
+        setNotificationPermission(mappedResult);
+        try { localStorage.setItem(WEATHER_NOTIFICATION_PERMISSION_PROMPTED_KEY, 'true'); } catch (e) { /* ignore */ }
+        return mappedResult;
+      } catch (e) {
+        initialNotificationPromptAttemptedRef.current = true;
+        setNotificationPermission('denied');
+        return 'denied';
+      }
+    }
     if (typeof window === 'undefined' || typeof Notification === 'undefined') {
       setNotificationPermission('denied');
       return 'denied';
@@ -15546,7 +15609,7 @@ export default function WeatherApp() {
       || notifications.rainStartLeads.length > 0;
     if (!hasAnyNotificationTrigger) return;
     if (notificationPermission !== 'granted') return;
-    if (typeof window === 'undefined' || typeof Notification === 'undefined') return;
+    if (!isNativeApp() && (typeof window === 'undefined' || typeof Notification === 'undefined')) return;
     if (!currentLoc) return;
 
     const runtime = notificationRuntimeRef.current || {};
@@ -15561,6 +15624,12 @@ export default function WeatherApp() {
     };
 
     const notify = (title, body, tag) => {
+      if (isNativeApp()) {
+        LocalNotifications.schedule({
+          notifications: [{ id: tagToNotificationId(tag), title, body }],
+        }).catch(() => {});
+        return true;
+      }
       try {
         new Notification(title, { body, tag, renotify: false });
         return true;
