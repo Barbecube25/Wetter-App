@@ -5023,6 +5023,74 @@ const getNextMoonDate = (refDate, targetFraction) => {
   return new Date(new Date(refDate).getTime() + diff * LUNAR_CYCLE_MS);
 };
 
+const MODEL_CONFIDENCE_TEMP_STDDEV_TO_SCORE = 20; // 1°C std dev lowers confidence by ~20 points
+const MODEL_CONFIDENCE_PRECIP_STDDEV_TO_SCORE = 1.5; // 1% precip-prob std dev lowers confidence by ~1.5 points
+const MODEL_CONFIDENCE_TEMP_WEIGHT = 0.65; // Temperature stability is weighted slightly higher for perceived forecast quality
+const MODEL_CONFIDENCE_PRECIP_WEIGHT = 0.35;
+
+const getModelStdDeviationOrNull = (values) => {
+  if (!Array.isArray(values) || values.length < 2) return null;
+  const nums = values.filter((value) => typeof value === 'number' && Number.isFinite(value));
+  if (nums.length < 2) return null;
+  const mean = nums.reduce((sum, value) => sum + value, 0) / nums.length;
+  const variance = nums.reduce((sum, value) => sum + ((value - mean) ** 2), 0) / nums.length;
+  return Math.sqrt(variance);
+};
+
+const formatStdDeviation = (value) => (
+  typeof value === 'number' && Number.isFinite(value)
+    ? value.toFixed(1)
+    : '--'
+);
+
+const getModelConfidenceLabel = (category, lang = 'de') => {
+  if (category === 'high') return lang === 'en' ? 'High confidence' : 'Hohe Sicherheit';
+  if (category === 'medium') return lang === 'en' ? 'Moderate confidence' : 'Mäßige Sicherheit';
+  return lang === 'en' ? 'Low confidence' : 'Geringe Sicherheit';
+};
+
+const getModelConfidenceBadgeClass = (category) => {
+  if (category === 'high') return 'bg-m3-tertiary-container text-m3-on-tertiary-container border-m3-tertiary';
+  if (category === 'medium') return 'bg-m3-secondary-container text-m3-on-secondary-container border-m3-secondary';
+  return 'bg-m3-error-container text-m3-on-error-container border-m3-error';
+};
+
+const calculateModelConfidenceMetrics = (rows, { temperatureKeys = [], precipitationKeys = [] } = {}) => {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return { score: null, category: null, avgTempStdDev: null, avgPrecipStdDev: null };
+  }
+
+  const tempStdDevs = [];
+  const precipStdDevs = [];
+
+  rows.forEach((row) => {
+    if (!row || typeof row !== 'object') return;
+    const tempValues = temperatureKeys.map((key) => row[key]).filter((value) => typeof value === 'number' && Number.isFinite(value));
+    const precipValues = precipitationKeys.map((key) => row[key]).filter((value) => typeof value === 'number' && Number.isFinite(value));
+    const tempStdDev = getModelStdDeviationOrNull(tempValues);
+    const precipStdDev = getModelStdDeviationOrNull(precipValues);
+    if (tempStdDev !== null) tempStdDevs.push(tempStdDev);
+    if (precipStdDev !== null) precipStdDevs.push(precipStdDev);
+  });
+
+  if (tempStdDevs.length === 0 && precipStdDevs.length === 0) {
+    return { score: null, category: null, avgTempStdDev: null, avgPrecipStdDev: null };
+  }
+
+  const avgTempStdDev = tempStdDevs.length > 0 ? tempStdDevs.reduce((sum, value) => sum + value, 0) / tempStdDevs.length : 0;
+  const avgPrecipStdDev = precipStdDevs.length > 0 ? precipStdDevs.reduce((sum, value) => sum + value, 0) / precipStdDevs.length : 0;
+
+  const tempScore = Math.max(0, Math.min(100, 100 - (avgTempStdDev * MODEL_CONFIDENCE_TEMP_STDDEV_TO_SCORE)));
+  const precipScore = Math.max(0, Math.min(100, 100 - (avgPrecipStdDev * MODEL_CONFIDENCE_PRECIP_STDDEV_TO_SCORE)));
+  const score = Math.round((tempScore * MODEL_CONFIDENCE_TEMP_WEIGHT) + (precipScore * MODEL_CONFIDENCE_PRECIP_WEIGHT));
+
+  let category = 'low';
+  if (score >= 80) category = 'high';
+  else if (score >= 55) category = 'medium';
+
+  return { score, category, avgTempStdDev, avgPrecipStdDev };
+};
+
 // --- 3. KI LOGIK (REVISED - MIT STRUKTURIERTEN DATEN & SPRACHE) ---
 const generateAIReport = (type, data, lang = 'de', extraData = null) => {
   if (!data) return { title: "Lade...", summary: "Warte auf Daten...", details: null, warning: null, confidence: null };
@@ -5135,6 +5203,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
   let details = null; 
   let warning = null;
   let confidence = null;
+  let confidenceCategory = null;
   let structuredDetails = null; // New field for list view
   let tripDetails = null;
   let visualData = null; // New field for visual metric chips
@@ -6439,59 +6508,75 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
   
   if (type === 'model-hourly') {
      title = lang === 'en' ? "Model Check (48h)" : "Modell-Check (48h)";
-     // Calculate spread across all 4 models (ICON, GFS, AROME, GEM)
-     let totalSpread = 0;
-     let validCount = 0;
-     data.forEach(d => {
-       const temps = [d.temp_icon, d.temp_gfs, d.temp_arome, d.temp_gem].filter(t => t !== null && t !== undefined);
-       if (temps.length >= 2) {
-         const spread = Math.max(...temps) - Math.min(...temps);
-         totalSpread += spread;
-         validCount++;
-       }
+     const metrics = calculateModelConfidenceMetrics(data, {
+       temperatureKeys: ['temp_icon', 'temp_gfs', 'temp_arome', 'temp_gem'],
+       precipitationKeys: ['precipProb_icon', 'precipProb_gfs', 'precipProb_arome', 'precipProb_gem'],
      });
-     const avgSpread = validCount > 0 ? totalSpread / validCount : 0;
-     if (avgSpread < 1.0) { summary = lang === 'en' ? "✅ High agreement: All 4 models match almost perfectly." : "✅ Hohe Einigkeit: Alle 4 Modelle rechnen fast identisch."; confidence = 95; }
-     else if (avgSpread < 2.5) { summary = lang === 'en' ? "⚠️ Slight uncertainties across models." : "⚠️ Leichte Unsicherheiten zwischen den Modellen."; confidence = 70; }
-     else { summary = lang === 'en' ? "❌ Large discrepancy: Models disagree significantly." : "❌ Große Diskrepanz: Modelle rechnen deutlich verschieden."; confidence = 40; warning = lang === 'en' ? "UNCERTAIN" : "UNSICHER"; }
-     details = lang === 'en' ? "Comparison of ICON (DE), GFS (US), AROME (FR), and GEM (CA) shows forecast certainty. Greater spread indicates higher uncertainty." : "Der Vergleich von ICON (DE), GFS (US), AROME (FR) und GEM (CA) zeigt, wie sicher die Vorhersage ist. Bei großer Abweichung (❌) ist das Wetter schwer vorherzusagen.";
+     confidence = metrics.score;
+     confidenceCategory = metrics.category;
+
+     if (metrics.category === 'high') {
+       summary = lang === 'en'
+         ? "✅ High confidence: The 4 models are very consistent."
+         : "✅ Hohe Sicherheit: Die 4 Modelle sind sehr konsistent.";
+     } else if (metrics.category === 'medium') {
+       summary = lang === 'en'
+         ? "⚠️ Moderate confidence: Models show visible differences."
+         : "⚠️ Mäßige Sicherheit: Zwischen den Modellen gibt es erkennbare Unterschiede.";
+     } else if (metrics.category === 'low') {
+       summary = lang === 'en'
+         ? "❌ Low confidence: Strong model divergence detected."
+         : "❌ Geringe Sicherheit: Starke Abweichungen zwischen den Modellen erkannt.";
+       warning = lang === 'en' ? "UNCERTAIN" : "UNSICHER";
+     } else {
+       summary = lang === 'en'
+         ? "Model confidence is currently unavailable."
+         : "Die Modell-Konfidenz ist aktuell nicht verfügbar.";
+     }
+
+     const tempStd = formatStdDeviation(metrics.avgTempStdDev);
+     const precipStd = formatStdDeviation(metrics.avgPrecipStdDev);
+     details = lang === 'en'
+       ? `Std. deviation across ICON, GFS, AROME and GEM (48h): temperature ±${tempStd}°, precipitation probability ±${precipStd}%.`
+       : `Standardabweichung über ICON, GFS, AROME und GEM (48h): Temperatur ±${tempStd}°, Niederschlagswahrscheinlichkeit ±${precipStd}%.`;
   }
 
   if (type === 'model-daily') {
     title = lang === 'en' ? "Model Compare (Longterm)" : "Modell-Vergleich (Langzeit)";
     const slicedData = data.slice(0, 6); 
-    
-    // Calculate average max temperature across all 4 models for better comparison
-    let totalSpread = 0;
-    let validDays = 0;
-    slicedData.forEach(d => {
-      const maxTemps = [d.max_icon, d.max_gfs, d.max_arome, d.max_gem].filter(t => t !== null && t !== undefined);
-      if (maxTemps.length >= 2) {
-        const daySpread = Math.max(...maxTemps) - Math.min(...maxTemps);
-        totalSpread += daySpread;
-        validDays++;
-      }
+    const metrics = calculateModelConfidenceMetrics(slicedData, {
+      temperatureKeys: ['max_icon', 'max_gfs', 'max_arome', 'max_gem'],
+      precipitationKeys: ['prob_icon', 'prob_gfs', 'prob_arome', 'prob_gem'],
     });
-    const avgSpread = validDays > 0 ? totalSpread / validDays : 0;
-    
-    // More sophisticated model comparison considering all 4 models
-    if (avgSpread < 2) {
-      summary = lang === 'en' ? "✅ Excellent agreement: All 4 models synchronized." : "✅ Hervorragende Übereinstimmung: Alle 4 Modelle synchron.";
-      confidence = 90;
-    } else if (avgSpread < 4) {
-      summary = lang === 'en' ? "Good agreement across ICON, GFS, AROME, and GEM." : "Gute Übereinstimmung zwischen ICON, GFS, AROME und GEM.";
-      confidence = 80;
+    confidence = metrics.score;
+    confidenceCategory = metrics.category;
+
+    if (metrics.category === 'high') {
+      summary = lang === 'en'
+        ? "✅ High confidence in long-term trend: models are closely aligned."
+        : "✅ Hohe Sicherheit im Langzeittrend: Die Modelle liegen eng beieinander.";
+    } else if (metrics.category === 'medium') {
+      summary = lang === 'en'
+        ? "⚠️ Moderate confidence in long-term trend."
+        : "⚠️ Mäßige Sicherheit im Langzeittrend.";
+    } else if (metrics.category === 'low') {
+      summary = lang === 'en'
+        ? "❌ Low confidence: long-term model spread is high."
+        : "❌ Geringe Sicherheit: Die Langzeit-Abweichung der Modelle ist hoch.";
     } else {
-      summary = lang === 'en' ? "⚠️ Notable differences between models - higher uncertainty." : "⚠️ Deutliche Unterschiede zwischen Modellen - höhere Unsicherheit.";
-      confidence = 65;
+      summary = lang === 'en'
+        ? "Long-term model confidence is currently unavailable."
+        : "Die Langzeit-Modellkonfidenz ist aktuell nicht verfügbar.";
     }
-    
-    details = lang === 'en' 
-      ? "Comparison of max daily temps across all 4 models: ICON (German), GFS (US), AROME (French), and GEM (Canadian) over the next 6 days." 
-      : "Vergleich der maximalen Tagestemperaturen über alle 4 Modelle: ICON (Deutsch), GFS (USA), AROME (Französisch) und GEM (Kanadisch) über die nächsten 6 Tage.";
+
+    const tempStd = formatStdDeviation(metrics.avgTempStdDev);
+    const precipStd = formatStdDeviation(metrics.avgPrecipStdDev);
+    details = lang === 'en'
+      ? `Std. deviation across ICON, GFS, AROME and GEM (6 days): max temp ±${tempStd}°, rain probability ±${precipStd}%.`
+      : `Standardabweichung über ICON, GFS, AROME und GEM (6 Tage): Max-Temperatur ±${tempStd}°, Regenwahrscheinlichkeit ±${precipStd}%.`;
   }
 
-  return { title, summary, details, structuredDetails, tripDetails, warning, confidence, type, visualData };
+  return { title, summary, details, structuredDetails, tripDetails, warning, confidence, confidenceCategory, type, visualData };
 };
 
 // --- 4. KOMPONENTEN ---
@@ -13696,6 +13781,8 @@ export default function WeatherApp() {
 
   // Model info tooltip
   const [showModelTooltip, setShowModelTooltip] = useState(false);
+  const [isExpertMode, setIsExpertMode] = useState(false);
+  const [showModelDetails, setShowModelDetails] = useState(false);
 
   // Climate normals for historical context
   const [climateNormals, setClimateNormals] = useState(null);
@@ -15439,6 +15526,10 @@ export default function WeatherApp() {
         precip: getMax('precipitation'), // Use max across models to show precipitation if any model predicts it
         // FIX: Add precipProb field
         precipProb: getVal('precipitation_probability'),
+        precipProb_icon: h.precipitation_probability_icon_seamless?.[i],
+        precipProb_gfs: h.precipitation_probability_gfs_seamless?.[i],
+        precipProb_arome: h.precipitation_probability_arome_seamless?.[i],
+        precipProb_gem: h.precipitation_probability_gem_seamless?.[i],
         snow: getMax('snowfall'), // Use max across models to show snowfall if any model predicts it
         wind: Math.round(getMax('wind_speed_10m')), // Use max across models for accurate wind forecast (consistent with daily forecast)
         windAvg: Math.round(getAvg('wind_speed_10m')), // Average wind across models – used for activity advice to avoid threshold oscillation
@@ -15611,7 +15702,11 @@ export default function WeatherApp() {
           ].filter((val) => val !== undefined && val !== null);
           if (probVals.length === 0) return 0;
           return Math.round(probVals.reduce((a, b) => a + b, 0) / probVals.length);
-        })()
+        })(),
+        prob_icon: d.precipitation_probability_max_icon_seamless?.[i],
+        prob_gfs: d.precipitation_probability_max_gfs_seamless?.[i],
+        prob_arome: d.precipitation_probability_max_arome_seamless?.[i],
+        prob_gem: d.precipitation_probability_max_gem_seamless?.[i]
       };
     });
   }, [longTermData, lang]); // Add lang to deps to refresh names
@@ -16274,6 +16369,13 @@ export default function WeatherApp() {
   }), [processedShort, lang, airQualityData, settings.pollenFilter, dwdPollenForecast, astronomyForecast, stationLiveData, stationCapabilities, hasAnyStationData, settings?.personalStation?.provider]);
   const modelReport = useMemo(() => generateAIReport(chartView === 'hourly' ? 'model-hourly' : 'model-daily', chartView === 'hourly' ? processedShort : processedLong, lang), [chartView, processedShort, processedLong, lang]);
   const longtermReport = useMemo(() => generateAIReport('longterm', processedLong, lang, { pollenData: airQualityData, pollenFilter: settings.pollenFilter, astronomy: astronomyForecast }), [processedLong, lang, airQualityData, settings.pollenFilter, astronomyForecast]);
+  const modelDetailsVisible = isExpertMode && showModelDetails;
+  const modelConfidenceBadgeClass = getModelConfidenceBadgeClass(modelReport?.confidenceCategory);
+  const modelConfidenceLabel = getModelConfidenceLabel(modelReport?.confidenceCategory, lang);
+
+  useEffect(() => {
+    if (!isExpertMode) setShowModelDetails(false);
+  }, [isExpertMode]);
 
   // Only block rendering on initial load (no data yet); during location switches, keep existing data visible.
   const isInitialLoading = loading && !shortTermData;
@@ -17563,6 +17665,11 @@ export default function WeatherApp() {
                <div className="flex justify-between items-center mb-6">
                  <div className="flex items-center gap-2">
                    <h3 className="text-sm font-bold uppercase opacity-70">{t('modelCheck')}</h3>
+                   {isExpertMode && modelReport?.confidence !== null && (
+                     <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold border ${modelConfidenceBadgeClass}`}>
+                      {modelReport.confidence}% · {modelConfidenceLabel}
+                     </span>
+                   )}
                    <div className="relative">
                      <button
                        onClick={() => setShowModelTooltip(!showModelTooltip)}
@@ -17587,9 +17694,26 @@ export default function WeatherApp() {
                      )}
                    </div>
                  </div>
-                 <div className="flex bg-black/10 rounded-lg p-1">
+                 <div className="flex flex-col items-end gap-2">
+                   <div className="flex gap-2 flex-wrap justify-end">
+                    <button
+                      onClick={() => setIsExpertMode((prev) => !prev)}
+                      className={`px-3 py-1 rounded-md text-xs font-bold transition border ${isExpertMode ? 'bg-m3-primary text-m3-on-primary border-m3-primary' : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant'}`}
+                    >
+                      {lang === 'en' ? 'Expert mode' : 'Experten-Modus'}
+                    </button>
+                    <button
+                      onClick={() => setShowModelDetails((prev) => !prev)}
+                      disabled={!isExpertMode}
+                      className={`px-3 py-1 rounded-md text-xs font-bold transition border ${modelDetailsVisible ? 'bg-m3-secondary text-m3-on-secondary border-m3-secondary' : 'bg-m3-surface-container-high text-m3-on-surface-variant border-m3-outline-variant'} ${!isExpertMode ? 'opacity-40 cursor-not-allowed' : ''}`}
+                    >
+                      {lang === 'en' ? 'Show model details' : 'Modell-Details anzeigen'}
+                    </button>
+                   </div>
+                   <div className="flex bg-black/10 rounded-lg p-1">
                     <button onClick={() => setChartView('hourly')} className={`px-3 py-1 rounded-md text-xs font-bold transition ${chartView==='hourly' ? 'bg-white text-black shadow-sm' : 'opacity-60'}`}>48h</button>
-                    <button onClick={() => setChartView('daily')} className={`px-3 py-1 rounded-md text-xs font-bold transition ${chartView==='daily' ? 'bg-white text-black shadow-sm' : 'opacity-60'}`}>6 Tage</button>
+                    <button onClick={() => setChartView('daily')} className={`px-3 py-1 rounded-md text-xs font-bold transition ${chartView==='daily' ? 'bg-white text-black shadow-sm' : 'opacity-60'}`}>{lang === 'en' ? '6 days' : '6 Tage'}</button>
+                   </div>
                  </div>
                </div>
                <div className={`w-full ${isExpandedLayoutActive ? 'h-[420px]' : 'h-[300px]'}`}>
@@ -17604,12 +17728,15 @@ export default function WeatherApp() {
                           {processedShort[0]?.displayTime && (
                             <ReferenceLine xAxisId="idx" x={0} stroke="#005AC1" strokeWidth={2} strokeDasharray="4 3" strokeOpacity={0.8} label={{ value: t('now'), position: 'insideTopRight', fontSize: 10, fill: '#005AC1', fontWeight: 'bold' }} />
                           )}
-                          <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={2} dot={false} name="ICON" />
-                          <Line type="monotone" dataKey="temp_gfs" stroke="#1d4ed8" strokeWidth={2} dot={false} name="GFS" />
-                          <Line type="monotone" dataKey="temp_arome" stroke="#86efac" strokeWidth={2} dot={false} name="AROME" />
-                          {/* GEM (Canadian model) displayed in orange */}
-                          <Line type="monotone" dataKey="temp_gem" stroke="#fb923c" strokeWidth={2} dot={false} name="GEM" />
-                          <Line type="monotone" dataKey="temp" stroke="#2563eb" strokeWidth={4} dot={{r:0}} name="Mittel (4)" />
+                          {modelDetailsVisible && (
+                            <>
+                              <Line type="monotone" dataKey="temp_icon" stroke="#93c5fd" strokeWidth={1.5} strokeOpacity={0.7} dot={false} name="ICON" connectNulls={false} />
+                              <Line type="monotone" dataKey="temp_gfs" stroke="#1d4ed8" strokeWidth={1.5} strokeOpacity={0.7} dot={false} name="GFS" connectNulls={false} />
+                              <Line type="monotone" dataKey="temp_arome" stroke="#86efac" strokeWidth={1.5} strokeOpacity={0.7} dot={false} name="AROME" connectNulls={false} />
+                              <Line type="monotone" dataKey="temp_gem" stroke="#fb923c" strokeWidth={1.5} strokeOpacity={0.7} dot={false} name="GEM" connectNulls={false} />
+                            </>
+                          )}
+                          <Line type="monotone" dataKey="temp" stroke="#2563eb" strokeWidth={3.5} dot={false} name={lang === 'en' ? 'Average (4)' : 'Mittel (4)'} />
                         </LineChart>
                       ) : (
                         <LineChart data={processedLong.slice(0, 6)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -17621,31 +17748,32 @@ export default function WeatherApp() {
                           {processedLong[0]?.dateShort && (
                             <ReferenceLine xAxisId="idx" x={0} stroke="#005AC1" strokeWidth={2} strokeDasharray="4 3" strokeOpacity={0.8} label={{ value: t('today'), position: 'insideTopRight', fontSize: 10, fill: '#005AC1', fontWeight: 'bold' }} />
                           )}
-                          <Line type="monotone" dataKey="max_icon" stroke="#93c5fd" strokeWidth={3} dot={{r:3}} name="ICON Max" />
-                          <Line type="monotone" dataKey="max_gfs" stroke="#1d4ed8" strokeWidth={3} dot={{r:3}} name="GFS Max" />
-                          <Line type="monotone" dataKey="max_gem" stroke="#fca5a5" strokeWidth={3} dot={{r:3}} name="GEM Max" />
-                          <Line type="monotone" dataKey="max_arome" stroke="#86efac" strokeWidth={3} dot={{r:3}} name="AROME Max" connectNulls={false} />
-                        </LineChart>
-                      )}
-                  </ResponsiveContainer>
+                         {modelDetailsVisible && (
+                           <>
+                             <Line type="monotone" dataKey="max_icon" stroke="#93c5fd" strokeWidth={1.5} strokeOpacity={0.7} dot={false} name="ICON" connectNulls={false} />
+                             <Line type="monotone" dataKey="max_gfs" stroke="#1d4ed8" strokeWidth={1.5} strokeOpacity={0.7} dot={false} name="GFS" connectNulls={false} />
+                             <Line type="monotone" dataKey="max_arome" stroke="#86efac" strokeWidth={1.5} strokeOpacity={0.7} dot={false} name="AROME" connectNulls={false} />
+                             <Line type="monotone" dataKey="max_gem" stroke="#fb923c" strokeWidth={1.5} strokeOpacity={0.7} dot={false} name="GEM" connectNulls={false} />
+                           </>
+                         )}
+                         <Line type="monotone" dataKey="max" stroke="#2563eb" strokeWidth={3.5} dot={false} name={lang === 'en' ? 'Average (4)' : 'Mittel (4)'} connectNulls={false} />
+                       </LineChart>
+                     )}
+                 </ResponsiveContainer>
                </div>
                <div className="flex justify-center gap-4 mt-6 text-xs font-medium opacity-80 flex-wrap">
-                  {chartView === 'hourly' ? (
-                    <>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-700"></div> GFS</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400"></div> GEM</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div> Ø</span>
-                    </>
-                  ) : (
-                    <>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-700"></div> GFS</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-300"></div> GEM</span>
-                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
-                    </>
-                  )}
+                 {modelDetailsVisible && (
+                   <>
+                     <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300"></div> ICON</span>
+                     <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-700"></div> GFS</span>
+                     <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-300"></div> AROME</span>
+                     <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400"></div> GEM</span>
+                     <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div> {lang === 'en' ? 'Average' : 'Mittel'}</span>
+                   </>
+                 )}
+                 {!modelDetailsVisible && (
+                   <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-600"></div> {lang === 'en' ? 'Average (4 models)' : 'Mittelwert (4 Modelle)'}</span>
+                 )}
                </div>
             </div>
           )}
