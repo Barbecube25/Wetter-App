@@ -250,10 +250,19 @@ const ACTIVITY_DEFINITIONS = [
   { key: 'skiing',    emoji: '⛷️', label: { de: 'Ski fahren',   en: 'Skiing',     fr: 'Ski',           es: 'Esquí',          it: 'Sci',             tr: 'Kayak',         pl: 'Narciarstwo',  nl: 'Skiën',         hr: 'Skijanje',     el: 'Σκι',        da: 'Skiløb',      ru: 'Лыжи'        } },
   { key: 'gardening', emoji: '🌿', label: { de: 'Gartenarbeit', en: 'Gardening',  fr: 'Jardinage',     es: 'Jardinería',     it: 'Giardinaggio',    tr: 'Bahçecilik',    pl: 'Ogrodnictwo',  nl: 'Tuinieren',     hr: 'Vrtlarstvo',   el: 'Κηπουρική',  da: 'Havearbejde', ru: 'Садоводство' } },
   { key: 'picnic',    emoji: '🧺', label: { de: 'Picknick',     en: 'Picnic',     fr: 'Pique-nique',   es: 'Picnic',         it: 'Picnic',          tr: 'Piknik',        pl: 'Piknik',       nl: 'Picknick',      hr: 'Piknik',       el: 'Πικνίκ',     da: 'Picnic',      ru: 'Пикник'      } },
-  { key: 'grilling',  emoji: '🔥', label: { de: 'Grillen',      en: 'Grilling' } },
-  { key: 'diy_paint', emoji: '🛠️', label: { de: 'Heimwerken & Streichen', en: 'DIY & Painting' } },
-  { key: 'laundry',   emoji: '👕', label: { de: 'Wäsche trocknen', en: 'Laundry Drying' } },
+  { key: 'grilling',  emoji: '🔥', label: { de: 'Grillen',      en: 'Grilling',              fr: 'Grillades',               es: 'Parrilla',                it: 'Grigliata',                tr: 'Izgara',                  pl: 'Grill',                      nl: 'Barbecueën',               hr: 'Roštilj',                 el: 'Ψήσιμο',                   da: 'Grill',                    ru: 'Гриль' } },
+  { key: 'diy_paint', emoji: '🛠️', label: { de: 'Heimwerken & Streichen', en: 'DIY & Painting', fr: 'Bricolage et peinture', es: 'Bricolaje y pintura', it: 'Fai-da-te e pittura', tr: 'Tamirat ve boyama', pl: 'Majsterkowanie i malowanie', nl: 'Klussen en schilderen', hr: 'Uradi sam i bojanje', el: 'Μαστορέματα & βάψιμο', da: 'Gør-det-selv og maling', ru: 'Ремонт и покраска' } },
+  { key: 'laundry',   emoji: '👕', label: { de: 'Wäsche trocknen', en: 'Laundry Drying',       fr: 'Séchage du linge',       es: 'Secado de ropa',           it: 'Asciugatura bucato',       tr: 'Çamaşır kurutma',          pl: 'Suszenie prania',          nl: 'Was drogen',               hr: 'Sušenje rublja',          el: 'Στέγνωμα ρούχων',          da: 'Tøjtørring',               ru: 'Сушка белья' } },
 ];
+const SMART_ACTIVITY_PRESET_KEYS = ['gardening', 'grilling', 'diy_paint', 'laundry'];
+const ACTIVITY_KEYWORD_MAP = {
+  gardening: ['garten', 'garden'],
+  grilling: ['grill', 'barbecue', 'bbq'],
+  diy_paint: ['streich', 'paint', 'heimwerk', 'diy', 'säg', 'saeg', 'wood'],
+  laundry: ['wäsche', 'waesche', 'laundry', 'dry'],
+  running: ['jogg', 'run'],
+  cycling: ['rad', 'bike', 'cycling'],
+};
 // Default activity filter: all activities enabled
 const DEFAULT_ACTIVITY_FILTER = ACTIVITY_DEFINITIONS.map(a => a.key);
 const CUSTOM_ACTIVITY_DEFAULT_PARAMS = { minTemp: 10, maxTemp: 25, maxWind: 25, rainOk: false, cloudOk: true };
@@ -11522,7 +11531,7 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
   const [selectedActivityKey, setSelectedActivityKey] = useState(selectableActivities[0]?.key || 'walking');
   const [selectedHourIdx, setSelectedHourIdx] = useState(0);
   const [showDayOutlook, setShowDayOutlook] = useState(false);
-  const smartPresetActivities = ['gardening', 'grilling', 'diy_paint', 'laundry'];
+  const smartPresetActivities = SMART_ACTIVITY_PRESET_KEYS;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -11837,12 +11846,9 @@ const WeatherChatModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallScr
 
   const detectActivityKey = useCallback((rawQuestion) => {
     const text = String(rawQuestion || '').toLowerCase();
-    if (/garten|garden/.test(text)) return 'gardening';
-    if (/grill|barbecue|bbq/.test(text)) return 'grilling';
-    if (/streich|paint|heimwerk|diy|säg|saeg|wood/.test(text)) return 'diy_paint';
-    if (/wäsche|waesche|laundry|dry/.test(text)) return 'laundry';
-    if (/jogg|run/.test(text)) return 'running';
-    if (/rad|bike|cycling/.test(text)) return 'cycling';
+    for (const [activityKey, keywords] of Object.entries(ACTIVITY_KEYWORD_MAP)) {
+      if (keywords.some((keyword) => text.includes(keyword))) return activityKey;
+    }
     return null;
   }, []);
 
