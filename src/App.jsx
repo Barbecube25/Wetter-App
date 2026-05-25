@@ -239,6 +239,131 @@ const EMPTY_STATION_CAPABILITIES = {
   hasUv: false,
 };
 const hasStationMetricValue = (value) => value !== undefined && value !== null && Number.isFinite(Number(value));
+const getPersonalStationProviderLabel = (provider) => (
+  provider === 'wunderground'
+    ? 'Weather Underground'
+    : provider === 'netatmo'
+      ? 'Netatmo'
+      : provider === 'blueriiot'
+        ? 'BlueRiiot'
+        : provider === 'ecowitt'
+          ? 'ecowitt'
+          : ''
+);
+const pickFirstPresentValue = (...values) => values.find((value) => {
+  if (value === undefined || value === null) return false;
+  if (typeof value === 'string') return value.trim().length > 0;
+  return true;
+});
+const parseMetricNumber = (value) => {
+  if (value === undefined || value === null || value === '') return null;
+  const normalized = typeof value === 'string' ? value.replace(',', '.') : value;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+const getTrustedProxyUrl = (value) => {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  const hasScheme = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(raw);
+  try {
+    const base = typeof window !== 'undefined' && window.location?.origin
+      ? window.location.origin
+      : 'https://example.invalid';
+    const url = new URL(raw, base);
+    const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
+    if (url.username || url.password) return null;
+    if (!['https:', 'http:'].includes(url.protocol)) return null;
+    if (url.protocol === 'http:' && !isLocalhost && hasScheme) return null;
+    return raw;
+  } catch (e) {
+    return null;
+  }
+};
+const buildBlueRiiotProxyHeaders = (accessToken = '') => {
+  const headers = { Accept: 'application/json' };
+  const trimmedToken = String(accessToken || '').trim();
+  if (trimmedToken) headers.Authorization = `Bearer ${trimmedToken}`;
+  return headers;
+};
+const normalizeBlueRiiotPayload = (payload) => {
+  const root = payload && typeof payload === 'object' ? payload : {};
+  const container = [root.data, root.pool, root.result].find((entry) => entry && typeof entry === 'object') || root;
+  const readings = [
+    container.readings,
+    container.measurements,
+    container.current,
+    container.latest,
+    container.metrics,
+    root.readings,
+  ].find((entry) => entry && typeof entry === 'object') || container;
+
+  return {
+    poolName: String(pickFirstPresentValue(container.poolName, container.name, root.poolName, root.name, '') || '').trim(),
+    lat: parseMetricNumber(pickFirstPresentValue(container.latitude, container.lat, root.latitude, root.lat)),
+    lon: parseMetricNumber(pickFirstPresentValue(container.longitude, container.lon, root.longitude, root.lon)),
+    measuredAt: String(
+      pickFirstPresentValue(
+        readings.measuredAt,
+        readings.measured_at,
+        readings.timestamp,
+        readings.updatedAt,
+        container.measuredAt,
+        container.updatedAt,
+        root.measuredAt,
+        root.updatedAt,
+        ''
+      ) || ''
+    ).trim() || null,
+    status: String(pickFirstPresentValue(readings.status, container.status, root.status, '') || '').trim() || null,
+    waterTemperature: parseMetricNumber(
+      pickFirstPresentValue(
+        readings.waterTemperature,
+        readings.water_temperature,
+        readings.waterTemp,
+        readings.temperature,
+        readings.temp,
+        container.waterTemperature,
+        root.waterTemperature
+      )
+    ),
+    ph: parseMetricNumber(pickFirstPresentValue(readings.ph, readings.pH, container.ph, container.pH, root.ph, root.pH)),
+    orp: parseMetricNumber(
+      pickFirstPresentValue(
+        readings.orp,
+        readings.redox,
+        readings.redoxPotential,
+        container.orp,
+        container.redox,
+        root.orp,
+        root.redox
+      )
+    ),
+    conductivity: parseMetricNumber(
+      pickFirstPresentValue(readings.conductivity, container.conductivity, root.conductivity)
+    ),
+    salinity: parseMetricNumber(pickFirstPresentValue(readings.salinity, container.salinity, root.salinity)),
+    battery: parseMetricNumber(
+      pickFirstPresentValue(
+        readings.battery,
+        readings.batteryPct,
+        readings.batteryPercent,
+        readings.batteryLevel,
+        container.battery,
+        root.battery
+      )
+    ),
+  };
+};
+const hasBlueRiiotMetricData = (data) => Boolean(
+  data && [
+    data.waterTemperature,
+    data.ph,
+    data.orp,
+    data.conductivity,
+    data.salinity,
+    data.battery,
+  ].some(hasStationMetricValue)
+);
 
 // Activity definitions for the activity index filter
 const ACTIVITY_DEFINITIONS = [
@@ -897,7 +1022,20 @@ const TRANSLATIONS = {
     stationError: "Verbindung fehlgeschlagen. Prüfe deine Zugangsdaten.",
     stationNameLabel: "Stationsname / Ort",
     stationHintNetatmo: "Gib den Standort deiner Netatmo-Station als Ortsnamen ein.",
+    stationHintBlueRiiot: "Nutze einen HTTPS-Proxy, der BlueRiiot-Daten serverseitig lädt. BlueRiiot-Zugangsdaten bleiben im Backend.",
+    proxyUrlLabel: "Proxy-URL",
+    accessTokenLabel: "App-Token (optional)",
+    stationPoolNameLabel: "Poolname / Ort",
     orUseStation: "Oder eigene Wetterstation",
+    poolWaterQuality: "Poolwasser",
+    poolTemperature: "Wassertemperatur",
+    poolPh: "pH-Wert",
+    poolOrp: "Redox",
+    conductivity: "Leitfähigkeit",
+    salinity: "Salzgehalt",
+    battery: "Batterie",
+    poolUpdated: "Aktualisiert",
+    poolStatus: "Status",
     activityFilterLabel: "Aktivitäten anpassen",
     activityMyActivities: "Meine Aktivitäten",
     activityRatingIdeal: "Ideal",
@@ -1207,7 +1345,20 @@ const TRANSLATIONS = {
     stationError: "Connection failed. Check your credentials.",
     stationNameLabel: "Station name / location",
     stationHintNetatmo: "Enter the location of your Netatmo station as a city name.",
+    stationHintBlueRiiot: "Use an HTTPS proxy that loads BlueRiiot data server-side. Keep BlueRiiot credentials in the backend.",
+    proxyUrlLabel: "Proxy URL",
+    accessTokenLabel: "App token (optional)",
+    stationPoolNameLabel: "Pool name / location",
     orUseStation: "Or personal weather station",
+    poolWaterQuality: "Pool Water",
+    poolTemperature: "Water Temperature",
+    poolPh: "pH",
+    poolOrp: "ORP",
+    conductivity: "Conductivity",
+    salinity: "Salinity",
+    battery: "Battery",
+    poolUpdated: "Updated",
+    poolStatus: "Status",
     startingNow: "starting now",
     activityFilterLabel: "Customize Activities",
     activityMyActivities: "My Activities",
@@ -6918,7 +7069,10 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                          <div className="mt-2 px-3 py-2 bg-m3-primary-container rounded-m3-md flex items-center gap-2 text-sm text-m3-on-primary-container">
                              <span>📡</span>
                              <span className="font-bold">{t.personalStation || 'Eigene Wetterstation'}:</span>
-                             <span>{localSettings.personalStation.provider === 'wunderground' ? 'Weather Underground' : localSettings.personalStation.provider === 'netatmo' ? 'Netatmo' : 'ecowitt'}</span>
+                             <span>{getPersonalStationProviderLabel(localSettings.personalStation.provider)}</span>
+                             {localSettings.personalStation.poolName && (
+                                 <span className="truncate opacity-80">· {localSettings.personalStation.poolName}</span>
+                             )}
                          </div>
                      )}
                  </div>
@@ -12314,6 +12468,9 @@ const PersonalStationSetup = ({ onConnected, onCancel, lang = 'de' }) => {
     const [applicationKey, setApplicationKey] = useState('');
     const [mac, setMac] = useState('');
     const [stationName, setStationName] = useState('');
+    const [proxyUrl, setProxyUrl] = useState('');
+    const [accessToken, setAccessToken] = useState('');
+    const [poolName, setPoolName] = useState('');
     const [connecting, setConnecting] = useState(false);
     const [error, setError] = useState('');
     const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
@@ -12360,6 +12517,28 @@ const PersonalStationSetup = ({ onConnected, onCancel, lang = 'de' }) => {
                 stationLat = result.latitude;
                 stationLon = result.longitude;
                 resolvedName = stationName.trim();
+            } else if (provider === 'blueriiot') {
+                const trustedProxyUrl = getTrustedProxyUrl(proxyUrl);
+                if (!trustedProxyUrl) throw new Error('invalid_proxy_url');
+                const res = await fetch(trustedProxyUrl, {
+                    headers: buildBlueRiiotProxyHeaders(accessToken),
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const payload = normalizeBlueRiiotPayload(await res.json());
+                if (!hasBlueRiiotMetricData(payload)) throw new Error('no_data');
+                resolvedName = payload.poolName || poolName.trim();
+                stationLat = payload.lat;
+                stationLon = payload.lon;
+                if ((!hasStationMetricValue(stationLat) || !hasStationMetricValue(stationLon)) && resolvedName) {
+                    const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(resolvedName)}&count=1&language=de&format=json`);
+                    const geoData = await geoRes.json();
+                    const result = geoData.results?.[0];
+                    if (result) {
+                        stationLat = result.latitude;
+                        stationLon = result.longitude;
+                    }
+                }
+                if (!hasStationMetricValue(stationLat) || !hasStationMetricValue(stationLon)) throw new Error('no_location');
             }
             const stationConfig = {
                 provider,
@@ -12367,6 +12546,9 @@ const PersonalStationSetup = ({ onConnected, onCancel, lang = 'de' }) => {
                 apiKey: (provider === 'wunderground' || provider === 'ecowitt') ? apiKey.trim() : '',
                 applicationKey: provider === 'ecowitt' ? applicationKey.trim() : '',
                 mac: (provider === 'ecowitt' || provider === 'netatmo') ? mac.trim() : '',
+                proxyUrl: provider === 'blueriiot' ? proxyUrl.trim() : '',
+                accessToken: provider === 'blueriiot' ? accessToken.trim() : '',
+                poolName: provider === 'blueriiot' ? resolvedName : '',
             };
             const loc = {
                 name: resolvedName,
@@ -12389,16 +12571,18 @@ const PersonalStationSetup = ({ onConnected, onCancel, lang = 'de' }) => {
         provider === 'wunderground' ? (stationId.trim().length > 0 && apiKey.trim().length > 0) :
         provider === 'ecowitt' ? (applicationKey.trim().length > 0 && apiKey.trim().length > 0 && mac.trim().length > 0) :
         provider === 'netatmo' ? stationName.trim().length > 0 :
+        provider === 'blueriiot' ? (getTrustedProxyUrl(proxyUrl) && poolName.trim().length > 0) :
         false;
 
     if (!provider) {
         return (
             <div className="space-y-3">
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                     {[
                         { id: 'wunderground', label: 'Weather\nUnderground', icon: '🌦' },
                         { id: 'netatmo', label: 'Netatmo', icon: '📡' },
                         { id: 'ecowitt', label: 'ecowitt', icon: '🌡' },
+                        { id: 'blueriiot', label: 'BlueRiiot\nProxy', icon: '🏊' },
                     ].map(p => (
                         <button
                             key={p.id}
@@ -12427,7 +12611,7 @@ const PersonalStationSetup = ({ onConnected, onCancel, lang = 'de' }) => {
                     <ArrowLeft size={18}/>
                 </button>
                 <span className="font-bold text-m3-on-surface text-sm">
-                    {provider === 'wunderground' ? 'Weather Underground' : provider === 'netatmo' ? 'Netatmo' : 'ecowitt'}
+                    {getPersonalStationProviderLabel(provider)}
                 </span>
             </div>
             {provider === 'wunderground' && (
@@ -12489,6 +12673,32 @@ const PersonalStationSetup = ({ onConnected, onCancel, lang = 'de' }) => {
                         className="w-full px-3 py-2 rounded-m3-md border border-m3-outline focus:ring-2 focus:ring-m3-primary focus:outline-none bg-m3-surface-container text-m3-on-surface text-sm"
                         value={mac}
                         onChange={e => setMac(e.target.value)}
+                    />
+                </>
+            )}
+            {provider === 'blueriiot' && (
+                <>
+                    <p className="text-xs text-m3-on-surface-variant">{t.stationHintBlueRiiot || 'Nutze einen HTTPS-Proxy, der BlueRiiot-Daten serverseitig lädt. BlueRiiot-Zugangsdaten bleiben im Backend.'}</p>
+                    <input
+                        type="url"
+                        placeholder={t.proxyUrlLabel || 'Proxy-URL'}
+                        className="w-full px-3 py-2 rounded-m3-md border border-m3-outline focus:ring-2 focus:ring-m3-primary focus:outline-none bg-m3-surface-container text-m3-on-surface text-sm"
+                        value={proxyUrl}
+                        onChange={e => setProxyUrl(e.target.value)}
+                    />
+                    <input
+                        type="password"
+                        placeholder={t.accessTokenLabel || 'App-Token (optional)'}
+                        className="w-full px-3 py-2 rounded-m3-md border border-m3-outline focus:ring-2 focus:ring-m3-primary focus:outline-none bg-m3-surface-container text-m3-on-surface text-sm"
+                        value={accessToken}
+                        onChange={e => setAccessToken(e.target.value)}
+                    />
+                    <input
+                        type="text"
+                        placeholder={t.stationPoolNameLabel || 'Poolname / Ort'}
+                        className="w-full px-3 py-2 rounded-m3-md border border-m3-outline focus:ring-2 focus:ring-m3-primary focus:outline-none bg-m3-surface-container text-m3-on-surface text-sm"
+                        value={poolName}
+                        onChange={e => setPoolName(e.target.value)}
                     />
                 </>
             )}
@@ -13790,6 +14000,7 @@ export default function WeatherApp() {
   // Personal weather station live readings (replaces open-meteo current data at home location)
   const [stationLiveData, setStationLiveData] = useState(null);
   const [stationCapabilities, setStationCapabilities] = useState({ ...EMPTY_STATION_CAPABILITIES });
+  const [poolWaterData, setPoolWaterData] = useState(null);
 
 
   // Landscape mode detection
@@ -14468,16 +14679,24 @@ export default function WeatherApp() {
       setStationLiveData(null);
       setStationCapabilities({ ...EMPTY_STATION_CAPABILITIES });
     };
-    if (!station?.provider) {
+    const clearPoolData = () => {
+      setPoolWaterData(null);
+    };
+    const clearProviderData = () => {
       clearStationData();
+      clearPoolData();
+    };
+    if (!station?.provider) {
+      clearProviderData();
       return;
     }
     if (currentLoc?.id !== 'home_default' && currentLoc?.type !== 'home') {
-      clearStationData();
+      clearProviderData();
       return;
     }
     try {
       if (station.provider === 'wunderground') {
+        clearPoolData();
         const url = `https://api.weather.com/v2/pws/observations/current?stationId=${encodeURIComponent(station.stationId)}&format=json&units=m&apiKey=${encodeURIComponent(station.apiKey)}`;
         const res = await fetch(url);
         if (!res.ok) {
@@ -14512,6 +14731,7 @@ export default function WeatherApp() {
           hasUv: hasStationMetricValue(nextStationData.uvIndex),
         });
       } else if (station.provider === 'ecowitt') {
+        clearPoolData();
         const url = `https://api.ecowitt.net/api/v3/device/real_time?application_key=${encodeURIComponent(station.applicationKey)}&api_key=${encodeURIComponent(station.apiKey)}&mac=${encodeURIComponent(station.mac)}&call_back=all`;
         const res = await fetch(url);
         if (!res.ok) {
@@ -14550,13 +14770,36 @@ export default function WeatherApp() {
           hasRain: hasStationMetricValue(nextStationData.precip),
           hasUv: hasStationMetricValue(nextStationData.uvIndex),
         });
-      } else {
+      } else if (station.provider === 'blueriiot') {
         clearStationData();
+        const trustedProxyUrl = getTrustedProxyUrl(station.proxyUrl);
+        if (!trustedProxyUrl) {
+          clearPoolData();
+          return;
+        }
+        const res = await fetch(trustedProxyUrl, {
+          headers: buildBlueRiiotProxyHeaders(station.accessToken),
+        });
+        if (!res.ok) {
+          clearPoolData();
+          return;
+        }
+        const nextPoolData = normalizeBlueRiiotPayload(await res.json());
+        if (!hasBlueRiiotMetricData(nextPoolData)) {
+          clearPoolData();
+          return;
+        }
+        setPoolWaterData({
+          ...nextPoolData,
+          poolName: nextPoolData.poolName || station.poolName || currentLoc?.name || 'Pool',
+        });
+      } else {
+        clearProviderData();
       }
       // Netatmo: no API credentials stored, skip
     } catch (e) {
       console.warn('fetchStationData error:', e);
-      clearStationData();
+      clearProviderData();
     }
   }, [settings?.personalStation, currentLoc]);
 
@@ -14772,6 +15015,7 @@ export default function WeatherApp() {
     if (currentLoc?.id !== 'home_default' && currentLoc?.type !== 'home') {
       setStationLiveData(null);
       setStationCapabilities({ ...EMPTY_STATION_CAPABILITIES });
+      setPoolWaterData(null);
     }
   }, [currentLoc]);
 
@@ -16353,6 +16597,18 @@ export default function WeatherApp() {
     || stationCapabilities.hasWind
     || stationCapabilities.hasRain
     || stationCapabilities.hasUv;
+  const hasPoolWaterData = hasBlueRiiotMetricData(poolWaterData);
+  const formatPoolUpdatedAt = (value) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   const dailyReport = useMemo(() => generateAIReport('daily', processedShort, lang, {
     pollenData: airQualityData,
@@ -17619,8 +17875,65 @@ export default function WeatherApp() {
               </div>
             );
           })()}
-
         </div>
+
+        {hasPoolWaterData && (
+          <div className={`${tileBg} rounded-m3-2xl border shadow-m3-1 p-4`}>
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <div className={`flex items-center gap-2 text-sm font-semibold ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
+                  <Droplets size={16} />
+                  <span>{t('poolWaterQuality')}</span>
+                </div>
+                <div className={`mt-1 text-base font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
+                  {poolWaterData.poolName || currentLoc?.name}
+                </div>
+              </div>
+              {poolWaterData.status && (
+                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold border ${isRealNight ? 'border-cyan-800/60 bg-cyan-950/40 text-cyan-200' : 'border-cyan-200 bg-cyan-50 text-cyan-700'}`}>
+                  {t('poolStatus')}: {poolWaterData.status}
+                </span>
+              )}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {hasStationMetricValue(poolWaterData.waterTemperature) && (
+                <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${isRealNight ? 'bg-m3-dark-surface border border-m3-outline-variant text-m3-dark-on-surface' : 'bg-m3-surface border border-m3-outline-variant text-m3-on-surface'}`}>
+                  <Thermometer size={12} /> {t('poolTemperature')}: {formatTemp(poolWaterData.waterTemperature)}{getTempUnitSymbol()}
+                </span>
+              )}
+              {hasStationMetricValue(poolWaterData.ph) && (
+                <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${isRealNight ? 'bg-m3-dark-surface border border-m3-outline-variant text-m3-dark-on-surface' : 'bg-m3-surface border border-m3-outline-variant text-m3-on-surface'}`}>
+                  <Droplets size={12} /> {t('poolPh')}: {poolWaterData.ph.toFixed(2)}
+                </span>
+              )}
+              {hasStationMetricValue(poolWaterData.orp) && (
+                <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${isRealNight ? 'bg-m3-dark-surface border border-m3-outline-variant text-m3-dark-on-surface' : 'bg-m3-surface border border-m3-outline-variant text-m3-on-surface'}`}>
+                  <Activity size={12} /> {t('poolOrp')}: {Math.round(poolWaterData.orp)} mV
+                </span>
+              )}
+              {hasStationMetricValue(poolWaterData.conductivity) && (
+                <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${isRealNight ? 'bg-m3-dark-surface border border-m3-outline-variant text-m3-dark-on-surface' : 'bg-m3-surface border border-m3-outline-variant text-m3-on-surface'}`}>
+                  <Zap size={12} /> {t('conductivity')}: {Math.round(poolWaterData.conductivity)} µS/cm
+                </span>
+              )}
+              {hasStationMetricValue(poolWaterData.salinity) && (
+                <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${isRealNight ? 'bg-m3-dark-surface border border-m3-outline-variant text-m3-dark-on-surface' : 'bg-m3-surface border border-m3-outline-variant text-m3-on-surface'}`}>
+                  <Waves size={12} /> {t('salinity')}: {poolWaterData.salinity.toFixed(2)} g/L
+                </span>
+              )}
+              {hasStationMetricValue(poolWaterData.battery) && (
+                <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${isRealNight ? 'bg-m3-dark-surface border border-m3-outline-variant text-m3-dark-on-surface' : 'bg-m3-surface border border-m3-outline-variant text-m3-on-surface'}`}>
+                  <ShieldCheck size={12} /> {t('battery')}: {Math.round(poolWaterData.battery)}%
+                </span>
+              )}
+              {poolWaterData.measuredAt && (
+                <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${isRealNight ? 'bg-m3-dark-surface border border-m3-outline-variant text-m3-dark-on-surface' : 'bg-m3-surface border border-m3-outline-variant text-m3-on-surface'}`}>
+                  <Clock size={12} /> {t('poolUpdated')}: {formatPoolUpdatedAt(poolWaterData.measuredAt)}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
         {/* End of collapsible tiles */}
         </div>
 
