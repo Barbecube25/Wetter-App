@@ -248,20 +248,20 @@ const ACTIVITY_DEFINITIONS = [
   { key: 'walking',   emoji: '🚶', label: { de: 'Spaziergang',  en: 'Walking',    fr: 'Promenade',     es: 'Paseo',          it: 'Passeggiata',     tr: 'Yürüyüş',       pl: 'Spacer',       nl: 'Wandeling',     hr: 'Šetnja',       el: 'Περπάτημα',  da: 'Gåtur',       ru: 'Прогулка'    } },
   { key: 'swimming',  emoji: '🏊', label: { de: 'Schwimmen',    en: 'Swimming',   fr: 'Natation',      es: 'Natación',       it: 'Nuoto',           tr: 'Yüzme',         pl: 'Pływanie',     nl: 'Zwemmen',       hr: 'Plivanje',     el: 'Κολύμβηση',  da: 'Svømning',    ru: 'Плавание'    } },
   { key: 'skiing',    emoji: '⛷️', label: { de: 'Ski fahren',   en: 'Skiing',     fr: 'Ski',           es: 'Esquí',          it: 'Sci',             tr: 'Kayak',         pl: 'Narciarstwo',  nl: 'Skiën',         hr: 'Skijanje',     el: 'Σκι',        da: 'Skiløb',      ru: 'Лыжи'        } },
-  { key: 'gardening', emoji: '🌿', label: { de: 'Gartenarbeit', en: 'Gardening',  fr: 'Jardinage',     es: 'Jardinería',     it: 'Giardinaggio',    tr: 'Bahçecilik',    pl: 'Ogrodnictwo',  nl: 'Tuinieren',     hr: 'Vrtlarstvo',   el: 'Κηπουρική',  da: 'Havearbejde', ru: 'Садоводство' } },
+  { key: 'gardening', emoji: '🌿', isSmartPreset: true, label: { de: 'Gartenarbeit', en: 'Gardening',  fr: 'Jardinage',     es: 'Jardinería',     it: 'Giardinaggio',    tr: 'Bahçecilik',    pl: 'Ogrodnictwo',  nl: 'Tuinieren',     hr: 'Vrtlarstvo',   el: 'Κηπουρική',  da: 'Havearbejde', ru: 'Садоводство' } },
   { key: 'picnic',    emoji: '🧺', label: { de: 'Picknick',     en: 'Picnic',     fr: 'Pique-nique',   es: 'Picnic',         it: 'Picnic',          tr: 'Piknik',        pl: 'Piknik',       nl: 'Picknick',      hr: 'Piknik',       el: 'Πικνίκ',     da: 'Picnic',      ru: 'Пикник'      } },
-  { key: 'grilling',  emoji: '🔥', label: { de: 'Grillen',      en: 'Grilling',              fr: 'Grillades',               es: 'Parrilla',                it: 'Grigliata',                tr: 'Izgara',                  pl: 'Grill',                      nl: 'Barbecueën',               hr: 'Roštilj',                 el: 'Ψήσιμο',                   da: 'Grill',                    ru: 'Гриль' } },
-  { key: 'diy_paint', emoji: '🛠️', label: { de: 'Heimwerken & Streichen', en: 'DIY & Painting', fr: 'Bricolage et peinture', es: 'Bricolaje y pintura', it: 'Fai-da-te e pittura', tr: 'Tamirat ve boyama', pl: 'Majsterkowanie i malowanie', nl: 'Klussen en schilderen', hr: 'Uradi sam i bojanje', el: 'Μαστορέματα & βάψιμο', da: 'Gør-det-selv og maling', ru: 'Ремонт и покраска' } },
-  { key: 'laundry',   emoji: '👕', label: { de: 'Wäsche trocknen', en: 'Laundry Drying',       fr: 'Séchage du linge',       es: 'Secado de ropa',           it: 'Asciugatura bucato',       tr: 'Çamaşır kurutma',          pl: 'Suszenie prania',          nl: 'Was drogen',               hr: 'Sušenje rublja',          el: 'Στέγνωμα ρούχων',          da: 'Tøjtørring',               ru: 'Сушка белья' } },
+  { key: 'grilling',  emoji: '🔥', isSmartPreset: true, label: { de: 'Grillen',      en: 'Grilling',              fr: 'Grillades',               es: 'Parrilla',                it: 'Grigliata',                tr: 'Izgara',                  pl: 'Grill',                      nl: 'Barbecueën',               hr: 'Roštilj',                 el: 'Ψήσιμο',                   da: 'Grill',                    ru: 'Гриль' } },
+  { key: 'diy_paint', emoji: '🛠️', isSmartPreset: true, label: { de: 'Heimwerken & Streichen', en: 'DIY & Painting', fr: 'Bricolage et peinture', es: 'Bricolaje y pintura', it: 'Fai-da-te e pittura', tr: 'Tamirat ve boyama', pl: 'Majsterkowanie i malowanie', nl: 'Klussen en schilderen', hr: 'Uradi sam i bojanje', el: 'Μαστορέματα & βάψιμο', da: 'Gør-det-selv og maling', ru: 'Ремонт и покраска' } },
+  { key: 'laundry',   emoji: '👕', isSmartPreset: true, label: { de: 'Wäsche trocknen', en: 'Laundry Drying',       fr: 'Séchage du linge',       es: 'Secado de ropa',           it: 'Asciugatura bucato',       tr: 'Çamaşır kurutma',          pl: 'Suszenie prania',          nl: 'Was drogen',               hr: 'Sušenje rublja',          el: 'Στέγνωμα ρούχων',          da: 'Tøjtørring',               ru: 'Сушка белья' } },
 ];
-const SMART_ACTIVITY_PRESET_KEYS = ['gardening', 'grilling', 'diy_paint', 'laundry'];
+const SMART_ACTIVITY_PRESET_KEYS = ACTIVITY_DEFINITIONS.filter(({ isSmartPreset }) => isSmartPreset).map(({ key }) => key);
 const ACTIVITY_KEYWORD_MAP = {
-  gardening: ['garten', 'garden'],
-  grilling: ['grill', 'barbecue', 'bbq'],
-  diy_paint: ['streich', 'paint', 'heimwerk', 'diy', 'säg', 'saeg', 'wood'],
-  laundry: ['wäsche', 'waesche', 'laundry', 'dry'],
-  running: ['jogg', 'run'],
-  cycling: ['rad', 'bike', 'cycling'],
+  gardening: [/\bgarten\b/i, /\bgarden\b/i],
+  grilling: [/\bgrill\w*/i, /\bbarbecue\b/i, /\bbbbq\b/i],
+  diy_paint: [/\bstreich\w*/i, /\bpaint\w*/i, /\bheimwerk\w*/i, /\bdiy\b/i, /säg|saeg|sägen|saegen/i, /\bwood\w*/i],
+  laundry: [/\bwäsche\b/i, /\bwaesche\b/i, /\blaundry\b/i, /\bdry\w*/i],
+  running: [/\bjogg\w*/i, /\brun\w*/i],
+  cycling: [/\brad\w*/i, /\bbike\w*/i, /\bcycl\w*/i],
 };
 // Default activity filter: all activities enabled
 const DEFAULT_ACTIVITY_FILTER = ACTIVITY_DEFINITIONS.map(a => a.key);
@@ -344,6 +344,11 @@ const getActivityParamDefaults = (customActivities = []) => {
 
 const getActivityDefaultsForKey = (key) => DEFAULT_ACTIVITY_PARAMS[key] || CUSTOM_ACTIVITY_DEFAULT_PARAMS;
 const getActivityLabel = (activity, lang = 'de') => activity?.label?.[lang] || activity?.label?.en || activity?.name || activity?.key || '';
+const buildChatMessage = (role, text) => ({
+  id: `${role}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  role,
+  text,
+});
 
 // DWD pollen regions: approximate center coordinates for each partregion (or region if no partregions)
 const DWD_POLLEN_REGIONS = [
@@ -4868,7 +4873,8 @@ const getActivityRating = (key, temp, wind, precip, uvIndex, code, customParams 
   const isSnow = [71, 73, 75, 77, 85, 86].includes(code);
   const isHeavyRain = precip >= 5 || [65, 82].includes(code);
   const isCloud = [2, 3].includes(code);
-  const humidityVal = Number.isFinite(Number(humidity)) ? Number(humidity) : null;
+  const parsedHumidity = Number(humidity);
+  const humidityVal = Number.isFinite(parsedHumidity) ? parsedHumidity : null;
 
   // Merge defaults with user-defined params for this activity
   const defaults = getActivityDefaultsForKey(key);
@@ -11527,6 +11533,7 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
     const filter = Array.isArray(activityFilter) ? activityFilter : DEFAULT_ACTIVITY_FILTER;
     return allActivities.filter(({ key }) => filter.includes(key));
   }, [activityFilter, allActivities]);
+  const activityMap = useMemo(() => new Map(allActivities.map((activity) => [activity.key, activity])), [allActivities]);
   const selectableActivities = activeActivities.length > 0 ? activeActivities : allActivities;
   const [selectedActivityKey, setSelectedActivityKey] = useState(selectableActivities[0]?.key || 'walking');
   const [selectedHourIdx, setSelectedHourIdx] = useState(0);
@@ -11657,7 +11664,7 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
             </select>
             <div className="mt-2 flex flex-wrap gap-2">
               {smartPresetActivities.map((presetKey) => {
-                const activity = allActivities.find(({ key }) => key === presetKey);
+                const activity = activityMap.get(presetKey);
                 if (!activity) return null;
                 const isSelected = selectedActivity?.key === activity.key;
                 return (
@@ -11772,24 +11779,24 @@ const WeatherChatModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallScr
   const effectiveActivityParams = (activityParams && typeof activityParams === 'object') ? activityParams : getActivityParamDefaults(customActivities);
   const [question, setQuestion] = useState('');
   const [messages, setMessages] = useState(() => [
-    {
-      role: 'assistant',
-      text: isGerman
+    buildChatMessage(
+      'assistant',
+      isGerman
         ? 'Frag mich z. B. nach Regenrisiko, Kleidung oder ob Garten/Grillen/Streichen/Wäsche heute passt.'
-        : 'Ask me about rain risk, clothing, or whether gardening/grilling/painting/laundry is suitable today.',
-    },
+        : 'Ask me about rain risk, clothing, or whether gardening/grilling/painting/laundry is suitable today.'
+    ),
   ]);
 
   useEffect(() => {
     if (!isOpen) return;
     setQuestion('');
     setMessages([
-      {
-        role: 'assistant',
-        text: isGerman
+      buildChatMessage(
+        'assistant',
+        isGerman
           ? 'Frag mich z. B. nach Regenrisiko, Kleidung oder ob Garten/Grillen/Streichen/Wäsche heute passt.'
-          : 'Ask me about rain risk, clothing, or whether gardening/grilling/painting/laundry is suitable today.',
-      },
+          : 'Ask me about rain risk, clothing, or whether gardening/grilling/painting/laundry is suitable today.'
+      ),
     ]);
   }, [isOpen, isGerman]);
 
@@ -11846,8 +11853,8 @@ const WeatherChatModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallScr
 
   const detectActivityKey = useCallback((rawQuestion) => {
     const text = String(rawQuestion || '').toLowerCase();
-    for (const [activityKey, keywords] of Object.entries(ACTIVITY_KEYWORD_MAP)) {
-      if (keywords.some((keyword) => text.includes(keyword))) return activityKey;
+    for (const [activityKey, patterns] of Object.entries(ACTIVITY_KEYWORD_MAP)) {
+      if (patterns.some((pattern) => pattern.test(text))) return activityKey;
     }
     return null;
   }, []);
@@ -11865,6 +11872,8 @@ const WeatherChatModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallScr
     const maxTemp = Math.round(Math.max(...hours.map((h) => h.temp ?? 0)));
     const maxWind = Math.round(Math.max(...hours.map((h) => (h.windAvg ?? h.wind) ?? 0)));
     const maxPrecipProb = Math.round(Math.max(...hours.map((h) => h.precipProb ?? 0)));
+    // `precip` in our processed hourly rows represents liquid precipitation; `snow` is tracked separately.
+    // Summing both gives total wet load for practical recommendations (umbrella, drying, painting).
     const totalPrecip = hours.reduce((sum, h) => sum + Number(h.precip || 0) + Number(h.snow || 0), 0);
 
     if (/kleidung|pack|anzieh|wear|clothing|outfit/.test(normalized)) {
@@ -11942,8 +11951,8 @@ const WeatherChatModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallScr
     const answer = buildAnswer(cleaned);
     setMessages((prev) => [
       ...prev,
-      { role: 'user', text: cleaned },
-      { role: 'assistant', text: answer },
+      buildChatMessage('user', cleaned),
+      buildChatMessage('assistant', answer),
     ]);
     setQuestion('');
   }, [buildAnswer]);
@@ -11979,9 +11988,9 @@ const WeatherChatModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallScr
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {messages.map((msg, index) => (
+          {messages.map((msg) => (
             <div
-              key={`${msg.role}-${index}`}
+              key={msg.id}
               className={`rounded-2xl px-3 py-2 text-sm whitespace-pre-line ${msg.role === 'user'
                 ? 'bg-m3-primary-container text-m3-on-primary-container ml-6'
                 : (isRealNight ? 'bg-m3-dark-surface-container-high text-m3-dark-on-surface mr-6' : 'bg-slate-100 text-slate-700 mr-6')}`}
@@ -12007,7 +12016,8 @@ const WeatherChatModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallScr
           <button
             type="button"
             onClick={() => askQuestion(question)}
-            className="px-4 rounded-xl bg-m3-primary text-m3-on-primary font-semibold"
+            aria-label={isGerman ? 'Wetterfrage senden' : 'Send weather question'}
+            className="px-4 rounded-xl bg-m3-primary text-m3-on-primary font-semibold transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-m3-primary"
           >
             {isGerman ? 'Fragen' : 'Ask'}
           </button>
