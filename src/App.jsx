@@ -250,6 +250,9 @@ const ACTIVITY_DEFINITIONS = [
   { key: 'skiing',    emoji: '⛷️', label: { de: 'Ski fahren',   en: 'Skiing',     fr: 'Ski',           es: 'Esquí',          it: 'Sci',             tr: 'Kayak',         pl: 'Narciarstwo',  nl: 'Skiën',         hr: 'Skijanje',     el: 'Σκι',        da: 'Skiløb',      ru: 'Лыжи'        } },
   { key: 'gardening', emoji: '🌿', label: { de: 'Gartenarbeit', en: 'Gardening',  fr: 'Jardinage',     es: 'Jardinería',     it: 'Giardinaggio',    tr: 'Bahçecilik',    pl: 'Ogrodnictwo',  nl: 'Tuinieren',     hr: 'Vrtlarstvo',   el: 'Κηπουρική',  da: 'Havearbejde', ru: 'Садоводство' } },
   { key: 'picnic',    emoji: '🧺', label: { de: 'Picknick',     en: 'Picnic',     fr: 'Pique-nique',   es: 'Picnic',         it: 'Picnic',          tr: 'Piknik',        pl: 'Piknik',       nl: 'Picknick',      hr: 'Piknik',       el: 'Πικνίκ',     da: 'Picnic',      ru: 'Пикник'      } },
+  { key: 'grilling',  emoji: '🔥', label: { de: 'Grillen',      en: 'Grilling' } },
+  { key: 'diy_paint', emoji: '🛠️', label: { de: 'Heimwerken & Streichen', en: 'DIY & Painting' } },
+  { key: 'laundry',   emoji: '👕', label: { de: 'Wäsche trocknen', en: 'Laundry Drying' } },
 ];
 // Default activity filter: all activities enabled
 const DEFAULT_ACTIVITY_FILTER = ACTIVITY_DEFINITIONS.map(a => a.key);
@@ -272,6 +275,9 @@ const DEFAULT_ACTIVITY_PARAMS = {
   skiing:    { minTemp: -15, maxTemp: 0, maxWind: 40, rainOk: false, cloudOk: true },
   gardening: { minTemp: 12, maxTemp: 25, maxWind: 25, rainOk: false, cloudOk: true },
   picnic:    { minTemp: 18, maxTemp: 28, maxWind: 20, rainOk: false, cloudOk: true },
+  grilling:  { minTemp: 16, maxTemp: 30, maxWind: 20, rainOk: false, cloudOk: true },
+  diy_paint: { minTemp: 12, maxTemp: 27, maxWind: 20, rainOk: false, cloudOk: true },
+  laundry:   { minTemp: 14, maxTemp: 32, maxWind: 35, rainOk: false, cloudOk: true },
 };
 
 // Converts a custom activity name into a stable, storage-safe key:
@@ -4846,13 +4852,14 @@ const getActivityAdvice = (lang = 'de', temp = 0, wind = 0, precip24h = 0, uvInd
  * given current weather conditions. Accepts optional custom params (minTemp, maxTemp,
  * maxWind, rainOk, cloudOk) that override the activity's default thresholds.
  */
-const getActivityRating = (key, temp, wind, precip, uvIndex, code, customParams = {}) => {
+const getActivityRating = (key, temp, wind, precip, uvIndex, code, customParams = {}, humidity = null) => {
   const hasRain = precip >= UMBRELLA_PRECIP_THRESHOLD || RAIN_WEATHER_CODES.includes(code);
   const isThunderstorm = [17, 95, 96, 99].includes(code);
   const isStorm = wind > 50;
   const isSnow = [71, 73, 75, 77, 85, 86].includes(code);
   const isHeavyRain = precip >= 5 || [65, 82].includes(code);
   const isCloud = [2, 3].includes(code);
+  const humidityVal = Number.isFinite(Number(humidity)) ? Number(humidity) : null;
 
   // Merge defaults with user-defined params for this activity
   const defaults = getActivityDefaultsForKey(key);
@@ -4931,6 +4938,29 @@ const getActivityRating = (key, temp, wind, precip, uvIndex, code, customParams 
       if ((!p.rainOk && hasRain) || temp < Math.min(10, p.minTemp - 8) || temp > Math.max(35, p.maxTemp + 7) || wind > Math.max(35, p.maxWind + 15)) return rate(2);
       if (temp < Math.min(15, p.minTemp - 3) || temp > Math.max(30, p.maxTemp + 2) || wind > Math.max(25, p.maxWind + 5)) return rate(5);
       if (isIdeal) return rate(9);
+      return rate(7);
+    }
+    case 'grilling': {
+      if (isThunderstorm || isStorm) return rate(1);
+      if ((!p.rainOk && hasRain) || isHeavyRain || wind > Math.max(35, p.maxWind + 15) || temp < Math.min(5, p.minTemp - 11) || temp > Math.max(36, p.maxTemp + 6)) return rate(2);
+      if (wind > Math.max(28, p.maxWind + 8) || temp < Math.min(12, p.minTemp - 4) || temp > Math.max(32, p.maxTemp + 2)) return rate(5);
+      if (isIdeal) return rate(9);
+      return rate(7);
+    }
+    case 'diy_paint': {
+      if (isThunderstorm || isStorm) return rate(1);
+      if ((!p.rainOk && hasRain) || isHeavyRain || temp < Math.min(6, p.minTemp - 6) || temp > Math.max(33, p.maxTemp + 6)) return rate(2);
+      if ((humidityVal !== null && (humidityVal > 82 || humidityVal < 25)) || wind > Math.max(30, p.maxWind + 10)) return rate(3);
+      if ((humidityVal !== null && (humidityVal > 75 || humidityVal < 30)) || temp < Math.min(10, p.minTemp - 2) || temp > Math.max(30, p.maxTemp + 3)) return rate(5);
+      if (isIdeal && (humidityVal === null || (humidityVal >= 35 && humidityVal <= 70))) return rate(9);
+      return rate(7);
+    }
+    case 'laundry': {
+      if (isThunderstorm || isStorm) return rate(1);
+      if ((!p.rainOk && hasRain) || isHeavyRain || temp < Math.min(4, p.minTemp - 10)) return rate(2);
+      if ((humidityVal !== null && humidityVal > 85) || temp < Math.min(8, p.minTemp - 6)) return rate(3);
+      if ((humidityVal !== null && humidityVal > 75) || temp < Math.min(12, p.minTemp - 2) || wind > Math.max(45, p.maxWind + 10)) return rate(5);
+      if (isIdeal && (humidityVal === null || humidityVal <= 65)) return rate(9);
       return rate(7);
     }
     default: {
@@ -11183,7 +11213,7 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
           key,
           emoji,
           label: getActivityLabel({ label, key }, lang),
-          rating: getActivityRating(key, currentHourData.temp, currentHourData.wind, currentHourData.precip, currentHourData.uvIndex, currentHourData.code, effectiveActivityParams[key]),
+          rating: getActivityRating(key, currentHourData.temp, currentHourData.wind, currentHourData.precip, currentHourData.uvIndex, currentHourData.code, effectiveActivityParams[key], currentHourData.humidity),
         }))
     : [];
 
@@ -11385,7 +11415,7 @@ const ActivityIndexModal = ({ isOpen, onClose, hourlyData, lang='de', isSmallScr
         const effectiveParams = (activityParams && typeof activityParams === 'object') ? activityParams : getActivityParamDefaults(customActivities);
         const chartData = todayHours.map(h => ({
           displayTime: String(h.hour).padStart(2, '0') + ':00',
-          score: getActivityRating(key, h.temp, h.wind, h.precip, h.uvIndex, h.code, effectiveParams[key]).score,
+          score: getActivityRating(key, h.temp, h.wind, h.precip, h.uvIndex, h.code, effectiveParams[key], h.humidity).score,
         }));
         return (
           <div
@@ -11483,20 +11513,23 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
   const isGerman = lang === 'de';
   const TODAY_OFFSET = 0;
   const TOMORROW_OFFSET = 1;
+  const allActivities = useMemo(() => getActivityDefinitions(customActivities), [customActivities]);
   const activeActivities = useMemo(() => {
     const filter = Array.isArray(activityFilter) ? activityFilter : DEFAULT_ACTIVITY_FILTER;
-    return getActivityDefinitions(customActivities).filter(({ key }) => filter.includes(key));
-  }, [activityFilter, customActivities]);
-  const [selectedActivityKey, setSelectedActivityKey] = useState(activeActivities[0]?.key || 'walking');
+    return allActivities.filter(({ key }) => filter.includes(key));
+  }, [activityFilter, allActivities]);
+  const selectableActivities = activeActivities.length > 0 ? activeActivities : allActivities;
+  const [selectedActivityKey, setSelectedActivityKey] = useState(selectableActivities[0]?.key || 'walking');
   const [selectedHourIdx, setSelectedHourIdx] = useState(0);
   const [showDayOutlook, setShowDayOutlook] = useState(false);
+  const smartPresetActivities = ['gardening', 'grilling', 'diy_paint', 'laundry'];
 
   useEffect(() => {
     if (!isOpen) return;
-    setSelectedActivityKey(activeActivities[0]?.key || 'walking');
+    setSelectedActivityKey(selectableActivities[0]?.key || 'walking');
     setSelectedHourIdx(0);
     setShowDayOutlook(false);
-  }, [isOpen, activeActivities]);
+  }, [isOpen, selectableActivities]);
 
   if (!isOpen) return null;
 
@@ -11507,11 +11540,12 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
     temp: Math.round(hour.temp ?? 0),
     wind: Math.round((hour.windAvg ?? hour.wind) ?? 0),
     precip: hour.precip ?? 0,
+    humidity: hour.humidity ?? null,
     uvIndex: hour.uvIndex ?? 0,
     code: hour.code ?? 0,
   }));
 
-  const selectedActivity = activeActivities.find(a => a.key === selectedActivityKey) || activeActivities[0];
+  const selectedActivity = allActivities.find(a => a.key === selectedActivityKey) || selectableActivities[0];
   const safeHourIdx = (selectedHourIdx >= 0 && selectedHourIdx < times.length) ? selectedHourIdx : 0;
   const selectedTime = times[safeHourIdx] || null;
   const effectiveActivityParams = (activityParams && typeof activityParams === 'object') ? activityParams : getActivityParamDefaults(customActivities);
@@ -11523,7 +11557,8 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
         selectedTime.precip,
         selectedTime.uvIndex,
         selectedTime.code,
-        effectiveActivityParams[selectedActivity.key]
+        effectiveActivityParams[selectedActivity.key],
+        selectedTime.humidity
       )
     : null;
   const isGood = !!rating && rating.score >= 6;
@@ -11562,7 +11597,8 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
           hour.precip ?? 0,
           hour.uvIndex ?? 0,
           hour.code ?? 0,
-          effectiveActivityParams[selectedActivity.key]
+          effectiveActivityParams[selectedActivity.key],
+          hour.humidity
         );
         if (!best || currentRating.score > best.score) {
           return { score: currentRating.score, time: hour.time };
@@ -11604,12 +11640,31 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
               onChange={(e) => setSelectedActivityKey(e.target.value)}
               className={`w-full p-3 rounded-xl border ${isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant text-m3-dark-on-surface' : 'bg-white border-slate-200 text-slate-800'} text-sm`}
             >
-              {activeActivities.map(({ key, emoji, label }) => (
+              {selectableActivities.map(({ key, emoji, label }) => (
                 <option key={key} value={key}>
                   {emoji} {getActivityLabel({ label, key }, lang)}
                 </option>
               ))}
             </select>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {smartPresetActivities.map((presetKey) => {
+                const activity = allActivities.find(({ key }) => key === presetKey);
+                if (!activity) return null;
+                const isSelected = selectedActivity?.key === activity.key;
+                return (
+                  <button
+                    key={activity.key}
+                    type="button"
+                    onClick={() => setSelectedActivityKey(activity.key)}
+                    className={`text-xs px-2.5 py-1 rounded-full border transition ${isSelected
+                      ? (isRealNight ? 'bg-m3-dark-primary/30 border-m3-dark-primary text-m3-dark-on-surface' : 'bg-m3-primary-container border-m3-primary text-m3-on-primary-container')
+                      : (isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant text-m3-dark-on-surface-variant' : 'bg-slate-50 border-slate-200 text-slate-600')}`}
+                  >
+                    {activity.emoji} {getActivityLabel(activity, lang)}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div>
@@ -11645,7 +11700,7 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-2xl">{selectedActivity.emoji}</span>
                 <span className={`text-sm font-semibold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'}`}>
-                  {(selectedActivity.label[lang] || selectedActivity.label.en)} · {selectedTime.label}
+                  {getActivityLabel(selectedActivity, lang)} · {selectedTime.label}
                 </span>
               </div>
               <div className="flex items-center gap-2 mb-2">
@@ -11656,8 +11711,8 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
               </div>
               <div className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'}`}>
                 {isGerman
-                  ? `Wetterwerte um ${selectedTime.label}: ${selectedTime.temp}°C, ${selectedTime.wind} km/h Wind, ${selectedTime.precip.toFixed(1)} mm Niederschlag.`
-                  : `Weather at ${selectedTime.label}: ${selectedTime.temp}°C, ${selectedTime.wind} km/h wind, ${selectedTime.precip.toFixed(1)} mm precipitation.`}
+                  ? `Wetterwerte um ${selectedTime.label}: ${selectedTime.temp}°C, ${selectedTime.wind} km/h Wind, ${selectedTime.precip.toFixed(1)} mm Niederschlag${selectedTime.humidity !== null ? `, ${Math.round(selectedTime.humidity)}% Luftfeuchte` : ''}.`
+                  : `Weather at ${selectedTime.label}: ${selectedTime.temp}°C, ${selectedTime.wind} km/h wind, ${selectedTime.precip.toFixed(1)} mm precipitation${selectedTime.humidity !== null ? `, ${Math.round(selectedTime.humidity)}% humidity` : ''}.`}
               </div>
               <div className={`text-[11px] mt-2 ${isRealNight ? 'text-m3-dark-on-surface-variant/80' : 'text-slate-500'}`}>
                 {isGerman ? 'Klicken oder drücken für Heute & Morgen.' : 'Click or press for today & tomorrow.'}
@@ -11695,6 +11750,261 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
               {isGerman ? 'Keine Stunden-Daten verfügbar.' : 'No hourly data available.'}
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const WeatherChatModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallScreen = false, customActivities = [], activityParams = null, isRealNight = false }) => {
+  const isGerman = lang === 'de';
+  const locale = LANG_LOCALE_MAP[lang] || 'de-DE';
+  const allActivities = useMemo(() => getActivityDefinitions(customActivities), [customActivities]);
+  const effectiveActivityParams = (activityParams && typeof activityParams === 'object') ? activityParams : getActivityParamDefaults(customActivities);
+  const [question, setQuestion] = useState('');
+  const [messages, setMessages] = useState(() => [
+    {
+      role: 'assistant',
+      text: isGerman
+        ? 'Frag mich z. B. nach Regenrisiko, Kleidung oder ob Garten/Grillen/Streichen/Wäsche heute passt.'
+        : 'Ask me about rain risk, clothing, or whether gardening/grilling/painting/laundry is suitable today.',
+    },
+  ]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setQuestion('');
+    setMessages([
+      {
+        role: 'assistant',
+        text: isGerman
+          ? 'Frag mich z. B. nach Regenrisiko, Kleidung oder ob Garten/Grillen/Streichen/Wäsche heute passt.'
+          : 'Ask me about rain risk, clothing, or whether gardening/grilling/painting/laundry is suitable today.',
+      },
+    ]);
+  }, [isOpen, isGerman]);
+
+  const nextHours = useMemo(() => (Array.isArray(hourlyData) ? hourlyData.slice(0, 48) : []), [hourlyData]);
+  const quickQuestions = useMemo(() => (isGerman
+    ? [
+        'Kann ich heute Nachmittag draußen sägen, ohne vom Regen überrascht zu werden?',
+        'Welche Kleidung soll ich morgen einpacken?',
+        'Wie gut ist das Wetter morgen zum Grillen?',
+        'Ist morgen gutes Wäsche-Trocken-Wetter?',
+      ]
+    : [
+        'Can I work outside this afternoon without rain surprises?',
+        'What clothing should I pack for tomorrow?',
+        'How good is tomorrow for grilling?',
+        'Is tomorrow good laundry-drying weather?',
+      ]), [isGerman]);
+
+  const getWindowFromQuestion = useCallback((rawQuestion) => {
+    const text = String(rawQuestion || '').toLowerCase();
+    const baseNow = nextHours[0]?.time ? new Date(nextHours[0].time) : new Date();
+    const from = new Date(baseNow);
+    const to = new Date(baseNow);
+    let label = isGerman ? 'nächsten Stunden' : 'next hours';
+
+    if (/\bmorgen\b|\btomorrow\b/.test(text)) {
+      from.setDate(from.getDate() + 1);
+      from.setHours(6, 0, 0, 0);
+      to.setDate(from.getDate());
+      to.setHours(22, 0, 0, 0);
+      label = isGerman ? 'morgen' : 'tomorrow';
+    } else if (/nachmittag|afternoon/.test(text)) {
+      from.setHours(13, 0, 0, 0);
+      to.setHours(18, 0, 0, 0);
+      label = isGerman ? 'heute Nachmittag' : 'this afternoon';
+    } else if (/abend|evening|tonight/.test(text)) {
+      from.setHours(18, 0, 0, 0);
+      to.setHours(23, 0, 0, 0);
+      label = isGerman ? 'heute Abend' : 'this evening';
+    } else if (/morgen früh|morning/.test(text)) {
+      from.setHours(6, 0, 0, 0);
+      to.setHours(12, 0, 0, 0);
+      label = isGerman ? 'heute Morgen' : 'this morning';
+    } else {
+      to.setHours(to.getHours() + 8);
+    }
+
+    const hours = nextHours.filter((hour) => hour.time >= from && hour.time <= to);
+    return {
+      label,
+      hours: hours.length > 0 ? hours : nextHours.slice(0, 12),
+    };
+  }, [nextHours, isGerman]);
+
+  const detectActivityKey = useCallback((rawQuestion) => {
+    const text = String(rawQuestion || '').toLowerCase();
+    if (/garten|garden/.test(text)) return 'gardening';
+    if (/grill|barbecue|bbq/.test(text)) return 'grilling';
+    if (/streich|paint|heimwerk|diy|säg|saeg|wood/.test(text)) return 'diy_paint';
+    if (/wäsche|waesche|laundry|dry/.test(text)) return 'laundry';
+    if (/jogg|run/.test(text)) return 'running';
+    if (/rad|bike|cycling/.test(text)) return 'cycling';
+    return null;
+  }, []);
+
+  const buildAnswer = useCallback((rawQuestion) => {
+    if (!nextHours.length) {
+      return isGerman ? 'Dafür habe ich gerade keine Stunden-Daten.' : 'I currently have no hourly forecast data for that.';
+    }
+
+    const normalized = String(rawQuestion || '').trim().toLowerCase();
+    const { label, hours } = getWindowFromQuestion(rawQuestion);
+    if (!hours.length) return isGerman ? 'Ich habe dafür keine passenden Daten gefunden.' : 'I could not find matching forecast data.';
+
+    const minTemp = Math.round(Math.min(...hours.map((h) => h.temp ?? 0)));
+    const maxTemp = Math.round(Math.max(...hours.map((h) => h.temp ?? 0)));
+    const maxWind = Math.round(Math.max(...hours.map((h) => (h.windAvg ?? h.wind) ?? 0)));
+    const maxPrecipProb = Math.round(Math.max(...hours.map((h) => h.precipProb ?? 0)));
+    const totalPrecip = hours.reduce((sum, h) => sum + Number(h.precip || 0) + Number(h.snow || 0), 0);
+
+    if (/kleidung|pack|anzieh|wear|clothing|outfit/.test(normalized)) {
+      const clothingTip = getTripClothingTip({
+        lang,
+        maxTemp,
+        minTemp,
+        rainChance: maxPrecipProb,
+        rainAmount: totalPrecip,
+        wind: maxWind,
+      });
+      return isGerman
+        ? `👕 Für ${label}: ${clothingTip.replace(/^👕\s*Kleidungstipp:\s*/i, '')}\nTemperatur etwa ${minTemp}–${maxTemp}°C, Regenrisiko bis ${maxPrecipProb}%.`
+        : `👕 For ${label}: ${clothingTip.replace(/^👕\s*Clothing tip:\s*/i, '')}\nTemperature around ${minTemp}–${maxTemp}°C, rain risk up to ${maxPrecipProb}%.`;
+    }
+
+    const activityKey = detectActivityKey(normalized);
+    if (activityKey) {
+      const activity = allActivities.find((item) => item.key === activityKey);
+      if (!activity) return isGerman ? 'Dazu fehlt mir noch ein Aktivitätsprofil.' : 'I am missing an activity profile for that.';
+      const scored = hours.map((hour) => ({
+        hour,
+        rating: getActivityRating(
+          activity.key,
+          Math.round(hour.temp ?? 0),
+          Math.round((hour.windAvg ?? hour.wind) ?? 0),
+          hour.precip ?? 0,
+          hour.uvIndex ?? 0,
+          hour.code ?? 0,
+          effectiveActivityParams[activity.key],
+          hour.humidity
+        ),
+      }));
+      const best = scored.reduce((top, entry) => (!top || entry.rating.score > top.rating.score ? entry : top), null);
+      if (!best) return isGerman ? 'Dafür konnte ich keine Bewertung erzeugen.' : 'I could not generate a rating for that.';
+      const score = best.rating.score;
+      const bestTime = best.hour.time.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+      const humidityPart = Number.isFinite(Number(best.hour.humidity))
+        ? (isGerman ? `, Luftfeuchte ca. ${Math.round(Number(best.hour.humidity))}%` : `, humidity around ${Math.round(Number(best.hour.humidity))}%`)
+        : '';
+      const verdict = score >= 8
+        ? (isGerman ? 'sehr gut geeignet' : 'very suitable')
+        : score >= 6
+          ? (isGerman ? 'brauchbar mit kleinen Einschränkungen' : 'usable with minor limits')
+          : (isGerman ? 'eher ungeeignet' : 'rather unsuitable');
+      return isGerman
+        ? `${activity.emoji} ${getActivityLabel(activity, lang)} (${label}): ${verdict}.\nBeste Zeit: ${bestTime} (${score}/10) bei etwa ${Math.round(best.hour.temp ?? 0)}°C, ${Math.round((best.hour.windAvg ?? best.hour.wind) ?? 0)} km/h Wind und ${Number(best.hour.precip ?? 0).toFixed(1)} mm Niederschlag${humidityPart}.`
+        : `${activity.emoji} ${getActivityLabel(activity, lang)} (${label}): ${verdict}.\nBest time: ${bestTime} (${score}/10) at around ${Math.round(best.hour.temp ?? 0)}°C, ${Math.round((best.hour.windAvg ?? best.hour.wind) ?? 0)} km/h wind and ${Number(best.hour.precip ?? 0).toFixed(1)} mm precipitation${humidityPart}.`;
+    }
+
+    if (/regen|rain|trocken|dry|verlässlich|reliable|überrascht|surprise/.test(normalized)) {
+      if (maxPrecipProb < 25 && totalPrecip < 0.5) {
+        return isGerman
+          ? `✅ Für ${label} wirkt es recht verlässlich trocken (Regenrisiko max. ${maxPrecipProb}%, Summe ~${totalPrecip.toFixed(1)} mm).`
+          : `✅ ${label} looks reliably dry (max rain risk ${maxPrecipProb}%, total ~${totalPrecip.toFixed(1)} mm).`;
+      }
+      if (maxPrecipProb < 50 && totalPrecip < 2) {
+        return isGerman
+          ? `⚠️ Für ${label} meist trocken, aber unsicher: bis ${maxPrecipProb}% Regenrisiko und ~${totalPrecip.toFixed(1)} mm möglich.`
+          : `⚠️ ${label} is mostly dry but uncertain: up to ${maxPrecipProb}% rain risk and ~${totalPrecip.toFixed(1)} mm possible.`;
+      }
+      return isGerman
+        ? `🌧️ Für ${label} ist Regen wahrscheinlich (bis ${maxPrecipProb}% Risiko, ~${totalPrecip.toFixed(1)} mm). Lieber wetterfest planen.`
+        : `🌧️ Rain is likely for ${label} (up to ${maxPrecipProb}% risk, ~${totalPrecip.toFixed(1)} mm). Plan with rain protection.`;
+    }
+
+    return isGerman
+      ? `📍 Für ${label}: etwa ${minTemp}–${maxTemp}°C, Wind bis ${maxWind} km/h, Regenrisiko bis ${maxPrecipProb}% (ca. ${totalPrecip.toFixed(1)} mm).`
+      : `📍 For ${label}: around ${minTemp}–${maxTemp}°C, wind up to ${maxWind} km/h, rain risk up to ${maxPrecipProb}% (about ${totalPrecip.toFixed(1)} mm).`;
+  }, [nextHours, getWindowFromQuestion, detectActivityKey, allActivities, effectiveActivityParams, locale, isGerman, lang]);
+
+  const askQuestion = useCallback((rawQuestion) => {
+    const cleaned = String(rawQuestion || '').trim();
+    if (!cleaned) return;
+    const answer = buildAnswer(cleaned);
+    setMessages((prev) => [
+      ...prev,
+      { role: 'user', text: cleaned },
+      { role: 'assistant', text: answer },
+    ]);
+    setQuestion('');
+  }, [buildAnswer]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
+      <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-white'} rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-lg'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
+        <div className={`p-4 border-b ${isRealNight ? 'border-m3-outline-variant/70 bg-m3-dark-surface-container-high/50' : 'border-slate-100 bg-slate-50/50'} flex justify-between items-center sticky top-0`}>
+          <h3 className={`font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'} flex items-center gap-2`}>
+            <MessageSquarePlus size={18} className="text-m3-primary" />
+            {isGerman ? 'Interaktiver Wetter-Chat' : 'Interactive Weather Chat'}
+          </h3>
+          <button onClick={onClose} className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'} rounded-full transition`}>
+            <X size={20} className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} />
+          </button>
+        </div>
+
+        <div className="p-4 border-b border-m3-outline-variant/40">
+          <div className="flex flex-wrap gap-2">
+            {quickQuestions.map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => askQuestion(preset)}
+                className={`text-xs px-2.5 py-1 rounded-full border transition ${isRealNight ? 'bg-m3-dark-surface-container-high border-m3-outline-variant text-m3-dark-on-surface-variant hover:bg-m3-dark-surface-container' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+              >
+                {preset}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {messages.map((msg, index) => (
+            <div
+              key={`${msg.role}-${index}`}
+              className={`rounded-2xl px-3 py-2 text-sm whitespace-pre-line ${msg.role === 'user'
+                ? 'bg-m3-primary-container text-m3-on-primary-container ml-6'
+                : (isRealNight ? 'bg-m3-dark-surface-container-high text-m3-dark-on-surface mr-6' : 'bg-slate-100 text-slate-700 mr-6')}`}
+            >
+              {msg.text}
+            </div>
+          ))}
+        </div>
+
+        <div className={`p-4 border-t ${isRealNight ? 'border-m3-outline-variant/70 bg-m3-dark-surface-container-high/50' : 'border-slate-100 bg-slate-50/50'} flex gap-2`}>
+          <input
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                askQuestion(question);
+              }
+            }}
+            placeholder={isGerman ? 'Frage zum Wetter stellen …' : 'Ask a weather question …'}
+            className={`flex-1 p-3 rounded-xl border text-sm ${isRealNight ? 'bg-m3-dark-surface-container border-m3-outline-variant text-m3-dark-on-surface placeholder:text-m3-dark-on-surface-variant' : 'bg-white border-slate-200 text-slate-800 placeholder:text-slate-400'}`}
+          />
+          <button
+            type="button"
+            onClick={() => askQuestion(question)}
+            className="px-4 rounded-xl bg-m3-primary text-m3-on-primary font-semibold"
+          >
+            {isGerman ? 'Fragen' : 'Ask'}
+          </button>
         </div>
       </div>
     </div>
@@ -13721,6 +14031,7 @@ export default function WeatherApp() {
   const [showPrecipModal, setShowPrecipModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [showActivityCheckModal, setShowActivityCheckModal] = useState(false);
+  const [showWeatherChatModal, setShowWeatherChatModal] = useState(false);
   const [showThunderstormModal, setShowThunderstormModal] = useState(false);
   const [showPollenModal, setShowPollenModal] = useState(false);
   const [showMoonModal, setShowMoonModal] = useState(false);
@@ -14809,7 +15120,7 @@ export default function WeatherApp() {
   }, []);
 
   // --- PULL-TO-REFRESH & SWIPE GESTURE HANDLERS ---
-  const isAnyModalOpen = showFeedback || !!activeDetailModal || showPrecipModal || showActivityModal || showActivityCheckModal || showThunderstormModal || showSettingsModal || showLocationModal || showPollenModal || showMoonModal || !!selectedTripForPopup || showNewTripModal;
+  const isAnyModalOpen = showFeedback || !!activeDetailModal || showPrecipModal || showActivityModal || showActivityCheckModal || showWeatherChatModal || showThunderstormModal || showSettingsModal || showLocationModal || showPollenModal || showMoonModal || !!selectedTripForPopup || showNewTripModal;
 
   const handleTouchStart = (e) => {
     // Do not activate gestures when a modal/overlay is open
@@ -16914,6 +17225,18 @@ export default function WeatherApp() {
           isRealNight={isRealNight}
         />
       )}
+      {showWeatherChatModal && (
+        <WeatherChatModal
+          isOpen={showWeatherChatModal}
+          onClose={() => setShowWeatherChatModal(false)}
+          hourlyData={processedShort}
+          lang={lang}
+          isSmallScreen={isSmallScreen}
+          customActivities={settings.customActivities}
+          activityParams={settings.activityParams}
+          isRealNight={isRealNight}
+        />
+      )}
       {showThunderstormModal && (
         <ThunderstormModal
           isOpen={showThunderstormModal}
@@ -17321,6 +17644,25 @@ export default function WeatherApp() {
           {tilesExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </button>
         </div>
+
+        <button
+          onClick={() => setShowWeatherChatModal(true)}
+          className={`mt-2 w-full flex items-center justify-between gap-3 ${isRealNight ? 'bg-m3-dark-surface-container/90 hover:bg-m3-dark-surface-container text-m3-dark-on-surface' : 'bg-m3-surface-container hover:bg-m3-surface-container-high text-m3-on-surface'} rounded-m3-2xl p-3 shadow-m3-1 transition-all active:scale-[0.99]`}
+          aria-label={lang === 'de' ? 'Interaktiven Wetter-Chat öffnen' : 'Open interactive weather chat'}
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center ${isRealNight ? 'bg-m3-dark-primary/20 text-m3-dark-primary' : 'bg-m3-primary/15 text-m3-primary'}`}>
+              <MessageSquarePlus size={18} />
+            </div>
+            <div className="text-left min-w-0">
+              <div className="text-m3-label-large font-semibold truncate">{lang === 'de' ? 'Interaktiver Wetter-Chat' : 'Interactive Weather Chat'}</div>
+              <div className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} truncate`}>
+                {lang === 'de' ? 'Fragen stellen & wetterbasierte Antworten erhalten' : 'Ask questions and get weather-based answers'}
+              </div>
+            </div>
+          </div>
+          <ArrowRight size={18} className={`${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} flex-shrink-0`} />
+        </button>
 
         {/* Collapsible Weather Details Container */}
         <div 
