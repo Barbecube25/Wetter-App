@@ -250,7 +250,7 @@ const getPersonalStationProviderLabel = (provider) => (
           ? 'Ecowitt'
           : ''
 );
-const pickFirstPresentValue = (...values) => values.find((value) => {
+const findFirstNonEmptyValue = (...values) => values.find((value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
   return true;
@@ -264,7 +264,6 @@ const parseMetricNumber = (value) => {
 const getTrustedProxyUrl = (value) => {
   const raw = String(value || '').trim();
   if (!raw) return null;
-  const hasScheme = /^[A-Za-z][A-Za-z\d+.\-]*:/.test(raw);
   try {
     const base = typeof window !== 'undefined' && window.location?.origin
       ? window.location.origin
@@ -273,7 +272,7 @@ const getTrustedProxyUrl = (value) => {
     const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
     if (url.username || url.password) return null;
     if (!['https:', 'http:'].includes(url.protocol)) return null;
-    if (url.protocol === 'http:' && !isLocalhost && hasScheme) return null;
+    if (url.protocol === 'http:' && !isLocalhost) return null;
     return raw;
   } catch (e) {
     return null;
@@ -298,11 +297,11 @@ const normalizeBlueRiiotPayload = (payload) => {
   ].find((entry) => entry && typeof entry === 'object') || container;
 
   return {
-    poolName: String(pickFirstPresentValue(container.poolName, container.name, root.poolName, root.name, '') || '').trim(),
-    lat: parseMetricNumber(pickFirstPresentValue(container.latitude, container.lat, root.latitude, root.lat)),
-    lon: parseMetricNumber(pickFirstPresentValue(container.longitude, container.lon, root.longitude, root.lon)),
+    poolName: String(findFirstNonEmptyValue(container.poolName, container.name, root.poolName, root.name, '') || '').trim(),
+    lat: parseMetricNumber(findFirstNonEmptyValue(container.latitude, container.lat, root.latitude, root.lat)),
+    lon: parseMetricNumber(findFirstNonEmptyValue(container.longitude, container.lon, root.longitude, root.lon)),
     measuredAt: String(
-      pickFirstPresentValue(
+      findFirstNonEmptyValue(
         readings.measuredAt,
         readings.measured_at,
         readings.timestamp,
@@ -314,9 +313,9 @@ const normalizeBlueRiiotPayload = (payload) => {
         ''
       ) || ''
     ).trim() || null,
-    status: String(pickFirstPresentValue(readings.status, container.status, root.status, '') || '').trim() || null,
+    status: String(findFirstNonEmptyValue(readings.status, container.status, root.status, '') || '').trim() || null,
     waterTemperature: parseMetricNumber(
-      pickFirstPresentValue(
+      findFirstNonEmptyValue(
         readings.waterTemperature,
         readings.water_temperature,
         readings.waterTemp,
@@ -326,9 +325,9 @@ const normalizeBlueRiiotPayload = (payload) => {
         root.waterTemperature
       )
     ),
-    ph: parseMetricNumber(pickFirstPresentValue(readings.ph, readings.pH, container.ph, container.pH, root.ph, root.pH)),
+    ph: parseMetricNumber(findFirstNonEmptyValue(readings.ph, readings.pH, container.ph, container.pH, root.ph, root.pH)),
     orp: parseMetricNumber(
-      pickFirstPresentValue(
+      findFirstNonEmptyValue(
         readings.orp,
         readings.redox,
         readings.redoxPotential,
@@ -339,11 +338,11 @@ const normalizeBlueRiiotPayload = (payload) => {
       )
     ),
     conductivity: parseMetricNumber(
-      pickFirstPresentValue(readings.conductivity, container.conductivity, root.conductivity)
+      findFirstNonEmptyValue(readings.conductivity, container.conductivity, root.conductivity)
     ),
-    salinity: parseMetricNumber(pickFirstPresentValue(readings.salinity, container.salinity, root.salinity)),
+    salinity: parseMetricNumber(findFirstNonEmptyValue(readings.salinity, container.salinity, root.salinity)),
     battery: parseMetricNumber(
-      pickFirstPresentValue(
+      findFirstNonEmptyValue(
         readings.battery,
         readings.batteryPct,
         readings.batteryPercent,
@@ -16601,7 +16600,7 @@ export default function WeatherApp() {
   const formatPoolUpdatedAt = (value) => {
     if (!value) return null;
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
+    if (Number.isNaN(date.getTime())) return null;
     return date.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE', {
       day: '2-digit',
       month: '2-digit',
