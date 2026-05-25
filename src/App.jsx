@@ -247,7 +247,7 @@ const getPersonalStationProviderLabel = (provider) => (
       : provider === 'blueriiot'
         ? 'BlueRiiot'
         : provider === 'ecowitt'
-          ? 'ecowitt'
+          ? 'Ecowitt'
           : ''
 );
 const pickFirstPresentValue = (...values) => values.find((value) => {
@@ -264,7 +264,7 @@ const parseMetricNumber = (value) => {
 const getTrustedProxyUrl = (value) => {
   const raw = String(value || '').trim();
   if (!raw) return null;
-  const hasScheme = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(raw);
+  const hasScheme = /^[A-Za-z][A-Za-z\d+.\-]*:/.test(raw);
   try {
     const base = typeof window !== 'undefined' && window.location?.origin
       ? window.location.origin
@@ -12577,11 +12577,11 @@ const PersonalStationSetup = ({ onConnected, onCancel, lang = 'de' }) => {
     if (!provider) {
         return (
             <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {[
                         { id: 'wunderground', label: 'Weather\nUnderground', icon: '🌦' },
                         { id: 'netatmo', label: 'Netatmo', icon: '📡' },
-                        { id: 'ecowitt', label: 'ecowitt', icon: '🌡' },
+                        { id: 'ecowitt', label: 'Ecowitt', icon: '🌡' },
                         { id: 'blueriiot', label: 'BlueRiiot\nProxy', icon: '🏊' },
                     ].map(p => (
                         <button
@@ -17903,7 +17903,7 @@ export default function WeatherApp() {
               )}
               {hasStationMetricValue(poolWaterData.ph) && (
                 <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${isRealNight ? 'bg-m3-dark-surface border border-m3-outline-variant text-m3-dark-on-surface' : 'bg-m3-surface border border-m3-outline-variant text-m3-on-surface'}`}>
-                  <Droplets size={12} /> {t('poolPh')}: {poolWaterData.ph.toFixed(2)}
+                  <Droplets size={12} /> {t('poolPh')}: {Number(poolWaterData.ph).toFixed(2)}
                 </span>
               )}
               {hasStationMetricValue(poolWaterData.orp) && (
@@ -17918,7 +17918,7 @@ export default function WeatherApp() {
               )}
               {hasStationMetricValue(poolWaterData.salinity) && (
                 <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${isRealNight ? 'bg-m3-dark-surface border border-m3-outline-variant text-m3-dark-on-surface' : 'bg-m3-surface border border-m3-outline-variant text-m3-on-surface'}`}>
-                  <Waves size={12} /> {t('salinity')}: {poolWaterData.salinity.toFixed(2)} g/L
+                  <Waves size={12} /> {t('salinity')}: {Number(poolWaterData.salinity).toFixed(2)} g/L
                 </span>
               )}
               {hasStationMetricValue(poolWaterData.battery) && (
