@@ -4975,15 +4975,23 @@ const getActivityRating = (key, temp, wind, precip, uvIndex, code, customParams 
   }
 };
 
+const TOMORROW_NOTIFICATION_RAIN_PROBABILITY_THRESHOLD = 35;
+const TOMORROW_NOTIFICATION_RAIN_AMOUNT_THRESHOLD_MM = 1;
+const TOMORROW_NOTIFICATION_WINDY_GUST_THRESHOLD_KMH = 60;
+const TOMORROW_NOTIFICATION_WINDY_AVG_THRESHOLD_KMH = 35;
+const TOMORROW_NOTIFICATION_ACTIVITY_GOOD_SCORE = 6;
+const TOMORROW_NOTIFICATION_MAX_BODY_LENGTH = 320;
+const TOMORROW_NOTIFICATION_TEMP_FALLBACK = '--';
+
 const buildTomorrowNotificationBody = ({
-  isGerman = true,
+  isGerman = false,
   processedLong = [],
   processedShort = [],
   activityFilter = DEFAULT_ACTIVITY_FILTER,
   activityParams = null,
   customActivities = [],
 } = {}) => {
-  const tomorrow = Array.isArray(processedLong) ? processedLong[1] : null;
+  const tomorrow = Array.isArray(processedLong) && processedLong.length > 1 ? processedLong[1] : null;
   if (!tomorrow) {
     return isGerman ? 'Der Ausblick für morgen ist verfügbar.' : 'Your tomorrow outlook is ready.';
   }
@@ -4998,8 +5006,10 @@ const buildTomorrowNotificationBody = ({
     .filter((hour) => hour?.time instanceof Date && hour.time >= tomorrowStart && hour.time < tomorrowEnd);
   const formatTime = (date) => date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 
-  const maxTemp = Math.round(tomorrow.max ?? 0);
-  const minTemp = Math.round(tomorrow.min ?? 0);
+  const hasMaxTemp = Number.isFinite(Number(tomorrow.max));
+  const hasMinTemp = Number.isFinite(Number(tomorrow.min));
+  const maxTemp = hasMaxTemp ? Math.round(Number(tomorrow.max)) : TOMORROW_NOTIFICATION_TEMP_FALLBACK;
+  const minTemp = hasMinTemp ? Math.round(Number(tomorrow.min)) : TOMORROW_NOTIFICATION_TEMP_FALLBACK;
   const rainAmount = Number(tomorrow.rain) || 0;
   const rainProbability = Math.round(Number(tomorrow.prob) || 0);
   const segments = [
@@ -5019,9 +5029,9 @@ const buildTomorrowNotificationBody = ({
       ? formatTime(firstRain)
       : `${formatTime(firstRain)}–${formatTime(lastRain)}`;
     segments.push(isGerman
-      ? `Regen vsl. ${rainWindow} (${rainAmount.toFixed(1)} mm)`
+      ? `Regen voraussichtlich ${rainWindow} (${rainAmount.toFixed(1)} mm)`
       : `Rain likely ${rainWindow} (${rainAmount.toFixed(1)} mm)`);
-  } else if (rainProbability >= 35 || rainAmount >= 1) {
+  } else if (rainProbability >= TOMORROW_NOTIFICATION_RAIN_PROBABILITY_THRESHOLD || rainAmount >= TOMORROW_NOTIFICATION_RAIN_AMOUNT_THRESHOLD_MM) {
     segments.push(isGerman
       ? `Regen möglich (${rainProbability}%, ${rainAmount.toFixed(1)} mm)`
       : `Rain possible (${rainProbability}%, ${rainAmount.toFixed(1)} mm)`);
@@ -5030,7 +5040,12 @@ const buildTomorrowNotificationBody = ({
   }
 
   const severeThunderHour = tomorrowHours.find((hour) => {
-    const risk = calcThunderstormRiskLevel(hour.cape ?? 0, hour.liftedIndex, hour.precipProb ?? 0, hour.code ?? 0, hour.gust ?? 0);
+    const cape = hour.cape ?? 0;
+    const liftedIndex = hour.liftedIndex ?? 0;
+    const precipProb = hour.precipProb ?? 0;
+    const code = hour.code ?? 0;
+    const gust = hour.gust ?? 0;
+    const risk = calcThunderstormRiskLevel(cape, liftedIndex, precipProb, code, gust);
     const level = getThunderstormWarningLevel(risk, hour.gust ?? 0);
     return level >= 4;
   });
@@ -5041,7 +5056,7 @@ const buildTomorrowNotificationBody = ({
 
   const maxGust = Math.round(Number(tomorrow.gust) || 0);
   const maxWind = Math.round(Number(tomorrow.wind) || 0);
-  if (maxGust > 60 || maxWind >= 35) {
+  if (maxGust > TOMORROW_NOTIFICATION_WINDY_GUST_THRESHOLD_KMH || maxWind >= TOMORROW_NOTIFICATION_WINDY_AVG_THRESHOLD_KMH) {
     segments.push(isGerman ? `💨 Sehr windig (Böen bis ${maxGust} km/h)` : `💨 Very windy (gusts up to ${maxGust} km/h)`);
   }
 
@@ -5071,7 +5086,9 @@ const buildTomorrowNotificationBody = ({
       .filter(Boolean)
       .sort((a, b) => b.score - a.score);
 
-    const goodActivities = activityCandidates.filter((entry) => entry.score >= 6).slice(0, 2);
+    const goodActivities = activityCandidates
+      .filter((entry) => entry.score >= TOMORROW_NOTIFICATION_ACTIVITY_GOOD_SCORE)
+      .slice(0, 2);
     if (goodActivities.length > 0) {
       const activityText = goodActivities
         .map(({ activity, score, time }) => `${getActivityLabel(activity, isGerman ? 'de' : 'en')} ${formatTime(time)} (${score}/10)`)
@@ -5082,8 +5099,12 @@ const buildTomorrowNotificationBody = ({
     }
   }
 
-  const body = segments.join('. ') + '.';
-  return body.length > 320 ? `${body.slice(0, 317)}…` : body;
+  const body = segments.join('. ');
+  const normalizedBody = /[.!?]$/.test(body) ? body : `${body}.`;
+  const characters = Array.from(normalizedBody);
+  if (characters.length <= TOMORROW_NOTIFICATION_MAX_BODY_LENGTH) return normalizedBody;
+  const trimmedCharacters = characters.slice(0, TOMORROW_NOTIFICATION_MAX_BODY_LENGTH - 1);
+  return `${trimmedCharacters.join('')}…`;
 };
 
 
