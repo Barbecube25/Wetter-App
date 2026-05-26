@@ -96,6 +96,7 @@ const DEFAULT_NOTIFICATION_SETTINGS = {
   rainStartLeads: [WEATHER_NOTIFICATION_LEAD_OPTIONS[1]],
   morningReportTime: WEATHER_NOTIFICATION_DEFAULT_MORNING_TIME,
   eveningReportTime: WEATHER_NOTIFICATION_DEFAULT_EVENING_TIME,
+  notificationActivities: [],
 };
 
 const normalizeNotificationTime = (value, fallback) => {
@@ -135,6 +136,7 @@ const normalizeNotificationSettings = (value) => {
     rainStartLeads: leads,
     morningReportTime: normalizeNotificationTime(source.morningReportTime, DEFAULT_NOTIFICATION_SETTINGS.morningReportTime),
     eveningReportTime: normalizeNotificationTime(source.eveningReportTime, DEFAULT_NOTIFICATION_SETTINGS.eveningReportTime),
+    notificationActivities: Array.isArray(source.notificationActivities) ? source.notificationActivities.filter(k => typeof k === 'string') : DEFAULT_NOTIFICATION_SETTINGS.notificationActivities,
   };
 };
 
@@ -7264,6 +7266,38 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                                       })}
                                   </div>
                               </div>
+                              <div className="rounded-m3-sm bg-m3-surface-container-high p-2">
+                                  <div className="text-xs font-bold text-m3-on-surface-variant mb-2">
+                                      {isGerman ? 'Aktivitäten in Benachrichtigungen:' : 'Activities in notifications:'}
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                      {activityDefinitions.map((act) => {
+                                          const isActActive = (notificationSettings.notificationActivities || []).includes(act.key);
+                                          return (
+                                              <button
+                                                  key={act.key}
+                                                  onClick={() => {
+                                                      const current = notificationSettings.notificationActivities || [];
+                                                      const next = isActActive
+                                                          ? current.filter((k) => k !== act.key)
+                                                          : [...current, act.key];
+                                                      updateNotifications({ notificationActivities: next });
+                                                  }}
+                                                  className={`py-1 px-2 rounded-full text-xs font-bold transition flex items-center gap-1 ${isActActive ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'bg-m3-surface text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                                              >
+                                                  <span>{act.emoji}</span>
+                                                  <span>{getActivityLabel(act, isGerman ? 'de' : 'en')}</span>
+                                                  {isActActive && <Check size={11} />}
+                                              </button>
+                                          );
+                                      })}
+                                  </div>
+                                  <p className="text-xs text-m3-on-surface-variant mt-2 opacity-70">
+                                      {isGerman
+                                          ? 'Ausgewählte Aktivitäten zeigen den besten Zeitpunkt im Tagesbericht.'
+                                          : 'Selected activities show the best time window in daily reports.'}
+                                  </p>
+                              </div>
                           </div>
                       </div>
                   </div>
@@ -11823,7 +11857,121 @@ const getThunderstormWarningLevel = (peakRisk, maxGust) => {
   return 0;
 };
 
-// --- MOON PHASE MODAL ---
+// Builds a rich notification body for morning (today) or evening (tomorrow) weather reports.
+// dayData: entry from processedLong (has max, min, rain, gust, prob, code)
+// hourlyForDay: array of processedShort-style entries filtered for that day
+// dwdWarnings: array of active DWD alert objects
+// notificationActivities: array of activity keys the user wants shown
+// activityParams: from settings (user-customised thresholds)
+// customActivities: from settings
+// isGerman: boolean
+// Returns a notification body string (newline-separated lines).
+const buildDailyNotificationBody = ({
+  dayData,
+  hourlyForDay,
+  dwdWarnings,
+  notificationActivities,
+  activityParams,
+  customActivities,
+  isGerman,
+}) => {
+  const de = isGerman;
+  const locale = de ? 'de-DE' : 'en-US';
+  const parts = [];
+
+  // --- Temperature ---
+  if (dayData) {
+    const maxT = Math.round(dayData.max);
+    const minT = Math.round(dayData.min);
+    parts.push(`🌡️ ${maxT}° / ${minT}°`);
+  }
+
+  // --- Rain ---
+  const rainProb = dayData?.prob ?? 0;
+  const rainMm = parseFloat(dayData?.rain ?? 0) + parseFloat(dayData?.snow ?? 0);
+  if (rainProb >= 30 || rainMm > 0.5) {
+    const firstRainHour = hourlyForDay.find(
+      (h) => parseFloat(h.precip || 0) > 0.3 || parseFloat(h.snow || 0) > 0.3
+    );
+    if (firstRainHour) {
+      const timeStr = firstRainHour.time.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+      const mmStr = rainMm > 0.5 ? ` (~${rainMm.toFixed(1)} mm)` : '';
+      parts.push(de
+        ? `🌧️ Regen ab ${timeStr} Uhr${mmStr}`
+        : `🌧️ Rain from ${timeStr}${mmStr}`);
+    } else {
+      parts.push(de ? `🌧️ Regenrisiko ${rainProb}%` : `🌧️ Rain chance ${rainProb}%`);
+    }
+  }
+
+  // --- Thunderstorm (only warn level >= 4) ---
+  const severeThunderHour = hourlyForDay.find((h) => {
+    const risk = calcThunderstormRiskLevel(h.cape ?? 0, h.liftedIndex, h.precipProb ?? 0, h.code ?? 0, h.gust ?? 0);
+    return getThunderstormWarningLevel(risk, h.gust ?? 0) >= 4;
+  });
+  if (severeThunderHour) {
+    const timeStr = severeThunderHour.time.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+    parts.push(de
+      ? `⛈️ Gewitter (Warnstufe 4) ab ${timeStr} Uhr`
+      : `⛈️ Thunderstorm (warning level 4) from ${timeStr}`);
+  }
+
+  // --- Strong wind ---
+  const maxGust = dayData?.gust ?? 0;
+  if (maxGust >= GUST_STRONG_THRESHOLD) {
+    parts.push(de
+      ? `💨 Starke Böen bis ${maxGust} km/h`
+      : `💨 Strong gusts up to ${maxGust} km/h`);
+  }
+
+  // --- DWD warnings ---
+  if (Array.isArray(dwdWarnings) && dwdWarnings.length > 0) {
+    const count = dwdWarnings.length;
+    parts.push(de
+      ? `⚠️ ${count} aktive ${count === 1 ? 'Wetterwarnung' : 'Wetterwarnungen'}`
+      : `⚠️ ${count} active weather ${count === 1 ? 'warning' : 'warnings'}`);
+  }
+
+  // --- Activities ---
+  if (Array.isArray(notificationActivities) && notificationActivities.length > 0 && hourlyForDay.length > 0) {
+    const activityDefs = getActivityDefinitions(customActivities);
+    const effectiveParams = (activityParams && typeof activityParams === 'object')
+      ? activityParams
+      : getActivityParamDefaults(customActivities);
+
+    notificationActivities.forEach((actKey) => {
+      const actDef = activityDefs.find((a) => a.key === actKey);
+      if (!actDef) return;
+
+      const goodHours = hourlyForDay.filter((h) => {
+        const rating = getActivityRating(
+          actKey,
+          h.temp ?? 0,
+          h.windAvg ?? h.wind ?? 0,
+          parseFloat(h.precip ?? 0),
+          h.uvIndex ?? 0,
+          h.code ?? 0,
+          effectiveParams[actKey]
+        );
+        return rating.score >= 6;
+      });
+
+      if (goodHours.length > 0) {
+        const first = goodHours[0];
+        const last = goodHours[goodHours.length - 1];
+        const fromStr = first.time.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+        const toStr = last.time.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+        const label = getActivityLabel(actDef, de ? 'de' : 'en');
+        const timeRange = fromStr === toStr ? fromStr : `${fromStr}–${toStr}`;
+        parts.push(`${actDef.emoji} ${label}: ${timeRange}`);
+      }
+    });
+  }
+
+  return parts.join('\n');
+};
+
+
 const MOON_PHASE_KEYS = [
   'moonPhaseNew', 'moonPhaseWaxingCrescent', 'moonPhaseFirstQuarter', 'moonPhaseWaxingGibbous',
   'moonPhaseFull', 'moonPhaseWaningGibbous', 'moonPhaseLastQuarter', 'moonPhaseWaningCrescent',
@@ -15886,10 +16034,31 @@ export default function WeatherApp() {
         notifications.morningReportTime,
         DEFAULT_NOTIFICATION_SETTINGS.morningReportTime
       );
+      const today = processedLong[0];
+      const todayDate = today?.date;
+      const hourlyToday = todayDate
+        ? processedShort.filter((h) => {
+            const d = h.time;
+            return d.getFullYear() === todayDate.getFullYear()
+              && d.getMonth() === todayDate.getMonth()
+              && d.getDate() === todayDate.getDate();
+          })
+        : processedShort.slice(0, 12);
+      const morningBody = today
+        ? buildDailyNotificationBody({
+            dayData: today,
+            hourlyForDay: hourlyToday,
+            dwdWarnings,
+            notificationActivities: notifications.notificationActivities,
+            activityParams: settings.activityParams,
+            customActivities: settings.customActivities,
+            isGerman,
+          }) || (isGerman ? 'Dein Tageswetter ist jetzt verfügbar.' : 'Your daytime forecast is now available.')
+        : (isGerman ? 'Dein Tageswetter ist jetzt verfügbar.' : 'Your daytime forecast is now available.');
       scheduledNotifications.push({
         id: WEATHER_BACKGROUND_MORNING_NOTIFICATION_ID,
         title: isGerman ? '🌤️ Wetterbericht am Morgen' : '🌤️ Morning weather report',
-        body: isGerman ? 'Dein Tageswetter ist jetzt verfügbar.' : 'Your daytime forecast is now available.',
+        body: morningBody,
         schedule: {
           on: { hour, minute },
           repeats: true,
@@ -15902,10 +16071,31 @@ export default function WeatherApp() {
         notifications.eveningReportTime,
         DEFAULT_NOTIFICATION_SETTINGS.eveningReportTime
       );
+      const tomorrow = processedLong[1];
+      const tomorrowDate = tomorrow?.date;
+      const hourlyTomorrow = tomorrowDate
+        ? processedShort.filter((h) => {
+            const d = h.time;
+            return d.getFullYear() === tomorrowDate.getFullYear()
+              && d.getMonth() === tomorrowDate.getMonth()
+              && d.getDate() === tomorrowDate.getDate();
+          })
+        : [];
+      const eveningBody = tomorrow
+        ? buildDailyNotificationBody({
+            dayData: tomorrow,
+            hourlyForDay: hourlyTomorrow,
+            dwdWarnings,
+            notificationActivities: notifications.notificationActivities,
+            activityParams: settings.activityParams,
+            customActivities: settings.customActivities,
+            isGerman,
+          }) || (isGerman ? 'Der Ausblick für Nacht und morgen ist da.' : 'Your night and tomorrow outlook is ready.')
+        : (isGerman ? 'Der Ausblick für Nacht und morgen ist da.' : 'Your night and tomorrow outlook is ready.');
       scheduledNotifications.push({
         id: WEATHER_BACKGROUND_EVENING_NOTIFICATION_ID,
         title: isGerman ? '🌙 Wetterbericht am Abend' : '🌙 Evening weather report',
-        body: isGerman ? 'Der Ausblick für Nacht und morgen ist da.' : 'Your night and tomorrow outlook is ready.',
+        body: eveningBody,
         schedule: {
           on: { hour, minute },
           repeats: true,
@@ -15923,7 +16113,7 @@ export default function WeatherApp() {
       }
     };
     syncBackgroundSchedules();
-  }, [settings.notifications, notificationPermission, isGerman]);
+  }, [settings.notifications, settings.activityParams, settings.customActivities, notificationPermission, isGerman, processedLong, processedShort, dwdWarnings]);
 
   useEffect(() => {
     const notifications = normalizeNotificationSettings(settings.notifications);
@@ -15992,8 +16182,25 @@ export default function WeatherApp() {
 
       if (useRuntimeDailyChecks && notifications.morningReport && isMorningWindow && runtime[morningSentKey] !== dateKey) {
         const today = processedLong[0];
+        const todayDate = today?.date;
+        const hourlyToday = todayDate
+          ? processedShort.filter((h) => {
+              const d = h.time;
+              return d.getFullYear() === todayDate.getFullYear()
+                && d.getMonth() === todayDate.getMonth()
+                && d.getDate() === todayDate.getDate();
+            })
+          : processedShort.slice(0, 12);
         const body = today
-          ? `${isGerman ? 'Heute' : 'Today'}: ${Math.round(today.max)}°/${Math.round(today.min)}°, ${isGerman ? 'Regenrisiko' : 'Rain chance'} ${today.prob ?? 0}%`
+          ? buildDailyNotificationBody({
+              dayData: today,
+              hourlyForDay: hourlyToday,
+              dwdWarnings,
+              notificationActivities: notifications.notificationActivities,
+              activityParams: settings.activityParams,
+              customActivities: settings.customActivities,
+              isGerman,
+            }) || (isGerman ? 'Dein Tageswetter steht bereit.' : 'Your daily forecast is ready.')
           : (isGerman ? 'Dein Tageswetter steht bereit.' : 'Your daily forecast is ready.');
         if (notify(isGerman ? '🌤️ Wetterbericht am Morgen' : '🌤️ Morning weather report', body, `morning-${locationKey}-${dateKey}`)) {
           runtime[morningSentKey] = dateKey;
@@ -16003,8 +16210,25 @@ export default function WeatherApp() {
 
       if (useRuntimeDailyChecks && notifications.eveningReport && isEveningWindow && runtime[eveningSentKey] !== dateKey) {
         const tomorrow = processedLong[1];
+        const tomorrowDate = tomorrow?.date;
+        const hourlyTomorrow = tomorrowDate
+          ? processedShort.filter((h) => {
+              const d = h.time;
+              return d.getFullYear() === tomorrowDate.getFullYear()
+                && d.getMonth() === tomorrowDate.getMonth()
+                && d.getDate() === tomorrowDate.getDate();
+            })
+          : [];
         const body = tomorrow
-          ? `${isGerman ? 'Nacht & morgen' : 'Tonight & tomorrow'}: ${Math.round(tomorrow.max)}°/${Math.round(tomorrow.min)}°, ${isGerman ? 'Regenrisiko' : 'Rain chance'} ${tomorrow.prob ?? 0}%`
+          ? buildDailyNotificationBody({
+              dayData: tomorrow,
+              hourlyForDay: hourlyTomorrow,
+              dwdWarnings,
+              notificationActivities: notifications.notificationActivities,
+              activityParams: settings.activityParams,
+              customActivities: settings.customActivities,
+              isGerman,
+            }) || (isGerman ? 'Abendausblick ist verfügbar.' : 'Evening outlook is available.')
           : (isGerman ? 'Abendausblick ist verfügbar.' : 'Evening outlook is available.');
         if (notify(isGerman ? '🌙 Wetterbericht am Abend' : '🌙 Evening weather report', body, `evening-${locationKey}-${dateKey}`)) {
           runtime[eveningSentKey] = dateKey;
@@ -16086,7 +16310,7 @@ export default function WeatherApp() {
     checkNotifications();
     const timer = window.setInterval(checkNotifications, NOTIFICATION_CHECK_INTERVAL_MS);
     return () => window.clearInterval(timer);
-  }, [settings.notifications, notificationPermission, currentLoc, processedLong, processedShort, shortTermData, isGerman]);
+  }, [settings.notifications, settings.activityParams, settings.customActivities, notificationPermission, currentLoc, processedLong, processedShort, shortTermData, dwdWarnings, isGerman]);
   
   // LIVE oder DEMO Daten?
   const liveCurrent = useMemo(() => {
