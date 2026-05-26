@@ -12,6 +12,7 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.format.DateFormat;
+import android.util.Log;
 import android.util.SizeF;
 import android.util.TypedValue;
 import android.view.View;
@@ -21,6 +22,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -45,8 +47,10 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     public static final String ACTION_WIDGET_SHOW_TOMORROW = "com.barbecubewetterscoutai.app.ACTION_WIDGET_SHOW_TOMORROW";
     private static final String PREFS_NAME = "weather_widget_prefs";
     private static final String PREF_DAY_PREFIX = "widget_selected_day_";
+    private static final String PREF_CACHE_KEY = "widget_cached_data_v1";
     private static final String DAY_TODAY = "today";
     private static final String DAY_TOMORROW = "tomorrow";
+    private static final String TAG = "WeatherHomeWidget";
     private static final double DEFAULT_LAT = 50.7766;
     private static final double DEFAULT_LON = 6.0834;
     private static final int HTTP_TIMEOUT_MS = 12000;
@@ -166,13 +170,15 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private void updateWidgetAsync(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
         Bundle widgetOptions = appWidgetManager.getAppWidgetOptions(appWidgetId);
         String selectedDay = getSelectedDay(context, appWidgetId);
-        RemoteViews loadingViews = createWidgetViews(context, appWidgetId, widgetOptions, selectedDay, null);
-        appWidgetManager.updateAppWidget(appWidgetId, loadingViews);
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             try {
                 WidgetData data = fetchWidgetData(context);
+                if (!hasRenderableData(data)) {
+                    // Keep existing widget content when no fresh or cached weather data is available.
+                    return;
+                }
                 RemoteViews views = createWidgetViews(context, appWidgetId, widgetOptions, selectedDay, data);
                 appWidgetManager.updateAppWidget(appWidgetId, views);
             } finally {
@@ -706,10 +712,12 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     }
 
     private WidgetData fetchWidgetData(Context context) {
-        WidgetData data = WidgetData.empty(context);
+        WidgetData cachedData = loadCachedWidgetData(context);
+        WidgetData data = cachedData != null ? cachedData : WidgetData.empty(context);
         Location location = getBestLastKnownLocation(context);
         double lat = location != null ? location.getLatitude() : DEFAULT_LAT;
         double lon = location != null ? location.getLongitude() : DEFAULT_LON;
+        boolean weatherPayloadReceived = false;
 
         try {
             String weatherUrl = String.format(
@@ -723,6 +731,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             JSONObject current = weatherJson.optJSONObject("current");
             JSONObject hourly = weatherJson.optJSONObject("hourly");
             JSONObject daily = weatherJson.optJSONObject("daily");
+            weatherPayloadReceived = current != null || daily != null;
 
             if (current != null) {
                 data.temperatureC = readDouble(current, "temperature_2m");
@@ -790,7 +799,149 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             // Keep fallback pollen value
         }
 
+        if (weatherPayloadReceived && hasRenderableData(data)) {
+            saveCachedWidgetData(context, data);
+        }
+
         return data;
+    }
+
+    private boolean hasRenderableData(WidgetData data) {
+        if (data == null) return false;
+        if (!Double.isNaN(data.temperatureC)) return true;
+        if (!Double.isNaN(data.maxTemperatureC) || !Double.isNaN(data.minTemperatureC)) return true;
+        if (data.weatherCode >= 0 || data.tomorrowWeatherCode >= 0) return true;
+        return false;
+    }
+
+    private WidgetData loadCachedWidgetData(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String raw = prefs.getString(PREF_CACHE_KEY, null);
+        if (raw == null || raw.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            JSONObject json = new JSONObject(raw);
+            WidgetData data = WidgetData.empty(context);
+            data.temperatureC = readCachedDouble(json, "temperatureC");
+            data.feelsLikeC = readCachedDouble(json, "feelsLikeC");
+            data.maxTemperatureC = readCachedDouble(json, "maxTemperatureC");
+            data.minTemperatureC = readCachedDouble(json, "minTemperatureC");
+            data.rainRate = readCachedDouble(json, "rainRate");
+            data.uvIndex = readCachedDouble(json, "uvIndex");
+            data.windKmh = readCachedDouble(json, "windKmh");
+            data.tomorrowMaxTemperatureC = readCachedDouble(json, "tomorrowMaxTemperatureC");
+            data.tomorrowMinTemperatureC = readCachedDouble(json, "tomorrowMinTemperatureC");
+            data.tomorrowRainRate = readCachedDouble(json, "tomorrowRainRate");
+            data.tomorrowUvIndex = readCachedDouble(json, "tomorrowUvIndex");
+            data.tomorrowWindKmh = readCachedDouble(json, "tomorrowWindKmh");
+            data.weatherCode = readCachedInt(json, "weatherCode", -1);
+            data.tomorrowWeatherCode = readCachedInt(json, "tomorrowWeatherCode", -1);
+            data.weatherLabel = readCachedString(json, "weatherLabel", data.weatherLabel);
+            data.tomorrowWeatherLabel = readCachedString(json, "tomorrowWeatherLabel", data.tomorrowWeatherLabel);
+            data.thunderRiskLabel = readCachedNullableString(json, "thunderRiskLabel");
+            data.tomorrowThunderRiskLabel = readCachedNullableString(json, "tomorrowThunderRiskLabel");
+            data.pollenLabel = readCachedString(json, "pollenLabel", data.pollenLabel);
+
+            JSONArray hourlyTemps = json.optJSONArray("hourlyTemps");
+            JSONArray hourlyCodes = json.optJSONArray("hourlyCodes");
+            JSONArray hourlyPrecipProbs = json.optJSONArray("hourlyPrecipProbs");
+            JSONArray hourlyTimes = json.optJSONArray("hourlyTimes");
+            for (int i = 0; i < data.hourlyTemps.length; i++) {
+                if (hourlyTemps != null && i < hourlyTemps.length() && !hourlyTemps.isNull(i)) {
+                    data.hourlyTemps[i] = hourlyTemps.optDouble(i, Double.NaN);
+                }
+                if (hourlyCodes != null && i < hourlyCodes.length() && !hourlyCodes.isNull(i)) {
+                    data.hourlyCodes[i] = hourlyCodes.optInt(i, -1);
+                }
+                if (hourlyPrecipProbs != null && i < hourlyPrecipProbs.length() && !hourlyPrecipProbs.isNull(i)) {
+                    data.hourlyPrecipProbs[i] = hourlyPrecipProbs.optDouble(i, Double.NaN);
+                }
+                if (hourlyTimes != null && i < hourlyTimes.length() && !hourlyTimes.isNull(i)) {
+                    data.hourlyTimes[i] = hourlyTimes.optString(i, null);
+                }
+            }
+
+            return hasRenderableData(data) ? data : null;
+        } catch (JSONException e) {
+            Log.w(TAG, "Failed to load cached widget data.", e);
+            return null;
+        }
+    }
+
+    private void saveCachedWidgetData(Context context, WidgetData data) {
+        try {
+            JSONObject json = new JSONObject();
+            putCachedDouble(json, "temperatureC", data.temperatureC);
+            putCachedDouble(json, "feelsLikeC", data.feelsLikeC);
+            putCachedDouble(json, "maxTemperatureC", data.maxTemperatureC);
+            putCachedDouble(json, "minTemperatureC", data.minTemperatureC);
+            putCachedDouble(json, "rainRate", data.rainRate);
+            putCachedDouble(json, "uvIndex", data.uvIndex);
+            putCachedDouble(json, "windKmh", data.windKmh);
+            putCachedDouble(json, "tomorrowMaxTemperatureC", data.tomorrowMaxTemperatureC);
+            putCachedDouble(json, "tomorrowMinTemperatureC", data.tomorrowMinTemperatureC);
+            putCachedDouble(json, "tomorrowRainRate", data.tomorrowRainRate);
+            putCachedDouble(json, "tomorrowUvIndex", data.tomorrowUvIndex);
+            putCachedDouble(json, "tomorrowWindKmh", data.tomorrowWindKmh);
+            json.put("weatherCode", data.weatherCode);
+            json.put("tomorrowWeatherCode", data.tomorrowWeatherCode);
+            json.put("weatherLabel", data.weatherLabel);
+            json.put("tomorrowWeatherLabel", data.tomorrowWeatherLabel);
+            json.put("thunderRiskLabel", data.thunderRiskLabel == null ? JSONObject.NULL : data.thunderRiskLabel);
+            json.put("tomorrowThunderRiskLabel", data.tomorrowThunderRiskLabel == null ? JSONObject.NULL : data.tomorrowThunderRiskLabel);
+            json.put("pollenLabel", data.pollenLabel);
+
+            JSONArray hourlyTemps = new JSONArray();
+            JSONArray hourlyCodes = new JSONArray();
+            JSONArray hourlyPrecipProbs = new JSONArray();
+            JSONArray hourlyTimes = new JSONArray();
+            for (int i = 0; i < data.hourlyTemps.length; i++) {
+                hourlyTemps.put(Double.isNaN(data.hourlyTemps[i]) ? JSONObject.NULL : data.hourlyTemps[i]);
+                hourlyCodes.put(data.hourlyCodes[i]);
+                hourlyPrecipProbs.put(Double.isNaN(data.hourlyPrecipProbs[i]) ? JSONObject.NULL : data.hourlyPrecipProbs[i]);
+                hourlyTimes.put(data.hourlyTimes[i] == null ? JSONObject.NULL : data.hourlyTimes[i]);
+            }
+            json.put("hourlyTemps", hourlyTemps);
+            json.put("hourlyCodes", hourlyCodes);
+            json.put("hourlyPrecipProbs", hourlyPrecipProbs);
+            json.put("hourlyTimes", hourlyTimes);
+
+            SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            prefs.edit().putString(PREF_CACHE_KEY, json.toString()).apply();
+        } catch (JSONException e) {
+            Log.w(TAG, "Failed to cache widget data.", e);
+        }
+    }
+
+    private void putCachedDouble(JSONObject json, String key, double value) throws JSONException {
+        json.put(key, Double.isNaN(value) ? JSONObject.NULL : value);
+    }
+
+    private double readCachedDouble(JSONObject json, String key) {
+        if (json == null || !json.has(key) || json.isNull(key)) return Double.NaN;
+        return json.optDouble(key, Double.NaN);
+    }
+
+    private int readCachedInt(JSONObject json, String key, int fallback) {
+        if (json == null || !json.has(key) || json.isNull(key)) return fallback;
+        return json.optInt(key, fallback);
+    }
+
+    private String readCachedString(JSONObject json, String key, String fallback) {
+        if (json == null || !json.has(key) || json.isNull(key)) return fallback;
+        String value = json.optString(key, fallback);
+        if (value == null) return fallback;
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? fallback : trimmed;
+    }
+
+    private String readCachedNullableString(JSONObject json, String key) {
+        if (json == null || !json.has(key) || json.isNull(key)) return null;
+        String value = json.optString(key, null);
+        if (value == null) return null;
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private Location getBestLastKnownLocation(Context context) {
