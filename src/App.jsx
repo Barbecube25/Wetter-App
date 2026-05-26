@@ -309,9 +309,10 @@ const DEFAULT_ACTIVITY_PARAMS = {
 // Converts a custom activity name into a stable, storage-safe key:
 // lowercase, accents removed, non-alphanumeric groups replaced with hyphens.
 const sanitizeActivityKey = (value) => {
-  const base = String(value || '')
-    .toLowerCase()
-    .normalize('NFD')
+  const normalizedValue = String(value || '').toLowerCase();
+  const base = (typeof normalizedValue.normalize === 'function'
+    ? normalizedValue.normalize('NFD')
+    : normalizedValue)
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
