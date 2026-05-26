@@ -66,13 +66,16 @@ const ASTRONOMY_MOON_MEDIUM_PENALTY = -5;
 const ASTRONOMY_REPORT_MIN_CHANCE_SCORE = 40; // Minimum chance score to show aurora/NLC hints in AI reports
 const ASTRONOMY_AURORA_LAT_MIN = 50; // Minimum latitude to show aurora hints in longterm report
 const MINUTELY_SLOT_DURATION_MINUTES = 15;
-const MORNING_NOTIFICATION_HOUR = 8;
-const EVENING_NOTIFICATION_HOUR = 20;
 const WEATHER_NOTIFICATION_LEAD_OPTIONS = [5, 15, 30];
 const WEATHER_NOTIFICATION_RUNTIME_KEY = 'weather_notification_runtime_v1';
 const WEATHER_NOTIFICATION_PERMISSION_PROMPTED_KEY = 'weather_notification_permission_prompted_v1';
 const NOTIFICATION_TRIGGER_WINDOW_MINUTES = 15;
 const NOTIFICATION_CHECK_INTERVAL_MS = 60 * 1000;
+const MILLISECONDS_PER_MINUTE = 60000;
+const WEATHER_NOTIFICATION_DEFAULT_MORNING_TIME = '08:00';
+const WEATHER_NOTIFICATION_DEFAULT_EVENING_TIME = '20:00';
+const WEATHER_BACKGROUND_MORNING_NOTIFICATION_ID = 71001;
+const WEATHER_BACKGROUND_EVENING_NOTIFICATION_ID = 71002;
 
 // Detect native Capacitor app (Android/iOS) vs. browser
 const isNativeApp = () => typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.() === true;
@@ -90,14 +93,39 @@ const DEFAULT_NOTIFICATION_SETTINGS = {
   morningReport: true,
   eveningReport: true,
   thunderstormLevel4: true,
-  rainStartLeads: [...WEATHER_NOTIFICATION_LEAD_OPTIONS],
+  rainStartLeads: [WEATHER_NOTIFICATION_LEAD_OPTIONS[1]],
+  morningReportTime: WEATHER_NOTIFICATION_DEFAULT_MORNING_TIME,
+  eveningReportTime: WEATHER_NOTIFICATION_DEFAULT_EVENING_TIME,
+};
+
+const normalizeNotificationTime = (value, fallback) => {
+  if (typeof value !== 'string') return fallback;
+  const normalized = value.trim();
+  return /^([01]\d|2[0-3]):([0-5]\d)$/.test(normalized) ? normalized : fallback;
+};
+
+const parseNotificationTime = (value, fallback) => {
+  const normalized = normalizeNotificationTime(value, fallback);
+  const [hourRaw, minuteRaw] = normalized.split(':');
+  return {
+    value: normalized,
+    hour: Number(hourRaw),
+    minute: Number(minuteRaw),
+  };
 };
 
 const normalizeNotificationSettings = (value) => {
   const source = value && typeof value === 'object' ? value : {};
-  const leads = Array.isArray(source.rainStartLeads)
-    ? WEATHER_NOTIFICATION_LEAD_OPTIONS.filter((lead) => source.rainStartLeads.includes(lead))
-    : [...DEFAULT_NOTIFICATION_SETTINGS.rainStartLeads];
+  const leads = (() => {
+    if (!Array.isArray(source.rainStartLeads)) {
+      return [...DEFAULT_NOTIFICATION_SETTINGS.rainStartLeads];
+    }
+    if (source.rainStartLeads.length === 0) {
+      return [];
+    }
+    const validLeads = WEATHER_NOTIFICATION_LEAD_OPTIONS.filter((lead) => source.rainStartLeads.includes(lead));
+    return validLeads.length > 0 ? [validLeads[0]] : [...DEFAULT_NOTIFICATION_SETTINGS.rainStartLeads];
+  })();
 
   return {
     enabled: Boolean(source.enabled),
@@ -105,6 +133,8 @@ const normalizeNotificationSettings = (value) => {
     eveningReport: source.eveningReport !== undefined ? Boolean(source.eveningReport) : DEFAULT_NOTIFICATION_SETTINGS.eveningReport,
     thunderstormLevel4: source.thunderstormLevel4 !== undefined ? Boolean(source.thunderstormLevel4) : DEFAULT_NOTIFICATION_SETTINGS.thunderstormLevel4,
     rainStartLeads: leads,
+    morningReportTime: normalizeNotificationTime(source.morningReportTime, DEFAULT_NOTIFICATION_SETTINGS.morningReportTime),
+    eveningReportTime: normalizeNotificationTime(source.eveningReportTime, DEFAULT_NOTIFICATION_SETTINGS.eveningReportTime),
   };
 };
 
@@ -7175,6 +7205,19 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                                   <span>{isGerman ? 'Wetterbericht morgens (Tag)' : 'Morning weather report (day)'}</span>
                                   {notificationSettings.morningReport && <Check size={14} />}
                               </button>
+                              <div className="rounded-m3-sm bg-m3-surface-container-high p-2">
+                                  <label htmlFor="notification-morning-time" className="block text-xs font-bold text-m3-on-surface-variant mb-2">
+                                      {isGerman ? 'Uhrzeit morgens:' : 'Morning time:'}
+                                  </label>
+                                  <input
+                                      id="notification-morning-time"
+                                      type="time"
+                                      value={notificationSettings.morningReportTime}
+                                      onChange={(event) => updateNotifications({ morningReportTime: event.target.value })}
+                                      aria-label={isGerman ? 'Uhrzeit für morgendlichen Wetterbericht' : 'Time for morning weather report'}
+                                      className="w-full py-2 px-3 rounded-m3-sm bg-m3-surface text-m3-on-surface text-sm font-semibold border border-m3-outline-variant"
+                                  />
+                              </div>
                               <button
                                   onClick={() => updateNotifications({ eveningReport: !notificationSettings.eveningReport })}
                                   className={`w-full py-2 px-3 rounded-m3-sm text-sm font-bold transition flex items-center justify-between gap-2 ${notificationSettings.eveningReport ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'bg-m3-surface-container-high text-m3-on-surface-variant hover:text-m3-on-surface'}`}
@@ -7182,6 +7225,19 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                                   <span>{isGerman ? 'Wetterbericht abends (Nacht & morgen)' : 'Evening report (night & tomorrow)'}</span>
                                   {notificationSettings.eveningReport && <Check size={14} />}
                               </button>
+                              <div className="rounded-m3-sm bg-m3-surface-container-high p-2">
+                                  <label htmlFor="notification-evening-time" className="block text-xs font-bold text-m3-on-surface-variant mb-2">
+                                      {isGerman ? 'Uhrzeit abends:' : 'Evening time:'}
+                                  </label>
+                                  <input
+                                      id="notification-evening-time"
+                                      type="time"
+                                      value={notificationSettings.eveningReportTime}
+                                      onChange={(event) => updateNotifications({ eveningReportTime: event.target.value })}
+                                      aria-label={isGerman ? 'Uhrzeit für abendlichen Wetterbericht' : 'Time for evening weather report'}
+                                      className="w-full py-2 px-3 rounded-m3-sm bg-m3-surface text-m3-on-surface text-sm font-semibold border border-m3-outline-variant"
+                                  />
+                              </div>
                               <button
                                   onClick={() => updateNotifications({ thunderstormLevel4: !notificationSettings.thunderstormLevel4 })}
                                   className={`w-full py-2 px-3 rounded-m3-sm text-sm font-bold transition flex items-center justify-between gap-2 ${notificationSettings.thunderstormLevel4 ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'bg-m3-surface-container-high text-m3-on-surface-variant hover:text-m3-on-surface'}`}
@@ -7199,12 +7255,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                                           return (
                                               <button
                                                   key={lead}
-                                                  onClick={() => {
-                                                      const nextLeads = isLeadActive
-                                                          ? notificationSettings.rainStartLeads.filter((item) => item !== lead)
-                                                          : [...notificationSettings.rainStartLeads, lead];
-                                                      updateNotifications({ rainStartLeads: nextLeads });
-                                                  }}
+                                                  onClick={() => updateNotifications({ rainStartLeads: isLeadActive ? [] : [lead] })}
                                                   className={`py-2 px-2 rounded-m3-sm text-xs font-bold transition ${isLeadActive ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'bg-m3-surface text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                                               >
                                                   {lead} {isGerman ? 'Min' : 'min'}
@@ -15808,6 +15859,73 @@ export default function WeatherApp() {
   }, []);
 
   useEffect(() => {
+    if (!isNativeApp()) return;
+    const notifications = normalizeNotificationSettings(settings.notifications);
+    const managedNotifications = [
+      { id: WEATHER_BACKGROUND_MORNING_NOTIFICATION_ID },
+      { id: WEATHER_BACKGROUND_EVENING_NOTIFICATION_ID },
+    ];
+
+    const clearBackgroundSchedules = async () => {
+      await LocalNotifications.cancel({ notifications: managedNotifications }).catch((error) => {
+        console.warn('Failed to cancel background weather notifications', error);
+      });
+      await LocalNotifications.removeDeliveredNotifications({ notifications: managedNotifications }).catch((error) => {
+        console.warn('Failed to clear delivered background weather notifications', error);
+      });
+    };
+
+    if (notificationPermission !== 'granted' || !notifications.enabled) {
+      clearBackgroundSchedules();
+      return;
+    }
+
+    const scheduledNotifications = [];
+    if (notifications.morningReport) {
+      const { hour, minute } = parseNotificationTime(
+        notifications.morningReportTime,
+        DEFAULT_NOTIFICATION_SETTINGS.morningReportTime
+      );
+      scheduledNotifications.push({
+        id: WEATHER_BACKGROUND_MORNING_NOTIFICATION_ID,
+        title: isGerman ? '🌤️ Wetterbericht am Morgen' : '🌤️ Morning weather report',
+        body: isGerman ? 'Dein Tageswetter ist jetzt verfügbar.' : 'Your daytime forecast is now available.',
+        schedule: {
+          on: { hour, minute },
+          repeats: true,
+          allowWhileIdle: true,
+        },
+      });
+    }
+    if (notifications.eveningReport) {
+      const { hour, minute } = parseNotificationTime(
+        notifications.eveningReportTime,
+        DEFAULT_NOTIFICATION_SETTINGS.eveningReportTime
+      );
+      scheduledNotifications.push({
+        id: WEATHER_BACKGROUND_EVENING_NOTIFICATION_ID,
+        title: isGerman ? '🌙 Wetterbericht am Abend' : '🌙 Evening weather report',
+        body: isGerman ? 'Der Ausblick für Nacht und morgen ist da.' : 'Your night and tomorrow outlook is ready.',
+        schedule: {
+          on: { hour, minute },
+          repeats: true,
+          allowWhileIdle: true,
+        },
+      });
+    }
+
+    const syncBackgroundSchedules = async () => {
+      await clearBackgroundSchedules();
+      if (scheduledNotifications.length > 0) {
+        await LocalNotifications.schedule({ notifications: scheduledNotifications }).catch((error) => {
+          console.warn('Failed to schedule background weather notifications', error);
+        });
+      }
+    };
+    syncBackgroundSchedules();
+  }, [settings.notifications, notificationPermission, isGerman]);
+
+  useEffect(() => {
     const notifications = normalizeNotificationSettings(settings.notifications);
     if (!notifications.enabled) return;
     const hasAnyNotificationTrigger = notifications.morningReport
@@ -15851,14 +15969,28 @@ export default function WeatherApp() {
       const nowDate = new Date();
       const dateKey = toDateKey(nowDate);
       const locationKey = currentLoc.id || `${currentLoc.lat},${currentLoc.lon}`;
-      const minutes = nowDate.getMinutes();
+      const morningTime = parseNotificationTime(
+        notifications.morningReportTime,
+        DEFAULT_NOTIFICATION_SETTINGS.morningReportTime
+      );
+      const eveningTime = parseNotificationTime(
+        notifications.eveningReportTime,
+        DEFAULT_NOTIFICATION_SETTINGS.eveningReportTime
+      );
+      const useRuntimeDailyChecks = !isNativeApp();
+      const morningDate = new Date(nowDate);
+      morningDate.setHours(morningTime.hour, morningTime.minute, 0, 0);
+      const eveningDate = new Date(nowDate);
+      eveningDate.setHours(eveningTime.hour, eveningTime.minute, 0, 0);
 
-      const isMorningWindow = nowDate.getHours() === MORNING_NOTIFICATION_HOUR && minutes < NOTIFICATION_TRIGGER_WINDOW_MINUTES;
-      const isEveningWindow = nowDate.getHours() === EVENING_NOTIFICATION_HOUR && minutes < NOTIFICATION_TRIGGER_WINDOW_MINUTES;
+      const isMorningWindow = nowDate.getTime() >= morningDate.getTime()
+        && nowDate.getTime() < (morningDate.getTime() + NOTIFICATION_TRIGGER_WINDOW_MINUTES * MILLISECONDS_PER_MINUTE);
+      const isEveningWindow = nowDate.getTime() >= eveningDate.getTime()
+        && nowDate.getTime() < (eveningDate.getTime() + NOTIFICATION_TRIGGER_WINDOW_MINUTES * MILLISECONDS_PER_MINUTE);
       const morningSentKey = `morning:${locationKey}`;
       const eveningSentKey = `evening:${locationKey}`;
 
-      if (notifications.morningReport && isMorningWindow && runtime[morningSentKey] !== dateKey) {
+      if (useRuntimeDailyChecks && notifications.morningReport && isMorningWindow && runtime[morningSentKey] !== dateKey) {
         const today = processedLong[0];
         const body = today
           ? `${isGerman ? 'Heute' : 'Today'}: ${Math.round(today.max)}°/${Math.round(today.min)}°, ${isGerman ? 'Regenrisiko' : 'Rain chance'} ${today.prob ?? 0}%`
@@ -15869,7 +16001,7 @@ export default function WeatherApp() {
         }
       }
 
-      if (notifications.eveningReport && isEveningWindow && runtime[eveningSentKey] !== dateKey) {
+      if (useRuntimeDailyChecks && notifications.eveningReport && isEveningWindow && runtime[eveningSentKey] !== dateKey) {
         const tomorrow = processedLong[1];
         const body = tomorrow
           ? `${isGerman ? 'Nacht & morgen' : 'Tonight & tomorrow'}: ${Math.round(tomorrow.max)}°/${Math.round(tomorrow.min)}°, ${isGerman ? 'Regenrisiko' : 'Rain chance'} ${tomorrow.prob ?? 0}%`
