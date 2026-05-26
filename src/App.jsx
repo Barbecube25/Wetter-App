@@ -4975,6 +4975,117 @@ const getActivityRating = (key, temp, wind, precip, uvIndex, code, customParams 
   }
 };
 
+const buildTomorrowNotificationBody = ({
+  isGerman = true,
+  processedLong = [],
+  processedShort = [],
+  activityFilter = DEFAULT_ACTIVITY_FILTER,
+  activityParams = null,
+  customActivities = [],
+} = {}) => {
+  const tomorrow = Array.isArray(processedLong) ? processedLong[1] : null;
+  if (!tomorrow) {
+    return isGerman ? 'Der Ausblick für morgen ist verfügbar.' : 'Your tomorrow outlook is ready.';
+  }
+
+  const locale = isGerman ? 'de-DE' : 'en-US';
+  const tomorrowStart = new Date(tomorrow.date);
+  tomorrowStart.setHours(0, 0, 0, 0);
+  const tomorrowEnd = new Date(tomorrowStart);
+  tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
+
+  const tomorrowHours = (Array.isArray(processedShort) ? processedShort : [])
+    .filter((hour) => hour?.time instanceof Date && hour.time >= tomorrowStart && hour.time < tomorrowEnd);
+  const formatTime = (date) => date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+
+  const maxTemp = Math.round(tomorrow.max ?? 0);
+  const minTemp = Math.round(tomorrow.min ?? 0);
+  const rainAmount = Number(tomorrow.rain) || 0;
+  const rainProbability = Math.round(Number(tomorrow.prob) || 0);
+  const segments = [
+    isGerman
+      ? `Morgen ${maxTemp}°/${minTemp}°`
+      : `Tomorrow ${maxTemp}°/${minTemp}°`,
+  ];
+
+  const rainyHours = tomorrowHours.filter((hour) => (
+    Number(hour.precip ?? 0) >= LIGHT_PRECIP_THRESHOLD
+    || RAIN_WEATHER_CODES.includes(Number(hour.code ?? -1))
+  ));
+  if (rainyHours.length > 0) {
+    const firstRain = rainyHours[0].time;
+    const lastRain = rainyHours[rainyHours.length - 1].time;
+    const rainWindow = firstRain.getTime() === lastRain.getTime()
+      ? formatTime(firstRain)
+      : `${formatTime(firstRain)}–${formatTime(lastRain)}`;
+    segments.push(isGerman
+      ? `Regen vsl. ${rainWindow} (${rainAmount.toFixed(1)} mm)`
+      : `Rain likely ${rainWindow} (${rainAmount.toFixed(1)} mm)`);
+  } else if (rainProbability >= 35 || rainAmount >= 1) {
+    segments.push(isGerman
+      ? `Regen möglich (${rainProbability}%, ${rainAmount.toFixed(1)} mm)`
+      : `Rain possible (${rainProbability}%, ${rainAmount.toFixed(1)} mm)`);
+  } else {
+    segments.push(isGerman ? 'Wahrscheinlich trocken' : 'Likely dry');
+  }
+
+  const severeThunderHour = tomorrowHours.find((hour) => {
+    const risk = calcThunderstormRiskLevel(hour.cape ?? 0, hour.liftedIndex, hour.precipProb ?? 0, hour.code ?? 0, hour.gust ?? 0);
+    const level = getThunderstormWarningLevel(risk, hour.gust ?? 0);
+    return level >= 4;
+  });
+  if (severeThunderHour) {
+    const when = formatTime(severeThunderHour.time);
+    segments.push(isGerman ? `⛈️ Gewitter Stufe 4+ um ${when}` : `⛈️ Thunder level 4+ around ${when}`);
+  }
+
+  const maxGust = Math.round(Number(tomorrow.gust) || 0);
+  const maxWind = Math.round(Number(tomorrow.wind) || 0);
+  if (maxGust > 60 || maxWind >= 35) {
+    segments.push(isGerman ? `💨 Sehr windig (Böen bis ${maxGust} km/h)` : `💨 Very windy (gusts up to ${maxGust} km/h)`);
+  }
+
+  if (tomorrowHours.length > 0) {
+    const selectedKeys = Array.isArray(activityFilter) && activityFilter.length > 0 ? activityFilter : DEFAULT_ACTIVITY_FILTER;
+    const selectedActivities = getActivityDefinitions(customActivities).filter(({ key }) => selectedKeys.includes(key));
+    const effectiveParams = (activityParams && typeof activityParams === 'object') ? activityParams : getActivityParamDefaults(customActivities);
+    const activityCandidates = selectedActivities
+      .map((activity) => {
+        const bestHour = tomorrowHours.reduce((best, hour) => {
+          const rating = getActivityRating(
+            activity.key,
+            Math.round(hour.temp ?? 0),
+            Math.round((hour.windAvg ?? hour.wind) ?? 0),
+            hour.precip ?? 0,
+            hour.uvIndex ?? 0,
+            hour.code ?? 0,
+            effectiveParams[activity.key]
+          );
+          if (!best || rating.score > best.score) {
+            return { score: rating.score, time: hour.time };
+          }
+          return best;
+        }, null);
+        return bestHour ? { activity, ...bestHour } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.score - a.score);
+
+    const goodActivities = activityCandidates.filter((entry) => entry.score >= 6).slice(0, 2);
+    if (goodActivities.length > 0) {
+      const activityText = goodActivities
+        .map(({ activity, score, time }) => `${getActivityLabel(activity, isGerman ? 'de' : 'en')} ${formatTime(time)} (${score}/10)`)
+        .join(', ');
+      segments.push(isGerman ? `Aktivitäten: ${activityText}` : `Activities: ${activityText}`);
+    } else if (selectedActivities.length > 0) {
+      segments.push(isGerman ? 'Aktivitäten: keine gute Zeit erkannt' : 'Activities: no good time detected');
+    }
+  }
+
+  const body = segments.join('. ') + '.';
+  return body.length > 320 ? `${body.slice(0, 317)}…` : body;
+};
+
 
 const getWeatherConfig = (code, isDay = 1, lang = 'de') => {
   const isNight = isDay === 0;
@@ -15861,6 +15972,14 @@ export default function WeatherApp() {
   useEffect(() => {
     if (!isNativeApp()) return;
     const notifications = normalizeNotificationSettings(settings.notifications);
+    const tomorrowBody = buildTomorrowNotificationBody({
+      isGerman,
+      processedLong,
+      processedShort,
+      activityFilter: settings.activityFilter,
+      activityParams: settings.activityParams,
+      customActivities: settings.customActivities,
+    });
     const managedNotifications = [
       { id: WEATHER_BACKGROUND_MORNING_NOTIFICATION_ID },
       { id: WEATHER_BACKGROUND_EVENING_NOTIFICATION_ID },
@@ -15905,7 +16024,7 @@ export default function WeatherApp() {
       scheduledNotifications.push({
         id: WEATHER_BACKGROUND_EVENING_NOTIFICATION_ID,
         title: isGerman ? '🌙 Wetterbericht am Abend' : '🌙 Evening weather report',
-        body: isGerman ? 'Der Ausblick für Nacht und morgen ist da.' : 'Your night and tomorrow outlook is ready.',
+        body: tomorrowBody,
         schedule: {
           on: { hour, minute },
           repeats: true,
@@ -15923,7 +16042,7 @@ export default function WeatherApp() {
       }
     };
     syncBackgroundSchedules();
-  }, [settings.notifications, notificationPermission, isGerman]);
+  }, [settings.notifications, settings.activityFilter, settings.activityParams, settings.customActivities, notificationPermission, isGerman, processedLong, processedShort]);
 
   useEffect(() => {
     const notifications = normalizeNotificationSettings(settings.notifications);
@@ -16002,10 +16121,14 @@ export default function WeatherApp() {
       }
 
       if (useRuntimeDailyChecks && notifications.eveningReport && isEveningWindow && runtime[eveningSentKey] !== dateKey) {
-        const tomorrow = processedLong[1];
-        const body = tomorrow
-          ? `${isGerman ? 'Nacht & morgen' : 'Tonight & tomorrow'}: ${Math.round(tomorrow.max)}°/${Math.round(tomorrow.min)}°, ${isGerman ? 'Regenrisiko' : 'Rain chance'} ${tomorrow.prob ?? 0}%`
-          : (isGerman ? 'Abendausblick ist verfügbar.' : 'Evening outlook is available.');
+        const body = buildTomorrowNotificationBody({
+          isGerman,
+          processedLong,
+          processedShort,
+          activityFilter: settings.activityFilter,
+          activityParams: settings.activityParams,
+          customActivities: settings.customActivities,
+        });
         if (notify(isGerman ? '🌙 Wetterbericht am Abend' : '🌙 Evening weather report', body, `evening-${locationKey}-${dateKey}`)) {
           runtime[eveningSentKey] = dateKey;
           persistRuntime();
@@ -16086,7 +16209,7 @@ export default function WeatherApp() {
     checkNotifications();
     const timer = window.setInterval(checkNotifications, NOTIFICATION_CHECK_INTERVAL_MS);
     return () => window.clearInterval(timer);
-  }, [settings.notifications, notificationPermission, currentLoc, processedLong, processedShort, shortTermData, isGerman]);
+  }, [settings.notifications, settings.activityFilter, settings.activityParams, settings.customActivities, notificationPermission, currentLoc, processedLong, processedShort, shortTermData, isGerman]);
   
   // LIVE oder DEMO Daten?
   const liveCurrent = useMemo(() => {
