@@ -16351,6 +16351,18 @@ export default function WeatherApp() {
   
   // WICHTIG: Nutze jetzt 'isRealNight' statt 'current.isDay === 0' für alle UI-Entscheidungen
   const isRealNight = getIsRealNight();
+  const aiWeatherPayload = useMemo(() => ({
+    temperature: Number.isFinite(current?.temp) ? Math.round(current.temp) : null,
+    condition: getWeatherConfig(current?.code ?? 0, isRealNight ? 0 : 1, lang)?.description ?? '',
+    warnings: Array.isArray(dwdWarnings)
+      ? dwdWarnings
+          .map((warning) => warning?.headline || warning?.description || warning?.event || '')
+          .filter(Boolean)
+          .slice(0, 3)
+      : [],
+  }), [current, dwdWarnings, isRealNight, lang]);
+  const aiWeatherLocation = currentLoc?.name || homeLoc?.name || (lang === 'en' ? 'Current location' : 'Aktueller Standort');
+  const aiWeatherFallbackText = lang === 'en' ? 'AI report currently unavailable' : 'KI-Bericht derzeit nicht verfügbar';
 
   const dailyRainSum = processedLong.length > 0 ? processedLong[0].rain : "0.0";
   const dailySnowSum = processedLong.length > 0 ? processedLong[0].snow : "0.0";
@@ -17951,17 +17963,9 @@ export default function WeatherApp() {
               <div className={isExpandedLayoutActive ? 'col-span-5 space-y-4' : 'space-y-4'}>
                 <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} isFoldableScreen={isFoldableScreen} />
                 <AiWeatherReport
-                  weatherData={{
-                    temperature: Math.round(current?.temp ?? 0),
-                    condition: getWeatherConfig(current?.code ?? 0, isRealNight ? 0 : 1, lang)?.description ?? '',
-                    warnings: Array.isArray(dwdWarnings)
-                      ? dwdWarnings
-                          .map((warning) => warning?.headline || warning?.description || warning?.event || '')
-                          .filter(Boolean)
-                          .slice(0, 3)
-                      : [],
-                  }}
-                  location={currentLoc?.name || homeLoc?.name || (lang === 'en' ? 'Current location' : 'Aktueller Standort')}
+                  weatherData={aiWeatherPayload}
+                  location={aiWeatherLocation}
+                  fallbackText={aiWeatherFallbackText}
                 />
                 
                 {/* Historical context: temperature anomaly vs. last year's monthly average */}

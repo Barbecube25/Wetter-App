@@ -2,12 +2,16 @@ import { useEffect, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { generateWeatherReport } from '../services/geminiService';
 
-const FALLBACK_TEXT = 'KI-Bericht derzeit nicht verfügbar';
+const DEFAULT_FALLBACK_TEXT = 'KI-Bericht derzeit nicht verfügbar';
 
-const AiWeatherReport = ({ weatherData, location }) => {
+const AiWeatherReport = ({ weatherData, location, fallbackText = DEFAULT_FALLBACK_TEXT }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [reportText, setReportText] = useState('');
+  const temperature = weatherData?.temperature;
+  const condition = weatherData?.condition || '';
+  const warnings = Array.isArray(weatherData?.warnings) ? weatherData.warnings : [];
+  const warningsKey = warnings.join('|');
 
   useEffect(() => {
     let isCancelled = false;
@@ -17,7 +21,7 @@ const AiWeatherReport = ({ weatherData, location }) => {
       setError(null);
 
       try {
-        const text = await generateWeatherReport(weatherData, location);
+        const text = await generateWeatherReport({ temperature, condition, warnings }, location);
         if (!isCancelled) {
           setReportText(text);
         }
@@ -38,7 +42,7 @@ const AiWeatherReport = ({ weatherData, location }) => {
     return () => {
       isCancelled = true;
     };
-  }, [weatherData, location]);
+  }, [temperature, condition, warningsKey, location]);
 
   return (
     <div className="rounded-m3-2xl border border-m3-outline-variant/30 bg-white/30 backdrop-blur-md p-4 shadow-m3-2">
@@ -54,7 +58,7 @@ const AiWeatherReport = ({ weatherData, location }) => {
         </div>
       ) : (
         <p className="text-sm leading-relaxed text-m3-on-surface-variant">
-          {error ? FALLBACK_TEXT : reportText || FALLBACK_TEXT}
+          {error ? fallbackText : reportText || fallbackText}
         </p>
       )}
     </div>

@@ -25,7 +25,7 @@ export const generateWeatherReport = async (weatherData, location) => {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
   if (!apiKey) {
-    throw new Error('Missing Gemini API key');
+    throw new Error('Missing Gemini API key. Please set VITE_GEMINI_API_KEY in your .env file.');
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
@@ -35,7 +35,7 @@ export const generateWeatherReport = async (weatherData, location) => {
   const text = result?.response?.text?.()?.trim();
 
   if (!text) {
-    throw new Error('Empty Gemini response');
+    throw new Error('Failed to generate weather report: Gemini API returned an empty response. This may indicate an API issue or an invalid prompt.');
   }
 
   return text;
