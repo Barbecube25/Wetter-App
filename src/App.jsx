@@ -5,6 +5,7 @@ import { Geolocation } from '@capacitor/geolocation';
 import { StatusBar } from '@capacitor/status-bar';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import packageJson from '../package.json';
+import AiWeatherReport from './components/AiWeatherReport.jsx';
 
 // --- 1. KONSTANTEN & CONFIG & ÜBERSETZUNGEN ---
 
@@ -17949,6 +17950,19 @@ export default function WeatherApp() {
             <div className={isExpandedLayoutActive ? 'grid grid-cols-12 gap-5 items-start' : 'space-y-4'}>
               <div className={isExpandedLayoutActive ? 'col-span-5 space-y-4' : 'space-y-4'}>
                 <AIReportBox report={dailyReport} dwdWarnings={dwdWarnings} lang={lang} tempFunc={formatTemp} formatWind={formatWind} getWindUnitLabel={getWindUnitLabel} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} getTempUnitSymbol={getTempUnitSymbol} isRealNight={isRealNight} onOpenQuickViewDetail={handleOpenDailyQuickViewDetail} isFoldableScreen={isFoldableScreen} />
+                <AiWeatherReport
+                  weatherData={{
+                    temperature: Math.round(current?.temp ?? 0),
+                    condition: getWeatherConfig(current?.code ?? 0, isRealNight ? 0 : 1, lang)?.description ?? '',
+                    warnings: Array.isArray(dwdWarnings)
+                      ? dwdWarnings
+                          .map((warning) => warning?.headline || warning?.description || warning?.event || '')
+                          .filter(Boolean)
+                          .slice(0, 3)
+                      : [],
+                  }}
+                  location={currentLoc?.name || homeLoc?.name || (lang === 'en' ? 'Current location' : 'Aktueller Standort')}
+                />
                 
                 {/* Historical context: temperature anomaly vs. last year's monthly average */}
                 {climateNormals !== null && processedShort.length > 0 && (() => {
