@@ -13693,7 +13693,7 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
 
     useEffect(() => {
         if (isTooFarFuture) { setLoading(false); return; }
-        if (cachedWeather && !isCacheStale) {
+        if (cachedWeather && !isCacheStale && !cachedWeather.isProvisional) {
             setWeather(cachedWeather);
             setLoading(false);
             return;
@@ -15442,9 +15442,9 @@ export default function WeatherApp() {
       let previewData = null;
       if (travelResult.mode === 'multi' && travelResult.items?.length > 0) {
           const firstItem = travelResult.items[0];
-          previewData = { code: firstItem.code, max: firstItem.max, min: firstItem.min, fetchedAt: Date.now() };
+          previewData = { code: firstItem.code, max: firstItem.max, min: firstItem.min, fetchedAt: Date.now(), isProvisional: true };
       } else if (travelResult.summary?.code !== undefined) {
-          previewData = { code: travelResult.summary.code, max: travelResult.summary.maxTemp, min: travelResult.summary.minTemp, fetchedAt: Date.now() };
+          previewData = { code: travelResult.summary.code, max: travelResult.summary.maxTemp, min: travelResult.summary.minTemp, fetchedAt: Date.now(), isProvisional: true };
       }
       if (previewData) {
           setTripPreviewCache(prev => ({ ...prev, [newTripId]: previewData }));
