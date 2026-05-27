@@ -6614,24 +6614,25 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
 
 // --- 4. KOMPONENTEN ---
 const ActivityEditorModal = ({ isOpen, onClose, onSave, activity = null, lang = 'de', isSmallScreen = false }) => {
-    const [name, setName] = useState(activity?.name || '');
-    const [emoji, setEmoji] = useState(activity?.emoji || CUSTOM_ACTIVITY_DEFAULT_EMOJI);
+    const [name, setName] = useState(String(activity?.name ?? ''));
+    const [emoji, setEmoji] = useState(String(activity?.emoji || CUSTOM_ACTIVITY_DEFAULT_EMOJI));
     const isGerman = lang === 'de';
 
     useEffect(() => {
-        setName(activity?.name || '');
-        setEmoji(activity?.emoji || CUSTOM_ACTIVITY_DEFAULT_EMOJI);
+        setName(String(activity?.name ?? ''));
+        setEmoji(String(activity?.emoji || CUSTOM_ACTIVITY_DEFAULT_EMOJI));
     }, [activity, isOpen]);
 
     if (!isOpen) return null;
 
     const handleSave = () => {
-        const trimmedName = name.trim();
+        const trimmedName = String(name ?? '').trim();
+        const trimmedEmoji = String(emoji ?? '').trim() || CUSTOM_ACTIVITY_DEFAULT_EMOJI;
         if (!trimmedName) return;
         onSave({
             key: activity?.key,
             name: trimmedName,
-            emoji: emoji.trim() || CUSTOM_ACTIVITY_DEFAULT_EMOJI,
+            emoji: trimmedEmoji,
         });
         onClose();
     };
@@ -6885,28 +6886,29 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
     };
 
     const handleSaveCustomActivity = (draft) => {
-        if (!draft?.name?.trim()) return;
+        const trimmedName = String(draft?.name ?? '').trim();
+        const nextEmoji = String(draft?.emoji ?? '').trim() || CUSTOM_ACTIVITY_DEFAULT_EMOJI;
+        if (!trimmedName) return;
         const currentCustomActivities = normalizeCustomActivities(localSettings.customActivities);
         let savedKey = draft.key;
         const nextCustomActivities = draft.key
             ? currentCustomActivities.map((activity) => {
                 if (activity.key !== draft.key) return activity;
-                return { ...activity, name: draft.name.trim(), emoji: draft.emoji?.trim() || CUSTOM_ACTIVITY_DEFAULT_EMOJI };
+                return { ...activity, name: trimmedName, emoji: nextEmoji };
               })
             : [
                 ...currentCustomActivities,
                 {
-                    key: sanitizeActivityKey(draft.name) || `custom-activity-${currentCustomActivities.length + 1}`,
-                    name: draft.name.trim(),
-                    emoji: draft.emoji?.trim() || CUSTOM_ACTIVITY_DEFAULT_EMOJI,
+                    key: sanitizeActivityKey(trimmedName) || `custom-activity-${currentCustomActivities.length + 1}`,
+                    name: trimmedName,
+                    emoji: nextEmoji,
                 },
               ];
 
         const normalizedNextCustomActivities = normalizeCustomActivities(nextCustomActivities);
         if (!draft.key) {
-            const nextEmoji = draft.emoji?.trim() || CUSTOM_ACTIVITY_DEFAULT_EMOJI;
             const created = normalizedNextCustomActivities.find((activity) =>
-                activity.name === draft.name.trim() && activity.emoji === nextEmoji
+                activity.name === trimmedName && activity.emoji === nextEmoji
             );
             savedKey = created?.key;
         }
