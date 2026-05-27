@@ -38,8 +38,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -989,7 +992,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         }
         try {
             Geocoder geocoder = new Geocoder(context, Locale.getDefault());
-            List<Address> addresses = geocoder.getFromLocation(lat, lon, 1);
+            List<Address> addresses = getAddressesForLocation(geocoder, lat, lon);
             if (addresses != null && !addresses.isEmpty()) {
                 Address address = addresses.get(0);
                 String locality = firstNonEmpty(
@@ -1001,14 +1004,38 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
                     return locality;
                 }
             }
-        } catch (IOException | IllegalArgumentException e) {
+        } catch (IOException | IllegalArgumentException | InterruptedException e) {
             Log.w(TAG, "Failed to resolve widget location label from coordinates.", e);
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
         }
         return context.getString(R.string.widget_location_current);
     }
 
+    private List<Address> getAddressesForLocation(Geocoder geocoder, double lat, double lon) throws IOException, InterruptedException {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            AtomicReference<List<Address>> addressesRef = new AtomicReference<>(new ArrayList<>());
+            CountDownLatch latch = new CountDownLatch(1);
+            geocoder.getFromLocation(lat, lon, 1, new Geocoder.GeocodeListener() {
+                @Override
+                public void onGeocode(List<Address> addresses) {
+                    addressesRef.set(addresses);
+                    latch.countDown();
+                }
+
+                @Override
+                public void onError(String errorMessage) {
+                    latch.countDown();
+                }
+            });
+            latch.await(2, TimeUnit.SECONDS);
+            return addressesRef.get();
+        }
+        return geocoder.getFromLocation(lat, lon, 1);
+    }
+
     private String firstNonEmpty(String... values) {
-        if (values == null) return null;
         for (String value : values) {
             if (value == null) continue;
             String trimmed = value.trim();
