@@ -116,7 +116,7 @@ const parseNotificationTime = (value, fallback) => {
   };
 };
 
-const buildNotificationTitle = (emoji, label) => `${emoji} ${WEATHER_NOTIFICATION_BRAND} · ${label}`;
+const formatBrandedNotificationTitle = (emoji, label) => `${emoji} ${WEATHER_NOTIFICATION_BRAND} - ${label}`;
 
 const styleNotificationBody = (text, isGerman) => {
   const lines = typeof text === 'string'
@@ -125,7 +125,7 @@ const styleNotificationBody = (text, isGerman) => {
   if (lines.length === 0) {
     return isGerman ? '• Wetter-Update verfügbar.' : '• Weather update available.';
   }
-  return lines.map((line) => `• ${line}`).join('\n');
+  return lines.map((line) => (/^[•*-]\s+/.test(line) ? line : `• ${line}`)).join('\n');
 };
 
 const normalizeNotificationSettings = (value) => {
@@ -16028,7 +16028,7 @@ export default function WeatherApp() {
         : (isGerman ? 'Dein Tageswetter ist jetzt verfügbar.' : 'Your daytime forecast is now available.');
       scheduledNotifications.push({
         id: WEATHER_BACKGROUND_MORNING_NOTIFICATION_ID,
-        title: buildNotificationTitle('🌤️', isGerman ? 'Morgenbericht' : 'Morning report'),
+        title: formatBrandedNotificationTitle('🌤️', isGerman ? 'Morgenbericht' : 'Morning report'),
         body: styleNotificationBody(morningBody, isGerman),
         schedule: {
           on: { hour, minute },
@@ -16062,7 +16062,7 @@ export default function WeatherApp() {
         : (isGerman ? 'Der Ausblick für Nacht und morgen ist da.' : 'Your night and tomorrow outlook is ready.');
       scheduledNotifications.push({
         id: WEATHER_BACKGROUND_EVENING_NOTIFICATION_ID,
-        title: buildNotificationTitle('🌙', isGerman ? 'Abendbericht' : 'Evening report'),
+        title: formatBrandedNotificationTitle('🌙', isGerman ? 'Abendbericht' : 'Evening report'),
         body: styleNotificationBody(eveningBody, isGerman),
         schedule: {
           on: { hour, minute },
@@ -16167,7 +16167,7 @@ export default function WeatherApp() {
               isGerman,
             }) || (isGerman ? 'Dein Tageswetter steht bereit.' : 'Your daily forecast is ready.')
           : (isGerman ? 'Dein Tageswetter steht bereit.' : 'Your daily forecast is ready.');
-        if (notify(buildNotificationTitle('🌤️', isGerman ? 'Morgenbericht' : 'Morning report'), styleNotificationBody(body, isGerman), `morning-${locationKey}-${dateKey}`)) {
+        if (notify(formatBrandedNotificationTitle('🌤️', isGerman ? 'Morgenbericht' : 'Morning report'), styleNotificationBody(body, isGerman), `morning-${locationKey}-${dateKey}`)) {
           runtime[morningSentKey] = dateKey;
           persistRuntime();
         }
@@ -16192,7 +16192,7 @@ export default function WeatherApp() {
               isGerman,
             }) || (isGerman ? 'Abendausblick ist verfügbar.' : 'Evening outlook is available.')
           : (isGerman ? 'Abendausblick ist verfügbar.' : 'Evening outlook is available.');
-        if (notify(buildNotificationTitle('🌙', isGerman ? 'Abendbericht' : 'Evening report'), styleNotificationBody(body, isGerman), `evening-${locationKey}-${dateKey}`)) {
+        if (notify(formatBrandedNotificationTitle('🌙', isGerman ? 'Abendbericht' : 'Evening report'), styleNotificationBody(body, isGerman), `evening-${locationKey}-${dateKey}`)) {
           runtime[eveningSentKey] = dateKey;
           persistRuntime();
         }
@@ -16215,7 +16215,7 @@ export default function WeatherApp() {
             const body = isGerman
               ? `Warnstufe 4 erwartet gegen ${whenText} Uhr. Bitte Vorsicht.`
               : `Warning level 4 expected around ${whenText}. Please stay alert.`;
-            if (notify(buildNotificationTitle('⛈️', isGerman ? 'Gewitterwarnung' : 'Thunderstorm alert'), styleNotificationBody(body, isGerman), `thunder-${severeKey}`)) {
+            if (notify(formatBrandedNotificationTitle('⛈️', isGerman ? 'Gewitterwarnung' : 'Thunderstorm alert'), styleNotificationBody(body, isGerman), `thunder-${severeKey}`)) {
               runtime[`thunder:${severeKey}`] = 'sent';
               persistRuntime();
             }
@@ -16259,7 +16259,7 @@ export default function WeatherApp() {
               const body = isGerman
                 ? `Regen beginnt voraussichtlich ${leadText}. Stärke: ${intensityLabel}.`
                 : `Rain is expected ${leadText}. Intensity: ${intensityLabel}.`;
-              if (notify(buildNotificationTitle('🌧️', isGerman ? `Regen in ${lead} Min.` : `Rain in ${lead} min`), styleNotificationBody(body, isGerman), `rain-${rainKey}`)) {
+              if (notify(formatBrandedNotificationTitle('🌧️', isGerman ? `Regen in ${lead} min` : `Rain in ${lead} min`), styleNotificationBody(body, isGerman), `rain-${rainKey}`)) {
                 runtime[`rain:${rainKey}`] = 'sent';
                 persistRuntime();
               }
