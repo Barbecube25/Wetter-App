@@ -7,6 +7,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
@@ -26,6 +28,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -316,6 +319,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private void applyWidgetData(Context context, RemoteViews views, WidgetData data, String selectedDay) {
         boolean showTomorrow = DAY_TOMORROW.equals(selectedDay);
         applyDayToggleStyle(context, views, showTomorrow);
+        views.setTextViewText(R.id.widget_title, data.locationLabel);
         String conditionLabel;
         if (showTomorrow) {
             conditionLabel = (data.tomorrowWeatherLabel == null || UNAVAILABLE.equals(data.tomorrowWeatherLabel))
@@ -717,6 +721,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         Location location = getBestLastKnownLocation(context);
         double lat = location != null ? location.getLatitude() : DEFAULT_LAT;
         double lon = location != null ? location.getLongitude() : DEFAULT_LON;
+        data.locationLabel = resolveLocationLabel(context, location, lat, lon);
         boolean weatherPayloadReceived = false;
 
         try {
@@ -842,6 +847,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             data.thunderRiskLabel = readCachedNullableString(json, "thunderRiskLabel");
             data.tomorrowThunderRiskLabel = readCachedNullableString(json, "tomorrowThunderRiskLabel");
             data.pollenLabel = readCachedString(json, "pollenLabel", data.pollenLabel);
+            data.locationLabel = readCachedString(json, "locationLabel", data.locationLabel);
 
             JSONArray hourlyTemps = json.optJSONArray("hourlyTemps");
             JSONArray hourlyCodes = json.optJSONArray("hourlyCodes");
@@ -891,6 +897,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             json.put("thunderRiskLabel", data.thunderRiskLabel == null ? JSONObject.NULL : data.thunderRiskLabel);
             json.put("tomorrowThunderRiskLabel", data.tomorrowThunderRiskLabel == null ? JSONObject.NULL : data.tomorrowThunderRiskLabel);
             json.put("pollenLabel", data.pollenLabel);
+            json.put("locationLabel", data.locationLabel);
 
             JSONArray hourlyTemps = new JSONArray();
             JSONArray hourlyCodes = new JSONArray();
@@ -974,6 +981,42 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             }
         }
         return best;
+    }
+
+    private String resolveLocationLabel(Context context, Location location, double lat, double lon) {
+        if (location == null) {
+            return context.getString(R.string.widget_location_fallback);
+        }
+        try {
+            Geocoder geocoder = new Geocoder(context, Locale.GERMANY);
+            List<Address> addresses = geocoder.getFromLocation(lat, lon, 1);
+            if (addresses != null && !addresses.isEmpty()) {
+                Address address = addresses.get(0);
+                String locality = firstNonEmpty(
+                    address.getLocality(),
+                    address.getSubAdminArea(),
+                    address.getAdminArea()
+                );
+                if (locality != null) {
+                    return locality;
+                }
+            }
+        } catch (IOException | IllegalArgumentException ignored) {
+            // Fall through to generic current-location label.
+        }
+        return context.getString(R.string.widget_location_current);
+    }
+
+    private String firstNonEmpty(String... values) {
+        if (values == null) return null;
+        for (String value : values) {
+            if (value == null) continue;
+            String trimmed = value.trim();
+            if (!trimmed.isEmpty()) {
+                return trimmed;
+            }
+        }
+        return null;
     }
 
     private String classifyThunderRisk(Context context, int weatherCode, double cape, double liftedIndex, double precipProb, double windKmh) {
@@ -1216,6 +1259,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         String thunderRiskLabel;
         String tomorrowThunderRiskLabel;
         String pollenLabel;
+        String locationLabel;
         double[] hourlyTemps = new double[6];
         int[] hourlyCodes = new int[6];
         double[] hourlyPrecipProbs = new double[6];
@@ -1242,6 +1286,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             data.thunderRiskLabel = null;
             data.tomorrowThunderRiskLabel = null;
             data.pollenLabel = context.getString(R.string.widget_metric_unavailable);
+            data.locationLabel = context.getString(R.string.widget_title);
             java.util.Arrays.fill(data.hourlyTemps, Double.NaN);
             java.util.Arrays.fill(data.hourlyCodes, -1);
             java.util.Arrays.fill(data.hourlyPrecipProbs, Double.NaN);
