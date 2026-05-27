@@ -988,7 +988,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             return context.getString(R.string.widget_location_fallback);
         }
         try {
-            Geocoder geocoder = new Geocoder(context, Locale.GERMANY);
+            Geocoder geocoder = new Geocoder(context, Locale.getDefault());
             List<Address> addresses = geocoder.getFromLocation(lat, lon, 1);
             if (addresses != null && !addresses.isEmpty()) {
                 Address address = addresses.get(0);
@@ -1001,8 +1001,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
                     return locality;
                 }
             }
-        } catch (IOException | IllegalArgumentException ignored) {
-            // Fall through to generic current-location label.
+        } catch (IOException | IllegalArgumentException e) {
+            Log.w(TAG, "Failed to resolve widget location label from coordinates.", e);
         }
         return context.getString(R.string.widget_location_current);
     }
