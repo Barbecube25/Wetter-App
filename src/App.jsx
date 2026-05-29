@@ -12186,84 +12186,108 @@ const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallSc
   const warnLevel = getThunderstormWarningLevel(peakRisk, maxGust);
 
   const riskLabelKey = THUNDERSTORM_RISK_LEVEL_KEYS[peakRisk] || THUNDERSTORM_RISK_LEVEL_KEYS[0];
-  const riskColors = [
-    { bg: isRealNight ? 'bg-green-900/20' : 'bg-green-50', text: isRealNight ? 'text-green-400' : 'text-green-700', border: isRealNight ? 'border-green-700/30' : 'border-green-200' },
-    { bg: isRealNight ? 'bg-yellow-900/20' : 'bg-yellow-50', text: isRealNight ? 'text-yellow-400' : 'text-yellow-700', border: isRealNight ? 'border-yellow-700/30' : 'border-yellow-200' },
-    { bg: isRealNight ? 'bg-orange-900/20' : 'bg-orange-50', text: isRealNight ? 'text-orange-400' : 'text-orange-700', border: isRealNight ? 'border-orange-700/30' : 'border-orange-200' },
-    { bg: isRealNight ? 'bg-red-900/20' : 'bg-red-50', text: isRealNight ? 'text-red-400' : 'text-red-700', border: isRealNight ? 'border-red-700/30' : 'border-red-200' },
-    { bg: isRealNight ? 'bg-blue-900/30' : 'bg-blue-50', text: isRealNight ? 'text-blue-400' : 'text-blue-800', border: isRealNight ? 'border-blue-700/40' : 'border-blue-200' },
+
+  /* Per-level color tokens */
+  const RISK_TOKENS = [
+    { bg: isRealNight ? 'bg-green-900/25' : 'bg-green-50',   text: isRealNight ? 'text-green-400'  : 'text-green-700',  border: isRealNight ? 'border-green-700/30'  : 'border-green-200',  accent: isRealNight ? 'bg-green-500'  : 'bg-green-500',  badge: isRealNight ? 'bg-green-900/50 text-green-300'  : 'bg-green-100 text-green-700' },
+    { bg: isRealNight ? 'bg-yellow-900/25' : 'bg-yellow-50', text: isRealNight ? 'text-yellow-400' : 'text-yellow-700', border: isRealNight ? 'border-yellow-700/30' : 'border-yellow-200', accent: isRealNight ? 'bg-yellow-500' : 'bg-yellow-400', badge: isRealNight ? 'bg-yellow-900/50 text-yellow-300' : 'bg-yellow-100 text-yellow-700' },
+    { bg: isRealNight ? 'bg-orange-900/25' : 'bg-orange-50', text: isRealNight ? 'text-orange-400' : 'text-orange-700', border: isRealNight ? 'border-orange-700/30' : 'border-orange-200', accent: isRealNight ? 'bg-orange-500' : 'bg-orange-400', badge: isRealNight ? 'bg-orange-900/50 text-orange-300' : 'bg-orange-100 text-orange-700' },
+    { bg: isRealNight ? 'bg-red-900/25'    : 'bg-red-50',    text: isRealNight ? 'text-red-400'    : 'text-red-700',    border: isRealNight ? 'border-red-700/30'    : 'border-red-200',    accent: isRealNight ? 'bg-red-500'    : 'bg-red-500',    badge: isRealNight ? 'bg-red-900/50 text-red-300'    : 'bg-red-100 text-red-700' },
+    { bg: isRealNight ? 'bg-purple-900/30' : 'bg-purple-50', text: isRealNight ? 'text-purple-400' : 'text-purple-800', border: isRealNight ? 'border-purple-700/40' : 'border-purple-200', accent: isRealNight ? 'bg-purple-500' : 'bg-purple-500', badge: isRealNight ? 'bg-purple-900/50 text-purple-300' : 'bg-purple-100 text-purple-700' },
   ];
   const riskEmojis = ['✅', '🟡', '🟠', '🔴', '🚨'];
-  const riskColor = riskColors[peakRisk] || riskColors[0];
-
-  const hourRiskColor = (risk) => {
-    if (risk === 0) return isRealNight ? 'bg-m3-dark-surface-container-high/40' : 'bg-slate-50/50';
-    return riskColors[risk]?.bg + ' border ' + riskColors[risk]?.border;
-  };
+  const tok = RISK_TOKENS[peakRisk] || RISK_TOKENS[0];
 
   const liDisplay = (li) => {
     if (li === null || li === undefined) return '–';
     return li.toFixed(1);
   };
 
-  const metaRow = (label, value) => (
-    <div className="flex justify-between items-center">
-      <span className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'}>{label}</span>
-      <span className="font-semibold">{value}</span>
+  /* Small metric chip */
+  const Chip = ({ label, value }) => (
+    <div className={`flex flex-col items-center rounded-xl px-3 py-1.5 ${isRealNight ? 'bg-m3-dark-surface-container-high/60' : 'bg-white/70'} shadow-sm`}>
+      <span className={`text-[10px] uppercase tracking-wide font-medium ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'}`}>{label}</span>
+      <span className={`text-sm font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-700'}`}>{value}</span>
     </div>
   );
 
+  /* Warning level badge */
+  const warnBadgeColor = [
+    '',
+    isRealNight ? 'bg-yellow-900/50 text-yellow-300 border-yellow-700/40' : 'bg-yellow-100 text-yellow-700 border-yellow-300',
+    isRealNight ? 'bg-orange-900/50 text-orange-300 border-orange-700/40' : 'bg-orange-100 text-orange-700 border-orange-300',
+    isRealNight ? 'bg-red-900/50 text-red-300 border-red-700/40' : 'bg-red-100 text-red-700 border-red-300',
+    isRealNight ? 'bg-purple-900/50 text-purple-300 border-purple-700/40' : 'bg-purple-100 text-purple-700 border-purple-300',
+  ];
+
   return (
-    <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
-      <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-white'} rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-md'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
-        {/* Header */}
-        <div className={`p-4 border-b ${isRealNight ? 'border-m3-outline-variant/70 bg-m3-dark-surface-container-high/50' : 'border-slate-100 bg-slate-50/50'} flex justify-between items-center sticky top-0`}>
-          <h3 className={`font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'} flex items-center gap-2`}>
-            <CloudLightning size={18} className="text-yellow-500" />
-            {t('thunderstormRiskDetails')}
-          </h3>
+    <div className={`fixed inset-0 z-[60] flex items-end sm:items-center justify-center ${isSmallScreen ? 'p-0' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
+      <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-white'} ${isSmallScreen ? 'rounded-t-3xl rounded-b-none w-full' : 'rounded-3xl max-w-md w-full'} shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
+
+        {/* ── Header ── */}
+        <div className={`px-5 pt-5 pb-4 flex justify-between items-center sticky top-0 ${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-white'}`}>
+          <div className="flex items-center gap-2">
+            <CloudLightning size={20} className="text-yellow-500" />
+            <h3 className={`font-bold text-base ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'}`}>
+              {t('thunderstormRiskDetails')}
+            </h3>
+          </div>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setShowInfo(s => !s)}
               title={isDE ? 'Berechnung erklären' : 'Explain calculation'}
-              className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'} rounded-full transition`}
+              className={`p-2 rounded-full transition ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'}`}
             >
               <Info size={18} className={showInfo ? 'text-yellow-500' : (isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400')} />
             </button>
-            <button onClick={onClose} className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'} rounded-full transition`}>
+            <button onClick={onClose} className={`p-2 rounded-full transition ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'}`}>
               <X size={20} className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} />
             </button>
           </div>
         </div>
 
-        {/* Summary */}
-        <div className={`p-4 border-b ${riskColor.bg} ${riskColor.border} border`}>
-          <div className="flex justify-between items-center mb-2">
-            <span className={`text-sm font-medium ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-600'}`}>{t('thunderstormNext24h')}</span>
-            <span className={`text-xl font-bold ${riskColor.text} flex items-center gap-1`}>
-              {riskEmojis[peakRisk]} {t(riskLabelKey)}
-            </span>
+        {/* ── Summary hero ── */}
+        <div className={`mx-4 mb-4 rounded-2xl border ${tok.bg} ${tok.border} overflow-hidden`}>
+          {/* Colored top accent bar */}
+          <div className={`h-1 w-full ${tok.accent}`} />
+          <div className="px-4 py-3">
+            {/* Risk label row */}
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className={`text-xs font-medium uppercase tracking-wide mb-0.5 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'}`}>{t('thunderstormNext24h')}</p>
+                <p className={`text-xl font-extrabold ${tok.text} flex items-center gap-1.5 leading-tight`}>
+                  <span>{riskEmojis[peakRisk]}</span>
+                  <span>{t(riskLabelKey)}</span>
+                </p>
+              </div>
+              {warnLevel > 0 && (
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${warnBadgeColor[warnLevel] || warnBadgeColor[1]}`}>
+                  ⚠️ {isDE ? `Stufe ${warnLevel}` : `Level ${warnLevel}`}
+                </span>
+              )}
+            </div>
+            {/* Peak time + intensity */}
+            {peakRisk > 0 && peakEntry && (
+              <p className={`text-xs mb-3 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'}`}>
+                ⚡ {t('thunderstormPeakAt')} <span className="font-semibold">{peakEntry.displayTime}</span>
+                {' · '}💨 {t('thunderstormIntensity')}: <span className="font-semibold">{peakEntry.intensity}</span>
+              </p>
+            )}
+            {/* Metric chips */}
+            {peakRisk > 0 && (
+              <div className="grid grid-cols-4 gap-2">
+                <Chip label="CAPE" value={`${Math.round(peakEntry?.cape ?? 0)}`} />
+                <Chip label="LI" value={liDisplay(peakEntry?.liftedIndex)} />
+                <Chip label={isDE ? 'Böen' : 'Gusts'} value={`${Math.round(peakEntry?.gust ?? 0)}`} />
+                <Chip label={isDE ? 'Regen' : 'Precip'} value={`${Math.round(peakEntry?.precipProb ?? 0)} %`} />
+              </div>
+            )}
           </div>
-          {peakRisk > 0 && peakEntry && (
-            <div className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'} flex gap-4 flex-wrap`}>
-              <span>⚡ {t('thunderstormPeakAt')} {peakEntry.displayTime}</span>
-              <span>💨 {t('thunderstormIntensity')}: {peakEntry.intensity}</span>
-              {warnLevel > 0 && <span>⚠️ {t('thunderstormWarningLevel')}: {warnLevel}</span>}
-            </div>
-          )}
-          {peakRisk > 0 && (
-            <div className={`mt-2 text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'} space-y-1`}>
-              {metaRow(t('cape'), `${Math.round(peakEntry?.cape ?? 0)} J/kg`)}
-              {metaRow(t('liftedIndex'), liDisplay(peakEntry?.liftedIndex))}
-              {metaRow(t('gusts'), `${Math.round(peakEntry?.gust ?? 0)} km/h`)}
-              {metaRow(isDE ? 'Regenwahrsch.' : 'Precip. prob.', `${Math.round(peakEntry?.precipProb ?? 0)} %`)}
-            </div>
-          )}
         </div>
 
         {showInfo ? (
-          /* Info panel: explains calculation */
-          <div className="overflow-y-auto p-4 space-y-4">
+          /* ── Info panel ── */
+          <div className="overflow-y-auto px-4 pb-4 space-y-3">
             <p className={`text-sm font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'}`}>
               {isDE ? 'Wie wird das Gewitterrisiko berechnet?' : 'How is the thunderstorm risk calculated?'}
             </p>
@@ -12337,46 +12361,63 @@ const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallSc
             ))}
           </div>
         ) : (
-          /* Hourly list */
-          <div className="overflow-y-auto p-4 space-y-1.5">
-            {next24.map((hour, idx) => (
-              <div
-                key={idx}
-                className={`p-2.5 rounded-xl transition-colors ${hourRiskColor(hour.risk)}`}
-              >
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-base leading-none">{riskEmojis[hour.risk]}</span>
-                    <span className={`font-medium text-sm ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-700'}`}>{hour.displayTime}</span>
+          /* ── Hourly list ── */
+          <div className="overflow-y-auto px-4 pb-2 space-y-1.5">
+            {next24.map((hour, idx) => {
+              const tk = RISK_TOKENS[hour.risk] || RISK_TOKENS[0];
+              if (hour.risk === 0) {
+                return (
+                  <div key={idx} className={`flex items-center gap-3 px-3 py-2 rounded-xl ${isRealNight ? 'bg-m3-dark-surface-container-high/30' : 'bg-slate-50/60'}`}>
+                    <span className="text-sm leading-none opacity-60">✅</span>
+                    <span className={`text-sm font-medium ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'}`}>{hour.displayTime}</span>
+                    <span className={`ml-auto text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'}`}>{t('thunderstormNone')}</span>
                   </div>
-                  <div className="text-right">
-                    {hour.risk > 0 ? (
-                      <div className={`text-sm font-bold ${riskColors[hour.risk]?.text}`}>{t(THUNDERSTORM_RISK_LEVEL_KEYS[hour.risk])}</div>
-                    ) : (
-                      <span className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'}`}>{t('thunderstormNone')}</span>
-                    )}
+                );
+              }
+              return (
+                <div key={idx} className={`rounded-xl overflow-hidden border ${tk.bg} ${tk.border}`}>
+                  {/* Left accent stripe + main row */}
+                  <div className="flex">
+                    <div className={`w-1 self-stretch flex-shrink-0 ${tk.accent}`} />
+                    <div className="flex-1 px-3 py-2.5">
+                      {/* Time + label */}
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base leading-none">{riskEmojis[hour.risk]}</span>
+                          <span className={`font-semibold text-sm ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'}`}>{hour.displayTime}</span>
+                        </div>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${tk.badge}`}>
+                          {t(THUNDERSTORM_RISK_LEVEL_KEYS[hour.risk])}
+                        </span>
+                      </div>
+                      {/* Metric chips row */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          { label: 'CAPE', value: `${Math.round(hour.cape)} J/kg` },
+                          { label: 'LI', value: liDisplay(hour.liftedIndex) },
+                          { label: isDE ? 'Böen' : 'Gusts', value: `${Math.round(hour.gust)} km/h` },
+                          { label: isDE ? 'Regen' : 'Precip', value: `${Math.round(hour.precipProb)} %` },
+                          { label: isDE ? 'Stärke' : 'Intensity', value: hour.intensity },
+                        ].map(({ label, value }) => (
+                          <span key={label} className={`text-[11px] px-2 py-0.5 rounded-full ${isRealNight ? 'bg-m3-dark-surface-container/70 text-m3-dark-on-surface-variant' : 'bg-white/80 text-slate-600'} border ${isRealNight ? 'border-white/10' : 'border-slate-200'}`}>
+                            <span className="font-medium">{label}:</span> {value}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                {hour.risk > 0 && (
-                  <div className={`mt-1.5 grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'}`}>
-                    <span>CAPE: <span className="font-semibold">{Math.round(hour.cape)} J/kg</span></span>
-                    <span>LI: <span className="font-semibold">{liDisplay(hour.liftedIndex)}</span></span>
-                    <span>{t('gusts')}: <span className="font-semibold">{Math.round(hour.gust)} km/h</span></span>
-                    <span>{isDE ? 'Regen' : 'Precip'}: <span className="font-semibold">{Math.round(hour.precipProb)} %</span></span>
-                    <span className="col-span-2">{t('thunderstormIntensity')}: <span className="font-semibold">{hour.intensity}</span></span>
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
-        {/* Footer info */}
-        <div className={`p-4 border-t ${isRealNight ? 'border-m3-outline-variant/70 bg-m3-dark-surface-container-high/30' : 'border-slate-100 bg-slate-50/30'}`}>
-          <p className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'}`}>
+        {/* ── Footer ── */}
+        <div className={`px-5 py-3 mt-2 border-t ${isRealNight ? 'border-m3-outline-variant/50' : 'border-slate-100'}`}>
+          <p className={`text-[11px] ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'}`}>
             {isDE
-              ? 'Basiert auf CAPE (Konvektionsenergie), Lifted Index (Atmosphärenstabilität) und Windböen. Warnstufe entspricht DWD-Kriterien.'
-              : 'Based on CAPE (convective energy), Lifted Index (atmospheric stability) and wind gusts. Warning levels follow DWD criteria.'}
+              ? 'Basiert auf CAPE, Lifted Index und Windböen. Warnstufen nach DWD-Kriterien.'
+              : 'Based on CAPE, Lifted Index and wind gusts. Warning levels follow DWD criteria.'}
           </p>
         </div>
       </div>
@@ -17960,10 +18001,8 @@ export default function WeatherApp() {
           {/* Thunderstorm Risk tile */}
           {(() => {
             const thunderHours = processedShort.slice(0, THUNDERSTORM_FORECAST_HOURS);
-            const peakRisk = thunderHours.reduce((max, h) => {
-              const r = calcThunderstormRiskLevel(h.cape ?? 0, h.liftedIndex, h.precipProb ?? 0, h.code ?? 0, h.gust ?? 0);
-              return r > max ? r : max;
-            }, 0);
+            const hourRisks = thunderHours.map(h => calcThunderstormRiskLevel(h.cape ?? 0, h.liftedIndex, h.precipProb ?? 0, h.code ?? 0, h.gust ?? 0));
+            const peakRisk = hourRisks.reduce((max, r) => r > max ? r : max, 0);
             const riskLabelKey = THUNDERSTORM_RISK_LEVEL_KEYS[peakRisk];
             const riskEmoji = ['✅', '🟡', '🟠', '🔴', '🟣'][peakRisk];
             const riskTextColor = [
@@ -17971,7 +18010,7 @@ export default function WeatherApp() {
               (isRealNight ? 'text-yellow-400' : 'text-yellow-700'),
               (isRealNight ? 'text-orange-400' : 'text-orange-700'),
               (isRealNight ? 'text-red-400' : 'text-red-600'),
-              (isRealNight ? 'text-blue-400' : 'text-blue-800'),
+              (isRealNight ? 'text-purple-400' : 'text-purple-800'),
             ][peakRisk];
             const tileBgThunder = peakRisk >= 3
               ? (isRealNight ? 'bg-red-950/40 border-red-900/40' : 'bg-red-50 border-red-200')
@@ -17982,23 +18021,40 @@ export default function WeatherApp() {
               const r = calcThunderstormRiskLevel(h.cape ?? 0, h.liftedIndex, h.precipProb ?? 0, h.code ?? 0, h.gust ?? 0);
               return r > calcThunderstormRiskLevel(best.cape ?? 0, best.liftedIndex, best.precipProb ?? 0, best.code ?? 0, best.gust ?? 0) ? h : best;
             }, thunderHours[0] || {});
+            /* Compact 12-bar mini sparkline (every 2nd hour) */
+            const sparkBars = hourRisks.filter((_, i) => i % 2 === 0).slice(0, 12);
+            const sparkColors = ['bg-green-400', 'bg-yellow-400', 'bg-orange-400', 'bg-red-500', 'bg-purple-500'];
             return (
               <div
-                className={`${tileBgThunder} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`}
+                className={`${tileBgThunder} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col justify-between cursor-pointer active:scale-95 transition-transform`}
                 onClick={() => setShowThunderstormModal(true)}
               >
-                <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
-                  <CloudLightning size={14} /> {t('thunderstormRisk')}
+                {/* Title */}
+                <div className={`flex items-center gap-1.5 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small`}>
+                  <CloudLightning size={13} /> {t('thunderstormRisk')}
                 </div>
-                <div className="flex items-center justify-center gap-1.5 mb-0.5">
-                  <span className="text-lg leading-none">{riskEmoji}</span>
-                  <span className={`text-m3-label-large font-bold ${riskTextColor} leading-tight`}>{t(riskLabelKey)}</span>
-                </div>
-                {peakRisk > 0 && peakEntry?.time && (
-                  <div className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mt-0.5`}>
-                    {t('thunderstormPeakAt')} {peakEntry.time.toLocaleTimeString(lang === 'de' ? 'de-DE' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
+                {/* Main label */}
+                <div className="flex items-center gap-1.5 px-0.5">
+                  <span className="text-xl leading-none">{riskEmoji}</span>
+                  <div>
+                    <div className={`text-m3-label-large font-bold ${riskTextColor} leading-tight`}>{t(riskLabelKey)}</div>
+                    {peakRisk > 0 && peakEntry?.time && (
+                      <div className={`text-[11px] ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} leading-tight`}>
+                        ⚡ {peakEntry.time.toLocaleTimeString(lang === 'de' ? 'de-DE' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+                {/* 24h sparkline */}
+                <div className="flex items-end gap-px h-4 px-0.5">
+                  {sparkBars.map((r, i) => (
+                    <div
+                      key={i}
+                      style={{ height: `${[20, 40, 60, 80, 100][r]}%` }}
+                      className={`flex-1 rounded-sm ${sparkColors[r]} opacity-80`}
+                    />
+                  ))}
+                </div>
               </div>
             );
           })()}
