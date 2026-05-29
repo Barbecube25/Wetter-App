@@ -12153,7 +12153,10 @@ const MoonPhaseModal = ({ isOpen, onClose, date, lang = 'de', isSmallScreen = fa
 // --- THUNDERSTORM RISK MODAL ---
 const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallScreen = false, isRealNight = false }) => {
   const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
+  const [showInfo, setShowInfo] = useState(false);
   if (!isOpen) return null;
+
+  const isDE = lang === 'de';
 
   const next24 = hourlyData.slice(0, THUNDERSTORM_FORECAST_HOURS).map(hour => {
     const risk = calcThunderstormRiskLevel(
@@ -12203,6 +12206,13 @@ const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallSc
     return li.toFixed(1);
   };
 
+  const metaRow = (label, value) => (
+    <div className="flex justify-between items-center">
+      <span className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'}>{label}</span>
+      <span className="font-semibold">{value}</span>
+    </div>
+  );
+
   return (
     <div className={`fixed inset-0 z-[60] flex items-center justify-center ${isSmallScreen ? 'p-2' : 'p-4'} bg-black/60 backdrop-blur-sm animate-in fade-in duration-200`}>
       <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-white'} rounded-3xl ${isSmallScreen ? 'max-w-[95vw]' : 'max-w-md'} w-full shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
@@ -12212,9 +12222,18 @@ const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallSc
             <CloudLightning size={18} className="text-yellow-500" />
             {t('thunderstormRiskDetails')}
           </h3>
-          <button onClick={onClose} className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'} rounded-full transition`}>
-            <X size={20} className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setShowInfo(s => !s)}
+              title={isDE ? 'Berechnung erklären' : 'Explain calculation'}
+              className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'} rounded-full transition`}
+            >
+              <Info size={18} className={showInfo ? 'text-yellow-500' : (isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400')} />
+            </button>
+            <button onClick={onClose} className={`p-2 ${isRealNight ? 'hover:bg-m3-dark-surface-container-high' : 'hover:bg-slate-100'} rounded-full transition`}>
+              <X size={20} className={isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'} />
+            </button>
+          </div>
         </div>
 
         {/* Summary */}
@@ -12233,44 +12252,129 @@ const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallSc
             </div>
           )}
           {peakRisk > 0 && (
-            <div className={`mt-2 text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'} space-y-0.5`}>
-              <div>{t('cape')}: <span className="font-semibold">{Math.round(peakEntry?.cape ?? 0)} J/kg</span></div>
-              <div>{t('liftedIndex')}: <span className="font-semibold">{liDisplay(peakEntry?.liftedIndex)}</span></div>
+            <div className={`mt-2 text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'} space-y-1`}>
+              {metaRow(t('cape'), `${Math.round(peakEntry?.cape ?? 0)} J/kg`)}
+              {metaRow(t('liftedIndex'), liDisplay(peakEntry?.liftedIndex))}
+              {metaRow(t('gusts'), `${Math.round(peakEntry?.gust ?? 0)} km/h`)}
+              {metaRow(isDE ? 'Regenwahrsch.' : 'Precip. prob.', `${Math.round(peakEntry?.precipProb ?? 0)} %`)}
             </div>
           )}
         </div>
 
-        {/* Hourly list */}
-        <div className="overflow-y-auto p-4 space-y-1.5">
-          {next24.map((hour, idx) => (
-            <div
-              key={idx}
-              className={`flex justify-between items-center p-2.5 rounded-xl transition-colors ${hourRiskColor(hour.risk)}`}
-            >
-              <div className="flex items-center gap-2.5">
-                <span className="text-base leading-none">{riskEmojis[hour.risk]}</span>
-                <span className={`font-medium text-sm ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-700'}`}>{hour.displayTime}</span>
-              </div>
-              <div className="text-right">
-                {hour.risk > 0 ? (
-                  <>
-                    <div className={`text-sm font-bold ${riskColors[hour.risk]?.text}`}>{t(THUNDERSTORM_RISK_LEVEL_KEYS[hour.risk])}</div>
-                    <div className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'}`}>
-                      {hour.intensity} · CAPE {Math.round(hour.cape)} J/kg
-                    </div>
-                  </>
-                ) : (
-                  <span className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'}`}>{t('thunderstormNone')}</span>
+        {showInfo ? (
+          /* Info panel: explains calculation */
+          <div className="overflow-y-auto p-4 space-y-4">
+            <p className={`text-sm font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'}`}>
+              {isDE ? 'Wie wird das Gewitterrisiko berechnet?' : 'How is the thunderstorm risk calculated?'}
+            </p>
+
+            {[
+              {
+                title: isDE ? '⚡ CAPE (Konvektionsenergie)' : '⚡ CAPE (Convective Energy)',
+                desc: isDE
+                  ? 'Misst die atmosphärische Instabilität – je höher, desto mehr Energie für Gewitter.'
+                  : 'Measures atmospheric instability – the higher, the more energy available for thunderstorms.',
+                rows: isDE
+                  ? [['< 100 J/kg', 'Kein Risiko'], ['100–500 J/kg', 'Geringes Risiko'], ['500–1500 J/kg', 'Mäßiges Risiko'], ['1500–3000 J/kg', 'Hohes Risiko'], ['> 3000 J/kg', 'Extremes Risiko']]
+                  : [['< 100 J/kg', 'No risk'], ['100–500 J/kg', 'Low risk'], ['500–1500 J/kg', 'Moderate risk'], ['1500–3000 J/kg', 'High risk'], ['> 3000 J/kg', 'Extreme risk']],
+              },
+              {
+                title: isDE ? '📊 Lifted Index (LI)' : '📊 Lifted Index (LI)',
+                desc: isDE
+                  ? 'Zeigt die Stabilität der Atmosphäre an. Negative Werte bedeuten Instabilität.'
+                  : 'Shows atmospheric stability. Negative values indicate instability.',
+                rows: isDE
+                  ? [['> 0', 'Stabil'], ['0 bis −2', 'Leichte Instabilität'], ['−2 bis −4', 'Mäßige Instabilität'], ['−4 bis −6', 'Starke Instabilität'], ['< −6', 'Extreme Instabilität']]
+                  : [['> 0', 'Stable'], ['0 to −2', 'Slight instability'], ['−2 to −4', 'Moderate instability'], ['−4 to −6', 'Large instability'], ['< −6', 'Extreme instability']],
+              },
+              {
+                title: isDE ? '🌧 Niederschlagswahrscheinlichkeit' : '🌧 Precipitation probability',
+                desc: isDE
+                  ? 'Hohe Regenwahrscheinlichkeit bestätigt oder verstärkt das atmosphärische Risiko.'
+                  : 'High precipitation probability confirms or amplifies the atmospheric risk.',
+                rows: isDE
+                  ? [['< 30 %', 'Kein Einfluss'], ['30–50 %', 'Geringer Einfluss'], ['50–70 %', 'Mäßiger Einfluss'], ['> 70 %', 'Hoher Einfluss']]
+                  : [['< 30 %', 'No influence'], ['30–50 %', 'Low influence'], ['50–70 %', 'Moderate influence'], ['> 70 %', 'High influence']],
+              },
+              {
+                title: isDE ? '💨 Windböen' : '💨 Wind gusts',
+                desc: isDE
+                  ? 'Bestimmen die Gewitterintensität (Stärke-Label).'
+                  : 'Determine thunderstorm intensity label.',
+                rows: isDE
+                  ? [['< 60 km/h', 'Leicht'], ['60–100 km/h', 'Mäßig'], ['100–140 km/h', 'Stark'], ['> 140 km/h', 'Unwetter']]
+                  : [['< 60 km/h', 'Light'], ['60–100 km/h', 'Moderate'], ['100–140 km/h', 'Strong'], ['> 140 km/h', 'Severe']],
+              },
+              {
+                title: isDE ? '🔢 WMO-Wettercode' : '🔢 WMO weather code',
+                desc: isDE
+                  ? 'Aktive Gewitter-Codes (17, 95, 96, 99) führen automatisch zum Maximalrisiko (Stufe 4).'
+                  : 'Active thunderstorm codes (17, 95, 96, 99) automatically trigger maximum risk (level 4).',
+                rows: [],
+              },
+              {
+                title: isDE ? '⚠️ Warnstufen (DWD-Kriterien)' : '⚠️ Warning levels (DWD criteria)',
+                desc: '',
+                rows: isDE
+                  ? [['Stufe 1', 'Gewitterrisiko vorhanden'], ['Stufe 2', 'Mäßig · Böen > 60 km/h'], ['Stufe 3', 'Stark · Böen > 100 km/h'], ['Stufe 4', 'Extrem · Böen > 140 km/h od. Aktiv']]
+                  : [['Level 1', 'Thunderstorm risk present'], ['Level 2', 'Moderate · Gusts > 60 km/h'], ['Level 3', 'Severe · Gusts > 100 km/h'], ['Level 4', 'Extreme · Gusts > 140 km/h or Active']],
+              },
+            ].map((section, i) => (
+              <div key={i} className={`rounded-xl p-3 ${isRealNight ? 'bg-m3-dark-surface-container-high/40' : 'bg-slate-50'}`}>
+                <p className={`text-xs font-bold mb-1 ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-700'}`}>{section.title}</p>
+                {section.desc && <p className={`text-xs mb-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'}`}>{section.desc}</p>}
+                {section.rows.length > 0 && (
+                  <div className="space-y-0.5">
+                    {section.rows.map(([threshold, label], j) => (
+                      <div key={j} className="flex justify-between text-xs">
+                        <span className={`font-mono ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'}`}>{threshold}</span>
+                        <span className={isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-700'}>{label}</span>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          /* Hourly list */
+          <div className="overflow-y-auto p-4 space-y-1.5">
+            {next24.map((hour, idx) => (
+              <div
+                key={idx}
+                className={`p-2.5 rounded-xl transition-colors ${hourRiskColor(hour.risk)}`}
+              >
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-base leading-none">{riskEmojis[hour.risk]}</span>
+                    <span className={`font-medium text-sm ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-700'}`}>{hour.displayTime}</span>
+                  </div>
+                  <div className="text-right">
+                    {hour.risk > 0 ? (
+                      <div className={`text-sm font-bold ${riskColors[hour.risk]?.text}`}>{t(THUNDERSTORM_RISK_LEVEL_KEYS[hour.risk])}</div>
+                    ) : (
+                      <span className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'}`}>{t('thunderstormNone')}</span>
+                    )}
+                  </div>
+                </div>
+                {hour.risk > 0 && (
+                  <div className={`mt-1.5 grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-500'}`}>
+                    <span>CAPE: <span className="font-semibold">{Math.round(hour.cape)} J/kg</span></span>
+                    <span>LI: <span className="font-semibold">{liDisplay(hour.liftedIndex)}</span></span>
+                    <span>{t('gusts')}: <span className="font-semibold">{Math.round(hour.gust)} km/h</span></span>
+                    <span>{isDE ? 'Regen' : 'Precip'}: <span className="font-semibold">{Math.round(hour.precipProb)} %</span></span>
+                    <span className="col-span-2">{t('thunderstormIntensity')}: <span className="font-semibold">{hour.intensity}</span></span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Footer info */}
         <div className={`p-4 border-t ${isRealNight ? 'border-m3-outline-variant/70 bg-m3-dark-surface-container-high/30' : 'border-slate-100 bg-slate-50/30'}`}>
           <p className={`text-xs ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-slate-400'}`}>
-            {lang === 'de'
+            {isDE
               ? 'Basiert auf CAPE (Konvektionsenergie), Lifted Index (Atmosphärenstabilität) und Windböen. Warnstufe entspricht DWD-Kriterien.'
               : 'Based on CAPE (convective energy), Lifted Index (atmospheric stability) and wind gusts. Warning levels follow DWD criteria.'}
           </p>
