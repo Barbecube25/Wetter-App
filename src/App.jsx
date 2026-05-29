@@ -12225,10 +12225,10 @@ const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallSc
       <div className={`${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-white'} ${isSmallScreen ? 'rounded-t-3xl rounded-b-none w-full' : 'rounded-3xl max-w-md w-full'} shadow-2xl overflow-hidden scale-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]`}>
 
         {/* ── Header ── */}
-        <div className={`px-5 pt-5 pb-4 flex justify-between items-center sticky top-0 ${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-white'}`}>
-          <div className="flex items-center gap-2">
+        <div className={`px-5 pt-5 pb-4 flex justify-between items-start sticky top-0 ${isRealNight ? 'bg-m3-dark-surface-container' : 'bg-white'}`}>
+          <div className="flex items-start gap-2 min-w-0 flex-1 pr-2">
             <CloudLightning size={20} className="text-yellow-500" />
-            <h3 className={`font-bold text-base ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'}`}>
+            <h3 className={`font-bold text-base leading-tight break-words ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'}`}>
               {t('thunderstormRiskDetails')}
             </h3>
           </div>
