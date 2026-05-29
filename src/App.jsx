@@ -12247,7 +12247,7 @@ const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallSc
         </div>
 
         {/* ── Summary hero ── */}
-        <div className={`mx-4 mb-4 rounded-2xl border ${tok.bg} ${tok.border} overflow-hidden`}>
+        <div className={`mx-4 mb-4 rounded-2xl border ${tok.bg} ${tok.border} overflow-hidden shrink-0`}>
           {/* Colored top accent bar */}
           <div className={`h-1 w-full ${tok.accent}`} />
           <div className="px-4 py-3">
@@ -12287,7 +12287,7 @@ const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallSc
 
         {showInfo ? (
           /* ── Info panel ── */
-          <div className="overflow-y-auto px-4 pb-4 space-y-3">
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 space-y-3">
             <p className={`text-sm font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-slate-800'}`}>
               {isDE ? 'Wie wird das Gewitterrisiko berechnet?' : 'How is the thunderstorm risk calculated?'}
             </p>
@@ -12362,7 +12362,7 @@ const ThunderstormModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallSc
           </div>
         ) : (
           /* ── Hourly list ── */
-          <div className="overflow-y-auto px-4 pb-2 space-y-1.5">
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 pt-2 pb-2 space-y-1.5">
             {next24.map((hour, idx) => {
               const tk = RISK_TOKENS[hour.risk] || RISK_TOKENS[0];
               if (hour.risk === 0) {
