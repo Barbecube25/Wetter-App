@@ -11859,12 +11859,13 @@ const calcThunderstormRiskLevel = (cape, liftedIndex, precipProb, weatherCode, w
   else if (precipProb >= 50) precipRisk = 2;
   else if (precipProb >= 30) precipRisk = 1;
 
-  // Atmospheric instability is the primary driver; precip probability raises the combined score
+  // Atmospheric instability is the primary driver; precip probability can only confirm,
+  // but not exceed, the instability-derived risk level.
   const atmosphericRisk = Math.max(capeRisk, liRisk);
   // Without any precip probability and only weak instability, return no risk
   if (precipRisk === 0 && atmosphericRisk <= 1) return 0;
-  // Allow precip probability to boost or confirm risk, capped by atmospheric instability + 1
-  return Math.min(4, Math.max(atmosphericRisk, precipRisk > 0 ? Math.min(precipRisk, atmosphericRisk + 1) : 0));
+  // Keep the model conservative: no "high" risk from rain probability alone.
+  return Math.min(4, Math.max(atmosphericRisk, precipRisk > 0 ? Math.min(precipRisk, atmosphericRisk) : 0));
 };
 
 // Returns an intensity label key based on max wind gust and CAPE
