@@ -9040,7 +9040,7 @@ const HourlyTemperatureTiles = ({ data, lang='de', formatTemp, getTempUnitSymbol
 };
 
 // --- NEU: PRECIPITATION TILE (Wann, Wie lang, Wie viel) ---
-const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang='de', formatPrecip, getPrecipUnitLabel, setActiveTab, setShowPrecipModal, isRealNight }) => {
+const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang='de', formatPrecip, getPrecipUnitLabel, isRealNight }) => {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['de'];
   // Analyse der nächsten 24h
   const analysis = useMemo(() => {
@@ -9887,28 +9887,6 @@ const PrecipitationTile = ({ data, minutelyData, radarNowcast, currentData, lang
                         })}
                     </div>
                 </div>
-            )}
-        </div>
-
-        {/* Action Buttons for Integration */}
-        <div className="mt-4 flex gap-2">
-            {setActiveTab && (
-                <button 
-                    onClick={() => setActiveTab('radar')}
-                    className="flex-1 bg-m3-surface-container hover:bg-m3-surface-container-high active:scale-95 transition-all rounded-xl p-3 flex items-center justify-center gap-2 border border-m3-outline-variant"
-                >
-                    <MapIcon size={18} className="text-m3-primary" />
-                    <span className="text-m3-body-medium font-bold text-m3-on-surface">{lang === 'en' ? 'View Radar' : 'Zum Radar'}</span>
-                </button>
-            )}
-            {setShowPrecipModal && (
-                <button 
-                    onClick={() => setShowPrecipModal(true)}
-                    className="flex-1 bg-m3-surface-container hover:bg-m3-surface-container-high active:scale-95 transition-all rounded-xl p-3 flex items-center justify-center gap-2 border border-m3-outline-variant"
-                >
-                    <Info size={18} className="text-m3-primary" />
-                    <span className="text-m3-body-medium font-bold text-m3-on-surface">{lang === 'en' ? '24h Details' : '24h-Details'}</span>
-                </button>
             )}
         </div>
     </div>
@@ -17273,7 +17251,7 @@ export default function WeatherApp() {
                <a href="/" className="bg-white p-2 rounded-full text-slate-700 shadow-sm inline-block"><ArrowLeft size={24}/></a>
            </div>
            <h2 className="text-2xl font-bold mb-6 text-slate-800 text-center">{t('precipRadar')}</h2>
-            <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} radarNowcast={shortTermData?.radar_nowcast} currentData={shortTermData?.current} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} isRealNight={isRealNight} />
+            <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} radarNowcast={shortTermData?.radar_nowcast} currentData={shortTermData?.current} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} isRealNight={isRealNight} />
        </div>
     );
  }
@@ -18099,7 +18077,8 @@ export default function WeatherApp() {
                 <>
                   {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) ? (
                     <div
-                      className={`bg-m3-tertiary-container rounded-m3-xl border border-m3-tertiary shadow-m3-1 relative overflow-hidden flex flex-col justify-between ${isFoldableInExpandedMode ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2'}`}
+                      className={`bg-m3-tertiary-container rounded-m3-xl border border-m3-tertiary shadow-m3-1 relative overflow-hidden flex flex-col justify-between cursor-pointer active:scale-95 transition-transform ${isFoldableInExpandedMode ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2'}`}
+                      onClick={() => setShowPrecipModal(true)}
                     >
                       <div className={`flex items-center justify-center gap-2 text-m3-on-tertiary-container mb-1 ${isFoldableInExpandedMode ? 'text-[14px] leading-tight' : 'text-m3-label-small'}`}>
                         {next24HoursPrecip.snow > 0.1 ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
@@ -18118,25 +18097,9 @@ export default function WeatherApp() {
                           <div key={i} style={{ height: `${Math.max(10, p)}%` }} className={`flex-1 rounded-sm ${getPrecipBarColor(p)} opacity-80`} />
                         ))}
                       </div>
-                      <div className={`flex ${isFoldableInExpandedMode ? 'flex-col gap-1.5' : 'gap-2'}`}>
-                        <button
-                          onClick={() => setShowPrecipModal(true)}
-                          className={`flex-1 bg-m3-on-tertiary-container/10 hover:bg-m3-on-tertiary-container/20 active:scale-95 transition-all rounded-lg px-2 flex items-center justify-center gap-1 ${isFoldableInExpandedMode ? 'py-1.5' : 'py-1'}`}
-                        >
-                          <Info size={14} className="text-m3-on-tertiary-container" />
-                          <span className="text-xs font-medium text-m3-on-tertiary-container">Details</span>
-                        </button>
-                        <button
-                          onClick={() => setActiveTab('radar')}
-                          className={`flex-1 bg-m3-on-tertiary-container/10 hover:bg-m3-on-tertiary-container/20 active:scale-95 transition-all rounded-lg px-2 flex items-center justify-center gap-1 ${isFoldableInExpandedMode ? 'py-1.5' : 'py-1'}`}
-                        >
-                          <MapIcon size={14} className="text-m3-on-tertiary-container" />
-                          <span className="text-xs font-medium text-m3-on-tertiary-container">Radar</span>
-                        </button>
-                      </div>
                     </div>
                   ) : (
-                    <div className={`${tileBg} rounded-m3-xl border shadow-m3-1 flex flex-col justify-between items-center text-center ${isFoldableInExpandedMode ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2'}`}>
+                    <div className={`${tileBg} rounded-m3-xl border shadow-m3-1 flex flex-col justify-between items-center text-center cursor-pointer active:scale-95 transition-transform ${isFoldableInExpandedMode ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2'}`} onClick={() => setShowPrecipModal(true)}>
                       <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mb-1 ${isFoldableInExpandedMode ? 'text-[14px] leading-tight' : 'text-m3-label-small'}`}>
                         <CloudRain size={14}/> {t('precip24h')}
                         {renderStationBadge(hasLiveRainFromStation)}
@@ -18461,7 +18424,7 @@ export default function WeatherApp() {
 
           {activeTab === 'precipitation' && (
             <div className="space-y-4">
-              <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} radarNowcast={shortTermData?.radar_nowcast} currentData={shortTermData?.current} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} setActiveTab={setActiveTab} setShowPrecipModal={setShowPrecipModal} isRealNight={isRealNight} />
+              <PrecipitationTile data={processedShort} minutelyData={shortTermData?.minutely_15} radarNowcast={shortTermData?.radar_nowcast} currentData={shortTermData?.current} lang={lang} formatPrecip={formatPrecip} getPrecipUnitLabel={getPrecipUnitLabel} isRealNight={isRealNight} />
             </div>
           )}
 
