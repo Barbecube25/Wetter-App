@@ -16778,8 +16778,8 @@ export default function WeatherApp() {
     ? 'grid grid-cols-2 gap-2 sm:gap-4'
     : 'grid grid-cols-2 gap-2 sm:gap-4 max-w-3xl mx-auto';
   const isFoldableInExpandedMode = isFoldableCompactScreen && isExpandedLayoutActive;
-  // Use broader foldable check so wide-inner-screen foldables (≥768px CSS width) also get wider tiles
-  const isFoldableTileWide = isFoldableScreen && isExpandedLayoutActive;
+  // Keep featured weather tiles large on every expanded layout (tablet + unfolded foldables)
+  const isFoldableTileWide = isExpandedLayoutActive;
   const foldableFeaturedWeatherTileClass = isFoldableTileWide ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2';
   const foldableFeaturedWeatherTileLabelClass = isFoldableTileWide ? 'text-[14px] leading-tight' : 'text-m3-label-small';
   const detailsStackSpacingClass = isSmallScreen ? 'space-y-2' : (isExpandedLayoutActive ? 'space-y-5' : 'space-y-4');
@@ -18122,7 +18122,8 @@ export default function WeatherApp() {
                   }
                 }
               }
-              const isCurrentlyRaining = precipStartMins !== null && precipStartMins <= 0;
+              const precipStartDisplayMins = precipStartMins !== null ? Math.max(0, precipStartMins) : null;
+              const precipEndDisplayMins = precipEndMins !== null ? Math.max(0, precipEndMins) : null;
 
               return (
                 <>
@@ -18145,14 +18146,14 @@ export default function WeatherApp() {
                       )}
                       {isFoldableTileWide && (
                         <>
-                          {isCurrentlyRaining && precipEndMins !== null && precipEndMins > 0 && (
+                          {precipStartDisplayMins !== null && (
                             <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-1 font-medium">
-                              ☀️ {t('endsIn')} {formatMinutesDuration(precipEndMins, lang)}
+                              🌧 {t('startsIn')} {formatMinutesDuration(precipStartDisplayMins, lang)}
                             </div>
                           )}
-                          {!isCurrentlyRaining && precipStartMins !== null && precipStartMins > 0 && (
+                          {precipEndDisplayMins !== null && precipEndDisplayMins > 0 && (
                             <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-1 font-medium">
-                              🌧 {t('startsIn')} {formatMinutesDuration(precipStartMins, lang)}
+                              ☀️ {t('endsIn')} {formatMinutesDuration(precipEndDisplayMins, lang)}
                             </div>
                           )}
                         </>
@@ -18173,9 +18174,14 @@ export default function WeatherApp() {
                         <Sun size={16} className="text-green-500 flex-shrink-0" />
                         <span className={`text-m3-label-medium font-bold text-green-600 leading-tight`}>{t('noPrecipSight')}</span>
                       </div>
-                      {isFoldableTileWide && precipStartMins !== null && precipStartMins > 0 && (
+                      {isFoldableTileWide && precipStartDisplayMins !== null && (
                         <div className={`text-xs mt-1 font-medium ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
-                          🌧 {t('startsIn')} {formatMinutesDuration(precipStartMins, lang)}
+                          🌧 {t('startsIn')} {formatMinutesDuration(precipStartDisplayMins, lang)}
+                        </div>
+                      )}
+                      {isFoldableTileWide && precipEndDisplayMins !== null && precipEndDisplayMins > 0 && (
+                        <div className={`text-xs mt-1 font-medium ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
+                          ☀️ {t('endsIn')} {formatMinutesDuration(precipEndDisplayMins, lang)}
                         </div>
                       )}
                       {hasLiveRainFromStation && (
