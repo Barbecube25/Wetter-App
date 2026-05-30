@@ -286,6 +286,7 @@ const POLLEN_HIGH_THRESHOLD = 20;
 const POLLEN_VERY_HIGH_THRESHOLD = 50;
 // Default pollen filter: all pollen types requested by users (olive_pollen excluded from default as it is not relevant for Central Europe)
 const DEFAULT_POLLEN_FILTER = ['hazel_pollen', 'alder_pollen', 'birch_pollen', 'ash_pollen', 'hornbeam_pollen', 'oak_pollen', 'beech_pollen', 'grass_pollen', 'rye_pollen', 'mugwort_pollen', 'ragweed_pollen', 'plantain_pollen', 'sorrel_pollen'];
+const OPEN_METEO_POLLEN_KEYS = ['alder_pollen', 'birch_pollen', 'grass_pollen', 'mugwort_pollen', 'olive_pollen', 'ragweed_pollen'];
 const EMPTY_STATION_CAPABILITIES = {
   hasTemperature: false,
   hasHumidity: false,
@@ -16861,9 +16862,8 @@ export default function WeatherApp() {
   const pollenSparkBars = [];
 
   if (airQualityHourlyData?.time?.length) {
-    const openMeteoPollenKeys = ['alder_pollen', 'birch_pollen', 'grass_pollen', 'mugwort_pollen', 'olive_pollen', 'ragweed_pollen'];
-    const filteredPollenKeys = (settings.pollenFilter || DEFAULT_POLLEN_FILTER).filter(key => openMeteoPollenKeys.includes(key));
-    const pollenKeysForBars = filteredPollenKeys.length > 0 ? filteredPollenKeys : openMeteoPollenKeys;
+    const filteredPollenKeys = (settings.pollenFilter || DEFAULT_POLLEN_FILTER).filter(key => OPEN_METEO_POLLEN_KEYS.includes(key));
+    const pollenKeysForBars = filteredPollenKeys.length > 0 ? filteredPollenKeys : OPEN_METEO_POLLEN_KEYS;
     const now = new Date();
 
     for (let i = 0; i < airQualityHourlyData.time.length; i += 1) {
@@ -16886,8 +16886,8 @@ export default function WeatherApp() {
   }
 
   const renderSparkBars = (values, getColorClass, options = {}) => {
+    if (values.length === 0) return null;
     const cleanValues = values.map((value) => Number.isFinite(value) ? value : 0);
-    if (cleanValues.length === 0) return null;
 
     const minValue = options.minValue ?? Math.min(...cleanValues, 0);
     const maxValue = options.maxValue ?? Math.max(...cleanValues, 1);
