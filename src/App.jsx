@@ -17974,8 +17974,8 @@ export default function WeatherApp() {
                     else if (foundStart) break;
                   }
                   if (startMs !== null) {
-                    precipStartMins = Math.max(0, Math.round((startMs - Date.now()) / 60000));
-                    if (endMs !== null) precipEndMins = Math.max(0, Math.round((endMs - Date.now()) / 60000));
+                    precipStartMins = Math.max(0, Math.round((startMs - nowMs) / 60000));
+                    if (endMs !== null) precipEndMins = Math.max(0, Math.round((endMs - nowMs) / 60000));
                   }
                 }
               }
