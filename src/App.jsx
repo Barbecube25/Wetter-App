@@ -16780,7 +16780,7 @@ export default function WeatherApp() {
   const isFoldableInExpandedMode = isFoldableCompactScreen && isExpandedLayoutActive;
   // Use broader foldable check so wide-inner-screen foldables (≥768px CSS width) also get wider tiles
   const isFoldableTileWide = isFoldableScreen && isExpandedLayoutActive;
-  const foldableFeaturedWeatherTileClass = isFoldableTileWide ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2';
+  const foldableFeaturedWeatherTileClass = isFoldableTileWide ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2 md:col-span-2 md:min-h-[112px] md:p-3';
   const foldableFeaturedWeatherTileLabelClass = isFoldableTileWide ? 'text-[14px] leading-tight' : 'text-m3-label-small';
   const detailsStackSpacingClass = isSmallScreen ? 'space-y-2' : (isExpandedLayoutActive ? 'space-y-5' : 'space-y-4');
   const contentCardPaddingClass = isSmallScreen ? 'p-4' : (isExpandedLayoutActive ? 'p-8' : 'p-6');
@@ -18143,19 +18143,15 @@ export default function WeatherApp() {
                           Live: {formatPrecip(current.precip)} {getPrecipUnitLabel()}/h
                         </div>
                       )}
-                      {isFoldableTileWide && (
-                        <>
-                          {isCurrentlyRaining && precipEndMins !== null && precipEndMins > 0 && (
-                            <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-1 font-medium">
-                              ☀️ {t('endsIn')} {formatMinutesDuration(precipEndMins, lang)}
-                            </div>
-                          )}
-                          {!isCurrentlyRaining && precipStartMins !== null && precipStartMins > 0 && (
-                            <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-1 font-medium">
-                              🌧 {t('startsIn')} {formatMinutesDuration(precipStartMins, lang)}
-                            </div>
-                          )}
-                        </>
+                      {isFoldableTileWide && precipStartMins !== null && (
+                        <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-1 font-medium">
+                          🌧 {t('startsIn')} {formatMinutesDuration(Math.max(0, precipStartMins), lang)}
+                        </div>
+                      )}
+                      {isFoldableTileWide && precipEndMins !== null && precipEndMins > 0 && (
+                        <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-1 font-medium">
+                          ☀️ {t('endsIn')} {formatMinutesDuration(precipEndMins, lang)}
+                        </div>
                       )}
                       <div className="flex items-end gap-px h-4 px-0.5 mb-2">
                         {precipSparkBars.map((p, i) => (
@@ -18173,9 +18169,14 @@ export default function WeatherApp() {
                         <Sun size={16} className="text-green-500 flex-shrink-0" />
                         <span className={`text-m3-label-medium font-bold text-green-600 leading-tight`}>{t('noPrecipSight')}</span>
                       </div>
-                      {isFoldableTileWide && precipStartMins !== null && precipStartMins > 0 && (
+                      {isFoldableTileWide && precipStartMins !== null && (
                         <div className={`text-xs mt-1 font-medium ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
-                          🌧 {t('startsIn')} {formatMinutesDuration(precipStartMins, lang)}
+                          🌧 {t('startsIn')} {formatMinutesDuration(Math.max(0, precipStartMins), lang)}
+                        </div>
+                      )}
+                      {isFoldableTileWide && precipEndMins !== null && precipEndMins > 0 && (
+                        <div className={`text-xs mt-1 font-medium ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
+                          ☀️ {t('endsIn')} {formatMinutesDuration(precipEndMins, lang)}
                         </div>
                       )}
                       {hasLiveRainFromStation && (
