@@ -16779,9 +16779,9 @@ export default function WeatherApp() {
     : 'grid grid-cols-2 gap-2 sm:gap-4 max-w-3xl mx-auto';
   const isFoldableInExpandedMode = isFoldableCompactScreen && isExpandedLayoutActive;
   // Keep featured weather tiles large on every expanded layout (tablet + unfolded foldables)
-  const isFoldableTileWide = isExpandedLayoutActive;
-  const foldableFeaturedWeatherTileClass = isFoldableTileWide ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2';
-  const foldableFeaturedWeatherTileLabelClass = isFoldableTileWide ? 'text-[14px] leading-tight' : 'text-m3-label-small';
+  const isFeaturedWeatherTileWide = isExpandedLayoutActive;
+  const foldableFeaturedWeatherTileClass = isFeaturedWeatherTileWide ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2';
+  const foldableFeaturedWeatherTileLabelClass = isFeaturedWeatherTileWide ? 'text-[14px] leading-tight' : 'text-m3-label-small';
   const detailsStackSpacingClass = isSmallScreen ? 'space-y-2' : (isExpandedLayoutActive ? 'space-y-5' : 'space-y-4');
   const contentCardPaddingClass = isSmallScreen ? 'p-4' : (isExpandedLayoutActive ? 'p-8' : 'p-6');
 
@@ -18081,7 +18081,7 @@ export default function WeatherApp() {
               // Foldable-only: compute rain timing from nowcast or hourly data
               let precipStartMins = null;
               let precipEndMins = null;
-              if (isFoldableTileWide) {
+              if (isFeaturedWeatherTileWide) {
                 const nowMs = Date.now();
                 const nowcastFold = shortTermData?.radar_nowcast;
                 if (nowcastFold?.time?.length && nowcastFold?.precipitation?.length) {
@@ -18144,7 +18144,7 @@ export default function WeatherApp() {
                           Live: {formatPrecip(current.precip)} {getPrecipUnitLabel()}/h
                         </div>
                       )}
-                      {isFoldableTileWide && (
+                      {isFeaturedWeatherTileWide && (
                         <>
                           {precipStartDisplayMins !== null && (
                             <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-1 font-medium">
@@ -18174,12 +18174,12 @@ export default function WeatherApp() {
                         <Sun size={16} className="text-green-500 flex-shrink-0" />
                         <span className={`text-m3-label-medium font-bold text-green-600 leading-tight`}>{t('noPrecipSight')}</span>
                       </div>
-                      {isFoldableTileWide && precipStartDisplayMins !== null && (
+                      {isFeaturedWeatherTileWide && precipStartDisplayMins !== null && (
                         <div className={`text-xs mt-1 font-medium ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
                           🌧 {t('startsIn')} {formatMinutesDuration(precipStartDisplayMins, lang)}
                         </div>
                       )}
-                      {isFoldableTileWide && precipEndDisplayMins !== null && precipEndDisplayMins > 0 && (
+                      {isFeaturedWeatherTileWide && precipEndDisplayMins !== null && precipEndDisplayMins > 0 && (
                         <div className={`text-xs mt-1 font-medium ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
                           ☀️ {t('endsIn')} {formatMinutesDuration(precipEndDisplayMins, lang)}
                         </div>
