@@ -16780,7 +16780,8 @@ export default function WeatherApp() {
   const isFoldableInExpandedMode = isFoldableCompactScreen && isExpandedLayoutActive;
   // Use broader foldable check so wide-inner-screen foldables (≥768px CSS width) also get wider tiles
   const isFoldableTileWide = isFoldableScreen && isExpandedLayoutActive;
-  const foldableFeaturedWeatherTileClass = isFoldableTileWide ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2';
+  const foldableFeaturedTileSizeClass = isFoldableTileWide ? 'min-h-[112px] p-3' : 'min-h-[90px] p-2';
+  const foldableFeaturedWeatherTileClass = isFoldableTileWide ? `col-span-2 ${foldableFeaturedTileSizeClass}` : foldableFeaturedTileSizeClass;
   const foldableFeaturedWeatherTileLabelClass = isFoldableTileWide ? 'text-[14px] leading-tight' : 'text-m3-label-small';
   const detailsStackSpacingClass = isSmallScreen ? 'space-y-2' : (isExpandedLayoutActive ? 'space-y-5' : 'space-y-4');
   const contentCardPaddingClass = isSmallScreen ? 'p-4' : (isExpandedLayoutActive ? 'p-8' : 'p-6');
@@ -17870,7 +17871,7 @@ export default function WeatherApp() {
                   ? (isRealNight ? 'bg-orange-950/40 border-orange-900/40' : 'bg-orange-50 border-orange-200')
                   : tileBg;
               return (
-                <div className={`${activityTileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setShowActivityModal(true)}>
+                <div className={`${activityTileBg} rounded-m3-xl border shadow-m3-1 flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform ${foldableFeaturedTileSizeClass}`} onClick={() => setShowActivityModal(true)}>
                   <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
                     <Zap size={14} /> {t('activityIndex')}
                   </div>
@@ -17902,7 +17903,7 @@ export default function WeatherApp() {
               const moonR = 16;
               return (
                 <div
-                  className={`${tileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`}
+                  className={`${tileBg} rounded-m3-xl border shadow-m3-1 flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform ${foldableFeaturedTileSizeClass}`}
                   onClick={() => setShowMoonModal(true)}
                 >
                   <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
