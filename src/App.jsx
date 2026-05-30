@@ -128,6 +128,21 @@ const styleNotificationBody = (text, isGerman) => {
   return lines.map((line) => (/^[•*-]\s+/.test(line) ? line : `• ${line}`)).join('\n');
 };
 
+const withExpandedNativeNotificationBody = (notification, isGerman) => {
+  if (!notification || typeof notification !== 'object') return notification;
+  const lines = typeof notification.body === 'string'
+    ? notification.body.split('\n').map((line) => line.trim()).filter(Boolean)
+    : [];
+  if (lines.length === 0) return notification;
+  const fullBody = lines.join('\n');
+  return {
+    ...notification,
+    body: fullBody,
+    largeBody: fullBody,
+    summaryText: notification.summaryText || (isGerman ? 'Vollständiger Wetterbericht' : 'Full weather report'),
+  };
+};
+
 const normalizeNotificationSettings = (value) => {
   const source = value && typeof value === 'object' ? value : {};
   const leads = (() => {
@@ -16171,7 +16186,7 @@ export default function WeatherApp() {
             isGerman,
           }) || (isGerman ? 'Dein Tageswetter ist jetzt verfügbar.' : 'Your daytime forecast is now available.')
         : (isGerman ? 'Dein Tageswetter ist jetzt verfügbar.' : 'Your daytime forecast is now available.');
-      scheduledNotifications.push({
+      scheduledNotifications.push(withExpandedNativeNotificationBody({
         id: WEATHER_BACKGROUND_MORNING_NOTIFICATION_ID,
         title: formatBrandedNotificationTitle('🌤️', isGerman ? 'Morgenbericht' : 'Morning report'),
         body: styleNotificationBody(morningBody, isGerman),
@@ -16180,7 +16195,7 @@ export default function WeatherApp() {
           repeats: true,
           allowWhileIdle: true,
         },
-      });
+      }, isGerman));
     }
     if (notifications.eveningReport) {
       const { hour, minute } = parseNotificationTime(
@@ -16205,7 +16220,7 @@ export default function WeatherApp() {
             isGerman,
           }) || (isGerman ? 'Der Ausblick für Nacht und morgen ist da.' : 'Your night and tomorrow outlook is ready.')
         : (isGerman ? 'Der Ausblick für Nacht und morgen ist da.' : 'Your night and tomorrow outlook is ready.');
-      scheduledNotifications.push({
+      scheduledNotifications.push(withExpandedNativeNotificationBody({
         id: WEATHER_BACKGROUND_EVENING_NOTIFICATION_ID,
         title: formatBrandedNotificationTitle('🌙', isGerman ? 'Abendbericht' : 'Evening report'),
         body: styleNotificationBody(eveningBody, isGerman),
@@ -16214,7 +16229,7 @@ export default function WeatherApp() {
           repeats: true,
           allowWhileIdle: true,
         },
-      });
+      }, isGerman));
     }
 
     const syncBackgroundSchedules = async () => {
@@ -16253,8 +16268,13 @@ export default function WeatherApp() {
 
     const notify = (title, body, tag) => {
       if (isNativeApp()) {
+        const nativeNotification = withExpandedNativeNotificationBody({
+          id: tagToNotificationId(tag),
+          title,
+          body,
+        }, isGerman);
         LocalNotifications.schedule({
-          notifications: [{ id: tagToNotificationId(tag), title, body }],
+          notifications: [nativeNotification],
         }).catch(() => {});
         return true;
       }
