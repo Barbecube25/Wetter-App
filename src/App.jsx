@@ -17859,7 +17859,7 @@ export default function WeatherApp() {
           }`}
         >
           {/* Featured tiles */}
-          <div className={`grid grid-cols-2 ${weatherTileGapClass}`}>
+          <div className={`grid ${weatherTileGridClass} ${weatherTileGapClass}`}>
             {(() => {
               const advice = getActivityAdvice(lang, current.temp, current.wind, next24HoursPrecip.total, current.uvIndex, current.code);
               const isDanger = advice.color === 'text-red-500';
@@ -17870,8 +17870,8 @@ export default function WeatherApp() {
                   ? (isRealNight ? 'bg-orange-950/40 border-orange-900/40' : 'bg-orange-50 border-orange-200')
                   : tileBg;
               return (
-                <div className={`${activityTileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setShowActivityModal(true)}>
-                  <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                <div className={`${activityTileBg} rounded-m3-xl border shadow-m3-1 flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform ${foldableFeaturedWeatherTileClass}`} onClick={() => setShowActivityModal(true)}>
+                  <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} ${foldableFeaturedWeatherTileLabelClass} mb-1`}>
                     <Zap size={14} /> {t('activityIndex')}
                   </div>
                   <div className="flex items-center justify-center gap-1.5 mb-1">
@@ -17902,10 +17902,10 @@ export default function WeatherApp() {
               const moonR = 16;
               return (
                 <div
-                  className={`${tileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`}
+                  className={`${tileBg} rounded-m3-xl border shadow-m3-1 flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform ${foldableFeaturedWeatherTileClass}`}
                   onClick={() => setShowMoonModal(true)}
                 >
-                  <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                  <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} ${foldableFeaturedWeatherTileLabelClass} mb-1`}>
                     <Moon size={14} /> {t('moonPhase')}
                   </div>
                   <div className="flex items-center justify-center gap-2 mb-1">
@@ -17925,6 +17925,188 @@ export default function WeatherApp() {
                         {moonIllum}% {t('moonIllumination')}
                       </div>
                     </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {(() => {
+              const hasLiveRainFromStation = isStationCapabilityActive('hasRain') && hasStationMetricValue(current.precip);
+              const precipSparkBars = sampledForecastHours.map(h => h.precipProb ?? 0);
+              const getPrecipBarColor = (p) => p >= 80 ? 'bg-blue-600' : p >= 60 ? 'bg-blue-500' : p >= 40 ? 'bg-blue-400' : p >= 20 ? 'bg-blue-300' : 'bg-blue-200';
+
+              // Expanded layout (foldable/tablet): compute rain timing from nowcast or hourly data
+              let precipStartMins = null;
+              let precipEndMins = null;
+              if (isExpandedLayoutActive) {
+                const nowMs = Date.now();
+                const nowcastFold = shortTermData?.radar_nowcast;
+                if (nowcastFold?.time?.length && nowcastFold?.precipitation?.length) {
+                  const intervalMs = (nowcastFold.intervalMinutes || MINUTELY_SLOT_DURATION_MINUTES) * 60000;
+                  const slotCount = Math.min(nowcastFold.time.length, nowcastFold.precipitation.length);
+                  let evStart = null;
+                  let evEnd = null;
+                  let evClosed = false;
+                  for (let i = 0; i < slotCount; i++) {
+                    const slotMs = new Date(nowcastFold.time[i]).getTime();
+                    const slotEndMs = slotMs + intervalMs;
+                    if (slotEndMs <= nowMs) continue;
+                    const hasPrecip = (Number(nowcastFold.precipitation[i]) || 0) > LIGHT_PRECIP_THRESHOLD;
+                    if (!evClosed) {
+                      if (!evStart && hasPrecip) evStart = Math.max(slotMs, nowMs);
+                      if (evStart && hasPrecip) evEnd = slotEndMs;
+                      else if (evStart && !hasPrecip) evClosed = true;
+                    }
+                  }
+                  if (evStart !== null) {
+                    precipStartMins = Math.round((evStart - nowMs) / 60000);
+                    if (evEnd !== null) precipEndMins = Math.round((evEnd - nowMs) / 60000);
+                  }
+                } else {
+                  // Fallback: derive timing from hourly forecast
+                  let foundStart = false;
+                  let startMs = null;
+                  let endMs = null;
+                  for (const h of processedShort.slice(0, 24)) {
+                    const hasPrecip = ((h.precip || 0) + (h.snow || 0)) >= LIGHT_PRECIP_THRESHOLD;
+                    if (hasPrecip && !foundStart) { foundStart = true; startMs = h.time.getTime(); }
+                    if (hasPrecip) endMs = h.time.getTime() + 3600000;
+                    else if (foundStart) break;
+                  }
+                  if (startMs !== null) {
+                    precipStartMins = Math.max(0, Math.round((startMs - Date.now()) / 60000));
+                    if (endMs !== null) precipEndMins = Math.max(0, Math.round((endMs - Date.now()) / 60000));
+                  }
+                }
+              }
+              const isCurrentlyRaining = precipStartMins !== null && precipStartMins <= 0;
+
+              return (
+                <>
+                  {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) ? (
+                    <div
+                      className={`bg-m3-tertiary-container rounded-m3-xl border border-m3-tertiary shadow-m3-1 relative overflow-hidden flex flex-col justify-between cursor-pointer active:scale-95 transition-transform ${foldableFeaturedWeatherTileClass}`}
+                      onClick={() => setShowPrecipModal(true)}
+                    >
+                      <div className={`flex items-center justify-center gap-2 text-m3-on-tertiary-container mb-1 ${foldableFeaturedWeatherTileLabelClass}`}>
+                        {next24HoursPrecip.snow > 0.1 ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
+                        {renderStationBadge(hasLiveRainFromStation)}
+                      </div>
+                      <div className="text-m3-title-large font-bold text-m3-on-tertiary-container text-center mb-2">
+                        {formatPrecip(next24HoursPrecip.total)} {getPrecipUnitLabel()}
+                      </div>
+                      {hasLiveRainFromStation && (
+                        <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-2">
+                          Live: {formatPrecip(current.precip)} {getPrecipUnitLabel()}/h
+                        </div>
+                      )}
+                      {isExpandedLayoutActive && (
+                        <>
+                          {isCurrentlyRaining && precipEndMins !== null && precipEndMins > 0 && (
+                            <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-1 font-medium">
+                              ☀️ {t('endsIn')} {formatMinutesDuration(precipEndMins, lang)}
+                            </div>
+                          )}
+                          {!isCurrentlyRaining && precipStartMins !== null && precipStartMins > 0 && (
+                            <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-1 font-medium">
+                              🌧 {t('startsIn')} {formatMinutesDuration(precipStartMins, lang)}
+                            </div>
+                          )}
+                        </>
+                      )}
+                      <div className="flex items-end gap-px h-4 px-0.5 mb-2">
+                        {precipSparkBars.map((p, i) => (
+                          <div key={i} style={{ height: `${Math.max(10, p)}%` }} className={`flex-1 rounded-sm ${getPrecipBarColor(p)} opacity-80`} />
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={`${tileBg} rounded-m3-xl border shadow-m3-1 flex flex-col justify-between items-center text-center cursor-pointer active:scale-95 transition-transform ${foldableFeaturedWeatherTileClass}`} onClick={() => setShowPrecipModal(true)}>
+                      <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mb-1 ${foldableFeaturedWeatherTileLabelClass}`}>
+                        <CloudRain size={14}/> {t('precip24h')}
+                        {renderStationBadge(hasLiveRainFromStation)}
+                      </div>
+                      <div className="flex items-center justify-center gap-1 mt-1">
+                        <Sun size={16} className="text-green-500 flex-shrink-0" />
+                        <span className={`text-m3-label-medium font-bold text-green-600 leading-tight`}>{t('noPrecipSight')}</span>
+                      </div>
+                      {isExpandedLayoutActive && precipStartMins !== null && precipStartMins > 0 && (
+                        <div className={`text-xs mt-1 font-medium ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
+                          🌧 {t('startsIn')} {formatMinutesDuration(precipStartMins, lang)}
+                        </div>
+                      )}
+                      {hasLiveRainFromStation && (
+                        <div className={`text-xs mt-1 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
+                          Live: {formatPrecip(current.precip)} {getPrecipUnitLabel()}/h
+                        </div>
+                      )}
+                      <div className="flex items-end gap-px h-4 px-0.5 w-full mt-1">
+                        {precipSparkBars.map((p, i) => (
+                          <div key={i} style={{ height: `${Math.max(10, p)}%` }} className={`flex-1 rounded-sm ${getPrecipBarColor(p)} opacity-80`} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+
+            {/* Thunderstorm Risk tile */}
+            {(() => {
+              const thunderHours = processedShort.slice(0, THUNDERSTORM_FORECAST_HOURS);
+              const hourRisks = thunderHours.map(h => calcThunderstormRiskLevel(h.cape ?? 0, h.liftedIndex, h.precipProb ?? 0, h.code ?? 0, h.gust ?? 0));
+              const peakRisk = hourRisks.reduce((max, r) => r > max ? r : max, 0);
+              const riskLabelKey = THUNDERSTORM_RISK_LEVEL_KEYS[peakRisk];
+              const riskEmoji = ['✅', '🟡', '🟠', '🔴', '🟣'][peakRisk];
+              const riskTextColor = [
+                (isRealNight ? 'text-green-400' : 'text-green-700'),
+                (isRealNight ? 'text-yellow-400' : 'text-yellow-700'),
+                (isRealNight ? 'text-orange-400' : 'text-orange-700'),
+                (isRealNight ? 'text-red-400' : 'text-red-600'),
+                (isRealNight ? 'text-purple-400' : 'text-purple-800'),
+              ][peakRisk];
+              const tileBgThunder = peakRisk >= 3
+                ? (isRealNight ? 'bg-red-950/40 border-red-900/40' : 'bg-red-50 border-red-200')
+                : peakRisk === 2
+                  ? (isRealNight ? 'bg-orange-950/40 border-orange-900/40' : 'bg-orange-50 border-orange-200')
+                  : tileBg;
+              const peakEntry = thunderHours.reduce((best, h) => {
+                const r = calcThunderstormRiskLevel(h.cape ?? 0, h.liftedIndex, h.precipProb ?? 0, h.code ?? 0, h.gust ?? 0);
+                return r > calcThunderstormRiskLevel(best.cape ?? 0, best.liftedIndex, best.precipProb ?? 0, best.code ?? 0, best.gust ?? 0) ? h : best;
+              }, thunderHours[0] || {});
+              /* Compact 12-bar mini sparkline (every 2nd hour) */
+              const sparkBars = hourRisks.filter((_, i) => i % 2 === 0).slice(0, 12);
+              const sparkColors = ['bg-green-400', 'bg-yellow-400', 'bg-orange-400', 'bg-red-500', 'bg-purple-500'];
+              return (
+                <div
+                  className={`${tileBgThunder} rounded-m3-xl border shadow-m3-1 flex flex-col justify-between cursor-pointer active:scale-95 transition-transform ${foldableFeaturedWeatherTileClass}`}
+                  onClick={() => setShowThunderstormModal(true)}
+                >
+                  {/* Title */}
+                  <div className={`flex items-center gap-1.5 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} ${foldableFeaturedWeatherTileLabelClass}`}>
+                    <CloudLightning size={13} /> {t('thunderstormRisk')}
+                  </div>
+                  {/* Main label */}
+                  <div className="flex items-center gap-1.5 px-0.5">
+                    <span className="text-xl leading-none">{riskEmoji}</span>
+                    <div>
+                      <div className={`text-m3-label-large font-bold ${riskTextColor} leading-tight`}>{t(riskLabelKey)}</div>
+                      {peakRisk > 0 && peakEntry?.time && (
+                        <div className={`text-[11px] ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} leading-tight`}>
+                          ⚡ {peakEntry.time.toLocaleTimeString(lang === 'de' ? 'de-DE' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {/* 24h sparkline */}
+                  <div className="flex items-end gap-px h-4 px-0.5">
+                    {sparkBars.map((r, i) => (
+                      <div
+                        key={i}
+                        style={{ height: `${[20, 40, 60, 80, 100][r]}%` }}
+                        className={`flex-1 rounded-sm ${sparkColors[r]} opacity-80`}
+                      />
+                    ))}
                   </div>
                 </div>
               );
@@ -18072,188 +18254,6 @@ export default function WeatherApp() {
                 {renderSparkBars(pollenSparkBars, getPollenBarColor, { minValue: 0, maxValue: Math.max(...pollenSparkBars, POLLEN_HIGH_THRESHOLD, 1) })}
               </div>
             )}
-
-            {(() => {
-              const hasLiveRainFromStation = isStationCapabilityActive('hasRain') && hasStationMetricValue(current.precip);
-              const precipSparkBars = sampledForecastHours.map(h => h.precipProb ?? 0);
-              const getPrecipBarColor = (p) => p >= 80 ? 'bg-blue-600' : p >= 60 ? 'bg-blue-500' : p >= 40 ? 'bg-blue-400' : p >= 20 ? 'bg-blue-300' : 'bg-blue-200';
-
-              // Foldable-only: compute rain timing from nowcast or hourly data
-              let precipStartMins = null;
-              let precipEndMins = null;
-              if (isFoldableTileWide) {
-                const nowMs = Date.now();
-                const nowcastFold = shortTermData?.radar_nowcast;
-                if (nowcastFold?.time?.length && nowcastFold?.precipitation?.length) {
-                  const intervalMs = (nowcastFold.intervalMinutes || MINUTELY_SLOT_DURATION_MINUTES) * 60000;
-                  const slotCount = Math.min(nowcastFold.time.length, nowcastFold.precipitation.length);
-                  let evStart = null;
-                  let evEnd = null;
-                  let evClosed = false;
-                  for (let i = 0; i < slotCount; i++) {
-                    const slotMs = new Date(nowcastFold.time[i]).getTime();
-                    const slotEndMs = slotMs + intervalMs;
-                    if (slotEndMs <= nowMs) continue;
-                    const hasPrecip = (Number(nowcastFold.precipitation[i]) || 0) > LIGHT_PRECIP_THRESHOLD;
-                    if (!evClosed) {
-                      if (!evStart && hasPrecip) evStart = Math.max(slotMs, nowMs);
-                      if (evStart && hasPrecip) evEnd = slotEndMs;
-                      else if (evStart && !hasPrecip) evClosed = true;
-                    }
-                  }
-                  if (evStart !== null) {
-                    precipStartMins = Math.round((evStart - nowMs) / 60000);
-                    if (evEnd !== null) precipEndMins = Math.round((evEnd - nowMs) / 60000);
-                  }
-                } else {
-                  // Fallback: derive timing from hourly forecast
-                  let foundStart = false;
-                  let startMs = null;
-                  let endMs = null;
-                  for (const h of processedShort.slice(0, 24)) {
-                    const hasPrecip = ((h.precip || 0) + (h.snow || 0)) >= LIGHT_PRECIP_THRESHOLD;
-                    if (hasPrecip && !foundStart) { foundStart = true; startMs = h.time.getTime(); }
-                    if (hasPrecip) endMs = h.time.getTime() + 3600000;
-                    else if (foundStart) break;
-                  }
-                  if (startMs !== null) {
-                    precipStartMins = Math.max(0, Math.round((startMs - nowMs) / 60000));
-                    if (endMs !== null) precipEndMins = Math.max(0, Math.round((endMs - nowMs) / 60000));
-                  }
-                }
-              }
-              const isCurrentlyRaining = precipStartMins !== null && precipStartMins <= 0;
-
-              return (
-                <>
-                  {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) ? (
-                    <div
-                      className={`bg-m3-tertiary-container rounded-m3-xl border border-m3-tertiary shadow-m3-1 relative overflow-hidden flex flex-col justify-between cursor-pointer active:scale-95 transition-transform ${foldableFeaturedWeatherTileClass}`}
-                      onClick={() => setShowPrecipModal(true)}
-                    >
-                      <div className={`flex items-center justify-center gap-2 text-m3-on-tertiary-container mb-1 ${foldableFeaturedWeatherTileLabelClass}`}>
-                        {next24HoursPrecip.snow > 0.1 ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
-                        {renderStationBadge(hasLiveRainFromStation)}
-                      </div>
-                      <div className="text-m3-title-large font-bold text-m3-on-tertiary-container text-center mb-2">
-                        {formatPrecip(next24HoursPrecip.total)} {getPrecipUnitLabel()}
-                      </div>
-                      {hasLiveRainFromStation && (
-                        <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-2">
-                          Live: {formatPrecip(current.precip)} {getPrecipUnitLabel()}/h
-                        </div>
-                      )}
-                      {isFoldableTileWide && (
-                        <>
-                          {isCurrentlyRaining && precipEndMins !== null && precipEndMins > 0 && (
-                            <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-1 font-medium">
-                              ☀️ {t('endsIn')} {formatMinutesDuration(precipEndMins, lang)}
-                            </div>
-                          )}
-                          {!isCurrentlyRaining && precipStartMins !== null && precipStartMins > 0 && (
-                            <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-1 font-medium">
-                              🌧 {t('startsIn')} {formatMinutesDuration(precipStartMins, lang)}
-                            </div>
-                          )}
-                        </>
-                      )}
-                      <div className="flex items-end gap-px h-4 px-0.5 mb-2">
-                        {precipSparkBars.map((p, i) => (
-                          <div key={i} style={{ height: `${Math.max(10, p)}%` }} className={`flex-1 rounded-sm ${getPrecipBarColor(p)} opacity-80`} />
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className={`${tileBg} rounded-m3-xl border shadow-m3-1 flex flex-col justify-between items-center text-center cursor-pointer active:scale-95 transition-transform ${foldableFeaturedWeatherTileClass}`} onClick={() => setShowPrecipModal(true)}>
-                      <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mb-1 ${foldableFeaturedWeatherTileLabelClass}`}>
-                        <CloudRain size={14}/> {t('precip24h')}
-                        {renderStationBadge(hasLiveRainFromStation)}
-                      </div>
-                      <div className="flex items-center justify-center gap-1 mt-1">
-                        <Sun size={16} className="text-green-500 flex-shrink-0" />
-                        <span className={`text-m3-label-medium font-bold text-green-600 leading-tight`}>{t('noPrecipSight')}</span>
-                      </div>
-                      {isFoldableTileWide && precipStartMins !== null && precipStartMins > 0 && (
-                        <div className={`text-xs mt-1 font-medium ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
-                          🌧 {t('startsIn')} {formatMinutesDuration(precipStartMins, lang)}
-                        </div>
-                      )}
-                      {hasLiveRainFromStation && (
-                        <div className={`text-xs mt-1 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
-                          Live: {formatPrecip(current.precip)} {getPrecipUnitLabel()}/h
-                        </div>
-                      )}
-                      <div className="flex items-end gap-px h-4 px-0.5 w-full mt-1">
-                        {precipSparkBars.map((p, i) => (
-                          <div key={i} style={{ height: `${Math.max(10, p)}%` }} className={`flex-1 rounded-sm ${getPrecipBarColor(p)} opacity-80`} />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              );
-            })()}
-
-            {/* Thunderstorm Risk tile */}
-          {(() => {
-            const thunderHours = processedShort.slice(0, THUNDERSTORM_FORECAST_HOURS);
-            const hourRisks = thunderHours.map(h => calcThunderstormRiskLevel(h.cape ?? 0, h.liftedIndex, h.precipProb ?? 0, h.code ?? 0, h.gust ?? 0));
-            const peakRisk = hourRisks.reduce((max, r) => r > max ? r : max, 0);
-            const riskLabelKey = THUNDERSTORM_RISK_LEVEL_KEYS[peakRisk];
-            const riskEmoji = ['✅', '🟡', '🟠', '🔴', '🟣'][peakRisk];
-            const riskTextColor = [
-              (isRealNight ? 'text-green-400' : 'text-green-700'),
-              (isRealNight ? 'text-yellow-400' : 'text-yellow-700'),
-              (isRealNight ? 'text-orange-400' : 'text-orange-700'),
-              (isRealNight ? 'text-red-400' : 'text-red-600'),
-              (isRealNight ? 'text-purple-400' : 'text-purple-800'),
-            ][peakRisk];
-            const tileBgThunder = peakRisk >= 3
-              ? (isRealNight ? 'bg-red-950/40 border-red-900/40' : 'bg-red-50 border-red-200')
-              : peakRisk === 2
-                ? (isRealNight ? 'bg-orange-950/40 border-orange-900/40' : 'bg-orange-50 border-orange-200')
-                : tileBg;
-            const peakEntry = thunderHours.reduce((best, h) => {
-              const r = calcThunderstormRiskLevel(h.cape ?? 0, h.liftedIndex, h.precipProb ?? 0, h.code ?? 0, h.gust ?? 0);
-              return r > calcThunderstormRiskLevel(best.cape ?? 0, best.liftedIndex, best.precipProb ?? 0, best.code ?? 0, best.gust ?? 0) ? h : best;
-            }, thunderHours[0] || {});
-            /* Compact 12-bar mini sparkline (every 2nd hour) */
-            const sparkBars = hourRisks.filter((_, i) => i % 2 === 0).slice(0, 12);
-            const sparkColors = ['bg-green-400', 'bg-yellow-400', 'bg-orange-400', 'bg-red-500', 'bg-purple-500'];
-            return (
-              <div
-                className={`${tileBgThunder} rounded-m3-xl border shadow-m3-1 flex flex-col justify-between cursor-pointer active:scale-95 transition-transform ${foldableFeaturedWeatherTileClass}`}
-                onClick={() => setShowThunderstormModal(true)}
-              >
-                {/* Title */}
-                <div className={`flex items-center gap-1.5 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} ${foldableFeaturedWeatherTileLabelClass}`}>
-                  <CloudLightning size={13} /> {t('thunderstormRisk')}
-                </div>
-                {/* Main label */}
-                <div className="flex items-center gap-1.5 px-0.5">
-                  <span className="text-xl leading-none">{riskEmoji}</span>
-                  <div>
-                    <div className={`text-m3-label-large font-bold ${riskTextColor} leading-tight`}>{t(riskLabelKey)}</div>
-                    {peakRisk > 0 && peakEntry?.time && (
-                      <div className={`text-[11px] ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} leading-tight`}>
-                        ⚡ {peakEntry.time.toLocaleTimeString(lang === 'de' ? 'de-DE' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {/* 24h sparkline */}
-                <div className="flex items-end gap-px h-4 px-0.5">
-                  {sparkBars.map((r, i) => (
-                    <div
-                      key={i}
-                      style={{ height: `${[20, 40, 60, 80, 100][r]}%` }}
-                      className={`flex-1 rounded-sm ${sparkColors[r]} opacity-80`}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })()}
           </div>
         {/* End of collapsible tiles */}
         </div>
