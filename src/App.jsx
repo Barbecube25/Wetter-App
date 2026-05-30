@@ -16778,6 +16778,8 @@ export default function WeatherApp() {
     ? 'grid grid-cols-2 gap-2 sm:gap-4'
     : 'grid grid-cols-2 gap-2 sm:gap-4 max-w-3xl mx-auto';
   const isFoldableInExpandedMode = isFoldableCompactScreen && isExpandedLayoutActive;
+  const foldableFeaturedWeatherTileClass = isFoldableInExpandedMode ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2';
+  const foldableFeaturedWeatherTileLabelClass = isFoldableInExpandedMode ? 'text-[14px] leading-tight' : 'text-m3-label-small';
   const detailsStackSpacingClass = isSmallScreen ? 'space-y-2' : (isExpandedLayoutActive ? 'space-y-5' : 'space-y-4');
   const contentCardPaddingClass = isSmallScreen ? 'p-4' : (isExpandedLayoutActive ? 'p-8' : 'p-6');
 
@@ -18077,10 +18079,10 @@ export default function WeatherApp() {
                 <>
                   {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) ? (
                     <div
-                      className={`bg-m3-tertiary-container rounded-m3-xl border border-m3-tertiary shadow-m3-1 relative overflow-hidden flex flex-col justify-between cursor-pointer active:scale-95 transition-transform ${isFoldableInExpandedMode ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2'}`}
+                      className={`bg-m3-tertiary-container rounded-m3-xl border border-m3-tertiary shadow-m3-1 relative overflow-hidden flex flex-col justify-between cursor-pointer active:scale-95 transition-transform ${foldableFeaturedWeatherTileClass}`}
                       onClick={() => setShowPrecipModal(true)}
                     >
-                      <div className={`flex items-center justify-center gap-2 text-m3-on-tertiary-container mb-1 ${isFoldableInExpandedMode ? 'text-[14px] leading-tight' : 'text-m3-label-small'}`}>
+                      <div className={`flex items-center justify-center gap-2 text-m3-on-tertiary-container mb-1 ${foldableFeaturedWeatherTileLabelClass}`}>
                         {next24HoursPrecip.snow > 0.1 ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
                         {renderStationBadge(hasLiveRainFromStation)}
                       </div>
@@ -18099,8 +18101,8 @@ export default function WeatherApp() {
                       </div>
                     </div>
                   ) : (
-                    <div className={`${tileBg} rounded-m3-xl border shadow-m3-1 flex flex-col justify-between items-center text-center cursor-pointer active:scale-95 transition-transform ${isFoldableInExpandedMode ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2'}`} onClick={() => setShowPrecipModal(true)}>
-                      <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mb-1 ${isFoldableInExpandedMode ? 'text-[14px] leading-tight' : 'text-m3-label-small'}`}>
+                    <div className={`${tileBg} rounded-m3-xl border shadow-m3-1 flex flex-col justify-between items-center text-center cursor-pointer active:scale-95 transition-transform ${foldableFeaturedWeatherTileClass}`} onClick={() => setShowPrecipModal(true)}>
+                      <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mb-1 ${foldableFeaturedWeatherTileLabelClass}`}>
                         <CloudRain size={14}/> {t('precip24h')}
                         {renderStationBadge(hasLiveRainFromStation)}
                       </div>
@@ -18152,11 +18154,11 @@ export default function WeatherApp() {
             const sparkColors = ['bg-green-400', 'bg-yellow-400', 'bg-orange-400', 'bg-red-500', 'bg-purple-500'];
             return (
               <div
-                className={`${tileBgThunder} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col justify-between cursor-pointer active:scale-95 transition-transform`}
+                className={`${tileBgThunder} rounded-m3-xl border shadow-m3-1 flex flex-col justify-between cursor-pointer active:scale-95 transition-transform ${foldableFeaturedWeatherTileClass}`}
                 onClick={() => setShowThunderstormModal(true)}
               >
                 {/* Title */}
-                <div className={`flex items-center gap-1.5 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small`}>
+                <div className={`flex items-center gap-1.5 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} ${foldableFeaturedWeatherTileLabelClass}`}>
                   <CloudLightning size={13} /> {t('thunderstormRisk')}
                 </div>
                 {/* Main label */}
