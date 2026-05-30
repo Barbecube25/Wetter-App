@@ -16778,8 +16778,10 @@ export default function WeatherApp() {
     ? 'grid grid-cols-2 gap-2 sm:gap-4'
     : 'grid grid-cols-2 gap-2 sm:gap-4 max-w-3xl mx-auto';
   const isFoldableInExpandedMode = isFoldableCompactScreen && isExpandedLayoutActive;
-  const foldableFeaturedWeatherTileClass = isFoldableInExpandedMode ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2';
-  const foldableFeaturedWeatherTileLabelClass = isFoldableInExpandedMode ? 'text-[14px] leading-tight' : 'text-m3-label-small';
+  // Use broader foldable check so wide-inner-screen foldables (≥768px CSS width) also get wider tiles
+  const isFoldableTileWide = isFoldableScreen && isExpandedLayoutActive;
+  const foldableFeaturedWeatherTileClass = isFoldableTileWide ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2';
+  const foldableFeaturedWeatherTileLabelClass = isFoldableTileWide ? 'text-[14px] leading-tight' : 'text-m3-label-small';
   const detailsStackSpacingClass = isSmallScreen ? 'space-y-2' : (isExpandedLayoutActive ? 'space-y-5' : 'space-y-4');
   const contentCardPaddingClass = isSmallScreen ? 'p-4' : (isExpandedLayoutActive ? 'p-8' : 'p-6');
 
@@ -18075,6 +18077,52 @@ export default function WeatherApp() {
               const hasLiveRainFromStation = isStationCapabilityActive('hasRain') && hasStationMetricValue(current.precip);
               const precipSparkBars = sampledForecastHours.map(h => h.precipProb ?? 0);
               const getPrecipBarColor = (p) => p >= 80 ? 'bg-blue-600' : p >= 60 ? 'bg-blue-500' : p >= 40 ? 'bg-blue-400' : p >= 20 ? 'bg-blue-300' : 'bg-blue-200';
+
+              // Foldable-only: compute rain timing from nowcast or hourly data
+              let foldablePrecipMinsStart = null;
+              let foldablePrecipMinsEnd = null;
+              if (isFoldableTileWide) {
+                const nowMs = Date.now();
+                const nowcastFold = shortTermData?.radar_nowcast;
+                if (nowcastFold?.time?.length && nowcastFold?.precipitation?.length) {
+                  const intervalMs = (nowcastFold.intervalMinutes || MINUTELY_SLOT_DURATION_MINUTES) * 60000;
+                  let evStart = null;
+                  let evEnd = null;
+                  let evClosed = false;
+                  for (let i = 0; i < nowcastFold.time.length; i++) {
+                    const slotMs = new Date(nowcastFold.time[i]).getTime();
+                    const slotEndMs = slotMs + intervalMs;
+                    if (slotEndMs <= nowMs) continue;
+                    const hasPrecip = (Number(nowcastFold.precipitation[i]) || 0) > LIGHT_PRECIP_THRESHOLD;
+                    if (!evClosed) {
+                      if (!evStart && hasPrecip) evStart = Math.max(slotMs, nowMs);
+                      if (evStart && hasPrecip) evEnd = slotEndMs;
+                      else if (evStart && !hasPrecip) evClosed = true;
+                    }
+                  }
+                  if (evStart !== null) {
+                    foldablePrecipMinsStart = Math.round((evStart - nowMs) / 60000);
+                    if (evEnd !== null) foldablePrecipMinsEnd = Math.round((evEnd - nowMs) / 60000);
+                  }
+                } else {
+                  // Fallback: derive timing from hourly forecast
+                  let foundStart = false;
+                  let startMs = null;
+                  let endMs = null;
+                  for (const h of processedShort.slice(0, 24)) {
+                    const hasPrecip = ((h.precip || 0) + (h.snow || 0)) >= LIGHT_PRECIP_THRESHOLD;
+                    if (hasPrecip && !foundStart) { foundStart = true; startMs = h.time.getTime(); }
+                    if (hasPrecip) endMs = h.time.getTime() + 3600000;
+                    else if (foundStart) break;
+                  }
+                  if (startMs !== null) {
+                    foldablePrecipMinsStart = Math.max(0, Math.round((startMs - nowMs) / 60000));
+                    if (endMs !== null) foldablePrecipMinsEnd = Math.max(0, Math.round((endMs - nowMs) / 60000));
+                  }
+                }
+              }
+              const isRainingNowTile = foldablePrecipMinsStart !== null && foldablePrecipMinsStart <= 0;
+
               return (
                 <>
                   {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) ? (
@@ -18094,6 +18142,20 @@ export default function WeatherApp() {
                           Live: {formatPrecip(current.precip)} {getPrecipUnitLabel()}/h
                         </div>
                       )}
+                      {isFoldableTileWide && (
+                        <>
+                          {isRainingNowTile && foldablePrecipMinsEnd !== null && foldablePrecipMinsEnd > 0 && (
+                            <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-1 font-medium">
+                              ☀️ {t('endsIn')} {formatMinutesDuration(foldablePrecipMinsEnd, lang)}
+                            </div>
+                          )}
+                          {!isRainingNowTile && foldablePrecipMinsStart !== null && foldablePrecipMinsStart > 0 && (
+                            <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-1 font-medium">
+                              🌧 {t('startsIn')} {formatMinutesDuration(foldablePrecipMinsStart, lang)}
+                            </div>
+                          )}
+                        </>
+                      )}
                       <div className="flex items-end gap-px h-4 px-0.5 mb-2">
                         {precipSparkBars.map((p, i) => (
                           <div key={i} style={{ height: `${Math.max(10, p)}%` }} className={`flex-1 rounded-sm ${getPrecipBarColor(p)} opacity-80`} />
@@ -18110,6 +18172,11 @@ export default function WeatherApp() {
                         <Sun size={16} className="text-green-500 flex-shrink-0" />
                         <span className={`text-m3-label-medium font-bold text-green-600 leading-tight`}>{t('noPrecipSight')}</span>
                       </div>
+                      {isFoldableTileWide && foldablePrecipMinsStart !== null && foldablePrecipMinsStart > 0 && (
+                        <div className={`text-xs mt-1 font-medium ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
+                          🌧 {t('startsIn')} {formatMinutesDuration(foldablePrecipMinsStart, lang)}
+                        </div>
+                      )}
                       {hasLiveRainFromStation && (
                         <div className={`text-xs mt-1 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
                           Live: {formatPrecip(current.precip)} {getPrecipUnitLabel()}/h
