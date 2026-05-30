@@ -16852,6 +16852,73 @@ export default function WeatherApp() {
   const modelDetailsVisible = isExpertMode && showModelDetails;
   const modelConfidenceBadgeClass = getModelConfidenceBadgeClass(modelReport?.confidenceCategory);
   const modelConfidenceLabel = getModelConfidenceLabel(modelReport?.confidenceCategory, lang);
+  const sampledForecastHours = processedShort.filter((_, i) => i % 2 === 0).slice(0, 12);
+  const humiditySparkBars = sampledForecastHours.map(h => h.humidity ?? 0);
+  const dewPointSparkBars = sampledForecastHours.map(h => h.dewPoint ?? 0);
+  const pressureSparkBars = sampledForecastHours.map(h => h.pressure ?? 0);
+  const visibilitySparkBars = sampledForecastHours.map(h => h.visibility ?? 0);
+  const airQualitySparkBars = [];
+  const pollenSparkBars = [];
+
+  if (airQualityHourlyData?.time?.length) {
+    const openMeteoPollenKeys = ['alder_pollen', 'birch_pollen', 'grass_pollen', 'mugwort_pollen', 'olive_pollen', 'ragweed_pollen'];
+    const filteredPollenKeys = (settings.pollenFilter || DEFAULT_POLLEN_FILTER).filter(key => openMeteoPollenKeys.includes(key));
+    const pollenKeysForBars = filteredPollenKeys.length > 0 ? filteredPollenKeys : openMeteoPollenKeys;
+    const now = new Date();
+
+    for (let i = 0; i < airQualityHourlyData.time.length; i += 1) {
+      const ts = parseLocalTime(airQualityHourlyData.time[i]);
+      if (ts < now) continue;
+
+      const aqi = airQualityHourlyData.european_aqi?.[i];
+      if (aqi != null && airQualitySparkBars.length < 12) {
+        airQualitySparkBars.push(Math.round(aqi));
+      }
+
+      if (pollenSparkBars.length < 12) {
+        pollenSparkBars.push(
+          pollenKeysForBars.reduce((max, key) => Math.max(max, airQualityHourlyData[key]?.[i] ?? 0), 0)
+        );
+      }
+
+      if (airQualitySparkBars.length >= 12 && pollenSparkBars.length >= 12) break;
+    }
+  }
+
+  const renderSparkBars = (values, getColorClass, options = {}) => {
+    const cleanValues = values.map((value) => Number.isFinite(value) ? value : 0);
+    if (cleanValues.length === 0) return null;
+
+    const minValue = options.minValue ?? Math.min(...cleanValues, 0);
+    const maxValue = options.maxValue ?? Math.max(...cleanValues, 1);
+    const range = Math.max(maxValue - minValue, 1);
+
+    return (
+      <div className={`flex items-end gap-px h-4 px-0.5 w-full ${options.className ?? 'mt-1'}`}>
+        {cleanValues.map((value, index) => {
+          const normalized = options.normalize
+            ? options.normalize(value, { minValue, maxValue, range })
+            : ((value - minValue) / range) * 100;
+          const height = Math.max(10, Math.min(100, normalized));
+
+          return (
+            <div
+              key={index}
+              style={{ height: `${height}%` }}
+              className={`flex-1 rounded-sm ${getColorClass(value)} opacity-80`}
+            />
+          );
+        })}
+      </div>
+    );
+  };
+
+  const getHumidityBarColor = (value) => value < 30 ? 'bg-amber-400' : value < 60 ? 'bg-sky-400' : value < 80 ? 'bg-blue-500' : 'bg-indigo-500';
+  const getDewPointBarColor = (value) => value < 0 ? 'bg-sky-300' : value < 10 ? 'bg-cyan-400' : value < 18 ? 'bg-emerald-400' : 'bg-orange-400';
+  const getPressureBarColor = (value) => value < 1000 ? 'bg-orange-400' : value < 1015 ? 'bg-emerald-400' : value < 1025 ? 'bg-sky-400' : 'bg-blue-500';
+  const getVisibilityBarColor = (value) => value < 1000 ? 'bg-orange-500' : value < 5000 ? 'bg-yellow-400' : value < 10000 ? 'bg-sky-400' : 'bg-emerald-400';
+  const getAQIBarColor = (value) => value <= 20 ? 'bg-green-400' : value <= 40 ? 'bg-yellow-400' : value <= 60 ? 'bg-orange-400' : value <= 80 ? 'bg-red-500' : 'bg-purple-500';
+  const getPollenBarColor = (value) => value >= POLLEN_VERY_HIGH_THRESHOLD ? 'bg-red-500' : value >= POLLEN_HIGH_THRESHOLD ? 'bg-orange-400' : value >= POLLEN_MODERATE_THRESHOLD ? 'bg-yellow-400' : 'bg-green-400';
 
   useEffect(() => {
     if (!isExpertMode) setShowModelDetails(false);
@@ -17809,251 +17876,292 @@ export default function WeatherApp() {
             tilesExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
-          {/* Weather Details Grid - First row (4 tiles) */}
-          <div className={`grid ${weatherTileGridClass} ${weatherTileGapClass}`}>
-          {(() => {
-            const uvSparkBars = processedShort.filter((_, i) => i % 2 === 0).slice(0, 12).map(h => h.uvIndex ?? 0);
-            const uvSparkMax = Math.max(...uvSparkBars, 1);
-            const getUvBarColor = (uv) => uv >= 11 ? 'bg-purple-500' : uv >= 8 ? 'bg-red-500' : uv >= 6 ? 'bg-orange-400' : uv >= 3 ? 'bg-yellow-400' : 'bg-green-400';
-            return (
-              <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-between items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('uv')}>
-                <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
-                  <Sun size={14} /> {t('uv')}
-                </div>
-                <div className={`text-m3-title-large font-bold ${getUvColorClass(current.uvIndex, isRealNight)}`}>{current.uvIndex}</div>
-                <div className="flex items-end gap-px h-4 px-0.5 w-full mt-1">
-                  {uvSparkBars.map((uv, i) => (
-                    <div key={i} style={{ height: `${Math.max(10, (uv / uvSparkMax) * 100)}%` }} className={`flex-1 rounded-sm ${getUvBarColor(uv)} opacity-80`} />
-                  ))}
-                </div>
-              </div>
-            );
-          })()}
-          
-          <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('humidity')}>
-            <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
-              <Waves size={14} /> {t('humidity')}
-            </div>
-            <div className="flex items-center justify-center gap-1.5">
-              <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{current.humidity}%</div>
-              {renderStationBadge(isStationCapabilityActive('hasHumidity'))}
-            </div>
-          </div>
-          
-          {(() => {
-            const windSparkBars = processedShort.filter((_, i) => i % 2 === 0).slice(0, 12).map(h => h.wind ?? 0);
-            const windSparkMax = Math.max(...windSparkBars, 1);
-            const getWindBarColor = (spd) => spd >= 60 ? 'bg-red-500' : spd >= 40 ? 'bg-orange-400' : spd >= 20 ? 'bg-blue-400' : 'bg-green-400';
-            return (
-              <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-between items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('wind')}>
-                <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
-                  <Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }} /> {t('wind')}
-                </div>
-                <div className="flex items-center justify-center gap-1.5">
-                  <div className={`text-m3-title-large font-bold ${windColorClass}`}>
-                    {formatWind(current.wind)} <span className="text-m3-body-small">{getWindUnitLabel()}</span>
+          {/* Featured tiles */}
+          <div className={`grid grid-cols-2 ${weatherTileGapClass}`}>
+            {(() => {
+              const advice = getActivityAdvice(lang, current.temp, current.wind, next24HoursPrecip.total, current.uvIndex, current.code);
+              const isDanger = advice.color === 'text-red-500';
+              const isWarning = advice.color === 'text-orange-500';
+              const activityTileBg = isDanger
+                ? (isRealNight ? 'bg-red-950/40 border-red-900/40' : 'bg-red-50 border-red-200')
+                : isWarning
+                  ? (isRealNight ? 'bg-orange-950/40 border-orange-900/40' : 'bg-orange-50 border-orange-200')
+                  : tileBg;
+              return (
+                <div className={`${activityTileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setShowActivityModal(true)}>
+                  <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                    <Zap size={14} /> {t('activityIndex')}
                   </div>
-                  {renderStationBadge(isStationCapabilityActive('hasWind'))}
-                </div>
-                {current.gust > current.wind && (
-                  <div className={`text-xs font-medium ${getWindColorClass(current.gust, isRealNight)}`}>
-                    {t('gusts')} {formatWind(current.gust)} {getWindUnitLabel()}
+                  <div className="flex items-center justify-center gap-1.5 mb-1">
+                    <span className="text-lg leading-none">{advice.emoji}</span>
+                    {advice.score != null && (
+                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full leading-none ${getScoreBadgeClass(advice.score, isRealNight)}`}>
+                        {advice.score}/10
+                      </span>
+                    )}
                   </div>
-                )}
-                <div className="flex items-end gap-px h-4 px-0.5 w-full mt-1">
-                  {windSparkBars.map((spd, i) => (
-                    <div key={i} style={{ height: `${Math.max(10, (spd / windSparkMax) * 100)}%` }} className={`flex-1 rounded-sm ${getWindBarColor(spd)} opacity-80`} />
-                  ))}
-                </div>
-              </div>
-            );
-          })()}
-          
-          <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('dewPoint')}>
-            <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
-              <Thermometer size={14} /> {t('dewPoint')}
-            </div>
-            <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{formatTemp(current.dewPoint)}{getTempUnitSymbol()}</div>
-          </div>
-        </div>
-        
-        {/* Additional Weather Details Grid - Second row (4 tiles) */}
-        <div className={`grid ${weatherTileGridClass} ${weatherTileGapClass}`}>
-          {current.pressure !== null && current.pressure !== undefined && (
-            <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('pressure')}>
-              <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
-                <Gauge size={14} /> {t('pressure')}
-              </div>
-              <div className="flex items-center justify-center gap-1.5">
-                <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
-                  {Math.round(current.pressure)} <span className="text-m3-body-small">hPa</span>
-                </div>
-                {renderStationBadge(isStationCapabilityActive('hasPressure'))}
-              </div>
-            </div>
-          )}
-          
-          {current.visibility !== null && current.visibility !== undefined && current.visibility > 0 && (
-            <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('visibility')}>
-              <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
-                <Eye size={14} /> {t('visibility')}
-              </div>
-              <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
-                {settings.windUnit === 'mph'
-                  ? `${(current.visibility / 1609.34).toFixed(1)} mi`
-                  : `${(current.visibility / 1000).toFixed(1)} km`}
-              </div>
-            </div>
-          )}
-          
-          {airQualityData && airQualityData.european_aqi !== undefined && (
-            <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('airQuality')}>
-              <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
-                <Activity size={14} /> {t('airQuality')}
-              </div>
-              <div className={`text-m3-title-large font-bold ${getAQIColor(airQualityData.european_aqi, isRealNight)}`}>
-                {Math.round(airQualityData.european_aqi)}
-              </div>
-              <div className={`text-xs font-medium ${getAQIColor(airQualityData.european_aqi, isRealNight)} mt-1`}>
-                {getAQILabel(airQualityData.european_aqi)}
-              </div>
-            </div>
-          )}
-
-          {/* Pollen tile */}
-          {getDominantPollen && (
-            <div
-              className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`}
-              onClick={() => setShowPollenModal(true)}
-            >
-              <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
-                <Sparkles size={14} /> {t('pollen')}
-              </div>
-              {getDominantPollen.pausing ? (
-                <div className={`text-xs font-medium mt-1 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
-                  {t('pollenPause')}
-                </div>
-              ) : (
-                <>
-                  <div className={`text-m3-title-medium font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
-                    {getDominantPollen.label}
-                  </div>
-                  <div className={`text-xs font-medium mt-1 ${getDominantPollen.val >= POLLEN_HIGH_THRESHOLD ? 'text-orange-500' : getDominantPollen.val >= POLLEN_MODERATE_THRESHOLD ? 'text-yellow-500' : (isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant')}`}>
-                    {getDominantPollen.level} ({Math.round(getDominantPollen.val)})
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-          
-
-          {(() => {
-            const hasLiveRainFromStation = isStationCapabilityActive('hasRain') && hasStationMetricValue(current.precip);
-            const precipSparkBars = processedShort.filter((_, i) => i % 2 === 0).slice(0, 12).map(h => h.precipProb ?? 0);
-            const getPrecipBarColor = (p) => p >= 80 ? 'bg-blue-600' : p >= 60 ? 'bg-blue-500' : p >= 40 ? 'bg-blue-400' : p >= 20 ? 'bg-blue-300' : 'bg-blue-200';
-            return (
-              <>
-          {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) ? (
-            <div 
-              className={`bg-m3-tertiary-container rounded-m3-xl border border-m3-tertiary shadow-m3-1 relative overflow-hidden flex flex-col justify-between ${isFoldableInExpandedMode ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2'}`}
-            >
-              <div className={`flex items-center justify-center gap-2 text-m3-on-tertiary-container mb-1 ${isFoldableInExpandedMode ? 'text-[14px] leading-tight' : 'text-m3-label-small'}`}>
-                {next24HoursPrecip.snow > 0.1 ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
-                {renderStationBadge(hasLiveRainFromStation)}
-              </div>
-              <div className="text-m3-title-large font-bold text-m3-on-tertiary-container text-center mb-2">
-                {formatPrecip(next24HoursPrecip.total)} {getPrecipUnitLabel()}
-              </div>
-              {hasLiveRainFromStation && (
-                <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-2">
-                  Live: {formatPrecip(current.precip)} {getPrecipUnitLabel()}/h
-                </div>
-              )}
-              {/* 24h precipProb sparkline */}
-              <div className="flex items-end gap-px h-4 px-0.5 mb-2">
-                {precipSparkBars.map((p, i) => (
-                  <div key={i} style={{ height: `${Math.max(10, p)}%` }} className={`flex-1 rounded-sm ${getPrecipBarColor(p)} opacity-80`} />
-                ))}
-              </div>
-              {/* Action buttons */}
-              <div className={`flex ${isFoldableInExpandedMode ? 'flex-col gap-1.5' : 'gap-2'}`}>
-                <button 
-                  onClick={() => setShowPrecipModal(true)}
-                  className={`flex-1 bg-m3-on-tertiary-container/10 hover:bg-m3-on-tertiary-container/20 active:scale-95 transition-all rounded-lg px-2 flex items-center justify-center gap-1 ${isFoldableInExpandedMode ? 'py-1.5' : 'py-1'}`}
-                >
-                  <Info size={14} className="text-m3-on-tertiary-container" />
-                  <span className="text-xs font-medium text-m3-on-tertiary-container">Details</span>
-                </button>
-                <button 
-                  onClick={() => setActiveTab('radar')}
-                  className={`flex-1 bg-m3-on-tertiary-container/10 hover:bg-m3-on-tertiary-container/20 active:scale-95 transition-all rounded-lg px-2 flex items-center justify-center gap-1 ${isFoldableInExpandedMode ? 'py-1.5' : 'py-1'}`}
-                >
-                  <MapIcon size={14} className="text-m3-on-tertiary-container" />
-                  <span className="text-xs font-medium text-m3-on-tertiary-container">Radar</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className={`${tileBg} rounded-m3-xl border shadow-m3-1 flex flex-col justify-between items-center text-center ${isFoldableInExpandedMode ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2'}`}>
-              <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mb-1 ${isFoldableInExpandedMode ? 'text-[14px] leading-tight' : 'text-m3-label-small'}`}>
-                <CloudRain size={14}/> {t('precip24h')}
-                {renderStationBadge(hasLiveRainFromStation)}
-              </div>
-              <div className="flex items-center justify-center gap-1 mt-1">
-                <Sun size={16} className="text-green-500 flex-shrink-0" />
-                <span className={`text-m3-label-medium font-bold text-green-600 leading-tight`}>{t('noPrecipSight')}</span>
-              </div>
-              {hasLiveRainFromStation && (
-                <div className={`text-xs mt-1 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
-                  Live: {formatPrecip(current.precip)} {getPrecipUnitLabel()}/h
-                </div>
-              )}
-              {/* 24h precipProb sparkline */}
-              <div className="flex items-end gap-px h-4 px-0.5 w-full mt-1">
-                {precipSparkBars.map((p, i) => (
-                  <div key={i} style={{ height: `${Math.max(10, p)}%` }} className={`flex-1 rounded-sm ${getPrecipBarColor(p)} opacity-80`} />
-                ))}
-              </div>
-            </div>
-          )}
-              </>
-            );
-          })()}
-
-          {/* Activity Index tile */}
-          {(() => {
-            const advice = getActivityAdvice(lang, current.temp, current.wind, next24HoursPrecip.total, current.uvIndex, current.code);
-            const isDanger = advice.color === 'text-red-500';
-            const isWarning = advice.color === 'text-orange-500';
-            const activityTileBg = isDanger
-              ? (isRealNight ? 'bg-red-950/40 border-red-900/40' : 'bg-red-50 border-red-200')
-              : isWarning
-                ? (isRealNight ? 'bg-orange-950/40 border-orange-900/40' : 'bg-orange-50 border-orange-200')
-                : tileBg;
-            return (
-              <div className={`${activityTileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setShowActivityModal(true)}>
-                <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
-                  <Zap size={14} /> {t('activityIndex')}
-                </div>
-                <div className="flex items-center justify-center gap-1.5 mb-1">
-                  <span className="text-lg leading-none">{advice.emoji}</span>
-                  {advice.score != null && (
-                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full leading-none ${getScoreBadgeClass(advice.score, isRealNight)}`}>
-                      {advice.score}/10
-                    </span>
+                  <div className={`text-m3-label-medium font-bold ${advice.color} leading-tight`}>{advice.text}</div>
+                  {getDominantPollen && !getDominantPollen.pausing && (
+                    <div className="text-xs mt-1 text-m3-on-surface-variant truncate">
+                      🌿 {getDominantPollen.label}: {getDominantPollen.level}
+                    </div>
                   )}
                 </div>
-                <div className={`text-m3-label-medium font-bold ${advice.color} leading-tight`}>{advice.text}</div>
-                {getDominantPollen && !getDominantPollen.pausing && (
-                  <div className="text-xs mt-1 text-m3-on-surface-variant truncate">
-                    🌿 {getDominantPollen.label}: {getDominantPollen.level}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
+              );
+            })()}
 
-          {/* Thunderstorm Risk tile */}
+            {(() => {
+              const refDate = processedShort[0]?.time || new Date();
+              const moonPhaseDiscrete = getMoonPhase(refDate);
+              const moonPhaseEx = getMoonPhaseExact(refDate);
+              const moonIllum = getMoonIllumination(moonPhaseEx);
+              const moonEmoji = MOON_PHASE_EMOJIS[moonPhaseDiscrete];
+              const moonName = t(MOON_PHASE_KEYS[moonPhaseDiscrete]);
+              const moonR = 16;
+              return (
+                <div
+                  className={`${tileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`}
+                  onClick={() => setShowMoonModal(true)}
+                >
+                  <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                    <Moon size={14} /> {t('moonPhase')}
+                  </div>
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <svg width={moonR * 2 + 6} height={moonR * 2 + 6} viewBox={`${-moonR - 3} ${-moonR - 3} ${(moonR + 3) * 2} ${(moonR + 3) * 2}`} className="flex-shrink-0">
+                      <circle r={moonR} fill={isRealNight ? '#1e1b4b' : '#1e293b'} />
+                      {moonPhaseDiscrete === 4 ? (
+                        <circle r={moonR} fill="white" opacity="0.9" />
+                      ) : moonPhaseDiscrete !== 0 ? (
+                        <path d={getMoonPhaseSVGPath(moonPhaseDiscrete, moonR)} fill="white" opacity="0.9" />
+                      ) : null}
+                    </svg>
+                    <div>
+                      <div className={`text-m3-label-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'} leading-tight`}>
+                        {moonEmoji} {moonName}
+                      </div>
+                      <div className={`text-xs font-medium ${isRealNight ? 'text-indigo-400' : 'text-indigo-600'} mt-0.5`}>
+                        {moonIllum}% {t('moonIllumination')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Bar tiles */}
+          <div className={`grid ${weatherTileGridClass} ${weatherTileGapClass}`}>
+            {(() => {
+              const uvSparkBars = sampledForecastHours.map(h => h.uvIndex ?? 0);
+              const uvSparkMax = Math.max(...uvSparkBars, 1);
+              const getUvBarColor = (uv) => uv >= 11 ? 'bg-purple-500' : uv >= 8 ? 'bg-red-500' : uv >= 6 ? 'bg-orange-400' : uv >= 3 ? 'bg-yellow-400' : 'bg-green-400';
+              return (
+                <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-between items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('uv')}>
+                  <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                    <Sun size={14} /> {t('uv')}
+                  </div>
+                  <div className={`text-m3-title-large font-bold ${getUvColorClass(current.uvIndex, isRealNight)}`}>{current.uvIndex}</div>
+                  <div className="flex items-end gap-px h-4 px-0.5 w-full mt-1">
+                    {uvSparkBars.map((uv, i) => (
+                      <div key={i} style={{ height: `${Math.max(10, (uv / uvSparkMax) * 100)}%` }} className={`flex-1 rounded-sm ${getUvBarColor(uv)} opacity-80`} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {(() => {
+              const windSparkBars = sampledForecastHours.map(h => h.wind ?? 0);
+              const windSparkMax = Math.max(...windSparkBars, 1);
+              const getWindBarColor = (spd) => spd >= 60 ? 'bg-red-500' : spd >= 40 ? 'bg-orange-400' : spd >= 20 ? 'bg-blue-400' : 'bg-green-400';
+              return (
+                <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-between items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('wind')}>
+                  <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                    <Navigation size={14} style={{ transform: `rotate(${current.dir}deg)` }} /> {t('wind')}
+                  </div>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <div className={`text-m3-title-large font-bold ${windColorClass}`}>
+                      {formatWind(current.wind)} <span className="text-m3-body-small">{getWindUnitLabel()}</span>
+                    </div>
+                    {renderStationBadge(isStationCapabilityActive('hasWind'))}
+                  </div>
+                  {current.gust > current.wind && (
+                    <div className={`text-xs font-medium ${getWindColorClass(current.gust, isRealNight)}`}>
+                      {t('gusts')} {formatWind(current.gust)} {getWindUnitLabel()}
+                    </div>
+                  )}
+                  <div className="flex items-end gap-px h-4 px-0.5 w-full mt-1">
+                    {windSparkBars.map((spd, i) => (
+                      <div key={i} style={{ height: `${Math.max(10, (spd / windSparkMax) * 100)}%` }} className={`flex-1 rounded-sm ${getWindBarColor(spd)} opacity-80`} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-between items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('humidity')}>
+              <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                <Waves size={14} /> {t('humidity')}
+              </div>
+              <div className="flex items-center justify-center gap-1.5">
+                <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{current.humidity}%</div>
+                {renderStationBadge(isStationCapabilityActive('hasHumidity'))}
+              </div>
+              {renderSparkBars(humiditySparkBars, getHumidityBarColor, { minValue: 0, maxValue: 100 })}
+            </div>
+
+            <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-between items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('dewPoint')}>
+              <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                <Thermometer size={14} /> {t('dewPoint')}
+              </div>
+              <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{formatTemp(current.dewPoint)}{getTempUnitSymbol()}</div>
+              {renderSparkBars(dewPointSparkBars, getDewPointBarColor, {
+                minValue: Math.min(...dewPointSparkBars, -5),
+                maxValue: Math.max(...dewPointSparkBars, 20),
+              })}
+            </div>
+
+            {current.pressure !== null && current.pressure !== undefined && (
+              <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-between items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('pressure')}>
+                <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                  <Gauge size={14} /> {t('pressure')}
+                </div>
+                <div className="flex items-center justify-center gap-1.5">
+                  <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
+                    {Math.round(current.pressure)} <span className="text-m3-body-small">hPa</span>
+                  </div>
+                  {renderStationBadge(isStationCapabilityActive('hasPressure'))}
+                </div>
+                {renderSparkBars(pressureSparkBars, getPressureBarColor, { minValue: 980, maxValue: 1045 })}
+              </div>
+            )}
+
+            {current.visibility !== null && current.visibility !== undefined && current.visibility > 0 && (
+              <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-between items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('visibility')}>
+                <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                  <Eye size={14} /> {t('visibility')}
+                </div>
+                <div className={`text-m3-title-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
+                  {settings.windUnit === 'mph'
+                    ? `${(current.visibility / 1609.34).toFixed(1)} mi`
+                    : `${(current.visibility / 1000).toFixed(1)} km`}
+                </div>
+                {renderSparkBars(visibilitySparkBars, getVisibilityBarColor, { minValue: 0, maxValue: Math.max(...visibilitySparkBars, 10000) })}
+              </div>
+            )}
+
+            {airQualityData && airQualityData.european_aqi !== undefined && (
+              <div className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-between items-center text-center cursor-pointer active:scale-95 transition-transform`} onClick={() => setActiveDetailModal('airQuality')}>
+                <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                  <Activity size={14} /> {t('airQuality')}
+                </div>
+                <div className={`text-m3-title-large font-bold ${getAQIColor(airQualityData.european_aqi, isRealNight)}`}>
+                  {Math.round(airQualityData.european_aqi)}
+                </div>
+                <div className={`text-xs font-medium ${getAQIColor(airQualityData.european_aqi, isRealNight)} mt-1`}>
+                  {getAQILabel(airQualityData.european_aqi)}
+                </div>
+                {renderSparkBars(airQualitySparkBars, getAQIBarColor, { minValue: 0, maxValue: Math.max(...airQualitySparkBars, 80) })}
+              </div>
+            )}
+
+            {getDominantPollen && (
+              <div
+                className={`${tileBg} rounded-m3-xl p-2 shadow-m3-1 min-h-[90px] flex flex-col justify-between items-center text-center cursor-pointer active:scale-95 transition-transform`}
+                onClick={() => setShowPollenModal(true)}
+              >
+                <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
+                  <Sparkles size={14} /> {t('pollen')}
+                </div>
+                {getDominantPollen.pausing ? (
+                  <div className={`text-xs font-medium mt-1 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
+                    {t('pollenPause')}
+                  </div>
+                ) : (
+                  <>
+                    <div className={`text-m3-title-medium font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>
+                      {getDominantPollen.label}
+                    </div>
+                    <div className={`text-xs font-medium mt-1 ${getDominantPollen.val >= POLLEN_HIGH_THRESHOLD ? 'text-orange-500' : getDominantPollen.val >= POLLEN_MODERATE_THRESHOLD ? 'text-yellow-500' : (isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant')}`}>
+                      {getDominantPollen.level} ({Math.round(getDominantPollen.val)})
+                    </div>
+                  </>
+                )}
+                {renderSparkBars(pollenSparkBars, getPollenBarColor, { minValue: 0, maxValue: Math.max(...pollenSparkBars, POLLEN_HIGH_THRESHOLD, 1) })}
+              </div>
+            )}
+
+            {(() => {
+              const hasLiveRainFromStation = isStationCapabilityActive('hasRain') && hasStationMetricValue(current.precip);
+              const precipSparkBars = sampledForecastHours.map(h => h.precipProb ?? 0);
+              const getPrecipBarColor = (p) => p >= 80 ? 'bg-blue-600' : p >= 60 ? 'bg-blue-500' : p >= 40 ? 'bg-blue-400' : p >= 20 ? 'bg-blue-300' : 'bg-blue-200';
+              return (
+                <>
+                  {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) ? (
+                    <div
+                      className={`bg-m3-tertiary-container rounded-m3-xl border border-m3-tertiary shadow-m3-1 relative overflow-hidden flex flex-col justify-between ${isFoldableInExpandedMode ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2'}`}
+                    >
+                      <div className={`flex items-center justify-center gap-2 text-m3-on-tertiary-container mb-1 ${isFoldableInExpandedMode ? 'text-[14px] leading-tight' : 'text-m3-label-small'}`}>
+                        {next24HoursPrecip.snow > 0.1 ? <Snowflake size={14}/> : <CloudRain size={14}/>} {t('precip24h')}
+                        {renderStationBadge(hasLiveRainFromStation)}
+                      </div>
+                      <div className="text-m3-title-large font-bold text-m3-on-tertiary-container text-center mb-2">
+                        {formatPrecip(next24HoursPrecip.total)} {getPrecipUnitLabel()}
+                      </div>
+                      {hasLiveRainFromStation && (
+                        <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-2">
+                          Live: {formatPrecip(current.precip)} {getPrecipUnitLabel()}/h
+                        </div>
+                      )}
+                      <div className="flex items-end gap-px h-4 px-0.5 mb-2">
+                        {precipSparkBars.map((p, i) => (
+                          <div key={i} style={{ height: `${Math.max(10, p)}%` }} className={`flex-1 rounded-sm ${getPrecipBarColor(p)} opacity-80`} />
+                        ))}
+                      </div>
+                      <div className={`flex ${isFoldableInExpandedMode ? 'flex-col gap-1.5' : 'gap-2'}`}>
+                        <button
+                          onClick={() => setShowPrecipModal(true)}
+                          className={`flex-1 bg-m3-on-tertiary-container/10 hover:bg-m3-on-tertiary-container/20 active:scale-95 transition-all rounded-lg px-2 flex items-center justify-center gap-1 ${isFoldableInExpandedMode ? 'py-1.5' : 'py-1'}`}
+                        >
+                          <Info size={14} className="text-m3-on-tertiary-container" />
+                          <span className="text-xs font-medium text-m3-on-tertiary-container">Details</span>
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('radar')}
+                          className={`flex-1 bg-m3-on-tertiary-container/10 hover:bg-m3-on-tertiary-container/20 active:scale-95 transition-all rounded-lg px-2 flex items-center justify-center gap-1 ${isFoldableInExpandedMode ? 'py-1.5' : 'py-1'}`}
+                        >
+                          <MapIcon size={14} className="text-m3-on-tertiary-container" />
+                          <span className="text-xs font-medium text-m3-on-tertiary-container">Radar</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={`${tileBg} rounded-m3-xl border shadow-m3-1 flex flex-col justify-between items-center text-center ${isFoldableInExpandedMode ? 'col-span-2 min-h-[112px] p-3' : 'min-h-[90px] p-2'}`}>
+                      <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} mb-1 ${isFoldableInExpandedMode ? 'text-[14px] leading-tight' : 'text-m3-label-small'}`}>
+                        <CloudRain size={14}/> {t('precip24h')}
+                        {renderStationBadge(hasLiveRainFromStation)}
+                      </div>
+                      <div className="flex items-center justify-center gap-1 mt-1">
+                        <Sun size={16} className="text-green-500 flex-shrink-0" />
+                        <span className={`text-m3-label-medium font-bold text-green-600 leading-tight`}>{t('noPrecipSight')}</span>
+                      </div>
+                      {hasLiveRainFromStation && (
+                        <div className={`text-xs mt-1 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
+                          Live: {formatPrecip(current.precip)} {getPrecipUnitLabel()}/h
+                        </div>
+                      )}
+                      <div className="flex items-end gap-px h-4 px-0.5 w-full mt-1">
+                        {precipSparkBars.map((p, i) => (
+                          <div key={i} style={{ height: `${Math.max(10, p)}%` }} className={`flex-1 rounded-sm ${getPrecipBarColor(p)} opacity-80`} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+
+            {/* Thunderstorm Risk tile */}
           {(() => {
             const thunderHours = processedShort.slice(0, THUNDERSTORM_FORECAST_HOURS);
             const hourRisks = thunderHours.map(h => calcThunderstormRiskLevel(h.cape ?? 0, h.liftedIndex, h.precipProb ?? 0, h.code ?? 0, h.gust ?? 0));
@@ -18113,47 +18221,7 @@ export default function WeatherApp() {
               </div>
             );
           })()}
-
-          {/* Moon Phase tile */}
-          {(() => {
-            const refDate = processedShort[0]?.time || new Date();
-            const moonPhaseDiscrete = getMoonPhase(refDate);
-            const moonPhaseEx = getMoonPhaseExact(refDate);
-            const moonIllum = getMoonIllumination(moonPhaseEx);
-            const moonEmoji = MOON_PHASE_EMOJIS[moonPhaseDiscrete];
-            const moonName = t(MOON_PHASE_KEYS[moonPhaseDiscrete]);
-            const moonR = 16;
-            return (
-              <div
-                className={`${tileBg} rounded-m3-xl p-2 border shadow-m3-1 min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer active:scale-95 transition-transform`}
-                onClick={() => setShowMoonModal(true)}
-              >
-                <div className={`flex items-center justify-center gap-2 ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'} text-m3-label-small mb-1`}>
-                  <Moon size={14} /> {t('moonPhase')}
-                </div>
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <svg width={moonR * 2 + 6} height={moonR * 2 + 6} viewBox={`${-moonR - 3} ${-moonR - 3} ${(moonR + 3) * 2} ${(moonR + 3) * 2}`} className="flex-shrink-0">
-                    <circle r={moonR} fill={isRealNight ? '#1e1b4b' : '#1e293b'} />
-                    {moonPhaseDiscrete === 4 ? (
-                      <circle r={moonR} fill="white" opacity="0.9" />
-                    ) : moonPhaseDiscrete !== 0 ? (
-                      <path d={getMoonPhaseSVGPath(moonPhaseDiscrete, moonR)} fill="white" opacity="0.9" />
-                    ) : null}
-                  </svg>
-                  <div>
-                    <div className={`text-m3-label-large font-bold ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'} leading-tight`}>
-                      {moonEmoji} {moonName}
-                    </div>
-                    <div className={`text-xs font-medium ${isRealNight ? 'text-indigo-400' : 'text-indigo-600'} mt-0.5`}>
-                      {moonIllum}% {t('moonIllumination')}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
-
-        </div>
+          </div>
         {/* End of collapsible tiles */}
         </div>
 
