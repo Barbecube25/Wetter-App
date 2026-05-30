@@ -18079,17 +18079,18 @@ export default function WeatherApp() {
               const getPrecipBarColor = (p) => p >= 80 ? 'bg-blue-600' : p >= 60 ? 'bg-blue-500' : p >= 40 ? 'bg-blue-400' : p >= 20 ? 'bg-blue-300' : 'bg-blue-200';
 
               // Foldable-only: compute rain timing from nowcast or hourly data
-              let foldablePrecipMinsStart = null;
-              let foldablePrecipMinsEnd = null;
+              let precipStartMins = null;
+              let precipEndMins = null;
               if (isFoldableTileWide) {
                 const nowMs = Date.now();
                 const nowcastFold = shortTermData?.radar_nowcast;
                 if (nowcastFold?.time?.length && nowcastFold?.precipitation?.length) {
                   const intervalMs = (nowcastFold.intervalMinutes || MINUTELY_SLOT_DURATION_MINUTES) * 60000;
+                  const slotCount = Math.min(nowcastFold.time.length, nowcastFold.precipitation.length);
                   let evStart = null;
                   let evEnd = null;
                   let evClosed = false;
-                  for (let i = 0; i < nowcastFold.time.length; i++) {
+                  for (let i = 0; i < slotCount; i++) {
                     const slotMs = new Date(nowcastFold.time[i]).getTime();
                     const slotEndMs = slotMs + intervalMs;
                     if (slotEndMs <= nowMs) continue;
@@ -18101,8 +18102,8 @@ export default function WeatherApp() {
                     }
                   }
                   if (evStart !== null) {
-                    foldablePrecipMinsStart = Math.round((evStart - nowMs) / 60000);
-                    if (evEnd !== null) foldablePrecipMinsEnd = Math.round((evEnd - nowMs) / 60000);
+                    precipStartMins = Math.round((evStart - nowMs) / 60000);
+                    if (evEnd !== null) precipEndMins = Math.round((evEnd - nowMs) / 60000);
                   }
                 } else {
                   // Fallback: derive timing from hourly forecast
@@ -18116,12 +18117,12 @@ export default function WeatherApp() {
                     else if (foundStart) break;
                   }
                   if (startMs !== null) {
-                    foldablePrecipMinsStart = Math.max(0, Math.round((startMs - nowMs) / 60000));
-                    if (endMs !== null) foldablePrecipMinsEnd = Math.max(0, Math.round((endMs - nowMs) / 60000));
+                    precipStartMins = Math.max(0, Math.round((startMs - nowMs) / 60000));
+                    if (endMs !== null) precipEndMins = Math.max(0, Math.round((endMs - nowMs) / 60000));
                   }
                 }
               }
-              const isRainingNowTile = foldablePrecipMinsStart !== null && foldablePrecipMinsStart <= 0;
+              const isCurrentlyRaining = precipStartMins !== null && precipStartMins <= 0;
 
               return (
                 <>
@@ -18144,14 +18145,14 @@ export default function WeatherApp() {
                       )}
                       {isFoldableTileWide && (
                         <>
-                          {isRainingNowTile && foldablePrecipMinsEnd !== null && foldablePrecipMinsEnd > 0 && (
+                          {isCurrentlyRaining && precipEndMins !== null && precipEndMins > 0 && (
                             <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-1 font-medium">
-                              ☀️ {t('endsIn')} {formatMinutesDuration(foldablePrecipMinsEnd, lang)}
+                              ☀️ {t('endsIn')} {formatMinutesDuration(precipEndMins, lang)}
                             </div>
                           )}
-                          {!isRainingNowTile && foldablePrecipMinsStart !== null && foldablePrecipMinsStart > 0 && (
+                          {!isCurrentlyRaining && precipStartMins !== null && precipStartMins > 0 && (
                             <div className="text-xs text-m3-on-tertiary-container/90 text-center mb-1 font-medium">
-                              🌧 {t('startsIn')} {formatMinutesDuration(foldablePrecipMinsStart, lang)}
+                              🌧 {t('startsIn')} {formatMinutesDuration(precipStartMins, lang)}
                             </div>
                           )}
                         </>
@@ -18172,9 +18173,9 @@ export default function WeatherApp() {
                         <Sun size={16} className="text-green-500 flex-shrink-0" />
                         <span className={`text-m3-label-medium font-bold text-green-600 leading-tight`}>{t('noPrecipSight')}</span>
                       </div>
-                      {isFoldableTileWide && foldablePrecipMinsStart !== null && foldablePrecipMinsStart > 0 && (
+                      {isFoldableTileWide && precipStartMins !== null && precipStartMins > 0 && (
                         <div className={`text-xs mt-1 font-medium ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
-                          🌧 {t('startsIn')} {formatMinutesDuration(foldablePrecipMinsStart, lang)}
+                          🌧 {t('startsIn')} {formatMinutesDuration(precipStartMins, lang)}
                         </div>
                       )}
                       {hasLiveRainFromStation && (
