@@ -11816,10 +11816,10 @@ const ActivityCheckModal = ({ isOpen, onClose, hourlyData, lang = 'de', isSmallS
 // --- THUNDERSTORM RISK HELPERS ---
 
 // Named constants for thunderstorm thresholds (meteorological/DWD criteria)
-const CAPE_EXTREME_THRESHOLD = 3000;  // J/kg – extreme instability, potential supercells
-const CAPE_HIGH_THRESHOLD    = 1500;  // J/kg – large instability, severe thunderstorms possible
-const CAPE_MOD_THRESHOLD     = 500;   // J/kg – moderate instability
-const CAPE_LOW_THRESHOLD     = 100;   // J/kg – weak convection
+const CAPE_EXTREME_THRESHOLD = 3500;  // J/kg – extreme instability, potential supercells
+const CAPE_HIGH_THRESHOLD    = 2000;  // J/kg – large instability, severe thunderstorms possible
+const CAPE_MOD_THRESHOLD     = 800;   // J/kg – moderate instability
+const CAPE_LOW_THRESHOLD     = 200;   // J/kg – notable convective potential
 const GUST_EXTREME_THRESHOLD = 140;   // km/h – Stufe 4: extreme Orkanböen
 const GUST_SEVERE_THRESHOLD  = 100;   // km/h – Stufe 3: Orkanböen
 const GUST_STRONG_THRESHOLD  = 60;    // km/h – Stufe 2: markante Böen
@@ -11847,25 +11847,25 @@ const calcThunderstormRiskLevel = (cape, liftedIndex, precipProb, weatherCode, w
 
   let liRisk = 0;
   if (liftedIndex !== null && liftedIndex !== undefined) {
-    if (liftedIndex <= -6) liRisk = 4;
-    else if (liftedIndex <= -4) liRisk = 3;
-    else if (liftedIndex <= -2) liRisk = 2;
-    else if (liftedIndex < 0) liRisk = 1;
+    if (liftedIndex <= -7) liRisk = 4;
+    else if (liftedIndex <= -5) liRisk = 3;
+    else if (liftedIndex <= -3) liRisk = 2;
+    else if (liftedIndex <= -1) liRisk = 1;
   }
 
   // Precipitation probability contribution: high precip prob raises the floor
   let precipRisk = 0;
-  if (precipProb >= 70) precipRisk = 3;
-  else if (precipProb >= 50) precipRisk = 2;
-  else if (precipProb >= 30) precipRisk = 1;
+  if (precipProb >= 80) precipRisk = 3;
+  else if (precipProb >= 60) precipRisk = 2;
+  else if (precipProb >= 40) precipRisk = 1;
 
-  // Atmospheric instability is the primary driver; precip probability can only confirm,
-  // but not exceed, the instability-derived risk level.
+  // Atmospheric instability is the primary driver; a precipitation probability signal is
+  // required to confirm any risk. Precip probability caps the ceiling by at most +1 above
+  // its own level, preventing strong instability with a weak precip signal from inflating
+  // the displayed risk.
   const atmosphericRisk = Math.max(capeRisk, liRisk);
-  // Without any precip probability and only weak instability, return no risk
-  if (precipRisk === 0 && atmosphericRisk <= 1) return 0;
-  // Keep the model conservative: no "high" risk from rain probability alone.
-  return Math.min(4, Math.max(atmosphericRisk, precipRisk > 0 ? Math.min(precipRisk, atmosphericRisk) : 0));
+  if (precipRisk === 0) return 0;
+  return Math.min(4, Math.min(atmosphericRisk, precipRisk + 1));
 };
 
 // Returns an intensity label key based on max wind gust and CAPE
