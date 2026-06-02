@@ -16766,7 +16766,6 @@ export default function WeatherApp() {
     const avgNightWind = slots.length > 0
       ? Math.round(slots.reduce((sum, slot) => sum + Number(slot.wind ?? 0), 0) / slots.length)
       : Math.round(current.wind ?? 0);
-    const hasWetRisk = slots.some((slot) => Number(slot.precip ?? 0) > LIGHT_PRECIP_THRESHOLD || Number(slot.snow ?? 0) > LIGHT_PRECIP_THRESHOLD);
     const moonIllumination = getMoonIllumination(getMoonPhaseExact(nowDate));
 
     const clothing = [];
