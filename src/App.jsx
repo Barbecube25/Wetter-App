@@ -67,7 +67,10 @@ const ASTRONOMY_REPORT_MIN_CHANCE_SCORE = 40; // Minimum chance score to show au
 const ASTRONOMY_COMET_MIN_CHANCE_SCORE = 45; // Show only realistically visible comet windows
 const ASTRONOMY_AURORA_LAT_MIN = 50; // Minimum latitude to show aurora hints in longterm report
 const MINUTELY_SLOT_DURATION_MINUTES = 15;
-const WEATHER_NOTIFICATION_LEAD_OPTIONS = [5, 15, 30];
+const WEATHER_NOTIFICATION_DEFAULT_RAIN_LEAD_MINUTES = 15;
+const WEATHER_NOTIFICATION_MIN_RAIN_LEAD_MINUTES = 5;
+const WEATHER_NOTIFICATION_MAX_RAIN_LEAD_MINUTES = 60;
+const WEATHER_NOTIFICATION_RAIN_LEAD_STEP_MINUTES = 5;
 const WEATHER_NOTIFICATION_RUNTIME_KEY = 'weather_notification_runtime_v1';
 const WEATHER_NOTIFICATION_PERMISSION_PROMPTED_KEY = 'weather_notification_permission_prompted_v1';
 const NOTIFICATION_TRIGGER_WINDOW_MINUTES = 15;
@@ -105,7 +108,7 @@ const DEFAULT_NOTIFICATION_SETTINGS = {
   eveningReport: true,
   thunderstormLevel4: true,
   auroraAlert: false,
-  rainStartLeads: [WEATHER_NOTIFICATION_LEAD_OPTIONS[1]],
+  rainStartLeads: [WEATHER_NOTIFICATION_DEFAULT_RAIN_LEAD_MINUTES],
   morningReportTime: WEATHER_NOTIFICATION_DEFAULT_MORNING_TIME,
   eveningReportTime: WEATHER_NOTIFICATION_DEFAULT_EVENING_TIME,
   notificationActivities: [],
@@ -124,6 +127,16 @@ const parseNotificationTime = (value, fallback) => {
     value: normalized,
     hour: Number(hourRaw),
     minute: Number(minuteRaw),
+  };
+
+  const normalizeRainLeadMinutes = (value) => {
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) return null;
+    const snapped = Math.round(numericValue / WEATHER_NOTIFICATION_RAIN_LEAD_STEP_MINUTES) * WEATHER_NOTIFICATION_RAIN_LEAD_STEP_MINUTES;
+    return Math.min(
+      WEATHER_NOTIFICATION_MAX_RAIN_LEAD_MINUTES,
+      Math.max(WEATHER_NOTIFICATION_MIN_RAIN_LEAD_MINUTES, snapped)
+    );
   };
 };
 
@@ -159,8 +172,8 @@ const normalizeNotificationSettings = (value) => {
     if (source.rainStartLeads.length === 0) {
       return [];
     }
-    const validLeads = WEATHER_NOTIFICATION_LEAD_OPTIONS.filter((lead) => source.rainStartLeads.includes(lead));
-    return validLeads.length > 0 ? [validLeads[0]] : [...DEFAULT_NOTIFICATION_SETTINGS.rainStartLeads];
+    const normalizedLead = normalizeRainLeadMinutes(source.rainStartLeads[0]);
+    return normalizedLead !== null ? [normalizedLead] : [...DEFAULT_NOTIFICATION_SETTINGS.rainStartLeads];
   })();
 
   return {
@@ -7040,6 +7053,8 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
     const activityDefinitions = useMemo(() => getActivityDefinitions(localSettings.customActivities), [localSettings.customActivities]);
     const customActivities = useMemo(() => normalizeCustomActivities(localSettings.customActivities), [localSettings.customActivities]);
     const notificationSettings = normalizeNotificationSettings(localSettings.notifications);
+    const rainAlertsEnabled = notificationSettings.rainStartLeads.length > 0;
+    const rainLeadMinutes = notificationSettings.rainStartLeads[0] ?? WEATHER_NOTIFICATION_DEFAULT_RAIN_LEAD_MINUTES;
 
     useEffect(() => {
         setLocalSettings(settings);
@@ -7442,26 +7457,40 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                                   onClick={() => updateNotifications({ auroraAlert: !notificationSettings.auroraAlert })}
                                   className={`w-full py-2 px-3 rounded-m3-sm text-sm font-bold transition flex items-center justify-between gap-2 ${notificationSettings.auroraAlert ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'bg-m3-surface-container-high text-m3-on-surface-variant hover:text-m3-on-surface'}`}
                               >
-                                  <span>{isGerman ? 'Polarlicht-Hinweis bei guten Chancen' : 'Aurora alert when conditions are good'}</span>
+                                  <span>{isGerman ? 'Polarlicht-Benachrichtigung (Ein/Aus)' : 'Aurora notification (On/Off)'}</span>
                                   {notificationSettings.auroraAlert && <Check size={14} />}
                               </button>
                               <div className="rounded-m3-sm bg-m3-surface-container-high p-2">
                                   <div className="text-xs font-bold text-m3-on-surface-variant mb-2">
-                                      {isGerman ? 'Regenstart in:' : 'Rain starts in:'}
+                                      {isGerman ? 'Regenstart-Benachrichtigung:' : 'Rain start notification:'}
                                   </div>
-                                  <div className="grid grid-cols-3 gap-2">
-                                      {WEATHER_NOTIFICATION_LEAD_OPTIONS.map((lead) => {
-                                          const isLeadActive = notificationSettings.rainStartLeads.includes(lead);
-                                          return (
-                                              <button
-                                                  key={lead}
-                                                  onClick={() => updateNotifications({ rainStartLeads: isLeadActive ? [] : [lead] })}
-                                                  className={`py-2 px-2 rounded-m3-sm text-xs font-bold transition ${isLeadActive ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'bg-m3-surface text-m3-on-surface-variant hover:text-m3-on-surface'}`}
-                                              >
-                                                  {lead} {isGerman ? 'Min' : 'min'}
-                                              </button>
-                                          );
-                                      })}
+                                  <button
+                                      onClick={() => updateNotifications({ rainStartLeads: rainAlertsEnabled ? [] : [rainLeadMinutes] })}
+                                      className={`w-full py-2 px-3 rounded-m3-sm text-sm font-bold transition flex items-center justify-between gap-2 ${rainAlertsEnabled ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'bg-m3-surface text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                                  >
+                                      <span>{isGerman ? 'Regen-Benachrichtigung aktivieren' : 'Enable rain notification'}</span>
+                                      {rainAlertsEnabled && <Check size={14} />}
+                                  </button>
+                                  <div className={`mt-2 ${rainAlertsEnabled ? '' : 'opacity-60'}`}>
+                                      <div className="flex justify-between text-xs text-m3-on-surface-variant mb-1">
+                                          <span>{isGerman ? 'Vorwarnzeit' : 'Lead time'}</span>
+                                          <span className="font-bold text-m3-on-surface">{rainLeadMinutes} {isGerman ? 'Min.' : 'min'}</span>
+                                      </div>
+                                      <input
+                                          type="range"
+                                          min={WEATHER_NOTIFICATION_MIN_RAIN_LEAD_MINUTES}
+                                          max={WEATHER_NOTIFICATION_MAX_RAIN_LEAD_MINUTES}
+                                          step={WEATHER_NOTIFICATION_RAIN_LEAD_STEP_MINUTES}
+                                          value={rainLeadMinutes}
+                                          disabled={!rainAlertsEnabled}
+                                          onChange={(event) => updateNotifications({ rainStartLeads: [Number(event.target.value)] })}
+                                          aria-label={isGerman ? 'Vorwarnzeit für Regen-Benachrichtigung' : 'Lead time for rain notification'}
+                                          className="w-full accent-m3-primary disabled:opacity-50"
+                                      />
+                                      <div className="flex justify-between text-xs text-m3-on-surface-variant mt-0.5">
+                                          <span>{WEATHER_NOTIFICATION_MIN_RAIN_LEAD_MINUTES} {isGerman ? 'Min' : 'min'}</span>
+                                          <span>{WEATHER_NOTIFICATION_MAX_RAIN_LEAD_MINUTES} {isGerman ? 'Min' : 'min'}</span>
+                                      </div>
                                   </div>
                               </div>
                               <div className="rounded-m3-sm bg-m3-surface-container-high p-2">
