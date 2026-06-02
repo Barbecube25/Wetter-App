@@ -64,6 +64,7 @@ const ASTRONOMY_MOON_DARK_BONUS = 12;
 const ASTRONOMY_MOON_BRIGHT_PENALTY = -20;
 const ASTRONOMY_MOON_MEDIUM_PENALTY = -5;
 const ASTRONOMY_REPORT_MIN_CHANCE_SCORE = 40; // Minimum chance score to show aurora/NLC hints in AI reports
+const ASTRONOMY_COMET_MIN_CHANCE_SCORE = 45; // Show only realistically visible comet windows
 const ASTRONOMY_AURORA_LAT_MIN = 50; // Minimum latitude to show aurora hints in longterm report
 const MINUTELY_SLOT_DURATION_MINUTES = 15;
 const WEATHER_NOTIFICATION_LEAD_OPTIONS = [5, 15, 30];
@@ -164,7 +165,7 @@ const normalizeNotificationSettings = (value) => {
   };
 };
 
-// Curated list of notable comets with their photographically visible windows
+// Curated list of bright, exceptional comets with practical visual windows
 const KNOWN_COMETS = [
   {
     id: '12p',
@@ -6203,7 +6204,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     const dailyAstronomyData = extraData && !Array.isArray(extraData) ? extraData.astronomy : null;
     if (dailyAstronomyData) {
       const astroLines = [];
-      // Comets currently in visible window
+      // Exceptional bright comets in a realistic visibility window
       if (dailyAstronomyData.currentComets && dailyAstronomyData.currentComets.length > 0) {
         dailyAstronomyData.currentComets.forEach(comet => {
           const name = lang === 'en' ? comet.nameEn : comet.nameDe;
@@ -6215,8 +6216,8 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
               : `☄️ Komet ${name} aktuell sichtbar (nur fotografisch, ${bestTime}).`);
           } else {
             astroLines.push(lang === 'en'
-              ? `☄️ Comet ${name} currently visible – ${direction} (${bestTime}).`
-              : `☄️ Komet ${name} aktuell sichtbar – ${direction} (${bestTime}).`);
+              ? `☄️ Bright comet ${name} currently visible – ${direction} (${bestTime}).`
+              : `☄️ Heller Komet ${name} aktuell sichtbar – ${direction} (${bestTime}).`);
           }
         });
       }
@@ -6505,7 +6506,7 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
     const longtermAstronomyData = extraData && !Array.isArray(extraData) ? extraData.astronomy : null;
     if (longtermAstronomyData) {
       const astroLines = [];
-      // Comets currently in visible window
+      // Exceptional bright comets in a realistic visibility window
       if (longtermAstronomyData.currentComets && longtermAstronomyData.currentComets.length > 0) {
         longtermAstronomyData.currentComets.forEach(comet => {
           const name = lang === 'en' ? comet.nameEn : comet.nameDe;
@@ -6517,8 +6518,8 @@ const generateAIReport = (type, data, lang = 'de', extraData = null) => {
               : `☄️ Komet ${name} im Beobachtungsfenster (nur fotografisch, beste Zeit: ${bestTime}).`);
           } else {
             astroLines.push(lang === 'en'
-              ? `☄️ Comet ${name} in visible window – ${direction} (best: ${bestTime}).`
-              : `☄️ Komet ${name} im Beobachtungsfenster – ${direction} (beste Zeit: ${bestTime}).`);
+              ? `☄️ Bright comet ${name} in visible window – ${direction} (best: ${bestTime}).`
+              : `☄️ Heller Komet ${name} im Beobachtungsfenster – ${direction} (beste Zeit: ${bestTime}).`);
           }
         });
       }
@@ -16659,7 +16660,12 @@ export default function WeatherApp() {
     const cometWindowScore = clamp(weatherScore + (moonIllumination <= ASTRONOMY_MOON_DARK_THRESHOLD ? ASTRONOMY_MOON_DARK_BONUS : moonIllumination >= ASTRONOMY_MOON_BRIGHT_THRESHOLD ? ASTRONOMY_MOON_BRIGHT_PENALTY : ASTRONOMY_MOON_MEDIUM_PENALTY));
     const cometChance = getChanceText(cometWindowScore);
     const nowMs = nowDate.getTime();
-    const currentComets = KNOWN_COMETS.filter(c => nowMs >= c.visibleFrom.getTime() && nowMs <= c.visibleUntil.getTime());
+    const currentComets = KNOWN_COMETS.filter((c) => (
+      !c.photoOnly
+      && nowMs >= c.visibleFrom.getTime()
+      && nowMs <= c.visibleUntil.getTime()
+      && cometWindowScore >= ASTRONOMY_COMET_MIN_CHANCE_SCORE
+    ));
 
     return {
       weatherScore,
@@ -18862,7 +18868,7 @@ export default function WeatherApp() {
               </div>
 
               <div className={`${tileBg} rounded-m3-2xl p-4 border shadow-m3-1`}>
-                <div className="text-m3-title-small font-bold mb-2">{lang === 'en' ? 'Comet sightings' : 'Kometen-Sichtung'}</div>
+                <div className="text-m3-title-small font-bold mb-2">{lang === 'en' ? 'Exceptional comet sightings' : 'Außergewöhnliche Kometensichtungen'}</div>
                 <div className="space-y-2 text-sm">
                   {astronomyForecast.currentComets.length > 0 ? (
                     astronomyForecast.currentComets.map((comet) => (
@@ -18885,8 +18891,8 @@ export default function WeatherApp() {
                     <div className="rounded-xl border border-m3-outline-variant/40 px-3 py-2">
                       <div className="text-xs opacity-80">
                         {lang === 'en'
-                          ? 'No known bright comets currently in the database. Check kometen.info or aerith.net/comet/status for the latest discoveries.'
-                          : 'Aktuell keine bekannten hellen Kometen in der Datenbank. Aktuelle Sichtungen auf kometen.info oder aerith.net/comet/status prüfen.'}
+                          ? 'No exceptionally bright and realistically visible comets are currently in the database. Check kometen.info or aerith.net/comet/status for the latest discoveries.'
+                          : 'Aktuell sind keine außergewöhnlich hellen und realistisch sichtbaren Kometen in der Datenbank. Aktuelle Sichtungen auf kometen.info oder aerith.net/comet/status prüfen.'}
                       </div>
                     </div>
                   )}
