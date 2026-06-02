@@ -6,7 +6,6 @@
     <string name="custom_url_scheme">com.barbecubewetterscoutai.app</string>
     <string name="widget_title">Tagesbericht</string>
     <string name="widget_location_current">Aktueller Standort</string>
-    <string name="widget_location_fallback">Aachen</string>
     <string name="widget_description">Aktuelle Wetterlage im Tagesbericht-Stil</string>
     <string name="widget_day_today">Heute</string>
     <string name="widget_day_tomorrow">Morgen</string>

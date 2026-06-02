@@ -57,8 +57,6 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final String DAY_TODAY = "today";
     private static final String DAY_TOMORROW = "tomorrow";
     private static final String TAG = "WeatherHomeWidget";
-    private static final double DEFAULT_LAT = 50.7766;
-    private static final double DEFAULT_LON = 6.0834;
     private static final int HTTP_TIMEOUT_MS = 12000;
     private static final String UNAVAILABLE = "--";
     private static final String WEATHER_API_URL_TEMPLATE =
@@ -720,11 +718,20 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
     private WidgetData fetchWidgetData(Context context) {
         WidgetData cachedData = loadCachedWidgetData(context);
-        WidgetData data = cachedData != null ? cachedData : WidgetData.empty(context);
         Location location = getBestLastKnownLocation(context);
-        double lat = location != null ? location.getLatitude() : DEFAULT_LAT;
-        double lon = location != null ? location.getLongitude() : DEFAULT_LON;
-        data.locationLabel = resolveLocationLabel(context, location, lat, lon);
+        if (location == null) {
+            if (cachedData != null && hasRenderableData(cachedData)) {
+                return cachedData;
+            }
+            WidgetData data = WidgetData.empty(context);
+            data.locationLabel = context.getString(R.string.widget_location_current);
+            return data;
+        }
+
+        WidgetData data = cachedData != null ? cachedData : WidgetData.empty(context);
+        double lat = location.getLatitude();
+        double lon = location.getLongitude();
+        data.locationLabel = resolveLocationLabel(context, lat, lon);
         boolean weatherPayloadReceived = false;
 
         try {
@@ -986,10 +993,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         return best;
     }
 
-    private String resolveLocationLabel(Context context, Location location, double lat, double lon) {
-        if (location == null) {
-            return context.getString(R.string.widget_location_fallback);
-        }
+    private String resolveLocationLabel(Context context, double lat, double lon) {
         try {
             Geocoder geocoder = new Geocoder(context, Locale.getDefault());
             List<Address> addresses = getAddressesForLocation(geocoder, lat, lon);
