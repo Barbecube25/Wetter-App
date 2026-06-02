@@ -177,8 +177,10 @@ const normalizeNotificationSettings = (value) => {
 };
 
 const parseAuroraUtcDate = (value) => {
-  if (typeof value !== 'string' || !value.trim()) return null;
-  const normalized = value.includes('T') ? value.trim() : value.trim().replace(' ', 'T');
+  if (typeof value !== 'string') return null;
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return null;
+  const normalized = trimmedValue.includes('T') ? trimmedValue : trimmedValue.replace(' ', 'T');
   const parsed = new Date(normalized.endsWith('Z') ? normalized : `${normalized}Z`);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
@@ -16556,8 +16558,8 @@ export default function WeatherApp() {
         const lat = Number(currentLoc?.lat ?? homeLoc?.lat ?? 0);
         const { weatherScore, bestSlot, avgCloud, hasWetRisk } = getAuroraObservingAssessment(processedShort);
         const auroraSummary = buildAuroraForecastSummary({ lat, weatherScore, spaceWeatherData });
-        const bestKp = auroraSummary.upcomingMaxKp ?? auroraSummary.currentKp;
-        const localProbability = auroraSummary.localAuroraProbability ?? 0;
+        const strongestKp = auroraSummary.upcomingMaxKp ?? auroraSummary.currentKp;
+        const localProbability = auroraSummary.localAuroraProbability;
         const auroraWindowTime = spaceWeatherData?.upcomingMaxKpTime ? new Date(spaceWeatherData.upcomingMaxKpTime) : bestSlot?.time ?? null;
         const minutesUntilWindow = auroraWindowTime ? Math.round((auroraWindowTime.getTime() - nowDate.getTime()) / 60000) : null;
         const isLeadWindow = minutesUntilWindow === null
@@ -16568,8 +16570,8 @@ export default function WeatherApp() {
           && avgCloud <= 60
           && !hasWetRisk
           && (
-            (bestKp !== null && bestKp >= auroraSummary.auroraKpMin)
-            || localProbability >= AURORA_NOTIFICATION_MIN_LOCAL_PROBABILITY
+            (strongestKp !== null && strongestKp >= auroraSummary.auroraKpMin)
+            || (localProbability !== null && localProbability >= AURORA_NOTIFICATION_MIN_LOCAL_PROBABILITY)
           );
         if (shouldAlertAurora) {
           const windowKey = auroraWindowTime ? auroraWindowTime.toISOString().slice(0, 13) : dateKey;
@@ -16579,9 +16581,10 @@ export default function WeatherApp() {
               ? auroraWindowTime.toLocaleTimeString(isGerman ? 'de-DE' : 'en-US', { hour: '2-digit', minute: '2-digit' })
               : (isGerman ? 'heute Nacht' : 'tonight');
             const bestWindowLabel = auroraWindowTime && isGerman ? `${bestWindowText} Uhr` : bestWindowText;
+            const probabilityText = localProbability !== null ? `${localProbability}%` : (isGerman ? 'k. A.' : 'n/a');
             const body = isGerman
-              ? `Gute Chancen auf Polarlichter. Beste Zeit: ${bestWindowLabel}. Kp bis ${bestKp ?? auroraSummary.auroraKpMin}, lokale NOAA-Chance ${localProbability}%.`
-              : `Good aurora chances ahead. Best time: ${bestWindowLabel}. Kp up to ${bestKp ?? auroraSummary.auroraKpMin}, local NOAA chance ${localProbability}%.`;
+              ? `Gute Chancen auf Polarlichter. Beste Zeit: ${bestWindowLabel}. Kp bis ${strongestKp ?? auroraSummary.auroraKpMin}, lokale NOAA-Chance ${probabilityText}.`
+              : `Good aurora chances ahead. Best time: ${bestWindowLabel}. Kp up to ${strongestKp ?? auroraSummary.auroraKpMin}, local NOAA chance ${probabilityText}.`;
             if (notify(formatBrandedNotificationTitle('🌌', isGerman ? 'Polarlicht-Hinweis' : 'Aurora alert'), styleNotificationBody(body, isGerman), `aurora-${auroraKey}`)) {
               runtime[`aurora:${auroraKey}`] = 'sent';
               persistRuntime();
