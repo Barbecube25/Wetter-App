@@ -718,16 +718,17 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
     private WidgetData fetchWidgetData(Context context) {
         WidgetData cachedData = loadCachedWidgetData(context);
-        WidgetData data = cachedData != null ? cachedData : WidgetData.empty(context);
         Location location = getBestLastKnownLocation(context);
         if (location == null) {
             if (cachedData != null && hasRenderableData(cachedData)) {
                 return cachedData;
             }
+            WidgetData data = WidgetData.empty(context);
             data.locationLabel = context.getString(R.string.widget_location_current);
             return data;
         }
 
+        WidgetData data = cachedData != null ? cachedData : WidgetData.empty(context);
         double lat = location.getLatitude();
         double lon = location.getLongitude();
         data.locationLabel = resolveLocationLabel(context, lat, lon);
