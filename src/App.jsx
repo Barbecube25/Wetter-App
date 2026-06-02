@@ -18868,7 +18868,7 @@ export default function WeatherApp() {
               </div>
 
               <div className={`${tileBg} rounded-m3-2xl p-4 border shadow-m3-1`}>
-                <div className="text-m3-title-small font-bold mb-2">{lang === 'en' ? 'Exceptional comet sightings' : 'Außergewöhnliche Kometen-Sichtung'}</div>
+                <div className="text-m3-title-small font-bold mb-2">{lang === 'en' ? 'Exceptional comet sightings' : 'Außergewöhnliche Kometensichtungen'}</div>
                 <div className="space-y-2 text-sm">
                   {astronomyForecast.currentComets.length > 0 ? (
                     astronomyForecast.currentComets.map((comet) => (
@@ -18891,7 +18891,7 @@ export default function WeatherApp() {
                     <div className="rounded-xl border border-m3-outline-variant/40 px-3 py-2">
                       <div className="text-xs opacity-80">
                         {lang === 'en'
-                          ? 'No exceptionally bright and realistically visible comets are currently in the database. Check kometen.info or aerith.net/comet/status for latest discoveries.'
+                          ? 'No exceptionally bright and realistically visible comets are currently in the database. Check kometen.info or aerith.net/comet/status for the latest discoveries.'
                           : 'Aktuell sind keine außergewöhnlich hellen und realistisch sichtbaren Kometen in der Datenbank. Aktuelle Sichtungen auf kometen.info oder aerith.net/comet/status prüfen.'}
                       </div>
                     </div>
