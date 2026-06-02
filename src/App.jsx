@@ -78,6 +78,15 @@ const WEATHER_NOTIFICATION_DEFAULT_MORNING_TIME = '08:00';
 const WEATHER_NOTIFICATION_DEFAULT_EVENING_TIME = '20:00';
 const WEATHER_BACKGROUND_MORNING_NOTIFICATION_ID = 71001;
 const WEATHER_BACKGROUND_EVENING_NOTIFICATION_ID = 71002;
+const AURORA_KP_API_URL = 'https://services.swpc.noaa.gov/json/planetary_k_index_1m.json';
+const AURORA_KP_FORECAST_API_URL = 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json';
+const AURORA_OVATION_API_URL = 'https://services.swpc.noaa.gov/json/ovation_aurora_latest.json';
+const AURORA_NOTIFICATION_MIN_SCORE = 55;
+const AURORA_NOTIFICATION_MIN_LOCAL_PROBABILITY = 10;
+const AURORA_NOTIFICATION_FALLBACK_START_HOUR = 18;
+const AURORA_NOTIFICATION_FALLBACK_END_HOUR = 2;
+const AURORA_NOTIFICATION_WINDOW_PAST_MINUTES = 60;
+const AURORA_NOTIFICATION_WINDOW_FUTURE_MINUTES = 8 * 60;
 
 // Detect native Capacitor app (Android/iOS) vs. browser
 const isNativeApp = () => typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.() === true;
@@ -95,6 +104,7 @@ const DEFAULT_NOTIFICATION_SETTINGS = {
   morningReport: true,
   eveningReport: true,
   thunderstormLevel4: true,
+  auroraAlert: false,
   rainStartLeads: [WEATHER_NOTIFICATION_LEAD_OPTIONS[1]],
   morningReportTime: WEATHER_NOTIFICATION_DEFAULT_MORNING_TIME,
   eveningReportTime: WEATHER_NOTIFICATION_DEFAULT_EVENING_TIME,
@@ -158,10 +168,162 @@ const normalizeNotificationSettings = (value) => {
     morningReport: source.morningReport !== undefined ? Boolean(source.morningReport) : DEFAULT_NOTIFICATION_SETTINGS.morningReport,
     eveningReport: source.eveningReport !== undefined ? Boolean(source.eveningReport) : DEFAULT_NOTIFICATION_SETTINGS.eveningReport,
     thunderstormLevel4: source.thunderstormLevel4 !== undefined ? Boolean(source.thunderstormLevel4) : DEFAULT_NOTIFICATION_SETTINGS.thunderstormLevel4,
+    auroraAlert: source.auroraAlert !== undefined ? Boolean(source.auroraAlert) : DEFAULT_NOTIFICATION_SETTINGS.auroraAlert,
     rainStartLeads: leads,
     morningReportTime: normalizeNotificationTime(source.morningReportTime, DEFAULT_NOTIFICATION_SETTINGS.morningReportTime),
     eveningReportTime: normalizeNotificationTime(source.eveningReportTime, DEFAULT_NOTIFICATION_SETTINGS.eveningReportTime),
     notificationActivities: Array.isArray(source.notificationActivities) ? source.notificationActivities.filter(k => typeof k === 'string') : DEFAULT_NOTIFICATION_SETTINGS.notificationActivities,
+  };
+};
+
+const parseAuroraUtcDate = (value) => {
+  if (typeof value !== 'string') return null;
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return null;
+  const normalized = trimmedValue.includes('T') ? trimmedValue : trimmedValue.replace(' ', 'T');
+  const parsed = new Date(normalized.endsWith('Z') ? normalized : `${normalized}Z`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const toFiniteNumber = (value) => {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+};
+
+const clampScore = (value, min = 0, max = 100) => {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return min;
+  return Math.max(min, Math.min(max, numericValue));
+};
+
+const getAuroraRequiredKp = (lat) => (
+  lat >= 65 ? 1 : lat >= 60 ? 3 : lat >= 55 ? 4 : lat >= 50 ? 5 : lat >= 45 ? 6 : 7
+);
+
+const getAuroraObservingAssessment = (processedShort) => {
+  const safeShort = Array.isArray(processedShort) ? processedShort : [];
+  const observingSlots = safeShort
+    .filter((slot) => {
+      const hour = slot?.time?.getHours?.();
+      return typeof hour === 'number' && (hour >= ASTRONOMY_OBSERVATION_START_HOUR || hour <= ASTRONOMY_OBSERVATION_END_HOUR);
+    })
+    .slice(0, 12);
+  const slots = observingSlots.length > 0 ? observingSlots : safeShort.slice(0, 12);
+  const getSlotScore = (slot) => {
+    if (!slot) return 30;
+    const cloud = Number(slot.cloudCover ?? 70);
+    const precip = Number(slot.precip ?? 0);
+    const snow = Number(slot.snow ?? 0);
+    const wind = Number(slot.wind ?? 0);
+    const visibility = Number(slot.visibility ?? 10000);
+    const fogPenalty = ASTRONOMY_FOG_WEATHER_CODES.includes(slot.code) ? 20 : 0;
+    const precipPenalty = (precip > LIGHT_PRECIP_THRESHOLD || snow > LIGHT_PRECIP_THRESHOLD) ? 35 : 0;
+    const windPenalty = wind > ASTRONOMY_WIND_PENALTY_THRESHOLD ? (wind - ASTRONOMY_WIND_PENALTY_THRESHOLD) * ASTRONOMY_WIND_PENALTY_FACTOR : 0;
+    const cloudPenalty = cloud * ASTRONOMY_CLOUD_PENALTY_FACTOR;
+    const visibilityBonus = visibility >= ASTRONOMY_EXCELLENT_VIS_THRESHOLD ? ASTRONOMY_EXCELLENT_VIS_BONUS : visibility < ASTRONOMY_POOR_VIS_THRESHOLD ? ASTRONOMY_POOR_VIS_PENALTY : 0;
+    return clampScore(Math.round(100 - cloudPenalty - precipPenalty - windPenalty - fogPenalty + visibilityBonus));
+  };
+  const scoreList = slots.map((slot) => getSlotScore(slot));
+  return {
+    slots,
+    weatherScore: scoreList.length > 0 ? Math.round(scoreList.reduce((sum, value) => sum + value, 0) / scoreList.length) : 35,
+    bestSlot: slots.reduce((best, slot) => {
+      if (!best) return slot;
+      return getSlotScore(slot) > getSlotScore(best) ? slot : best;
+    }, null),
+    avgCloud: slots.length > 0
+      ? Math.round(slots.reduce((sum, slot) => sum + Number(slot.cloudCover ?? 70), 0) / slots.length)
+      : 70,
+    hasWetRisk: slots.some((slot) => Number(slot.precip ?? 0) > LIGHT_PRECIP_THRESHOLD || Number(slot.snow ?? 0) > LIGHT_PRECIP_THRESHOLD),
+  };
+};
+
+const buildAuroraSpaceWeatherData = ({ kpRows, kpForecastRows, ovationData, lat, lon }) => {
+  const latestRow = Array.isArray(kpRows) && kpRows.length > 0 ? kpRows[kpRows.length - 1] : null;
+  const currentKp = toFiniteNumber(latestRow?.kp_index ?? latestRow?.estimated_kp ?? latestRow?.kp);
+  const currentKpTime = parseAuroraUtcDate(latestRow?.time_tag);
+  const now = Date.now();
+  const upcomingRows = Array.isArray(kpForecastRows)
+    ? kpForecastRows
+        .map((row) => ({
+          ...row,
+          parsedTime: parseAuroraUtcDate(row?.time_tag),
+          kpValue: toFiniteNumber(row?.kp),
+        }))
+        .filter((row) => row.parsedTime && row.kpValue !== null && row.parsedTime.getTime() >= now && row.parsedTime.getTime() <= now + (12 * 60 * 60 * 1000))
+    : [];
+  const strongestUpcoming = upcomingRows.reduce((best, row) => {
+    if (!best) return row;
+    if (row.kpValue > best.kpValue) return row;
+    if (row.kpValue === best.kpValue && row.parsedTime < best.parsedTime) return row;
+    return best;
+  }, null);
+
+  let localAuroraProbability = null;
+  let ovationForecastTime = null;
+  if (ovationData && Array.isArray(ovationData.coordinates) && Number.isFinite(lat) && Number.isFinite(lon)) {
+    let nearestDistance = Infinity;
+    ovationData.coordinates.forEach((entry) => {
+      if (!Array.isArray(entry) || entry.length < 3) return;
+      const entryLonRaw = toFiniteNumber(entry[0]);
+      const entryLat = toFiniteNumber(entry[1]);
+      const entryProb = toFiniteNumber(entry[2]);
+      if (entryLonRaw === null || entryLat === null || entryProb === null) return;
+      const entryLon = entryLonRaw > 180 ? entryLonRaw - 360 : entryLonRaw;
+      const distance = ((entryLat - lat) ** 2) + ((entryLon - lon) ** 2);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        localAuroraProbability = clampScore(Math.round(entryProb));
+      }
+    });
+    ovationForecastTime = parseAuroraUtcDate(ovationData['Forecast Time'] || ovationData.forecast_time || ovationData.time_tag);
+  }
+
+  if (currentKp === null && !strongestUpcoming && localAuroraProbability === null) {
+    return null;
+  }
+
+  return {
+    currentKp,
+    currentKpTime: currentKpTime ? currentKpTime.toISOString() : null,
+    upcomingMaxKp: strongestUpcoming?.kpValue ?? null,
+    upcomingMaxKpTime: strongestUpcoming?.parsedTime ? strongestUpcoming.parsedTime.toISOString() : null,
+    localAuroraProbability,
+    ovationForecastTime: ovationForecastTime ? ovationForecastTime.toISOString() : null,
+  };
+};
+
+const buildAuroraForecastSummary = ({ lat, weatherScore, spaceWeatherData }) => {
+  const auroraBase = lat >= ASTRONOMY_HIGH_LAT_THRESHOLD ? ASTRONOMY_HIGH_LAT_AURORA_BASE : lat >= ASTRONOMY_MID_LAT_THRESHOLD ? ASTRONOMY_MID_LAT_AURORA_BASE : ASTRONOMY_LOW_LAT_AURORA_BASE;
+  const fallbackChanceScore = clampScore(auroraBase + (weatherScore - 45));
+  const auroraKpMin = getAuroraRequiredKp(lat);
+  const currentKp = toFiniteNumber(spaceWeatherData?.currentKp);
+  const upcomingMaxKp = toFiniteNumber(spaceWeatherData?.upcomingMaxKp);
+  const localAuroraProbability = toFiniteNumber(spaceWeatherData?.localAuroraProbability);
+  const strongestKp = upcomingMaxKp ?? currentKp;
+  const hasLiveData = currentKp !== null || upcomingMaxKp !== null || localAuroraProbability !== null;
+  if (!hasLiveData) {
+    return {
+      auroraKpMin,
+      auroraChanceScore: fallbackChanceScore,
+      currentKp,
+      upcomingMaxKp,
+      localAuroraProbability,
+      hasLiveData: false,
+    };
+  }
+  const kpReadinessScore = strongestKp === null
+    ? fallbackChanceScore
+    : clampScore(Math.round((strongestKp - auroraKpMin + 1.5) * 18));
+  const localProbabilityScore = localAuroraProbability ?? fallbackChanceScore;
+  const solarScore = clampScore(Math.round((kpReadinessScore * 0.6) + (localProbabilityScore * 0.4)));
+  return {
+    auroraKpMin,
+    auroraChanceScore: clampScore(Math.round((weatherScore * 0.45) + (solarScore * 0.55))),
+    currentKp,
+    upcomingMaxKp,
+    localAuroraProbability,
+    hasLiveData: true,
   };
 };
 
@@ -7276,6 +7438,13 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                                   <span>{isGerman ? 'Gewitter Warnstufe 4 in den nächsten 2 Stunden' : 'Thunderstorm warning level 4 within 2 hours'}</span>
                                   {notificationSettings.thunderstormLevel4 && <Check size={14} />}
                               </button>
+                              <button
+                                  onClick={() => updateNotifications({ auroraAlert: !notificationSettings.auroraAlert })}
+                                  className={`w-full py-2 px-3 rounded-m3-sm text-sm font-bold transition flex items-center justify-between gap-2 ${notificationSettings.auroraAlert ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'bg-m3-surface-container-high text-m3-on-surface-variant hover:text-m3-on-surface'}`}
+                              >
+                                  <span>{isGerman ? 'Polarlicht-Hinweis bei guten Chancen' : 'Aurora alert when conditions are good'}</span>
+                                  {notificationSettings.auroraAlert && <Check size={14} />}
+                              </button>
                               <div className="rounded-m3-sm bg-m3-surface-container-high p-2">
                                   <div className="text-xs font-bold text-m3-on-surface-variant mb-2">
                                       {isGerman ? 'Regenstart in:' : 'Rain starts in:'}
@@ -14014,6 +14183,7 @@ export default function WeatherApp() {
   const [dwdPollenRegion, setDwdPollenRegion] = useState(null);
   const [dwdPollenForecast, setDwdPollenForecast] = useState(null);
   const [openMeteoPollenForecast, setOpenMeteoPollenForecast] = useState(null);
+  const [spaceWeatherData, setSpaceWeatherData] = useState(null);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [chartView, setChartView] = useState('hourly');
@@ -14892,6 +15062,7 @@ export default function WeatherApp() {
     setDwdWarnings([]);
     setDwdPollenRegion(null);
     setOpenMeteoPollenForecast(null);
+    setSpaceWeatherData(null);
     try {
       const { lat, lon } = currentLoc;
       
@@ -14905,6 +15076,9 @@ export default function WeatherApp() {
       const urlDwd = `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`;
       const urlAirQuality = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi,pm10,pm2_5,alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&hourly=european_aqi,alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&past_days=1&forecast_days=3&timezone=auto`;
       const urlDwdPollen = 'https://opendata.dwd.de/climate_environment/health/alerts/s31fg.json';
+      const urlAuroraKp = AURORA_KP_API_URL;
+      const urlAuroraKpForecast = AURORA_KP_FORECAST_API_URL;
+      const urlAuroraOvation = AURORA_OVATION_API_URL;
 
       // Climate normals: fetch same month last year from archive API for historical context
       const nowForClimate = new Date();
@@ -14913,7 +15087,7 @@ export default function WeatherApp() {
       const climLastDay = new Date(lastYear, nowForClimate.getMonth() + 1, 0).getDate();
       const urlClimate = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${lastYear}-${climMonth}-01&end_date=${lastYear}-${climMonth}-${climLastDay}&daily=temperature_2m_mean&timezone=auto`;
 
-      const [resShort, resLong, resSunriseSunset, resDwd, resAirQuality, resClimate, resDwdPollen, radarNowcast] = await Promise.all([
+      const [resShort, resLong, resSunriseSunset, resDwd, resAirQuality, resClimate, resDwdPollen, resAuroraKp, resAuroraKpForecast, resAuroraOvation, radarNowcast] = await Promise.all([
         fetch(urlShort), 
         fetch(urlLong), 
         fetch(urlSunriseSunset).catch(() => ({ ok: false })),
@@ -14921,6 +15095,9 @@ export default function WeatherApp() {
         fetch(urlAirQuality).catch(() => ({ ok: false })),
         fetch(urlClimate).catch(() => ({ ok: false })),
         isInGermany(lat, lon) ? fetch(urlDwdPollen).catch(() => ({ ok: false })) : Promise.resolve({ ok: false }),
+        fetch(urlAuroraKp, { cache: 'no-store' }).catch(() => ({ ok: false })),
+        fetch(urlAuroraKpForecast, { cache: 'no-store' }).catch(() => ({ ok: false })),
+        fetch(urlAuroraOvation, { cache: 'no-store' }).catch(() => ({ ok: false })),
         fetchRadarNowcast(lat, lon)
       ]);
       
@@ -14960,6 +15137,17 @@ export default function WeatherApp() {
          const dwdJson = await resDwd.json();
          setDwdWarnings(dwdJson.alerts || []);
       }
+
+      const auroraKpRows = resAuroraKp.ok ? await resAuroraKp.json().catch(() => null) : null;
+      const auroraForecastRows = resAuroraKpForecast.ok ? await resAuroraKpForecast.json().catch(() => null) : null;
+      const auroraOvation = resAuroraOvation.ok ? await resAuroraOvation.json().catch(() => null) : null;
+      setSpaceWeatherData(buildAuroraSpaceWeatherData({
+        kpRows: auroraKpRows,
+        kpForecastRows: auroraForecastRows,
+        ovationData: auroraOvation,
+        lat,
+        lon,
+      }));
       
       let aqData = null;
       if (resAirQuality.ok) {
@@ -16226,6 +16414,7 @@ export default function WeatherApp() {
     const hasAnyNotificationTrigger = notifications.morningReport
       || notifications.eveningReport
       || notifications.thunderstormLevel4
+      || notifications.auroraAlert
       || notifications.rainStartLeads.length > 0;
     if (!hasAnyNotificationTrigger) return;
     if (notificationPermission !== 'granted') return;
@@ -16365,6 +16554,45 @@ export default function WeatherApp() {
         }
       }
 
+      if (notifications.auroraAlert) {
+        const lat = Number(currentLoc?.lat ?? homeLoc?.lat ?? 0);
+        const { weatherScore, bestSlot, avgCloud, hasWetRisk } = getAuroraObservingAssessment(processedShort);
+        const auroraSummary = buildAuroraForecastSummary({ lat, weatherScore, spaceWeatherData });
+        const strongestKp = auroraSummary.upcomingMaxKp ?? auroraSummary.currentKp;
+        const localProbability = auroraSummary.localAuroraProbability;
+        const auroraWindowTime = spaceWeatherData?.upcomingMaxKpTime ? new Date(spaceWeatherData.upcomingMaxKpTime) : bestSlot?.time ?? null;
+        const minutesUntilWindow = auroraWindowTime ? Math.round((auroraWindowTime.getTime() - nowDate.getTime()) / 60000) : null;
+        const isLeadWindow = minutesUntilWindow === null
+          ? (nowDate.getHours() >= AURORA_NOTIFICATION_FALLBACK_START_HOUR || nowDate.getHours() <= AURORA_NOTIFICATION_FALLBACK_END_HOUR)
+          : minutesUntilWindow >= -AURORA_NOTIFICATION_WINDOW_PAST_MINUTES && minutesUntilWindow <= AURORA_NOTIFICATION_WINDOW_FUTURE_MINUTES;
+        const shouldAlertAurora = isLeadWindow
+          && auroraSummary.auroraChanceScore >= AURORA_NOTIFICATION_MIN_SCORE
+          && avgCloud <= 60
+          && !hasWetRisk
+          && (
+            (strongestKp !== null && strongestKp >= auroraSummary.auroraKpMin)
+            || (localProbability !== null && localProbability >= AURORA_NOTIFICATION_MIN_LOCAL_PROBABILITY)
+          );
+        if (shouldAlertAurora) {
+          const windowKey = auroraWindowTime ? auroraWindowTime.toISOString().slice(0, 13) : dateKey;
+          const auroraKey = `${locationKey}:${windowKey}`;
+          if (runtime[`aurora:${auroraKey}`] !== 'sent') {
+            const bestWindowText = auroraWindowTime
+              ? auroraWindowTime.toLocaleTimeString(isGerman ? 'de-DE' : 'en-US', { hour: '2-digit', minute: '2-digit' })
+              : (isGerman ? 'heute Nacht' : 'tonight');
+            const bestWindowLabel = auroraWindowTime && isGerman ? `${bestWindowText} Uhr` : bestWindowText;
+            const probabilityText = localProbability !== null ? `${localProbability}%` : (isGerman ? 'k. A.' : 'n/a');
+            const body = isGerman
+              ? `Gute Chancen auf Polarlichter. Beste Zeit: ${bestWindowLabel}. Kp bis ${strongestKp ?? auroraSummary.auroraKpMin}, lokale NOAA-Chance ${probabilityText}.`
+              : `Good aurora chances ahead. Best time: ${bestWindowLabel}. Kp up to ${strongestKp ?? auroraSummary.auroraKpMin}, local NOAA chance ${probabilityText}.`;
+            if (notify(formatBrandedNotificationTitle('🌌', isGerman ? 'Polarlicht-Hinweis' : 'Aurora alert'), styleNotificationBody(body, isGerman), `aurora-${auroraKey}`)) {
+              runtime[`aurora:${auroraKey}`] = 'sent';
+              persistRuntime();
+            }
+          }
+        }
+      }
+
       if (notifications.rainStartLeads.length > 0) {
         const nowcast = shortTermData?.radar_nowcast;
         if (Array.isArray(nowcast?.time) && Array.isArray(nowcast?.precipitation)) {
@@ -16414,7 +16642,7 @@ export default function WeatherApp() {
     checkNotifications();
     const timer = window.setInterval(checkNotifications, NOTIFICATION_CHECK_INTERVAL_MS);
     return () => window.clearInterval(timer);
-  }, [settings.notifications, settings.activityParams, settings.customActivities, notificationPermission, currentLoc, processedLong, processedShort, shortTermData, dwdWarnings, isGerman]);
+  }, [settings.notifications, settings.activityParams, settings.customActivities, notificationPermission, currentLoc, homeLoc, processedLong, processedShort, shortTermData, dwdWarnings, isGerman, spaceWeatherData]);
   
   // LIVE oder DEMO Daten?
   const liveCurrent = useMemo(() => {
@@ -16527,32 +16755,7 @@ export default function WeatherApp() {
     const locale = lang === 'en' ? 'en-US' : 'de-DE';
     const dayMonthFormatter = new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit' });
     const nowDate = new Date();
-    const observingSlots = processedShort
-      .filter((slot) => {
-        const hour = slot.time.getHours();
-        return hour >= ASTRONOMY_OBSERVATION_START_HOUR || hour <= ASTRONOMY_OBSERVATION_END_HOUR;
-      })
-      .slice(0, 12);
-    const slots = observingSlots.length > 0 ? observingSlots : processedShort.slice(0, 12);
-    const clamp = (value, min = 0, max = 100) => Math.max(min, Math.min(max, value));
-    const getSlotScore = (slot) => {
-      if (!slot) return 30;
-      const cloud = Number(slot.cloudCover ?? 70);
-      const precip = Number(slot.precip ?? 0);
-      const snow = Number(slot.snow ?? 0);
-      const wind = Number(slot.wind ?? 0);
-      const visibility = Number(slot.visibility ?? 10000);
-      const fogPenalty = ASTRONOMY_FOG_WEATHER_CODES.includes(slot.code) ? 20 : 0;
-      const precipPenalty = (precip > LIGHT_PRECIP_THRESHOLD || snow > LIGHT_PRECIP_THRESHOLD) ? 35 : 0;
-      const windPenalty = wind > ASTRONOMY_WIND_PENALTY_THRESHOLD ? (wind - ASTRONOMY_WIND_PENALTY_THRESHOLD) * ASTRONOMY_WIND_PENALTY_FACTOR : 0;
-      const cloudPenalty = cloud * ASTRONOMY_CLOUD_PENALTY_FACTOR;
-      const visibilityBonus = visibility >= ASTRONOMY_EXCELLENT_VIS_THRESHOLD ? ASTRONOMY_EXCELLENT_VIS_BONUS : visibility < ASTRONOMY_POOR_VIS_THRESHOLD ? ASTRONOMY_POOR_VIS_PENALTY : 0;
-      return clamp(Math.round(100 - cloudPenalty - precipPenalty - windPenalty - fogPenalty + visibilityBonus));
-    };
-    const scoreList = slots.map((slot) => getSlotScore(slot));
-    const weatherScore = scoreList.length > 0
-      ? Math.round(scoreList.reduce((sum, value) => sum + value, 0) / scoreList.length)
-      : 35;
+    const { slots, weatherScore, bestSlot, avgCloud, hasWetRisk } = getAuroraObservingAssessment(processedShort);
     const getChanceText = (score) => {
       if (score >= 80) return lang === 'en' ? 'very good' : 'sehr gut';
       if (score >= 60) return lang === 'en' ? 'good' : 'gut';
@@ -16560,10 +16763,6 @@ export default function WeatherApp() {
       return lang === 'en' ? 'low' : 'gering';
     };
 
-    const bestSlot = slots.reduce((best, slot) => {
-      if (!best) return slot;
-      return getSlotScore(slot) > getSlotScore(best) ? slot : best;
-    }, null);
     const formatDate = (date) => dayMonthFormatter.format(date);
     const formatTime = (date) => date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
     const bestWindow = bestSlot
@@ -16578,7 +16777,6 @@ export default function WeatherApp() {
     const avgNightWind = slots.length > 0
       ? Math.round(slots.reduce((sum, slot) => sum + Number(slot.wind ?? 0), 0) / slots.length)
       : Math.round(current.wind ?? 0);
-    const hasWetRisk = slots.some((slot) => Number(slot.precip ?? 0) > LIGHT_PRECIP_THRESHOLD || Number(slot.snow ?? 0) > LIGHT_PRECIP_THRESHOLD);
     const moonIllumination = getMoonIllumination(getMoonPhaseExact(nowDate));
 
     const clothing = [];
@@ -16625,19 +16823,15 @@ export default function WeatherApp() {
           : d === 1
             ? (lang === 'en' ? 'tomorrow' : 'morgen')
             : `${d} ${lang === 'en' ? 'days' : 'Tage'}`,
-        chance: getChanceText(clamp(weatherScore + (d <= ASTRONOMY_METEOR_PROXIMITY_DAYS ? ASTRONOMY_METEOR_PROXIMITY_BONUS : 0))),
+        chance: getChanceText(clampScore(weatherScore + (d <= ASTRONOMY_METEOR_PROXIMITY_DAYS ? ASTRONOMY_METEOR_PROXIMITY_BONUS : 0))),
       };
     }).sort((a, b) => a.peakDate - b.peakDate).slice(0, 3);
 
     const lat = Number(currentLoc?.lat ?? homeLoc?.lat ?? 0);
-    const avgCloud = slots.length > 0
-      ? Math.round(slots.reduce((sum, slot) => sum + Number(slot.cloudCover ?? 70), 0) / slots.length)
-      : Math.round(current.cloudCover ?? 70);
-    const auroraBase = lat >= ASTRONOMY_HIGH_LAT_THRESHOLD ? ASTRONOMY_HIGH_LAT_AURORA_BASE : lat >= ASTRONOMY_MID_LAT_THRESHOLD ? ASTRONOMY_MID_LAT_AURORA_BASE : ASTRONOMY_LOW_LAT_AURORA_BASE;
-    const auroraChanceScore = clamp(auroraBase + (weatherScore - 45));
+    const auroraSummary = buildAuroraForecastSummary({ lat, weatherScore, spaceWeatherData });
+    const auroraChanceScore = auroraSummary.auroraChanceScore;
     const auroraChance = getChanceText(auroraChanceScore);
-    // Minimum Kp-index required to see aurora at this latitude
-    const auroraKpMin = lat >= 65 ? 1 : lat >= 60 ? 3 : lat >= 55 ? 4 : lat >= 50 ? 5 : lat >= 45 ? 6 : 7;
+    const auroraKpMin = auroraSummary.auroraKpMin;
     const auroraLatText = lat >= 65
       ? (lang === 'en' ? 'subarctic – frequent aurora' : 'Subarktisch – häufige Polarlichter')
       : lat >= 54
@@ -16645,11 +16839,21 @@ export default function WeatherApp() {
         : lat >= 50
           ? (lang === 'en' ? 'central – requires significant solar storm (Kp ≥ ' + auroraKpMin + ')' : 'Mitte – starker Sonnensturm nötig (Kp ≥ ' + auroraKpMin + ')')
           : (lang === 'en' ? 'southern – very rarely, only extreme events (Kp ≥ ' + auroraKpMin + ')' : 'Süd – sehr selten, nur Extremereignisse (Kp ≥ ' + auroraKpMin + ')');
+    const auroraCurrentKp = auroraSummary.currentKp;
+    const auroraForecastKp = auroraSummary.upcomingMaxKp ?? auroraCurrentKp;
+    const auroraLocalProbability = auroraSummary.localAuroraProbability;
+    const auroraForecastTime = spaceWeatherData?.upcomingMaxKpTime ? new Date(spaceWeatherData.upcomingMaxKpTime) : null;
+    const auroraUpdatedTime = spaceWeatherData?.ovationForecastTime ? new Date(spaceWeatherData.ovationForecastTime) : spaceWeatherData?.currentKpTime ? new Date(spaceWeatherData.currentKpTime) : null;
+    const auroraStatusText = !auroraSummary.hasLiveData
+      ? (lang === 'en' ? 'Live NOAA solar activity is currently unavailable. Weather and latitude are used as fallback.' : 'Live-NOAA-Sonnendaten sind gerade nicht verfügbar. Es wird auf Wetter und Breitengrad zurückgegriffen.')
+      : auroraForecastKp !== null && auroraForecastKp >= auroraKpMin
+        ? (lang === 'en' ? 'Solar activity is currently strong enough for your latitude if the sky stays clear.' : 'Die Sonnenaktivität reicht aktuell für deinen Breitengrad aus, wenn der Himmel frei bleibt.')
+        : (lang === 'en' ? 'Weather is favourable, but solar activity still needs to increase for your latitude.' : 'Das Wetter passt, aber die Sonnenaktivität muss für deinen Breitengrad noch zulegen.');
 
     const month = nowDate.getMonth() + 1;
     const nlcSeason = month >= 5 && month <= 8;
     const nlcLatBoost = lat >= ASTRONOMY_NLC_HIGH_LAT_THRESHOLD ? ASTRONOMY_NLC_HIGH_LAT_BOOST : lat >= ASTRONOMY_NLC_MID_LAT_THRESHOLD ? ASTRONOMY_NLC_MID_LAT_BOOST : ASTRONOMY_NLC_LOW_LAT_PENALTY;
-    const nlcChanceScore = nlcSeason ? clamp(45 + nlcLatBoost + (weatherScore - 50)) : 10;
+    const nlcChanceScore = nlcSeason ? clampScore(45 + nlcLatBoost + (weatherScore - 50)) : 10;
     const nlcChance = getChanceText(nlcChanceScore);
     const nlcLatZone = lat >= 54
       ? (lang === 'en' ? 'optimal zone (≥54°N) – excellent conditions in season' : 'Optimale Zone (≥54°N) – beste Bedingungen in der Saison')
@@ -16657,7 +16861,7 @@ export default function WeatherApp() {
         ? (lang === 'en' ? 'good zone (50–54°N) – visible in season with clear skies' : 'Gute Zone (50–54°N) – bei klarem Himmel in der Saison sichtbar')
         : (lang === 'en' ? 'rarely visible at this latitude – only during exceptional NLC activity' : 'Selten sichtbar auf diesem Breitengrad – nur bei besonders starker NLC-Aktivität');
 
-    const cometWindowScore = clamp(weatherScore + (moonIllumination <= ASTRONOMY_MOON_DARK_THRESHOLD ? ASTRONOMY_MOON_DARK_BONUS : moonIllumination >= ASTRONOMY_MOON_BRIGHT_THRESHOLD ? ASTRONOMY_MOON_BRIGHT_PENALTY : ASTRONOMY_MOON_MEDIUM_PENALTY));
+    const cometWindowScore = clampScore(weatherScore + (moonIllumination <= ASTRONOMY_MOON_DARK_THRESHOLD ? ASTRONOMY_MOON_DARK_BONUS : moonIllumination >= ASTRONOMY_MOON_BRIGHT_THRESHOLD ? ASTRONOMY_MOON_BRIGHT_PENALTY : ASTRONOMY_MOON_MEDIUM_PENALTY));
     const cometChance = getChanceText(cometWindowScore);
     const nowMs = nowDate.getTime();
     const currentComets = KNOWN_COMETS.filter((c) => (
@@ -16683,6 +16887,13 @@ export default function WeatherApp() {
       auroraChanceScore,
       auroraKpMin,
       auroraLatText,
+      auroraCurrentKp,
+      auroraForecastKp,
+      auroraForecastTime: auroraForecastTime ? auroraForecastTime.toISOString() : null,
+      auroraLocalProbability,
+      auroraHasLiveData: auroraSummary.hasLiveData,
+      auroraStatusText,
+      auroraUpdatedTime: auroraUpdatedTime ? auroraUpdatedTime.toISOString() : null,
       nlcChance,
       nlcChanceScore,
       nlcLatZone,
@@ -16691,7 +16902,7 @@ export default function WeatherApp() {
       nlcSeason,
       lat,
     };
-  }, [processedShort, lang, current, currentLoc, homeLoc]);
+  }, [processedShort, lang, current, currentLoc, homeLoc, spaceWeatherData]);
   
   // Snow should be treated like rain - only show if weather code explicitly indicates snow, not based on temperature
   const isSnowing = current.code && SNOW_WEATHER_CODES.includes(current.code);
@@ -18908,7 +19119,10 @@ export default function WeatherApp() {
                   <div className="rounded-xl border border-m3-outline-variant/40 px-3 py-2">
                     <div className="flex items-center justify-between gap-2">
                       <div className="font-semibold">{lang === 'en' ? 'Your location' : 'Dein Standort'}</div>
-                      <div className="text-xs font-bold text-m3-primary">{astronomyForecast.auroraChanceScore}%</div>
+                      <div className="text-right">
+                        <div className="text-xs font-bold text-m3-primary">{astronomyForecast.auroraChanceScore}%</div>
+                        <div className="text-[11px] opacity-70">{astronomyForecast.auroraChance}</div>
+                      </div>
                     </div>
                     <div className="text-xs opacity-80 mt-1">
                       📍 {Math.abs(Math.round(astronomyForecast.lat))}°{astronomyForecast.lat >= 0 ? 'N' : 'S'} – {astronomyForecast.auroraLatText}
@@ -18917,12 +19131,36 @@ export default function WeatherApp() {
                       ⚡ {lang === 'en' ? 'Min. Kp-index required' : 'Mindest-Kp-Index nötig'}: <span className="font-semibold">Kp ≥ {astronomyForecast.auroraKpMin}</span>
                     </div>
                     <div className="text-xs opacity-80">
+                      🧲 {lang === 'en' ? 'Current Kp' : 'Aktueller Kp'}: <span className="font-semibold">{astronomyForecast.auroraCurrentKp ?? '–'}</span>
+                      {' · '}
+                      {lang === 'en' ? 'Next peak' : 'Nächstes Maximum'}: <span className="font-semibold">
+                        {astronomyForecast.auroraForecastKp ?? '–'}
+                        {astronomyForecast.auroraForecastTime
+                          ? ` @ ${new Date(astronomyForecast.auroraForecastTime).toLocaleTimeString(lang === 'en' ? 'en-US' : 'de-DE', { hour: '2-digit', minute: '2-digit' })}`
+                          : ''}
+                      </span>
+                    </div>
+                    <div className="text-xs opacity-80">
+                      🌌 NOAA OVATION: <span className="font-semibold">{astronomyForecast.auroraLocalProbability ?? '–'}%</span>
+                      {' · '}
+                      {lang === 'en' ? 'Weather window' : 'Wetterfenster'}: <span className="font-semibold">{astronomyForecast.avgCloud}% {lang === 'en' ? 'clouds' : 'Wolken'}</span>
+                    </div>
+                    <div className="text-xs opacity-80">
                       🕐 {lang === 'en' ? 'Best time' : 'Beste Zeit'}: 22:30–02:30 {lang === 'en' ? '(darkest window)' : '(dunkelste Zeit)'}
                     </div>
+                    <div className="text-xs opacity-80">
+                      ✨ {astronomyForecast.auroraStatusText}
+                    </div>
                     <div className="text-xs mt-1 opacity-60">
-                      {lang === 'en'
-                        ? 'Probability based on location & weather. Solar activity (Kp) not included – check spaceweather.com for live Kp data.'
-                        : 'Wahrscheinlichkeit basiert auf Standort & Wetter. Sonnenaktivität (Kp) nicht enthalten – aktuelle Kp-Werte auf spaceweather.com.'}
+                      {astronomyForecast.auroraHasLiveData
+                        ? (
+                          lang === 'en'
+                            ? `Live NOAA Kp and OVATION data included${astronomyForecast.auroraUpdatedTime ? ` · updated ${new Date(astronomyForecast.auroraUpdatedTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}` : ''}.`
+                            : `Live-NOAA-Kp- und OVATION-Daten enthalten${astronomyForecast.auroraUpdatedTime ? ` · aktualisiert ${new Date(astronomyForecast.auroraUpdatedTime).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr` : ''}.`
+                        )
+                        : (lang === 'en'
+                          ? 'Live solar activity could not be loaded, so the score currently uses weather and latitude only.'
+                          : 'Live-Sonnenaktivität konnte nicht geladen werden, daher basiert der Score aktuell nur auf Wetter und Breitengrad.')}
                     </div>
                   </div>
                 </div>
