@@ -7227,7 +7227,7 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                                             : 'Permission blocked. Please enable it in browser/system settings.'))
                                     : (isGerman ? 'Beim Aktivieren wirst du nach der Berechtigung gefragt.' : 'You will be asked for permission when enabling.')}
                           </p>
-                          <div className={`mt-3 space-y-2 ${notificationSettings.enabled ? '' : 'opacity-60 pointer-events-none'}`}>
+                          <div className={`mt-3 space-y-2 ${notificationSettings.enabled ? '' : 'opacity-80'}`}>
                               <button
                                   onClick={() => updateNotifications({ morningReport: !notificationSettings.morningReport })}
                                   className={`w-full py-2 px-3 rounded-m3-sm text-sm font-bold transition flex items-center justify-between gap-2 ${notificationSettings.morningReport ? 'bg-m3-primary-container shadow-m3-1 text-m3-on-primary-container' : 'bg-m3-surface-container-high text-m3-on-surface-variant hover:text-m3-on-surface'}`}
