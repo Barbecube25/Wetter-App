@@ -7449,6 +7449,13 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                                   <div className="text-xs font-bold text-m3-on-surface-variant mb-2">
                                       {isGerman ? 'Regenstart in:' : 'Rain starts in:'}
                                   </div>
+                                  <p className="text-xs text-m3-on-surface-variant mb-2 opacity-80">
+                                      {notificationSettings.rainStartLeads.length > 0
+                                          ? (isGerman
+                                              ? `Aktuell: ${notificationSettings.rainStartLeads[0]} Minuten vorher`
+                                              : `Current: ${notificationSettings.rainStartLeads[0]} minutes before`)
+                                          : (isGerman ? 'Aktuell: Keine Benachrichtigung' : 'Current: No notification')}
+                                  </p>
                                   <div className="grid grid-cols-3 gap-2">
                                       {WEATHER_NOTIFICATION_LEAD_OPTIONS.map((lead) => {
                                           const isLeadActive = notificationSettings.rainStartLeads.includes(lead);
