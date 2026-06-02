@@ -83,6 +83,10 @@ const AURORA_KP_FORECAST_API_URL = 'https://services.swpc.noaa.gov/products/noaa
 const AURORA_OVATION_API_URL = 'https://services.swpc.noaa.gov/json/ovation_aurora_latest.json';
 const AURORA_NOTIFICATION_MIN_SCORE = 55;
 const AURORA_NOTIFICATION_MIN_LOCAL_PROBABILITY = 10;
+const AURORA_NOTIFICATION_FALLBACK_START_HOUR = 18;
+const AURORA_NOTIFICATION_FALLBACK_END_HOUR = 2;
+const AURORA_NOTIFICATION_WINDOW_PAST_MINUTES = 60;
+const AURORA_NOTIFICATION_WINDOW_FUTURE_MINUTES = 8 * 60;
 
 // Detect native Capacitor app (Android/iOS) vs. browser
 const isNativeApp = () => typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.() === true;
@@ -184,7 +188,11 @@ const toFiniteNumber = (value) => {
   return Number.isFinite(num) ? num : null;
 };
 
-const clampScore = (value, min = 0, max = 100) => Math.max(min, Math.min(max, value));
+const clampScore = (value, min = 0, max = 100) => {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return min;
+  return Math.max(min, Math.min(max, numericValue));
+};
 
 const getAuroraRequiredKp = (lat) => (
   lat >= 65 ? 1 : lat >= 60 ? 3 : lat >= 55 ? 4 : lat >= 50 ? 5 : lat >= 45 ? 6 : 7
@@ -16553,8 +16561,8 @@ export default function WeatherApp() {
         const auroraWindowTime = spaceWeatherData?.upcomingMaxKpTime ? new Date(spaceWeatherData.upcomingMaxKpTime) : bestSlot?.time ?? null;
         const minutesUntilWindow = auroraWindowTime ? Math.round((auroraWindowTime.getTime() - nowDate.getTime()) / 60000) : null;
         const isLeadWindow = minutesUntilWindow === null
-          ? (nowDate.getHours() >= 18 || nowDate.getHours() <= 2)
-          : minutesUntilWindow >= -60 && minutesUntilWindow <= 8 * 60;
+          ? (nowDate.getHours() >= AURORA_NOTIFICATION_FALLBACK_START_HOUR || nowDate.getHours() <= AURORA_NOTIFICATION_FALLBACK_END_HOUR)
+          : minutesUntilWindow >= -AURORA_NOTIFICATION_WINDOW_PAST_MINUTES && minutesUntilWindow <= AURORA_NOTIFICATION_WINDOW_FUTURE_MINUTES;
         const shouldAlertAurora = isLeadWindow
           && auroraSummary.auroraChanceScore >= AURORA_NOTIFICATION_MIN_SCORE
           && avgCloud <= 60
@@ -16572,8 +16580,8 @@ export default function WeatherApp() {
               : (isGerman ? 'heute Nacht' : 'tonight');
             const bestWindowLabel = auroraWindowTime && isGerman ? `${bestWindowText} Uhr` : bestWindowText;
             const body = isGerman
-              ? `Gute Chancen auf Polarlichter. Beste Zeit: ${bestWindowLabel}. Kp bis ${bestKp ?? auroraSummary.auroraKpMin}, lokale NOAA-Chance ${Math.round(localProbability)}%.`
-              : `Good aurora chances ahead. Best time: ${bestWindowLabel}. Kp up to ${bestKp ?? auroraSummary.auroraKpMin}, local NOAA chance ${Math.round(localProbability)}%.`;
+              ? `Gute Chancen auf Polarlichter. Beste Zeit: ${bestWindowLabel}. Kp bis ${bestKp ?? auroraSummary.auroraKpMin}, lokale NOAA-Chance ${localProbability}%.`
+              : `Good aurora chances ahead. Best time: ${bestWindowLabel}. Kp up to ${bestKp ?? auroraSummary.auroraKpMin}, local NOAA chance ${localProbability}%.`;
             if (notify(formatBrandedNotificationTitle('🌌', isGerman ? 'Polarlicht-Hinweis' : 'Aurora alert'), styleNotificationBody(body, isGerman), `aurora-${auroraKey}`)) {
               runtime[`aurora:${auroraKey}`] = 'sent';
               persistRuntime();
