@@ -7483,7 +7483,10 @@ const SettingsModal = ({ isOpen, onClose, settings, onSave, onChangeHome, isSmal
                                           step={WEATHER_NOTIFICATION_RAIN_LEAD_STEP_MINUTES}
                                           value={rainLeadMinutes}
                                           disabled={!rainAlertsEnabled}
-                                          onChange={(event) => updateNotifications({ rainStartLeads: [Number(event.target.value)] })}
+                                          onChange={(event) => {
+                                              const normalizedLead = normalizeRainLeadMinutes(event.target.value);
+                                              updateNotifications({ rainStartLeads: [normalizedLead ?? WEATHER_NOTIFICATION_DEFAULT_RAIN_LEAD_MINUTES] });
+                                          }}
                                           aria-label={isGerman ? 'Vorwarnzeit für Regen-Benachrichtigung' : 'Lead time for rain notification'}
                                           className="w-full accent-m3-primary disabled:opacity-50"
                                       />
