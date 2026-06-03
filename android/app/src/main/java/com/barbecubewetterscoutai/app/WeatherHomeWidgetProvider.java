@@ -60,6 +60,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final String DAY_TOMORROW = "tomorrow";
     private static final String TAG = "WeatherHomeWidget";
     private static final int HTTP_TIMEOUT_MS = 12000;
+    private static final double MILLIS_PER_MINUTE = 60_000d;
     private static final String UNAVAILABLE = "--";
     private static final String WEATHER_API_URL_TEMPLATE =
         "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=temperature_2m,apparent_temperature,precipitation,rain,wind_speed_10m,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max,weathercode&hourly=temperature_2m,weathercode,uv_index,precipitation_probability,cape,lifted_index,wind_speed_10m&timezone=auto&forecast_days=2";
@@ -126,6 +127,11 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final float MAP_SIZE_LARGE_HEIGHT_DP = 240f;
     private static final float MAP_SIZE_EXPANDED_WIDTH_DP = 300f;
     private static final float MAP_SIZE_EXPANDED_HEIGHT_DP = 320f;
+    private static final ThreadLocal<SimpleDateFormat> ISO_HOUR_PARSER = ThreadLocal.withInitial(() -> {
+        SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.US);
+        parser.setLenient(false);
+        return parser;
+    });
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
@@ -1061,7 +1067,18 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
     private Integer readCachedNullableInt(JSONObject json, String key) {
         if (json == null || !json.has(key) || json.isNull(key)) return null;
-        return json.optInt(key);
+        Object value = json.opt(key);
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Integer.parseInt(((String) value).trim());
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
     }
 
     private Location getBestLastKnownLocation(Context context) {
@@ -1299,10 +1316,10 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         long startMs = extractHourMillis(times, eventStartIndex);
         long endMs = extractHourMillis(times, Math.min(eventEndIndex + 1, length - 1));
         if (startMs > 0) {
-            data.rainStartMinutes = Math.max(0, (int) Math.round((startMs - nowMs) / 60000d));
+            data.rainStartMinutes = Math.max(0, (int) Math.round((startMs - nowMs) / MILLIS_PER_MINUTE));
         }
         if (endMs > 0) {
-            data.rainEndMinutes = Math.max(0, (int) Math.round((endMs - nowMs) / 60000d));
+            data.rainEndMinutes = Math.max(0, (int) Math.round((endMs - nowMs) / MILLIS_PER_MINUTE));
         }
         if (rainingNow) {
             data.rainStartMinutes = 0;
@@ -1355,8 +1372,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         String raw = times.optString(index, null);
         if (raw == null || raw.trim().isEmpty()) return -1L;
         try {
-            SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.US);
-            parser.setLenient(false);
+            SimpleDateFormat parser = ISO_HOUR_PARSER.get();
             Date parsed = parser.parse(raw);
             return parsed == null ? -1L : parsed.getTime();
         } catch (ParseException e) {
