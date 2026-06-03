@@ -1534,7 +1534,9 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         }
 
         long nowMs = System.currentTimeMillis();
-        long slotDurationMs = (long) Math.max(1, nowcastData.intervalMinutes) * 60_000L;
+        int intervalMinutes = Math.max(1, nowcastData.intervalMinutes);
+        long slotDurationMs = (long) intervalMinutes * 60_000L;
+        double nowcastRateFactor = 60d / intervalMinutes;
         long eventStartMs = -1L;
         long eventEndMs = -1L;
         boolean eventClosed = false;
@@ -1548,10 +1550,14 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             double slotPrecipitation = i < nowcastData.precipitationMm.size()
                 ? nowcastData.precipitationMm.get(i)
                 : 0d;
+            double slotRate = Math.max(0d, slotPrecipitation) * nowcastRateFactor;
             boolean hasPrecipitation = slotPrecipitation > LIGHT_PRECIP_THRESHOLD_MM;
 
-            if (slotStartMs <= nowMs && slotEndMs > nowMs && hasPrecipitation) {
-                rainingNow = true;
+            if (slotStartMs <= nowMs && slotEndMs > nowMs) {
+                data.rainRate = slotRate;
+                if (hasPrecipitation) {
+                    rainingNow = true;
+                }
             }
 
             if (eventClosed) continue;
