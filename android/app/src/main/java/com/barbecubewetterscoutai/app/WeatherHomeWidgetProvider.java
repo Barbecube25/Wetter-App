@@ -271,9 +271,10 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setTextViewText(R.id.widget_detail_title, context.getString(R.string.widget_summary_title_today));
         views.setTextViewText(R.id.widget_detail_primary, context.getString(R.string.widget_summary_placeholder));
         views.setTextViewText(R.id.widget_detail_secondary, context.getString(R.string.widget_summary_placeholder));
-        views.setTextViewText(R.id.widget_inline_summary_title, context.getString(R.string.widget_summary_title_today));
-        views.setTextViewText(R.id.widget_inline_summary_primary, context.getString(R.string.widget_summary_placeholder));
-        views.setTextViewText(R.id.widget_inline_summary_secondary, context.getString(R.string.widget_inline_rain_timing_none));
+        views.setTextViewText(R.id.widget_inline_summary_title, context.getString(R.string.widget_inline_rain_title));
+        views.setTextViewText(R.id.widget_inline_summary_primary, context.getString(R.string.widget_inline_rain_timing_none));
+        views.setTextViewText(R.id.widget_inline_summary_secondary, context.getString(R.string.widget_summary_placeholder));
+        views.setViewVisibility(R.id.widget_inline_summary_secondary, View.GONE);
         views.setTextViewText(R.id.widget_updated_at, context.getString(R.string.widget_updated_placeholder));
         views.setTextViewText(R.id.widget_day_today, context.getString(R.string.widget_day_today));
         views.setTextViewText(R.id.widget_day_tomorrow, context.getString(R.string.widget_day_tomorrow));
@@ -728,6 +729,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
     private void applyInlineSummaryPanelText(Context context, RemoteViews views, WidgetData data, boolean showTomorrow) {
         if (showTomorrow) {
+            views.setViewVisibility(R.id.widget_inline_summary_secondary, View.VISIBLE);
             views.setTextViewText(R.id.widget_inline_summary_title, context.getString(R.string.widget_summary_title_tomorrow));
             views.setTextViewText(
                 R.id.widget_inline_summary_primary,
@@ -750,16 +752,10 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             return;
         }
 
-        views.setTextViewText(R.id.widget_inline_summary_title, context.getString(R.string.widget_summary_title_today));
-        views.setTextViewText(
-            R.id.widget_inline_summary_primary,
-            context.getString(
-                R.string.widget_inline_summary_today_primary_format,
-                safeText(data.weatherLabel),
-                formatTemperature(data.feelsLikeC)
-            )
-        );
-        views.setTextViewText(R.id.widget_inline_summary_secondary, formatRainTimingMinutes(context, data));
+        views.setViewVisibility(R.id.widget_inline_summary_secondary, View.GONE);
+        views.setTextViewText(R.id.widget_inline_summary_title, context.getString(R.string.widget_inline_rain_title));
+        views.setTextViewText(R.id.widget_inline_summary_primary, formatRainTimingMinutes(context, data));
+        views.setTextViewText(R.id.widget_inline_summary_secondary, context.getString(R.string.widget_summary_placeholder));
     }
 
     private String formatRainTimingMinutes(Context context, WidgetData data) {
@@ -797,7 +793,10 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         if (safeMinutes == 0) {
             return context.getString(R.string.widget_inline_rain_timing_now);
         }
-        return context.getString(R.string.widget_inline_minutes_format, safeMinutes);
+        if (safeMinutes == 1) {
+            return context.getString(R.string.widget_inline_minutes_format_singular, safeMinutes);
+        }
+        return context.getString(R.string.widget_inline_minutes_format_plural, safeMinutes);
     }
 
     private String getSelectedDay(Context context, int appWidgetId) {

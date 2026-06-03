@@ -200,7 +200,7 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="@string/widget_summary_title_today"
+                android:text="@string/widget_inline_rain_title"
                 android:textColor="@color/widget_text_secondary"
                 android:textSize="11sp"
                 android:textStyle="bold" />
@@ -212,7 +212,7 @@
                 android:layout_marginTop="4dp"
                 android:ellipsize="end"
                 android:maxLines="2"
-                android:text="@string/widget_summary_placeholder"
+                android:text="@string/widget_inline_rain_timing_none"
                 android:textColor="@color/widget_text_primary"
                 android:textSize="11sp"
                 android:textStyle="bold" />
@@ -224,7 +224,7 @@
                 android:layout_marginTop="2dp"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="@string/widget_inline_rain_timing_none"
+                android:text="@string/widget_summary_placeholder"
                 android:textColor="@color/widget_text_accent"
                 android:textSize="10sp"
                 android:textStyle="bold" />
