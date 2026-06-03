@@ -1314,8 +1314,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
                 if (parsedRadar != null) {
                     return parsedRadar;
                 }
-            } catch (Exception ignored) {
-                // Fallback to Open-Meteo nowcast below.
+            } catch (Exception e) {
+                Log.w(TAG, "Bright Sky radar unavailable for widget nowcast.", e);
             }
         }
 
@@ -1328,7 +1328,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             );
             String nowcastResponse = httpGet(nowcastUrl);
             return parseOpenMeteoNowcast(new JSONObject(nowcastResponse));
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            Log.w(TAG, "Open-Meteo nowcast unavailable for widget timing.", e);
             return null;
         }
     }
@@ -1445,6 +1446,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
                     // Try next parser pattern.
                 }
             }
+            Log.d(TAG, "Unable to parse nowcast timestamp: " + normalizedTime);
             return -1L;
         }
     }
