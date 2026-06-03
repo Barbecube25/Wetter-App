@@ -75,6 +75,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final double THUNDER_SCORE_LOW = 1.0;
     private static final double THUNDER_SCORE_MODERATE = 2.0;
     private static final double THUNDER_SCORE_HIGH = 3.5;
+    private static final double RAIN_TIMING_PRECIP_PROB_THRESHOLD = 40;
+    private static final double RAIN_TIMING_RATE_THRESHOLD_MM_H = 0.05;
     private static final double POLLEN_THRESHOLD_MODERATE = 5;
     private static final double POLLEN_THRESHOLD_HIGH = 20;
     private static final double POLLEN_THRESHOLD_VERY_HIGH = 50;
@@ -698,6 +700,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             R.id.widget_detail_secondary,
             context.getString(
                 R.string.widget_summary_today_secondary_format,
+                formatRainWindow(context, data),
                 formatMetricNumber(data.rainRate),
                 formatMetricNumber(data.windKmh),
                 thunderRisk
@@ -770,6 +773,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
                 data.uvIndex = uv;
                 data.thunderRiskLabel = classifyThunderRisk(context, weatherCode, cape, liftedIndex, precipProb, data.windKmh);
                 fillHourlyForecast(data, hourly, hourlyIndex);
+                updateRainTiming(data, hourly, hourlyIndex);
             }
             if (daily != null) {
                 data.maxTemperatureC = readDailyValue(daily, "temperature_2m_max");
@@ -856,6 +860,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             data.tomorrowWeatherLabel = readCachedString(json, "tomorrowWeatherLabel", data.tomorrowWeatherLabel);
             data.thunderRiskLabel = readCachedNullableString(json, "thunderRiskLabel");
             data.tomorrowThunderRiskLabel = readCachedNullableString(json, "tomorrowThunderRiskLabel");
+            data.rainStartLabel = readCachedNullableString(json, "rainStartLabel");
+            data.rainEndLabel = readCachedNullableString(json, "rainEndLabel");
             data.pollenLabel = readCachedString(json, "pollenLabel", data.pollenLabel);
             data.locationLabel = readCachedString(json, "locationLabel", data.locationLabel);
 
@@ -906,6 +912,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             json.put("tomorrowWeatherLabel", data.tomorrowWeatherLabel);
             json.put("thunderRiskLabel", data.thunderRiskLabel == null ? JSONObject.NULL : data.thunderRiskLabel);
             json.put("tomorrowThunderRiskLabel", data.tomorrowThunderRiskLabel == null ? JSONObject.NULL : data.tomorrowThunderRiskLabel);
+            json.put("rainStartLabel", data.rainStartLabel == null ? JSONObject.NULL : data.rainStartLabel);
+            json.put("rainEndLabel", data.rainEndLabel == null ? JSONObject.NULL : data.rainEndLabel);
             json.put("pollenLabel", data.pollenLabel);
             json.put("locationLabel", data.locationLabel);
 
@@ -1154,6 +1162,93 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         return max;
     }
 
+    private void updateRainTiming(WidgetData data, JSONObject hourly, int currentHourIndex) {
+        if (data == null || hourly == null || currentHourIndex < 0) return;
+        JSONArray times = hourly.optJSONArray("time");
+        if (times == null || times.length() == 0) return;
+
+        int length = times.length();
+        int eventStartIndex = -1;
+        boolean rainingNow = !Double.isNaN(data.rainRate) && data.rainRate > RAIN_TIMING_RATE_THRESHOLD_MM_H;
+
+        if (rainingNow && hasRainSignal(hourly, currentHourIndex)) {
+            eventStartIndex = currentHourIndex;
+        } else {
+            for (int i = Math.max(0, currentHourIndex); i < length; i++) {
+                if (hasRainSignal(hourly, i)) {
+                    eventStartIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if (eventStartIndex < 0) return;
+
+        int eventEndIndex = eventStartIndex;
+        for (int i = eventStartIndex + 1; i < length; i++) {
+            if (hasRainSignal(hourly, i)) {
+                eventEndIndex = i;
+            } else {
+                break;
+            }
+        }
+
+        data.rainStartLabel = extractHourLabel(times, eventStartIndex);
+        data.rainEndLabel = extractHourLabel(times, Math.min(eventEndIndex + 1, length - 1));
+    }
+
+    private boolean hasRainSignal(JSONObject hourly, int index) {
+        int weatherCode = readHourlyIntValue(hourly, "weathercode", index);
+        if (isRainCode(weatherCode)) {
+            return true;
+        }
+        double precipProb = readHourlyValue(hourly, "precipitation_probability", index);
+        return !Double.isNaN(precipProb) && precipProb >= RAIN_TIMING_PRECIP_PROB_THRESHOLD;
+    }
+
+    private boolean isRainCode(int weatherCode) {
+        switch (weatherCode) {
+            case 51:
+            case 53:
+            case 55:
+            case 56:
+            case 57:
+            case 61:
+            case 63:
+            case 65:
+            case 66:
+            case 67:
+            case 80:
+            case 81:
+            case 82:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private String extractHourLabel(JSONArray times, int index) {
+        if (times == null || index < 0 || index >= times.length()) return null;
+        String raw = times.optString(index, null);
+        if (raw == null || raw.trim().isEmpty()) return null;
+        int tPos = raw.lastIndexOf('T');
+        if (tPos >= 0 && tPos + 1 < raw.length()) {
+            return raw.substring(tPos + 1);
+        }
+        return raw;
+    }
+
+    private String formatRainWindow(Context context, WidgetData data) {
+        if (data == null || data.rainStartLabel == null || data.rainEndLabel == null) {
+            return context.getString(R.string.widget_metric_unavailable);
+        }
+        return context.getString(
+            R.string.widget_rain_window_format,
+            data.rainStartLabel,
+            data.rainEndLabel
+        );
+    }
+
     private String formatTemperature(double temperatureC) {
         if (Double.isNaN(temperatureC)) return "--°";
         return Math.round(temperatureC) + "°";
@@ -1289,6 +1384,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         String tomorrowWeatherLabel;
         String thunderRiskLabel;
         String tomorrowThunderRiskLabel;
+        String rainStartLabel;
+        String rainEndLabel;
         String pollenLabel;
         String locationLabel;
         double[] hourlyTemps = new double[6];
@@ -1316,6 +1413,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             data.tomorrowWeatherLabel = UNAVAILABLE;
             data.thunderRiskLabel = null;
             data.tomorrowThunderRiskLabel = null;
+            data.rainStartLabel = null;
+            data.rainEndLabel = null;
             data.pollenLabel = context.getString(R.string.widget_metric_unavailable);
             data.locationLabel = context.getString(R.string.widget_title);
             java.util.Arrays.fill(data.hourlyTemps, Double.NaN);
