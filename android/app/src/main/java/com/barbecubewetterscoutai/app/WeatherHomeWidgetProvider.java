@@ -27,6 +27,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -58,6 +60,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final String DAY_TOMORROW = "tomorrow";
     private static final String TAG = "WeatherHomeWidget";
     private static final int HTTP_TIMEOUT_MS = 12000;
+    private static final double MILLIS_PER_MINUTE = 60_000d;
     private static final String UNAVAILABLE = "--";
     private static final String WEATHER_API_URL_TEMPLATE =
         "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=temperature_2m,apparent_temperature,precipitation,rain,wind_speed_10m,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max,weathercode&hourly=temperature_2m,weathercode,uv_index,precipitation_probability,cape,lifted_index,wind_speed_10m&timezone=auto&forecast_days=2";
@@ -124,6 +127,11 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final float MAP_SIZE_LARGE_HEIGHT_DP = 240f;
     private static final float MAP_SIZE_EXPANDED_WIDTH_DP = 300f;
     private static final float MAP_SIZE_EXPANDED_HEIGHT_DP = 320f;
+    private static final ThreadLocal<SimpleDateFormat> ISO_HOUR_PARSER = ThreadLocal.withInitial(() -> {
+        SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.US);
+        parser.setLenient(false);
+        return parser;
+    });
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
@@ -263,6 +271,9 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setTextViewText(R.id.widget_detail_title, context.getString(R.string.widget_summary_title_today));
         views.setTextViewText(R.id.widget_detail_primary, context.getString(R.string.widget_summary_placeholder));
         views.setTextViewText(R.id.widget_detail_secondary, context.getString(R.string.widget_summary_placeholder));
+        views.setTextViewText(R.id.widget_inline_summary_title, context.getString(R.string.widget_summary_title_today));
+        views.setTextViewText(R.id.widget_inline_summary_primary, context.getString(R.string.widget_summary_placeholder));
+        views.setTextViewText(R.id.widget_inline_summary_secondary, context.getString(R.string.widget_inline_rain_timing_none));
         views.setTextViewText(R.id.widget_updated_at, context.getString(R.string.widget_updated_placeholder));
         views.setTextViewText(R.id.widget_day_today, context.getString(R.string.widget_day_today));
         views.setTextViewText(R.id.widget_day_tomorrow, context.getString(R.string.widget_day_tomorrow));
@@ -449,6 +460,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         );
 
         applyHourlySlots(views, data);
+        applyInlineSummaryPanelText(context, views, data, showTomorrow);
         applySummaryPanelText(context, views, data, showTomorrow);
     }
 
@@ -508,6 +520,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             views.setViewVisibility(R.id.widget_day_switcher, View.VISIBLE);
             views.setViewVisibility(R.id.widget_main_row, View.VISIBLE);
             views.setViewVisibility(R.id.widget_daily_overview, View.GONE);
+            views.setViewVisibility(R.id.widget_inline_summary_panel, View.VISIBLE);
             views.setViewVisibility(R.id.widget_metrics_panel, View.VISIBLE);
             views.setViewVisibility(R.id.widget_metrics_row_secondary, View.VISIBLE);
             views.setViewVisibility(R.id.widget_hourly_panel, View.GONE);
@@ -533,6 +546,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             views.setViewVisibility(R.id.widget_day_switcher, View.GONE);
             views.setViewVisibility(R.id.widget_main_row, View.GONE);
             views.setViewVisibility(R.id.widget_daily_overview, View.GONE);
+            views.setViewVisibility(R.id.widget_inline_summary_panel, View.GONE);
             views.setViewVisibility(R.id.widget_metrics_panel, View.GONE);
             views.setViewVisibility(R.id.widget_metrics_row_secondary, View.GONE);
             views.setViewVisibility(R.id.widget_hourly_panel, View.GONE);
@@ -547,6 +561,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setViewVisibility(R.id.widget_day_switcher, compactHeight ? View.GONE : View.VISIBLE);
         views.setViewVisibility(R.id.widget_main_row, View.VISIBLE);
         views.setViewVisibility(R.id.widget_daily_overview, View.GONE);
+        views.setViewVisibility(R.id.widget_inline_summary_panel, compactWidth ? View.GONE : View.VISIBLE);
         views.setViewVisibility(R.id.widget_metrics_panel, veryCompact ? View.GONE : View.VISIBLE);
         views.setViewVisibility(R.id.widget_metrics_row_secondary, compactHeight ? View.GONE : View.VISIBLE);
         boolean showHourly = largeHeight && !showTomorrow;
@@ -586,6 +601,9 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setTextViewTextSize(R.id.widget_metric_wind, TypedValue.COMPLEX_UNIT_SP, chipSize);
         views.setTextViewTextSize(R.id.widget_metric_uv, TypedValue.COMPLEX_UNIT_SP, chipSize);
         views.setTextViewTextSize(R.id.widget_metric_pollen, TypedValue.COMPLEX_UNIT_SP, chipSize);
+        views.setTextViewTextSize(R.id.widget_inline_summary_title, TypedValue.COMPLEX_UNIT_SP, headerSize);
+        views.setTextViewTextSize(R.id.widget_inline_summary_primary, TypedValue.COMPLEX_UNIT_SP, detailTextSize);
+        views.setTextViewTextSize(R.id.widget_inline_summary_secondary, TypedValue.COMPLEX_UNIT_SP, detailSecondarySize);
         views.setTextViewTextSize(R.id.widget_updated_at, TypedValue.COMPLEX_UNIT_SP, largeHeight ? UPDATED_SIZE_LARGE_SP : UPDATED_SIZE_DEFAULT_SP);
         views.setTextViewTextSize(R.id.widget_compact_metric_temperature, TypedValue.COMPLEX_UNIT_SP, compactHeight ? HEADER_SIZE_DEFAULT_SP : CHIP_SIZE_DEFAULT_SP);
         views.setTextViewTextSize(R.id.widget_compact_metric_uv, TypedValue.COMPLEX_UNIT_SP, compactHeight ? HEADER_SIZE_DEFAULT_SP : CHIP_SIZE_DEFAULT_SP);
@@ -706,6 +724,80 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
                 thunderRisk
             )
         );
+    }
+
+    private void applyInlineSummaryPanelText(Context context, RemoteViews views, WidgetData data, boolean showTomorrow) {
+        if (showTomorrow) {
+            views.setTextViewText(R.id.widget_inline_summary_title, context.getString(R.string.widget_summary_title_tomorrow));
+            views.setTextViewText(
+                R.id.widget_inline_summary_primary,
+                context.getString(
+                    R.string.widget_summary_tomorrow_primary_format,
+                    safeText(data.tomorrowWeatherLabel),
+                    formatTemperature(data.tomorrowMinTemperatureC),
+                    formatTemperature(data.tomorrowMaxTemperatureC)
+                )
+            );
+            views.setTextViewText(
+                R.id.widget_inline_summary_secondary,
+                context.getString(
+                    R.string.widget_summary_tomorrow_secondary_format,
+                    formatMetricNumber(data.tomorrowRainRate),
+                    formatMetricNumber(data.tomorrowWindKmh),
+                    formatMetricNumber(data.tomorrowUvIndex)
+                )
+            );
+            return;
+        }
+
+        views.setTextViewText(R.id.widget_inline_summary_title, context.getString(R.string.widget_summary_title_today));
+        views.setTextViewText(
+            R.id.widget_inline_summary_primary,
+            context.getString(
+                R.string.widget_inline_summary_today_primary_format,
+                safeText(data.weatherLabel),
+                formatTemperature(data.feelsLikeC)
+            )
+        );
+        views.setTextViewText(R.id.widget_inline_summary_secondary, formatRainTimingMinutes(context, data));
+    }
+
+    private String formatRainTimingMinutes(Context context, WidgetData data) {
+        if (data == null) {
+            return context.getString(R.string.widget_inline_rain_timing_none);
+        }
+        Integer startMinutes = data.rainStartMinutes;
+        Integer endMinutes = data.rainEndMinutes;
+        boolean rainingNow = !Double.isNaN(data.rainRate) && data.rainRate > RAIN_TIMING_RATE_THRESHOLD_MM_H;
+
+        if (rainingNow && endMinutes != null) {
+            return context.getString(
+                R.string.widget_inline_rain_timing_end_format,
+                formatMinuteLead(context, endMinutes)
+            );
+        }
+        if (startMinutes != null && endMinutes != null) {
+            return context.getString(
+                R.string.widget_inline_rain_timing_start_end_format,
+                formatMinuteLead(context, startMinutes),
+                formatMinuteLead(context, endMinutes)
+            );
+        }
+        if (startMinutes != null) {
+            return context.getString(
+                R.string.widget_inline_rain_timing_start_only_format,
+                formatMinuteLead(context, startMinutes)
+            );
+        }
+        return context.getString(R.string.widget_inline_rain_timing_none);
+    }
+
+    private String formatMinuteLead(Context context, int minutes) {
+        int safeMinutes = Math.max(0, minutes);
+        if (safeMinutes == 0) {
+            return context.getString(R.string.widget_inline_rain_timing_now);
+        }
+        return context.getString(R.string.widget_inline_minutes_format, safeMinutes);
     }
 
     private String getSelectedDay(Context context, int appWidgetId) {
@@ -862,6 +954,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             data.tomorrowThunderRiskLabel = readCachedNullableString(json, "tomorrowThunderRiskLabel");
             data.rainStartLabel = readCachedNullableString(json, "rainStartLabel");
             data.rainEndLabel = readCachedNullableString(json, "rainEndLabel");
+            data.rainStartMinutes = readCachedNullableInt(json, "rainStartMinutes");
+            data.rainEndMinutes = readCachedNullableInt(json, "rainEndMinutes");
             data.pollenLabel = readCachedString(json, "pollenLabel", data.pollenLabel);
             data.locationLabel = readCachedString(json, "locationLabel", data.locationLabel);
 
@@ -914,6 +1008,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             json.put("tomorrowThunderRiskLabel", data.tomorrowThunderRiskLabel == null ? JSONObject.NULL : data.tomorrowThunderRiskLabel);
             json.put("rainStartLabel", data.rainStartLabel == null ? JSONObject.NULL : data.rainStartLabel);
             json.put("rainEndLabel", data.rainEndLabel == null ? JSONObject.NULL : data.rainEndLabel);
+            json.put("rainStartMinutes", data.rainStartMinutes == null ? JSONObject.NULL : data.rainStartMinutes);
+            json.put("rainEndMinutes", data.rainEndMinutes == null ? JSONObject.NULL : data.rainEndMinutes);
             json.put("pollenLabel", data.pollenLabel);
             json.put("locationLabel", data.locationLabel);
 
@@ -967,6 +1063,22 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         if (value == null) return null;
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private Integer readCachedNullableInt(JSONObject json, String key) {
+        if (json == null || !json.has(key) || json.isNull(key)) return null;
+        Object value = json.opt(key);
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Integer.parseInt(((String) value).trim());
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
     }
 
     private Location getBestLastKnownLocation(Context context) {
@@ -1164,6 +1276,10 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
     private void updateRainTiming(WidgetData data, JSONObject hourly, int currentHourIndex) {
         if (data == null || hourly == null || currentHourIndex < 0) return;
+        data.rainStartLabel = null;
+        data.rainEndLabel = null;
+        data.rainStartMinutes = null;
+        data.rainEndMinutes = null;
         JSONArray times = hourly.optJSONArray("time");
         if (times == null || times.length() == 0) return;
 
@@ -1195,6 +1311,19 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
         data.rainStartLabel = extractHourLabel(times, eventStartIndex);
         data.rainEndLabel = extractHourLabel(times, Math.min(eventEndIndex + 1, length - 1));
+
+        long nowMs = System.currentTimeMillis();
+        long startMs = extractHourMillis(times, eventStartIndex);
+        long endMs = extractHourMillis(times, Math.min(eventEndIndex + 1, length - 1));
+        if (startMs > 0) {
+            data.rainStartMinutes = Math.max(0, (int) Math.round((startMs - nowMs) / MILLIS_PER_MINUTE));
+        }
+        if (endMs > 0) {
+            data.rainEndMinutes = Math.max(0, (int) Math.round((endMs - nowMs) / MILLIS_PER_MINUTE));
+        }
+        if (rainingNow) {
+            data.rainStartMinutes = 0;
+        }
     }
 
     private boolean hasRainSignal(JSONObject hourly, int index) {
@@ -1236,6 +1365,19 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             return raw.substring(tPos + 1);
         }
         return raw;
+    }
+
+    private long extractHourMillis(JSONArray times, int index) {
+        if (times == null || index < 0 || index >= times.length()) return -1L;
+        String raw = times.optString(index, null);
+        if (raw == null || raw.trim().isEmpty()) return -1L;
+        try {
+            SimpleDateFormat parser = ISO_HOUR_PARSER.get();
+            Date parsed = parser.parse(raw);
+            return parsed == null ? -1L : parsed.getTime();
+        } catch (ParseException e) {
+            return -1L;
+        }
     }
 
     private String formatRainWindow(Context context, WidgetData data) {
@@ -1386,6 +1528,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         String tomorrowThunderRiskLabel;
         String rainStartLabel;
         String rainEndLabel;
+        Integer rainStartMinutes;
+        Integer rainEndMinutes;
         String pollenLabel;
         String locationLabel;
         double[] hourlyTemps = new double[6];
@@ -1415,6 +1559,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             data.tomorrowThunderRiskLabel = null;
             data.rainStartLabel = null;
             data.rainEndLabel = null;
+            data.rainStartMinutes = null;
+            data.rainEndMinutes = null;
             data.pollenLabel = context.getString(R.string.widget_metric_unavailable);
             data.locationLabel = context.getString(R.string.widget_title);
             java.util.Arrays.fill(data.hourlyTemps, Double.NaN);
