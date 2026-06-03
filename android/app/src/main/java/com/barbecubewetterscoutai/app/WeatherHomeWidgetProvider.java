@@ -106,14 +106,21 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final float TEMPERATURE_SIZE_DEFAULT_SP = 42f;
     private static final float TEMPERATURE_SIZE_LARGE_SP = 48f;
     private static final float TEMPERATURE_SIZE_EXPANDED_SP = 52f;
+    private static final float TEMPERATURE_SIZE_NARROW_COMPACT_SP = 30f;
+    private static final float TEMPERATURE_SIZE_NARROW_DEFAULT_SP = 34f;
+    private static final float TEMPERATURE_SIZE_NARROW_LARGE_SP = 40f;
+    private static final float TEMPERATURE_SIZE_NARROW_EXPANDED_SP = 44f;
     private static final float WEATHER_ICON_SIZE_DEFAULT_SP = 18f;
     private static final float WEATHER_ICON_SIZE_LARGE_SP = 20f;
+    private static final float WEATHER_ICON_SIZE_NARROW_SP = 16f;
     private static final float CONDITION_SIZE_DEFAULT_SP = 13f;
     private static final float CONDITION_SIZE_LARGE_SP = 14f;
+    private static final float CONDITION_SIZE_NARROW_SP = 12f;
     private static final float HEADER_SIZE_DEFAULT_SP = 11f;
     private static final float HEADER_SIZE_LARGE_SP = 12f;
     private static final float CHIP_SIZE_DEFAULT_SP = 12f;
     private static final float CHIP_SIZE_LARGE_SP = 13f;
+    private static final float CHIP_SIZE_NARROW_SP = 11f;
     private static final float UPDATED_SIZE_DEFAULT_SP = 10f;
     private static final float UPDATED_SIZE_LARGE_SP = 11f;
     private static final float HOURLY_TIME_SIZE_DEFAULT_SP = 10f;
@@ -542,7 +549,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             views.setViewVisibility(R.id.widget_hourly_row_secondary, View.GONE);
             views.setViewVisibility(R.id.widget_detail_panel, View.GONE);
             views.setViewVisibility(R.id.widget_updated_at, View.VISIBLE);
-            applyResponsiveTypography(context, views, false, false, false);
+            applyResponsiveTypography(context, views, false, false, false, false);
             return;
         }
 
@@ -579,22 +586,36 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setViewVisibility(R.id.widget_inline_summary_panel, compactWidth ? View.GONE : View.VISIBLE);
         views.setViewVisibility(R.id.widget_metrics_panel, veryCompact ? View.GONE : View.VISIBLE);
         views.setViewVisibility(R.id.widget_metrics_row_secondary, compactHeight ? View.GONE : View.VISIBLE);
-        boolean showHourly = largeHeight && !showTomorrow;
+        boolean showHourly = largeHeight && !showTomorrow && !compactWidth;
         boolean showExpandedHourly = showHourly && expandedHeight;
         views.setViewVisibility(R.id.widget_hourly_panel, showHourly ? View.VISIBLE : View.GONE);
         views.setViewVisibility(R.id.widget_hourly_row_secondary, showExpandedHourly ? View.VISIBLE : View.GONE);
         views.setViewVisibility(R.id.widget_detail_panel, largeHeight ? View.VISIBLE : View.GONE);
         views.setViewVisibility(R.id.widget_updated_at, compactHeight ? View.GONE : View.VISIBLE);
-        applyResponsiveTypography(context, views, compactHeight, largeHeight, expandedHeight);
+        applyResponsiveTypography(context, views, compactHeight, largeHeight, expandedHeight, compactWidth);
     }
 
-    private void applyResponsiveTypography(Context context, RemoteViews views, boolean compactHeight, boolean largeHeight, boolean expandedHeight) {
-        float temperatureSize = expandedHeight
-            ? TEMPERATURE_SIZE_EXPANDED_SP
-            : (largeHeight ? TEMPERATURE_SIZE_LARGE_SP : (compactHeight ? TEMPERATURE_SIZE_COMPACT_SP : TEMPERATURE_SIZE_DEFAULT_SP));
-        float conditionSize = largeHeight ? CONDITION_SIZE_LARGE_SP : CONDITION_SIZE_DEFAULT_SP;
-        float chipSize = largeHeight ? CHIP_SIZE_LARGE_SP : CHIP_SIZE_DEFAULT_SP;
+    private float resolveTemperatureSize(boolean compactWidth, boolean compactHeight, boolean largeHeight, boolean expandedHeight) {
+        if (compactWidth) {
+            if (expandedHeight) return TEMPERATURE_SIZE_NARROW_EXPANDED_SP;
+            if (largeHeight)   return TEMPERATURE_SIZE_NARROW_LARGE_SP;
+            if (compactHeight) return TEMPERATURE_SIZE_NARROW_COMPACT_SP;
+            return TEMPERATURE_SIZE_NARROW_DEFAULT_SP;
+        }
+        if (expandedHeight) return TEMPERATURE_SIZE_EXPANDED_SP;
+        if (largeHeight)    return TEMPERATURE_SIZE_LARGE_SP;
+        if (compactHeight)  return TEMPERATURE_SIZE_COMPACT_SP;
+        return TEMPERATURE_SIZE_DEFAULT_SP;
+    }
+
+    private void applyResponsiveTypography(Context context, RemoteViews views, boolean compactHeight, boolean largeHeight, boolean expandedHeight, boolean compactWidth) {
+        float temperatureSize = resolveTemperatureSize(compactWidth, compactHeight, largeHeight, expandedHeight);
+        // On narrow widgets condition text is kept smaller regardless of height to prevent overflow;
+        // on wide widgets the larger large-height variant is used.
+        float conditionSize = compactWidth ? CONDITION_SIZE_NARROW_SP : (largeHeight ? CONDITION_SIZE_LARGE_SP : CONDITION_SIZE_DEFAULT_SP);
+        float chipSize = compactWidth ? CHIP_SIZE_NARROW_SP : (largeHeight ? CHIP_SIZE_LARGE_SP : CHIP_SIZE_DEFAULT_SP);
         float headerSize = largeHeight ? HEADER_SIZE_LARGE_SP : HEADER_SIZE_DEFAULT_SP;
+        float weatherIconSize = compactWidth ? WEATHER_ICON_SIZE_NARROW_SP : (largeHeight ? WEATHER_ICON_SIZE_LARGE_SP : WEATHER_ICON_SIZE_DEFAULT_SP);
         float detailTextSize = largeHeight ? DETAIL_TEXT_SIZE_LARGE_SP : DETAIL_TEXT_SIZE_DEFAULT_SP;
         float detailSecondarySize = largeHeight ? DETAIL_SECONDARY_SIZE_LARGE_SP : DETAIL_SECONDARY_SIZE_DEFAULT_SP;
         float hourlyTimeSize = expandedHeight ? HOURLY_TIME_SIZE_EXPANDED_SP : HOURLY_TIME_SIZE_DEFAULT_SP;
@@ -607,7 +628,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setViewPadding(R.id.widget_root, rootPaddingPx, rootPaddingPx, rootPaddingPx, rootPaddingPx);
         views.setViewPadding(R.id.widget_compact_row, compactRowHorizontalPx, compactRowVerticalPx, compactRowHorizontalPx, compactRowVerticalPx);
         views.setTextViewTextSize(R.id.widget_temperature, TypedValue.COMPLEX_UNIT_SP, temperatureSize);
-        views.setTextViewTextSize(R.id.widget_weather_icon, TypedValue.COMPLEX_UNIT_SP, largeHeight ? WEATHER_ICON_SIZE_LARGE_SP : WEATHER_ICON_SIZE_DEFAULT_SP);
+        views.setTextViewTextSize(R.id.widget_weather_icon, TypedValue.COMPLEX_UNIT_SP, weatherIconSize);
         views.setTextViewTextSize(R.id.widget_condition, TypedValue.COMPLEX_UNIT_SP, conditionSize);
         views.setTextViewTextSize(R.id.widget_title, TypedValue.COMPLEX_UNIT_SP, headerSize);
         views.setTextViewTextSize(R.id.widget_day_today, TypedValue.COMPLEX_UNIT_SP, headerSize);
