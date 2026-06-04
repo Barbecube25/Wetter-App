@@ -57,6 +57,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final String PREFS_NAME = "weather_widget_prefs";
     private static final String PREF_DAY_PREFIX = "widget_selected_day_";
     private static final String PREF_CACHE_KEY = "widget_cached_data_v1";
+    private static final String PREF_CACHE_SAVED_AT_KEY = "savedAtMs";
     private static final String DAY_TODAY = "today";
     private static final String DAY_TOMORROW = "tomorrow";
     private static final String TAG = "WeatherHomeWidget";
@@ -800,12 +801,16 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         Integer startMinutes = data.rainStartMinutes;
         Integer endMinutes = data.rainEndMinutes;
         boolean rainingNow = !Double.isNaN(data.rainRate) && data.rainRate > RAIN_TIMING_RATE_THRESHOLD_MM_H;
+        boolean startsNow = startMinutes != null && startMinutes <= 0;
 
-        if (rainingNow && endMinutes != null) {
+        if ((rainingNow || startsNow) && endMinutes != null && endMinutes > 0) {
             return context.getString(
                 R.string.widget_inline_rain_timing_end_format,
                 formatMinuteLead(context, endMinutes)
             );
+        }
+        if (rainingNow || startsNow) {
+            return context.getString(R.string.widget_inline_rain_timing_now_only);
         }
         if (startMinutes != null && endMinutes != null) {
             return context.getString(
@@ -1002,6 +1007,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             data.rainEndLabel = readCachedNullableString(json, "rainEndLabel");
             data.rainStartMinutes = readCachedNullableInt(json, "rainStartMinutes");
             data.rainEndMinutes = readCachedNullableInt(json, "rainEndMinutes");
+            long cacheSavedAtMs = readCachedLong(json, PREF_CACHE_SAVED_AT_KEY, -1L);
+            applyCachedRainTimingAge(data, cacheSavedAtMs);
             data.pollenLabel = readCachedString(json, "pollenLabel", data.pollenLabel);
             data.locationLabel = readCachedString(json, "locationLabel", data.locationLabel);
 
@@ -1056,6 +1063,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             json.put("rainEndLabel", data.rainEndLabel == null ? JSONObject.NULL : data.rainEndLabel);
             json.put("rainStartMinutes", data.rainStartMinutes == null ? JSONObject.NULL : data.rainStartMinutes);
             json.put("rainEndMinutes", data.rainEndMinutes == null ? JSONObject.NULL : data.rainEndMinutes);
+            json.put(PREF_CACHE_SAVED_AT_KEY, System.currentTimeMillis());
             json.put("pollenLabel", data.pollenLabel);
             json.put("locationLabel", data.locationLabel);
 
@@ -1093,6 +1101,46 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private int readCachedInt(JSONObject json, String key, int fallback) {
         if (json == null || !json.has(key) || json.isNull(key)) return fallback;
         return json.optInt(key, fallback);
+    }
+
+    private long readCachedLong(JSONObject json, String key, long fallback) {
+        if (json == null || !json.has(key) || json.isNull(key)) return fallback;
+        Object value = json.opt(key);
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        if (value instanceof String) {
+            try {
+                return Long.parseLong(((String) value).trim());
+            } catch (NumberFormatException ignored) {
+                return fallback;
+            }
+        }
+        return fallback;
+    }
+
+    private void applyCachedRainTimingAge(WidgetData data, long cacheSavedAtMs) {
+        if (data == null || cacheSavedAtMs <= 0L) return;
+        long nowMs = System.currentTimeMillis();
+        if (nowMs <= cacheSavedAtMs) return;
+        int elapsedMinutes = Math.max(0, (int) Math.round((nowMs - cacheSavedAtMs) / MILLIS_PER_MINUTE));
+        if (elapsedMinutes <= 0) return;
+
+        if (data.rainStartMinutes != null) {
+            data.rainStartMinutes = Math.max(0, data.rainStartMinutes - elapsedMinutes);
+        }
+        if (data.rainEndMinutes != null) {
+            int adjustedEnd = data.rainEndMinutes - elapsedMinutes;
+            if (adjustedEnd <= 0) {
+                data.rainStartMinutes = null;
+                data.rainEndMinutes = null;
+                data.rainStartLabel = null;
+                data.rainEndLabel = null;
+                data.rainRate = Double.NaN;
+                return;
+            }
+            data.rainEndMinutes = adjustedEnd;
+        }
     }
 
     private String readCachedString(JSONObject json, String key, String fallback) {
