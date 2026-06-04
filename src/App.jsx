@@ -14007,7 +14007,7 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
             }
         };
         fetchPreview();
-    }, [trip, isTooFarFuture, cachedWeather, isCacheStale]);
+    }, [trip, isTooFarFuture]);
 
     if (isTooFarFuture) {
         return (
