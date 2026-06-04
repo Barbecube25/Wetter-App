@@ -797,7 +797,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
     private String formatRainTimingMinutes(Context context, WidgetData data) {
         if (data == null) {
-            return context.getString(R.string.widget_inline_rain_timing_none);
+            return withNoRainSymbol(context, context.getString(R.string.widget_inline_rain_timing_none));
         }
         Integer startMinutes = data.rainStartMinutes;
         Integer endMinutes = data.rainEndMinutes;
@@ -816,19 +816,33 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             return context.getString(R.string.widget_inline_rain_timing_now_only);
         }
         if (startMinutes != null && endMinutes != null) {
-            return context.getString(
-                R.string.widget_inline_rain_timing_start_end_format,
-                formatMinuteLead(context, startMinutes),
-                formatMinuteLead(context, endMinutes)
+            return withNoRainSymbol(
+                context,
+                context.getString(
+                    R.string.widget_inline_rain_timing_start_end_format,
+                    formatMinuteLead(context, startMinutes),
+                    formatMinuteLead(context, endMinutes)
+                )
             );
         }
         if (startMinutes != null) {
-            return context.getString(
-                R.string.widget_inline_rain_timing_start_only_format,
-                formatMinuteLead(context, startMinutes)
+            return withNoRainSymbol(
+                context,
+                context.getString(
+                    R.string.widget_inline_rain_timing_start_only_format,
+                    formatMinuteLead(context, startMinutes)
+                )
             );
         }
-        return context.getString(R.string.widget_inline_rain_timing_none);
+        return withNoRainSymbol(context, context.getString(R.string.widget_inline_rain_timing_none));
+    }
+
+    private String withNoRainSymbol(Context context, String message) {
+        String symbol = context.getString(R.string.widget_inline_rain_no_rain_symbol);
+        if (message == null || message.trim().isEmpty()) {
+            return symbol;
+        }
+        return symbol + " " + message;
     }
 
     private String formatMinuteLead(Context context, int minutes) {
