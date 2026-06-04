@@ -13963,15 +13963,15 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
     const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
     const cachedWeather = tripPreviewCache[trip.id];
     const isCacheStale = !cachedWeather || !cachedWeather.fetchedAt || (Date.now() - cachedWeather.fetchedAt > TRIP_PREVIEW_CACHE_TTL_MS);
-    const [weather, setWeather] = useState(isCacheStale ? null : cachedWeather);
-    const [loading, setLoading] = useState(isCacheStale);
+    const [weather, setWeather] = useState(cachedWeather || null);
+    const [loading, setLoading] = useState(!cachedWeather);
 
     // Check if trip is too far in the future for forecast data
     const daysUntilTrip = Math.ceil((new Date(trip.startDate) - new Date()) / (1000 * 60 * 60 * 24));
     const isTooFarFuture = daysUntilTrip > TRIP_FORECAST_LIMIT_DAYS;
 
     useEffect(() => {
-        if (cachedWeather && !isCacheStale) {
+        if (cachedWeather) {
             setWeather(cachedWeather);
             setLoading(false);
         }
@@ -13985,6 +13985,7 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
             return;
         }
         const fetchPreview = async () => {
+            if (!cachedWeather) setLoading(true);
             try {
                 const url = `https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${trip.startDate}`;
                 const res = await fetch(url);
@@ -14006,7 +14007,7 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
             }
         };
         fetchPreview();
-    }, [trip, isTooFarFuture]);
+    }, [trip, isTooFarFuture, cachedWeather, isCacheStale]);
 
     if (isTooFarFuture) {
         return (
