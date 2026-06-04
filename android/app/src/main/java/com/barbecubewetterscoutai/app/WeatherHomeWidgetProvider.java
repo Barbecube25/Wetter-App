@@ -801,10 +801,12 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         }
         Integer startMinutes = data.rainStartMinutes;
         Integer endMinutes = data.rainEndMinutes;
-        // Only treat as "raining now" when the measured rain rate is actually above the threshold.
-        // A startMinutes of 0 can occur because a past hourly slot was clamped, so it must not
-        // be used to trigger the "Es regnet jetzt" message when the rain rate is 0.
-        boolean rainingNow = !Double.isNaN(data.rainRate) && data.rainRate > RAIN_TIMING_RATE_THRESHOLD_MM_H;
+        // Only treat as "raining now" when an active rain window starts now and the measured
+        // rate is above threshold. This avoids stale/non-current rates showing "Es regnet jetzt".
+        boolean rainingNow = startMinutes != null
+            && startMinutes == 0
+            && !Double.isNaN(data.rainRate)
+            && data.rainRate > RAIN_TIMING_RATE_THRESHOLD_MM_H;
 
         if (rainingNow && endMinutes != null && endMinutes > 0) {
             return context.getString(
@@ -1546,9 +1548,10 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
         int length = times.length();
         int eventStartIndex = -1;
-        boolean rainingNow = !Double.isNaN(data.rainRate) && data.rainRate > RAIN_TIMING_RATE_THRESHOLD_MM_H;
+        boolean rainingNowByRate = !Double.isNaN(data.rainRate) && data.rainRate > RAIN_TIMING_RATE_THRESHOLD_MM_H;
+        boolean rainingNow = rainingNowByRate && hasRainSignal(hourly, currentHourIndex);
 
-        if (rainingNow && hasRainSignal(hourly, currentHourIndex)) {
+        if (rainingNow) {
             eventStartIndex = currentHourIndex;
         } else {
             // When nowcast data was available and found no rain, it has already confirmed
