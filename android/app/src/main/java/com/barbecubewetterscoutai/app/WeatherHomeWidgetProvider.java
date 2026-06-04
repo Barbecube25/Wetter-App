@@ -27,8 +27,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -40,7 +38,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -68,10 +65,6 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=temperature_2m,apparent_temperature,precipitation,rain,snowfall,wind_speed_10m,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max,weathercode&hourly=temperature_2m,precipitation,snowfall,weathercode,uv_index,precipitation_probability,cape,lifted_index,wind_speed_10m&timezone=auto&forecast_days=2";
     private static final String AIR_QUALITY_API_URL_TEMPLATE =
         "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=%f&longitude=%f&current=alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&timezone=auto";
-    private static final String NOWCAST_API_URL_TEMPLATE =
-        "https://api.open-meteo.com/v1/nowcast?latitude=%f&longitude=%f&minutely_15=precipitation&timezone=auto";
-    private static final String BRIGHTSKY_RADAR_API_URL_TEMPLATE =
-        "https://api.brightsky.dev/radar?lat=%f&lon=%f&distance=%d&format=plain";
     // WMO weather codes representing thunderstorm conditions.
     private static final int[] THUNDERSTORM_WMO_CODES = {17, 95, 96, 99};
     private static final double THUNDER_CAPE_MODERATE = 500;
@@ -84,17 +77,6 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final double THUNDER_SCORE_LOW = 1.0;
     private static final double THUNDER_SCORE_MODERATE = 2.0;
     private static final double THUNDER_SCORE_HIGH = 3.5;
-    private static final double RAIN_TIMING_RATE_THRESHOLD_MM_H = 0.1;
-    private static final double LIGHT_PRECIP_THRESHOLD_MM = 0.1;
-    private static final int NOWCAST_LOOKAHEAD_MINUTES = 120;
-    private static final int MINUTELY_SLOT_DURATION_MINUTES = 15;
-    private static final int RADAR_SLOT_DURATION_MINUTES = 5;
-    private static final int RADAR_NOWCAST_DISTANCE_METERS = 6000;
-    private static final int RADAR_CENTER_RADIUS_CELLS = 1;
-    private static final int RADAR_CENTER_WEIGHT = 4;
-    private static final int RADAR_ADJACENT_WEIGHT = 2;
-    private static final int RADAR_DIAGONAL_WEIGHT = 1;
-    private static final double RADAR_LOCAL_PEAK_BLEND = 0.7;
     private static final double POLLEN_THRESHOLD_MODERATE = 5;
     private static final double POLLEN_THRESHOLD_HIGH = 20;
     private static final double POLLEN_THRESHOLD_VERY_HIGH = 50;
@@ -149,12 +131,6 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final float MAP_SIZE_LARGE_HEIGHT_DP = 240f;
     private static final float MAP_SIZE_EXPANDED_WIDTH_DP = 300f;
     private static final float MAP_SIZE_EXPANDED_HEIGHT_DP = 320f;
-    private static final ThreadLocal<SimpleDateFormat> ISO_HOUR_PARSER = ThreadLocal.withInitial(() -> {
-        SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.US);
-        parser.setLenient(false);
-        return parser;
-    });
-
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         for (int appWidgetId : appWidgetIds) {
@@ -293,8 +269,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setTextViewText(R.id.widget_detail_title, context.getString(R.string.widget_summary_title_today));
         views.setTextViewText(R.id.widget_detail_primary, context.getString(R.string.widget_summary_placeholder));
         views.setTextViewText(R.id.widget_detail_secondary, context.getString(R.string.widget_summary_placeholder));
-        views.setTextViewText(R.id.widget_inline_summary_title, context.getString(R.string.widget_inline_rain_title));
-        views.setTextViewText(R.id.widget_inline_summary_primary, context.getString(R.string.widget_inline_rain_timing_none));
+        views.setTextViewText(R.id.widget_inline_summary_title, context.getString(R.string.widget_summary_title_today));
+        views.setTextViewText(R.id.widget_inline_summary_primary, context.getString(R.string.widget_summary_placeholder));
         views.setTextViewText(R.id.widget_inline_summary_secondary, context.getString(R.string.widget_summary_placeholder));
         views.setViewVisibility(R.id.widget_inline_summary_secondary, View.GONE);
         views.setTextViewText(R.id.widget_updated_at, context.getString(R.string.widget_updated_placeholder));
@@ -759,104 +735,6 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
                 thunderRisk
             )
         );
-    }
-
-    private void applyInlineSummaryPanelText(Context context, RemoteViews views, WidgetData data, boolean showTomorrow) {
-        if (showTomorrow) {
-            views.setViewVisibility(R.id.widget_inline_summary_icon, View.GONE);
-            views.setViewVisibility(R.id.widget_inline_summary_secondary, View.VISIBLE);
-            views.setTextViewText(R.id.widget_inline_summary_title, context.getString(R.string.widget_summary_title_tomorrow));
-            views.setTextViewText(
-                R.id.widget_inline_summary_primary,
-                context.getString(
-                    R.string.widget_summary_tomorrow_primary_format,
-                    safeText(data.tomorrowWeatherLabel),
-                    formatTemperature(data.tomorrowMinTemperatureC),
-                    formatTemperature(data.tomorrowMaxTemperatureC)
-                )
-            );
-            views.setTextViewText(
-                R.id.widget_inline_summary_secondary,
-                context.getString(
-                    R.string.widget_summary_tomorrow_secondary_format,
-                    formatMetricNumber(data.tomorrowRainRate),
-                    formatMetricNumber(data.tomorrowWindKmh),
-                    formatMetricNumber(data.tomorrowUvIndex)
-                )
-            );
-            return;
-        }
-
-        boolean showNoRainState = isNoRainState(data);
-        views.setViewVisibility(R.id.widget_inline_summary_icon, showNoRainState ? View.VISIBLE : View.GONE);
-        views.setViewVisibility(R.id.widget_inline_summary_secondary, View.GONE);
-        views.setTextViewText(R.id.widget_inline_summary_title, context.getString(R.string.widget_inline_rain_title));
-        views.setTextViewText(R.id.widget_inline_summary_primary, formatRainTimingMinutes(context, data));
-        views.setTextViewText(R.id.widget_inline_summary_secondary, context.getString(R.string.widget_summary_placeholder));
-    }
-
-    private String formatRainTimingMinutes(Context context, WidgetData data) {
-        if (data == null) {
-            return context.getString(R.string.widget_inline_rain_timing_none);
-        }
-        Integer startMinutes = data.rainStartMinutes;
-        Integer endMinutes = data.rainEndMinutes;
-        // Only treat as "raining now" when an active rain window starts now and the measured
-        // rate is above threshold. This avoids stale/non-current rates showing "Es regnet jetzt".
-        boolean rainingNow = startMinutes != null
-            && startMinutes == 0
-            && !Double.isNaN(data.rainRate)
-            && data.rainRate > RAIN_TIMING_RATE_THRESHOLD_MM_H;
-
-        if (rainingNow && endMinutes != null && endMinutes > 0) {
-            return context.getString(
-                R.string.widget_inline_rain_timing_end_format,
-                formatMinuteLead(context, endMinutes)
-            );
-        }
-        if (rainingNow) {
-            return context.getString(R.string.widget_inline_rain_timing_now_only);
-        }
-        if (startMinutes != null && endMinutes != null) {
-            return context.getString(
-                R.string.widget_inline_rain_timing_start_end_format,
-                formatMinuteLead(context, startMinutes),
-                formatMinuteLead(context, endMinutes)
-            );
-        }
-        if (startMinutes != null) {
-            return context.getString(
-                R.string.widget_inline_rain_timing_start_only_format,
-                formatMinuteLead(context, startMinutes)
-            );
-        }
-        return context.getString(R.string.widget_inline_rain_timing_none);
-    }
-
-    private boolean isNoRainState(WidgetData data) {
-        return data == null || (data.rainStartMinutes == null && data.rainEndMinutes == null);
-    }
-
-    private String formatMinuteLead(Context context, int minutes) {
-        int safeMinutes = Math.max(0, minutes);
-        if (safeMinutes == 0) {
-            return context.getString(R.string.widget_inline_rain_timing_now);
-        }
-        int hours = safeMinutes / 60;
-        int remainingMinutes = safeMinutes % 60;
-        if (hours > 0 && remainingMinutes > 0) {
-            return context.getString(R.string.widget_inline_hours_minutes_format, hours, remainingMinutes);
-        }
-        if (hours > 0) {
-            if (hours == 1) {
-                return context.getString(R.string.widget_inline_hours_format_singular, hours);
-            }
-            return context.getString(R.string.widget_inline_hours_format_plural, hours);
-        }
-        if (safeMinutes == 1) {
-            return context.getString(R.string.widget_inline_minutes_format_singular, safeMinutes);
-        }
-        return context.getString(R.string.widget_inline_minutes_format_plural, safeMinutes);
     }
 
     private String getSelectedDay(Context context, int appWidgetId) {
@@ -1375,344 +1253,6 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         return max;
     }
 
-    private RainNowcastData fetchRainNowcast(double latitude, double longitude) {
-        if (isInGermany(latitude, longitude)) {
-            try {
-                String radarUrl = String.format(
-                    Locale.US,
-                    BRIGHTSKY_RADAR_API_URL_TEMPLATE,
-                    latitude,
-                    longitude,
-                    RADAR_NOWCAST_DISTANCE_METERS
-                );
-                String radarResponse = httpGet(radarUrl);
-                RainNowcastData parsedRadar = parseBrightSkyRadarNowcast(new JSONObject(radarResponse));
-                if (parsedRadar != null) {
-                    return parsedRadar;
-                }
-            } catch (Exception e) {
-                Log.w(TAG, "Bright Sky radar unavailable for widget nowcast.", e);
-            }
-        }
-
-        try {
-            String nowcastUrl = String.format(
-                Locale.US,
-                NOWCAST_API_URL_TEMPLATE,
-                latitude,
-                longitude
-            );
-            String nowcastResponse = httpGet(nowcastUrl);
-            return parseOpenMeteoNowcast(new JSONObject(nowcastResponse));
-        } catch (Exception e) {
-            Log.w(TAG, "Open-Meteo nowcast unavailable for widget timing.", e);
-            return null;
-        }
-    }
-
-    private boolean isInGermany(double lat, double lon) {
-        return lat >= 47.27 && lat <= 55.06 && lon >= 5.87 && lon <= 15.04;
-    }
-
-    private RainNowcastData parseOpenMeteoNowcast(JSONObject nowcast) {
-        if (nowcast == null) return null;
-        JSONObject minutely = nowcast.optJSONObject("minutely_15");
-        if (minutely == null) return null;
-        JSONArray times = minutely.optJSONArray("time");
-        JSONArray precipitation = minutely.optJSONArray("precipitation");
-        if (times == null || precipitation == null) return null;
-
-        int length = Math.min(times.length(), precipitation.length());
-        if (length <= 0) return null;
-        RainNowcastData data = new RainNowcastData(MINUTELY_SLOT_DURATION_MINUTES);
-        for (int i = 0; i < length; i++) {
-            long slotMs = parseIsoTimeToMillis(times.optString(i, null));
-            if (slotMs <= 0) continue;
-            data.slotStartMillis.add(slotMs);
-            data.precipitationMm.add(Math.max(0d, precipitation.optDouble(i, 0d)));
-        }
-        return data.slotStartMillis.isEmpty() ? null : data;
-    }
-
-    private RainNowcastData parseBrightSkyRadarNowcast(JSONObject radar) {
-        if (radar == null) return null;
-        JSONArray radarEntries = radar.optJSONArray("radar");
-        if (radarEntries == null || radarEntries.length() == 0) return null;
-
-        RainNowcastData data = new RainNowcastData(RADAR_SLOT_DURATION_MINUTES);
-        for (int i = 0; i < radarEntries.length(); i++) {
-            JSONObject entry = radarEntries.optJSONObject(i);
-            if (entry == null) continue;
-            long slotMs = parseIsoTimeToMillis(entry.optString("timestamp", null));
-            if (slotMs <= 0) continue;
-            JSONArray precipitationGrid = entry.optJSONArray("precipitation_5");
-            if (precipitationGrid == null) continue;
-            double localPrecipitation = extractLocalRadarPrecipitation(precipitationGrid);
-            data.slotStartMillis.add(slotMs);
-            data.precipitationMm.add(Math.max(0d, localPrecipitation));
-        }
-        return data.slotStartMillis.isEmpty() ? null : data;
-    }
-
-    private double extractLocalRadarPrecipitation(JSONArray grid) {
-        if (grid == null || grid.length() == 0) return 0d;
-        int rowCenter = grid.length() / 2;
-        JSONArray centerRow = grid.optJSONArray(rowCenter);
-        if (centerRow == null || centerRow.length() == 0) return 0d;
-        int colCenter = centerRow.length() / 2;
-
-        double weightedSum = 0d;
-        double totalWeight = 0d;
-        double localPeak = 0d;
-        int rowMin = Math.max(0, rowCenter - RADAR_CENTER_RADIUS_CELLS);
-        int rowMax = Math.min(grid.length() - 1, rowCenter + RADAR_CENTER_RADIUS_CELLS);
-
-        for (int row = rowMin; row <= rowMax; row++) {
-            JSONArray rowValues = grid.optJSONArray(row);
-            if (rowValues == null || rowValues.length() == 0) continue;
-            int colMin = Math.max(0, colCenter - RADAR_CENTER_RADIUS_CELLS);
-            int colMax = Math.min(rowValues.length() - 1, colCenter + RADAR_CENTER_RADIUS_CELLS);
-            for (int col = colMin; col <= colMax; col++) {
-                double rawValue = rowValues.optDouble(col, 0d);
-                double mmPerFiveMinutes = rawValue > 0d ? rawValue / 100d : 0d;
-                int distance = Math.abs(row - rowCenter) + Math.abs(col - colCenter);
-                double weight;
-                if (distance == 0) {
-                    weight = RADAR_CENTER_WEIGHT;
-                } else if (distance == 1) {
-                    weight = RADAR_ADJACENT_WEIGHT;
-                } else {
-                    weight = RADAR_DIAGONAL_WEIGHT;
-                }
-                weightedSum += mmPerFiveMinutes * weight;
-                totalWeight += weight;
-                localPeak = Math.max(localPeak, mmPerFiveMinutes);
-            }
-        }
-
-        if (totalWeight <= 0d) return 0d;
-        double localAverage = weightedSum / totalWeight;
-        return Math.max(localAverage, localPeak * RADAR_LOCAL_PEAK_BLEND);
-    }
-
-    private long parseIsoTimeToMillis(String isoTime) {
-        if (isoTime == null || isoTime.trim().isEmpty()) return -1L;
-        String normalizedTime = isoTime.trim();
-        try {
-            SimpleDateFormat parser = ISO_HOUR_PARSER.get();
-            Date parsed = parser.parse(normalizedTime);
-            return parsed == null ? -1L : parsed.getTime();
-        } catch (ParseException e) {
-            String[] fallbackPatterns = {
-                "yyyy-MM-dd'T'HH:mm:ssX",
-                "yyyy-MM-dd'T'HH:mm:ssXXX",
-                "yyyy-MM-dd'T'HH:mm:ss.SSSX",
-                "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
-            };
-            for (String pattern : fallbackPatterns) {
-                try {
-                    SimpleDateFormat fallbackParser = new SimpleDateFormat(pattern, Locale.US);
-                    fallbackParser.setLenient(false);
-                    fallbackParser.setTimeZone(TimeZone.getTimeZone("UTC"));
-                    Date parsed = fallbackParser.parse(normalizedTime);
-                    if (parsed != null) {
-                        return parsed.getTime();
-                    }
-                } catch (ParseException ignored) {
-                    // Try next parser pattern.
-                }
-            }
-            Log.d(TAG, "Unable to parse nowcast timestamp: " + normalizedTime);
-            return -1L;
-        }
-    }
-
-    private void updateRainTiming(WidgetData data, JSONObject hourly, int currentHourIndex, RainNowcastData nowcastData) {
-        if (data == null || hourly == null || currentHourIndex < 0) return;
-        data.rainStartLabel = null;
-        data.rainEndLabel = null;
-        data.rainStartMinutes = null;
-        data.rainEndMinutes = null;
-        if (applyNowcastRainTiming(data, nowcastData)) {
-            return;
-        }
-
-        JSONArray times = hourly.optJSONArray("time");
-        if (times == null || times.length() == 0) return;
-
-        int length = times.length();
-        int eventStartIndex = -1;
-        boolean rainingNowByRate = !Double.isNaN(data.rainRate) && data.rainRate > RAIN_TIMING_RATE_THRESHOLD_MM_H;
-        boolean rainingNow = rainingNowByRate && hasRainSignal(hourly, currentHourIndex);
-
-        if (rainingNow) {
-            eventStartIndex = currentHourIndex;
-        } else {
-            // When nowcast data was available and found no rain, it has already confirmed
-            // there is no precipitation in the next ~120 minutes. In that case skip the
-            // current hour slot (whose start time may lie in the past) to avoid reporting
-            // a past hourly slot as "starting now" when the user is not actually being rained on.
-            boolean nowcastConfirmedNoRain = nowcastData != null && !nowcastData.slotStartMillis.isEmpty();
-            int searchFrom = (nowcastConfirmedNoRain && !rainingNow)
-                ? currentHourIndex + 1
-                : Math.max(0, currentHourIndex);
-            for (int i = searchFrom; i < length; i++) {
-                if (hasRainSignal(hourly, i)) {
-                    eventStartIndex = i;
-                    break;
-                }
-            }
-        }
-
-        if (eventStartIndex < 0) return;
-
-        int eventEndIndex = eventStartIndex;
-        for (int i = eventStartIndex + 1; i < length; i++) {
-            if (hasRainSignal(hourly, i)) {
-                eventEndIndex = i;
-            } else {
-                break;
-            }
-        }
-
-        data.rainStartLabel = extractHourLabel(times, eventStartIndex);
-        data.rainEndLabel = extractHourLabel(times, Math.min(eventEndIndex + 1, length - 1));
-
-        long nowMs = System.currentTimeMillis();
-        long startMs = extractHourMillis(times, eventStartIndex);
-        long endMs = extractHourMillis(times, Math.min(eventEndIndex + 1, length - 1));
-        if (startMs > 0) {
-            data.rainStartMinutes = Math.max(0, (int) Math.round((startMs - nowMs) / MILLIS_PER_MINUTE));
-        }
-        if (endMs > 0) {
-            data.rainEndMinutes = Math.max(0, (int) Math.round((endMs - nowMs) / MILLIS_PER_MINUTE));
-        }
-        if (rainingNow) {
-            data.rainStartMinutes = 0;
-        }
-    }
-
-    private boolean applyNowcastRainTiming(WidgetData data, RainNowcastData nowcastData) {
-        if (data == null || nowcastData == null || nowcastData.slotStartMillis.isEmpty()) {
-            return false;
-        }
-
-        long nowMs = System.currentTimeMillis();
-        int intervalMinutes = Math.max(1, nowcastData.intervalMinutes);
-        long slotDurationMs = (long) intervalMinutes * 60_000L;
-        double nowcastRateFactor = 60d / intervalMinutes;
-        int firstActiveIndex = -1;
-        for (int i = 0; i < nowcastData.slotStartMillis.size(); i++) {
-            long slotStartMs = nowcastData.slotStartMillis.get(i);
-            long slotEndMs = slotStartMs + slotDurationMs;
-            if (slotEndMs > nowMs) {
-                firstActiveIndex = i;
-                break;
-            }
-        }
-        if (firstActiveIndex < 0) {
-            return false;
-        }
-        int maxSlots = (int) Math.ceil((double) NOWCAST_LOOKAHEAD_MINUTES / intervalMinutes);
-        int endExclusive = Math.min(nowcastData.slotStartMillis.size(), firstActiveIndex + maxSlots);
-        long eventStartMs = -1L;
-        long eventEndMs = -1L;
-        boolean eventClosed = false;
-        boolean rainingNow = false;
-        boolean currentSlotFound = false;
-
-        for (int i = firstActiveIndex; i < endExclusive; i++) {
-            long slotStartMs = nowcastData.slotStartMillis.get(i);
-            long slotEndMs = slotStartMs + slotDurationMs;
-
-            double slotPrecipitation = i < nowcastData.precipitationMm.size()
-                ? nowcastData.precipitationMm.get(i)
-                : 0d;
-            double slotRate = Math.max(0d, slotPrecipitation) * nowcastRateFactor;
-            boolean hasPrecipitation = slotPrecipitation > LIGHT_PRECIP_THRESHOLD_MM;
-
-            if (slotStartMs <= nowMs && slotEndMs > nowMs) {
-                currentSlotFound = true;
-                data.rainRate = slotRate;
-                if (hasPrecipitation) {
-                    rainingNow = true;
-                }
-            }
-
-            if (eventClosed) continue;
-
-            if (eventStartMs < 0L && hasPrecipitation) {
-                eventStartMs = Math.max(slotStartMs, nowMs);
-            }
-            if (eventStartMs >= 0L && hasPrecipitation) {
-                eventEndMs = slotEndMs;
-            } else if (eventStartMs >= 0L && !hasPrecipitation) {
-                eventClosed = true;
-            }
-        }
-        if (!currentSlotFound) {
-            data.rainRate = Double.NaN;
-        }
-
-        if (eventStartMs < 0L) {
-            return false;
-        }
-
-        data.rainStartLabel = formatClockTime(eventStartMs);
-        data.rainStartMinutes = Math.max(0, (int) Math.round((eventStartMs - nowMs) / MILLIS_PER_MINUTE));
-        if (rainingNow) {
-            data.rainStartMinutes = 0;
-        }
-
-        if (eventEndMs >= 0L) {
-            data.rainEndLabel = formatClockTime(eventEndMs);
-            data.rainEndMinutes = Math.max(0, (int) Math.round((eventEndMs - nowMs) / MILLIS_PER_MINUTE));
-        }
-        return true;
-    }
-
-    private String formatClockTime(long timeMs) {
-        if (timeMs <= 0L) return null;
-        return DateFormat.format("HH:mm", new Date(timeMs)).toString();
-    }
-
-    private boolean hasRainSignal(JSONObject hourly, int index) {
-        double precipitation = readHourlyValue(hourly, "precipitation", index);
-        if (!Double.isNaN(precipitation) && precipitation > LIGHT_PRECIP_THRESHOLD_MM) {
-            return true;
-        }
-        double snowfall = readHourlyValue(hourly, "snowfall", index);
-        return !Double.isNaN(snowfall) && snowfall > LIGHT_PRECIP_THRESHOLD_MM;
-    }
-
-    private String extractHourLabel(JSONArray times, int index) {
-        if (times == null || index < 0 || index >= times.length()) return null;
-        String raw = times.optString(index, null);
-        if (raw == null || raw.trim().isEmpty()) return null;
-        int tPos = raw.lastIndexOf('T');
-        if (tPos >= 0 && tPos + 1 < raw.length()) {
-            return raw.substring(tPos + 1);
-        }
-        return raw;
-    }
-
-    private long extractHourMillis(JSONArray times, int index) {
-        if (times == null || index < 0 || index >= times.length()) return -1L;
-        String raw = times.optString(index, null);
-        return parseIsoTimeToMillis(raw);
-    }
-
-    private String formatRainWindow(Context context, WidgetData data) {
-        if (data == null || data.rainStartLabel == null || data.rainEndLabel == null) {
-            return context.getString(R.string.widget_metric_unavailable);
-        }
-        return context.getString(
-            R.string.widget_rain_window_format,
-            data.rainStartLabel,
-            data.rainEndLabel
-        );
-    }
-
     private String formatTemperature(double temperatureC) {
         if (Double.isNaN(temperatureC)) return "--°";
         return Math.round(temperatureC) + "°";
@@ -1826,16 +1366,6 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             if (connection != null) {
                 connection.disconnect();
             }
-        }
-    }
-
-    private static class RainNowcastData {
-        final int intervalMinutes;
-        final List<Long> slotStartMillis = new ArrayList<>();
-        final List<Double> precipitationMm = new ArrayList<>();
-
-        RainNowcastData(int intervalMinutes) {
-            this.intervalMinutes = intervalMinutes;
         }
     }
 
