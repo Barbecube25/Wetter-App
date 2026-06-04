@@ -65,7 +65,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final double MILLIS_PER_MINUTE = 60_000d;
     private static final String UNAVAILABLE = "--";
     private static final String WEATHER_API_URL_TEMPLATE =
-        "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=temperature_2m,apparent_temperature,precipitation,rain,wind_speed_10m,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max,weathercode&hourly=temperature_2m,weathercode,uv_index,precipitation_probability,cape,lifted_index,wind_speed_10m&timezone=auto&forecast_days=2";
+        "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=temperature_2m,apparent_temperature,precipitation,rain,snowfall,wind_speed_10m,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,uv_index_max,weathercode&hourly=temperature_2m,precipitation,snowfall,weathercode,uv_index,precipitation_probability,cape,lifted_index,wind_speed_10m&timezone=auto&forecast_days=2";
     private static final String AIR_QUALITY_API_URL_TEMPLATE =
         "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=%f&longitude=%f&current=alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&timezone=auto";
     private static final String NOWCAST_API_URL_TEMPLATE =
@@ -85,8 +85,9 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final double THUNDER_SCORE_MODERATE = 2.0;
     private static final double THUNDER_SCORE_HIGH = 3.5;
     private static final double RAIN_TIMING_PRECIP_PROB_THRESHOLD = 40;
-    private static final double RAIN_TIMING_RATE_THRESHOLD_MM_H = 0.05;
+    private static final double RAIN_TIMING_RATE_THRESHOLD_MM_H = 0.1;
     private static final double LIGHT_PRECIP_THRESHOLD_MM = 0.1;
+    private static final int NOWCAST_LOOKAHEAD_MINUTES = 120;
     private static final int MINUTELY_SLOT_DURATION_MINUTES = 15;
     private static final int RADAR_SLOT_DURATION_MINUTES = 5;
     private static final int RADAR_NOWCAST_DISTANCE_METERS = 6000;
@@ -1585,15 +1586,29 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         int intervalMinutes = Math.max(1, nowcastData.intervalMinutes);
         long slotDurationMs = (long) intervalMinutes * 60_000L;
         double nowcastRateFactor = 60d / intervalMinutes;
+        int firstActiveIndex = -1;
+        for (int i = 0; i < nowcastData.slotStartMillis.size(); i++) {
+            long slotStartMs = nowcastData.slotStartMillis.get(i);
+            long slotEndMs = slotStartMs + slotDurationMs;
+            if (slotEndMs > nowMs) {
+                firstActiveIndex = i;
+                break;
+            }
+        }
+        if (firstActiveIndex < 0) {
+            return false;
+        }
+        int maxSlots = Math.max(1, (int) Math.ceil((double) NOWCAST_LOOKAHEAD_MINUTES / intervalMinutes));
+        int endExclusive = Math.min(nowcastData.slotStartMillis.size(), firstActiveIndex + maxSlots);
         long eventStartMs = -1L;
         long eventEndMs = -1L;
         boolean eventClosed = false;
         boolean rainingNow = false;
+        boolean currentSlotFound = false;
 
-        for (int i = 0; i < nowcastData.slotStartMillis.size(); i++) {
+        for (int i = firstActiveIndex; i < endExclusive; i++) {
             long slotStartMs = nowcastData.slotStartMillis.get(i);
             long slotEndMs = slotStartMs + slotDurationMs;
-            if (slotEndMs <= nowMs) continue;
 
             double slotPrecipitation = i < nowcastData.precipitationMm.size()
                 ? nowcastData.precipitationMm.get(i)
@@ -1602,8 +1617,9 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             boolean hasPrecipitation = slotPrecipitation > LIGHT_PRECIP_THRESHOLD_MM;
 
             if (slotStartMs <= nowMs && slotEndMs > nowMs) {
+                currentSlotFound = true;
                 data.rainRate = slotRate;
-                if (hasPrecipitation) {
+                if (hasPrecipitation && slotRate > RAIN_TIMING_RATE_THRESHOLD_MM_H) {
                     rainingNow = true;
                 }
             }
@@ -1618,6 +1634,9 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             } else if (eventStartMs >= 0L && !hasPrecipitation) {
                 eventClosed = true;
             }
+        }
+        if (!currentSlotFound) {
+            data.rainRate = 0d;
         }
 
         if (eventStartMs < 0L) {
@@ -1643,6 +1662,14 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     }
 
     private boolean hasRainSignal(JSONObject hourly, int index) {
+        double precipitation = readHourlyValue(hourly, "precipitation", index);
+        if (!Double.isNaN(precipitation) && precipitation > LIGHT_PRECIP_THRESHOLD_MM) {
+            return true;
+        }
+        double snowfall = readHourlyValue(hourly, "snowfall", index);
+        if (!Double.isNaN(snowfall) && snowfall > LIGHT_PRECIP_THRESHOLD_MM) {
+            return true;
+        }
         int weatherCode = readHourlyIntValue(hourly, "weathercode", index);
         if (isRainCode(weatherCode)) {
             return true;
