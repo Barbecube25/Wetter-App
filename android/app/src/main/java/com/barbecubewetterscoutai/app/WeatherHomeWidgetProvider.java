@@ -1598,7 +1598,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         if (firstActiveIndex < 0) {
             return false;
         }
-        int maxSlots = Math.max(1, (int) Math.ceil((double) NOWCAST_LOOKAHEAD_MINUTES / intervalMinutes));
+        int maxSlots = (int) Math.ceil((double) NOWCAST_LOOKAHEAD_MINUTES / intervalMinutes);
         int endExclusive = Math.min(nowcastData.slotStartMillis.size(), firstActiveIndex + maxSlots);
         long eventStartMs = -1L;
         long eventEndMs = -1L;
@@ -1619,7 +1619,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             if (slotStartMs <= nowMs && slotEndMs > nowMs) {
                 currentSlotFound = true;
                 data.rainRate = slotRate;
-                if (hasPrecipitation && slotRate > RAIN_TIMING_RATE_THRESHOLD_MM_H) {
+                if (hasPrecipitation) {
                     rainingNow = true;
                 }
             }
