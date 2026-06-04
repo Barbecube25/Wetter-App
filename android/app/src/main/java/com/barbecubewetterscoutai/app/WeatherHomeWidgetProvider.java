@@ -84,7 +84,6 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final double THUNDER_SCORE_LOW = 1.0;
     private static final double THUNDER_SCORE_MODERATE = 2.0;
     private static final double THUNDER_SCORE_HIGH = 3.5;
-    private static final double RAIN_TIMING_PRECIP_PROB_THRESHOLD = 40;
     private static final double RAIN_TIMING_RATE_THRESHOLD_MM_H = 0.1;
     private static final double LIGHT_PRECIP_THRESHOLD_MM = 0.1;
     private static final int NOWCAST_LOOKAHEAD_MINUTES = 120;
@@ -766,6 +765,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
     private void applyInlineSummaryPanelText(Context context, RemoteViews views, WidgetData data, boolean showTomorrow) {
         if (showTomorrow) {
+            views.setViewVisibility(R.id.widget_inline_summary_icon, View.GONE);
             views.setViewVisibility(R.id.widget_inline_summary_secondary, View.VISIBLE);
             views.setTextViewText(R.id.widget_inline_summary_title, context.getString(R.string.widget_summary_title_tomorrow));
             views.setTextViewText(
@@ -789,6 +789,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             return;
         }
 
+        boolean showNoRainState = isNoRainState(data);
+        views.setViewVisibility(R.id.widget_inline_summary_icon, showNoRainState ? View.VISIBLE : View.GONE);
         views.setViewVisibility(R.id.widget_inline_summary_secondary, View.GONE);
         views.setTextViewText(R.id.widget_inline_summary_title, context.getString(R.string.widget_inline_rain_title));
         views.setTextViewText(R.id.widget_inline_summary_primary, formatRainTimingMinutes(context, data));
@@ -797,7 +799,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
     private String formatRainTimingMinutes(Context context, WidgetData data) {
         if (data == null) {
-            return withNoRainSymbol(context, context.getString(R.string.widget_inline_rain_timing_none));
+            return context.getString(R.string.widget_inline_rain_timing_none);
         }
         Integer startMinutes = data.rainStartMinutes;
         Integer endMinutes = data.rainEndMinutes;
@@ -830,15 +832,11 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
                 formatMinuteLead(context, startMinutes)
             );
         }
-        return withNoRainSymbol(context, context.getString(R.string.widget_inline_rain_timing_none));
+        return context.getString(R.string.widget_inline_rain_timing_none);
     }
 
-    private String withNoRainSymbol(Context context, String message) {
-        String symbol = context.getString(R.string.widget_inline_rain_no_rain_symbol);
-        if (message == null || message.trim().isEmpty()) {
-            return symbol;
-        }
-        return symbol + " " + message;
+    private boolean isNoRainState(WidgetData data) {
+        return data == null || (data.rainStartMinutes == null && data.rainEndMinutes == null);
     }
 
     private String formatMinuteLead(Context context, int minutes) {
@@ -1688,36 +1686,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             return true;
         }
         double snowfall = readHourlyValue(hourly, "snowfall", index);
-        if (!Double.isNaN(snowfall) && snowfall > LIGHT_PRECIP_THRESHOLD_MM) {
-            return true;
-        }
-        int weatherCode = readHourlyIntValue(hourly, "weathercode", index);
-        if (isRainCode(weatherCode)) {
-            return true;
-        }
-        double precipProb = readHourlyValue(hourly, "precipitation_probability", index);
-        return !Double.isNaN(precipProb) && precipProb >= RAIN_TIMING_PRECIP_PROB_THRESHOLD;
-    }
-
-    private boolean isRainCode(int weatherCode) {
-        switch (weatherCode) {
-            case 51:
-            case 53:
-            case 55:
-            case 56:
-            case 57:
-            case 61:
-            case 63:
-            case 65:
-            case 66:
-            case 67:
-            case 80:
-            case 81:
-            case 82:
-                return true;
-            default:
-                return false;
-        }
+        return !Double.isNaN(snowfall) && snowfall > LIGHT_PRECIP_THRESHOLD_MM;
     }
 
     private String extractHourLabel(JSONArray times, int index) {

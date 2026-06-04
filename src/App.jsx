@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts';
-import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Clock3, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, ArrowLeft, ArrowUp, ArrowDown, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Eye, Activity, Leaf, Bell } from 'lucide-react';
+import { MapPin, RefreshCw, Info, CalendarDays, TrendingUp, Droplets, Navigation, Wind, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Clock, Clock3, Crosshair, Home, Download, Moon, Star, Umbrella, ShieldCheck, AlertTriangle, BarChart2, List, Database, Map as MapIcon, Sparkles, Thermometer, Waves, ChevronDown, ChevronUp, Save, CloudFog, Siren, X, ExternalLink, User, Share, Palette, Zap, ArrowRight, Gauge, Timer, MessageSquarePlus, CheckCircle2, CloudDrizzle, CloudSnow, CloudHail, CloudOff, ArrowLeft, ArrowUp, ArrowDown, Trash2, Plus, Plane, Calendar, Search, Edit2, Check, Settings, Globe, Languages, Sunrise, Sunset, Eye, Activity, Leaf, Bell } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
 import { StatusBar } from '@capacitor/status-bar';
 import { LocalNotifications } from '@capacitor/local-notifications';
@@ -18312,6 +18312,10 @@ export default function WeatherApp() {
               const hasLiveRainFromStation = isStationCapabilityActive('hasRain') && hasStationMetricValue(current.precip);
               const precipSparkBars = sampledForecastHours.map(h => h.precipProb ?? 0);
               const getPrecipBarColor = (p) => p >= 80 ? 'bg-blue-600' : p >= 60 ? 'bg-blue-500' : p >= 40 ? 'bg-blue-400' : p >= 20 ? 'bg-blue-300' : 'bg-blue-200';
+              const hasMeaningful24hPrecip = next24HoursPrecip.rain > LIGHT_PRECIP_THRESHOLD || next24HoursPrecip.snow > LIGHT_PRECIP_THRESHOLD;
+              const noRainWidgetText = lang === 'de'
+                ? 'Aktuell kein Regen'
+                : (lang === 'en' ? 'Currently no rain' : t('noPrecipExp'));
 
               // Foldable-only: compute rain timing from nowcast or hourly data
               let precipStartMins = null;
@@ -18357,11 +18361,9 @@ export default function WeatherApp() {
                   }
                 }
               }
-              const isCurrentlyRaining = precipStartMins !== null && precipStartMins <= 0;
-
               return (
                 <>
-                  {(next24HoursPrecip.rain > 0 || next24HoursPrecip.snow > 0) ? (
+                  {hasMeaningful24hPrecip ? (
                     <div
                       className={`bg-m3-tertiary-container rounded-m3-xl border border-m3-tertiary shadow-m3-1 relative overflow-hidden flex flex-col justify-between cursor-pointer active:scale-95 transition-transform ${foldableFeaturedWeatherTileClass}`}
                       onClick={() => setShowPrecipModal(true)}
@@ -18401,8 +18403,8 @@ export default function WeatherApp() {
                         {renderStationBadge(hasLiveRainFromStation)}
                       </div>
                       <div className="flex items-center justify-center gap-1 mt-1">
-                        <Sun size={16} className="text-green-500 flex-shrink-0" />
-                        <span className={`text-m3-label-medium font-bold text-green-600 leading-tight`}>{t('noPrecipSight')}</span>
+                        <CloudOff size={16} className="text-m3-on-surface-variant flex-shrink-0" />
+                        <span className={`text-m3-label-medium font-bold leading-tight ${isRealNight ? 'text-m3-dark-on-surface' : 'text-m3-on-surface'}`}>{noRainWidgetText}</span>
                       </div>
                       {isFoldableTileWide && precipStartMins !== null && (
                         <div className={`text-xs mt-1 font-medium ${isRealNight ? 'text-m3-dark-on-surface-variant' : 'text-m3-on-surface-variant'}`}>
