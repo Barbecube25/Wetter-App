@@ -801,16 +801,18 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         }
         Integer startMinutes = data.rainStartMinutes;
         Integer endMinutes = data.rainEndMinutes;
+        // Only treat as "raining now" when the measured rain rate is actually above the threshold.
+        // A startMinutes of 0 can occur because a past hourly slot was clamped, so it must not
+        // be used to trigger the "Es regnet jetzt" message when the rain rate is 0.
         boolean rainingNow = !Double.isNaN(data.rainRate) && data.rainRate > RAIN_TIMING_RATE_THRESHOLD_MM_H;
-        boolean startsNow = startMinutes != null && startMinutes <= 0;
 
-        if ((rainingNow || startsNow) && endMinutes != null && endMinutes > 0) {
+        if (rainingNow && endMinutes != null && endMinutes > 0) {
             return context.getString(
                 R.string.widget_inline_rain_timing_end_format,
                 formatMinuteLead(context, endMinutes)
             );
         }
-        if (rainingNow || startsNow) {
+        if (rainingNow) {
             return context.getString(R.string.widget_inline_rain_timing_now_only);
         }
         if (startMinutes != null && endMinutes != null) {
@@ -1541,7 +1543,15 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         if (rainingNow && hasRainSignal(hourly, currentHourIndex)) {
             eventStartIndex = currentHourIndex;
         } else {
-            for (int i = Math.max(0, currentHourIndex); i < length; i++) {
+            // When nowcast data was available and found no rain, it has already confirmed
+            // there is no precipitation in the next ~120 minutes. In that case skip the
+            // current hour slot (whose start time may lie in the past) to avoid reporting
+            // a past hourly slot as "starting now" when the user is not actually being rained on.
+            boolean nowcastConfirmedNoRain = nowcastData != null && !nowcastData.slotStartMillis.isEmpty();
+            int searchFrom = (nowcastConfirmedNoRain && !rainingNow)
+                ? currentHourIndex + 1
+                : Math.max(0, currentHourIndex);
+            for (int i = searchFrom; i < length; i++) {
                 if (hasRainSignal(hourly, i)) {
                     eventStartIndex = i;
                     break;
