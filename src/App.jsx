@@ -13961,14 +13961,22 @@ const TRIP_PREVIEW_CACHE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
 
 const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, formatTemp, getTempUnitSymbol, lang }) => {
     const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
+    const [cacheClock, setCacheClock] = useState(() => Date.now());
     const cachedWeather = tripPreviewCache[trip.id];
-    const isCacheStale = !cachedWeather || !cachedWeather.fetchedAt || (Date.now() - cachedWeather.fetchedAt > TRIP_PREVIEW_CACHE_TTL_MS);
+    const isCacheStale = !cachedWeather || !cachedWeather.fetchedAt || (cacheClock - cachedWeather.fetchedAt > TRIP_PREVIEW_CACHE_TTL_MS);
     const [weather, setWeather] = useState(cachedWeather || null);
     const [loading, setLoading] = useState(!cachedWeather);
 
     // Check if trip is too far in the future for forecast data
     const daysUntilTrip = Math.ceil((new Date(trip.startDate) - new Date()) / (1000 * 60 * 60 * 24));
     const isTooFarFuture = daysUntilTrip > TRIP_FORECAST_LIMIT_DAYS;
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCacheClock(Date.now());
+        }, 60 * 1000);
+        return () => clearInterval(interval);
+    }, []);
 
     useEffect(() => {
         if (cachedWeather) {
@@ -14009,7 +14017,7 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
             }
         };
         fetchPreview();
-    }, [trip, isTooFarFuture]);
+    }, [trip.id, trip.lat, trip.lon, trip.startDate, isTooFarFuture, isCacheStale, cachedWeather?.isProvisional]);
 
     if (isTooFarFuture) {
         return (
