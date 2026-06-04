@@ -46,9 +46,10 @@
     <string name="widget_inline_summary_today_primary_format">%1$s • Gefühlt %2$s</string>
     <string name="widget_inline_rain_title">Regenradar</string>
     <string name="widget_inline_rain_timing_none">🌧️🚫 Kein Regen in Sicht</string>
-    <string name="widget_inline_rain_timing_start_end_format">In %1$s regnet es und in %2$s hört es auf</string>
+    <string name="widget_inline_rain_timing_start_end_format">Ab %1$s regnet es und in %2$s hört es auf</string>
     <string name="widget_inline_rain_timing_end_format">Es regnet jetzt und in %1$s hört es auf</string>
-    <string name="widget_inline_rain_timing_start_only_format">In %1$s regnet es</string>
+    <string name="widget_inline_rain_timing_start_only_format">Ab %1$s regnet es</string>
+    <string name="widget_inline_rain_timing_now_only">Es regnet jetzt</string>
     <string name="widget_inline_rain_timing_now">jetzt</string>
     <string name="widget_inline_minutes_format_singular">%1$d Minute</string>
     <string name="widget_inline_minutes_format_plural">%1$d Minuten</string>
