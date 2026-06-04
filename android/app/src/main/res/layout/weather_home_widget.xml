@@ -195,7 +195,8 @@
             android:paddingStart="10dp"
             android:paddingTop="8dp"
             android:paddingEnd="10dp"
-            android:paddingBottom="8dp">
+            android:paddingBottom="8dp"
+            android:visibility="gone">
 
             <TextView
                 android:id="@+id/widget_inline_summary_title"

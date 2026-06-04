@@ -483,7 +483,6 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         );
 
         applyHourlySlots(views, data);
-        applyInlineSummaryPanelText(context, views, data, showTomorrow);
         applySummaryPanelText(context, views, data, showTomorrow);
     }
 
@@ -543,7 +542,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             views.setViewVisibility(R.id.widget_day_switcher, View.VISIBLE);
             views.setViewVisibility(R.id.widget_main_row, View.VISIBLE);
             views.setViewVisibility(R.id.widget_daily_overview, View.GONE);
-            views.setViewVisibility(R.id.widget_inline_summary_panel, View.VISIBLE);
+            views.setViewVisibility(R.id.widget_inline_summary_panel, View.GONE);
             views.setViewVisibility(R.id.widget_metrics_panel, View.VISIBLE);
             views.setViewVisibility(R.id.widget_metrics_row_secondary, View.VISIBLE);
             views.setViewVisibility(R.id.widget_hourly_panel, View.GONE);
@@ -584,7 +583,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         views.setViewVisibility(R.id.widget_day_switcher, compactHeight ? View.GONE : View.VISIBLE);
         views.setViewVisibility(R.id.widget_main_row, View.VISIBLE);
         views.setViewVisibility(R.id.widget_daily_overview, View.GONE);
-        views.setViewVisibility(R.id.widget_inline_summary_panel, compactWidth ? View.GONE : View.VISIBLE);
+        views.setViewVisibility(R.id.widget_inline_summary_panel, View.GONE);
         views.setViewVisibility(R.id.widget_metrics_panel, veryCompact ? View.GONE : View.VISIBLE);
         views.setViewVisibility(R.id.widget_metrics_row_secondary, compactHeight ? View.GONE : View.VISIBLE);
         boolean showHourly = largeHeight && !showTomorrow && !compactWidth;
@@ -755,7 +754,6 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             R.id.widget_detail_secondary,
             context.getString(
                 R.string.widget_summary_today_secondary_format,
-                formatRainWindow(context, data),
                 formatMetricNumber(data.rainRate),
                 formatMetricNumber(data.windKmh),
                 thunderRisk
@@ -902,7 +900,6 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             JSONObject current = weatherJson.optJSONObject("current");
             JSONObject hourly = weatherJson.optJSONObject("hourly");
             JSONObject daily = weatherJson.optJSONObject("daily");
-            RainNowcastData rainNowcast = fetchRainNowcast(lat, lon);
             weatherPayloadReceived = current != null || daily != null;
 
             if (current != null) {
@@ -927,7 +924,6 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
                 data.uvIndex = uv;
                 data.thunderRiskLabel = classifyThunderRisk(context, weatherCode, cape, liftedIndex, precipProb, data.windKmh);
                 fillHourlyForecast(data, hourly, hourlyIndex);
-                updateRainTiming(data, hourly, hourlyIndex, rainNowcast);
             }
             if (daily != null) {
                 data.maxTemperatureC = readDailyValue(daily, "temperature_2m_max");

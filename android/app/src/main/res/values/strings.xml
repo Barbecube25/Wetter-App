@@ -42,7 +42,7 @@
     <string name="widget_summary_title_tomorrow">Tagesausblick</string>
     <string name="widget_summary_placeholder">--</string>
     <string name="widget_summary_today_primary_format">%1$s • Gefühlt %2$s • Pollen %3$s</string>
-    <string name="widget_summary_today_secondary_format">%1$s • Regen %2$s mm • Wind %3$s km/h • Gewitter %4$s</string>
+    <string name="widget_summary_today_secondary_format">Regen %1$s mm • Wind %2$s km/h • Gewitter %3$s</string>
     <string name="widget_inline_summary_today_primary_format">%1$s • Gefühlt %2$s</string>
     <string name="widget_inline_rain_title">Regenradar</string>
     <string name="widget_inline_rain_timing_none">Aktuell kein Regen</string>
