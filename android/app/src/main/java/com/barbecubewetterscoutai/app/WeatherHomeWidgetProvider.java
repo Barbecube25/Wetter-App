@@ -816,22 +816,16 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             return context.getString(R.string.widget_inline_rain_timing_now_only);
         }
         if (startMinutes != null && endMinutes != null) {
-            return withNoRainSymbol(
-                context,
-                context.getString(
-                    R.string.widget_inline_rain_timing_start_end_format,
-                    formatMinuteLead(context, startMinutes),
-                    formatMinuteLead(context, endMinutes)
-                )
+            return context.getString(
+                R.string.widget_inline_rain_timing_start_end_format,
+                formatMinuteLead(context, startMinutes),
+                formatMinuteLead(context, endMinutes)
             );
         }
         if (startMinutes != null) {
-            return withNoRainSymbol(
-                context,
-                context.getString(
-                    R.string.widget_inline_rain_timing_start_only_format,
-                    formatMinuteLead(context, startMinutes)
-                )
+            return context.getString(
+                R.string.widget_inline_rain_timing_start_only_format,
+                formatMinuteLead(context, startMinutes)
             );
         }
         return withNoRainSymbol(context, context.getString(R.string.widget_inline_rain_timing_none));
