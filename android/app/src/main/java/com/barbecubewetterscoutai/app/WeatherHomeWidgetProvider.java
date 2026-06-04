@@ -1636,7 +1636,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             }
         }
         if (!currentSlotFound) {
-            data.rainRate = 0d;
+            data.rainRate = Double.NaN;
         }
 
         if (eventStartMs < 0L) {
