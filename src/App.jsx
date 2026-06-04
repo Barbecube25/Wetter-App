@@ -13974,6 +13974,9 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
         if (cachedWeather) {
             setWeather(cachedWeather);
             setLoading(false);
+        } else {
+            setWeather(null);
+            setLoading(true);
         }
     }, [cachedWeather]);
 
@@ -13985,7 +13988,6 @@ const TripWeatherPreview = ({ trip, tripPreviewCache, setTripPreviewCache, forma
             return;
         }
         const fetchPreview = async () => {
-            if (!cachedWeather) setLoading(true);
             try {
                 const url = `https://api.open-meteo.com/v1/forecast?latitude=${trip.lat}&longitude=${trip.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min&models=icon_seamless,gfs_seamless,arome_seamless,gem_seamless&timezone=auto&start_date=${trip.startDate}&end_date=${trip.startDate}`;
                 const res = await fetch(url);
