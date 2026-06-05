@@ -60,7 +60,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final String DAY_TOMORROW = "tomorrow";
     private static final String TAG = "WeatherHomeWidget";
     private static final long AUTO_REFRESH_INTERVAL_MS = 30 * 60 * 1000L;
-    private static final int AUTO_REFRESH_REQUEST_CODE = 20_026_005;
+    private static final int AUTO_REFRESH_REQUEST_CODE = 1001;
     private static final int HTTP_TIMEOUT_MS = 12000;
     private static final double MILLIS_PER_MINUTE = 60_000d;
     private static final String UNAVAILABLE = "--";
@@ -209,15 +209,12 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
 
         long triggerAtMillis = System.currentTimeMillis() + AUTO_REFRESH_INTERVAL_MS;
         PendingIntent refreshPendingIntent = createAutoRefreshPendingIntent(context);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            try {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, refreshPendingIntent);
-            } catch (SecurityException ignored) {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, refreshPendingIntent);
-            }
-        } else {
-            alarmManager.set(AlarmManager.RTC_WAKEUP, triggerAtMillis, refreshPendingIntent);
-        }
+        alarmManager.setInexactRepeating(
+            AlarmManager.RTC_WAKEUP,
+            triggerAtMillis,
+            AUTO_REFRESH_INTERVAL_MS,
+            refreshPendingIntent
+        );
     }
 
     private void cancelAutoRefresh(Context context) {
