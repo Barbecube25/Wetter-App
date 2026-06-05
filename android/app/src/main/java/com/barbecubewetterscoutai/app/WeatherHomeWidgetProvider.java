@@ -1,5 +1,6 @@
 package com.barbecubewetterscoutai.app;
 
+import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -58,6 +59,8 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
     private static final String DAY_TODAY = "today";
     private static final String DAY_TOMORROW = "tomorrow";
     private static final String TAG = "WeatherHomeWidget";
+    private static final long AUTO_REFRESH_INTERVAL_MS = 30 * 60 * 1000L;
+    private static final int AUTO_REFRESH_REQUEST_CODE = 20_026_005;
     private static final int HTTP_TIMEOUT_MS = 12000;
     private static final double MILLIS_PER_MINUTE = 60_000d;
     private static final String UNAVAILABLE = "--";
@@ -136,6 +139,7 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
         for (int appWidgetId : appWidgetIds) {
             updateWidgetAsync(context, appWidgetManager, appWidgetId);
         }
+        scheduleAutoRefresh(context);
     }
 
     @Override
@@ -159,7 +163,14 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             for (int appWidgetId : appWidgetIds) {
                 updateWidgetAsync(context, appWidgetManager, appWidgetId);
             }
+            scheduleAutoRefresh(context);
         }
+    }
+
+    @Override
+    public void onEnabled(Context context) {
+        super.onEnabled(context);
+        scheduleAutoRefresh(context);
     }
 
     @Override
@@ -177,6 +188,53 @@ public class WeatherHomeWidgetProvider extends AppWidgetProvider {
             editor.remove(PREF_DAY_PREFIX + appWidgetId);
         }
         editor.apply();
+    }
+
+    @Override
+    public void onDisabled(Context context) {
+        super.onDisabled(context);
+        cancelAutoRefresh(context);
+    }
+
+    private void scheduleAutoRefresh(Context context) {
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+        ComponentName provider = new ComponentName(context, WeatherHomeWidgetProvider.class);
+        int[] appWidgetIds = appWidgetManager.getAppWidgetIds(provider);
+        if (appWidgetIds == null || appWidgetIds.length == 0) {
+            cancelAutoRefresh(context);
+            return;
+        }
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (alarmManager == null) return;
+
+        long triggerAtMillis = System.currentTimeMillis() + AUTO_REFRESH_INTERVAL_MS;
+        PendingIntent refreshPendingIntent = createAutoRefreshPendingIntent(context);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, refreshPendingIntent);
+            } catch (SecurityException ignored) {
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, refreshPendingIntent);
+            }
+        } else {
+            alarmManager.set(AlarmManager.RTC_WAKEUP, triggerAtMillis, refreshPendingIntent);
+        }
+    }
+
+    private void cancelAutoRefresh(Context context) {
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (alarmManager == null) return;
+        alarmManager.cancel(createAutoRefreshPendingIntent(context));
+    }
+
+    private PendingIntent createAutoRefreshPendingIntent(Context context) {
+        Intent refreshIntent = new Intent(context, WeatherHomeWidgetProvider.class);
+        refreshIntent.setAction(ACTION_WIDGET_REFRESH);
+        return PendingIntent.getBroadcast(
+            context,
+            AUTO_REFRESH_REQUEST_CODE,
+            refreshIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
     }
 
     private void updateWidgetAsync(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
