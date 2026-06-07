@@ -18683,10 +18683,10 @@ export default function WeatherApp() {
                             <div className="text-sm font-bold text-m3-on-surface leading-tight truncate">{day.dayName}</div>
                             <div className="text-xs font-medium text-m3-on-surface-variant leading-tight truncate">{day.dateShort}</div>
                           </div>
-                         
+
                          {/* Icon */}
                          <DayIcon size={24} className="text-m3-on-surface" />
-                         
+
                          {/* Temp Range */}
                           <div className="flex items-center gap-1 min-w-0">
                             <span className="text-sm font-bold text-blue-400 whitespace-nowrap">{formatTemp(day.min)}{getTempUnitSymbol()}</span>
@@ -18695,7 +18695,7 @@ export default function WeatherApp() {
                             </div>
                             <span className="text-sm font-bold text-red-400 whitespace-nowrap">{formatTemp(day.max)}{getTempUnitSymbol()}</span>
                          </div>
-                          
+
                            <div className="min-h-[16px] flex items-center justify-end min-w-[72px]">
                               {parseFloat(day.rain) > 0.1 && parseFloat(day.snow) > 0.1 ? (
                                 <div className="flex flex-col items-end gap-0.5">
@@ -18721,7 +18721,7 @@ export default function WeatherApp() {
                                   <span className={`text-xs font-bold whitespace-nowrap ${getWindColorClass(day.wind, isRealNight)}`}>{formatWind(day.wind)} {getWindUnitLabel()}</span>
                               </div>
                           </div>
-                           
+
                         </div>
                      );
                    })}
